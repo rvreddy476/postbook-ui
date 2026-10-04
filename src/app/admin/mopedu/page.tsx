@@ -36,18 +36,18 @@ interface KpiCardProps {
 }
 
 const TONE_CLASSES: Record<NonNullable<KpiCardProps["tone"]>, string> = {
-  neutral: "bg-gray-50 text-gray-700",
-  amber: "bg-amber-50 text-amber-700",
-  green: "bg-emerald-50 text-emerald-700",
-  red: "bg-rose-50 text-rose-700",
-  blue: "bg-blue-50 text-blue-700",
+  neutral: "bg-brand-secondary text-brand-text",
+  amber: "bg-warning/10 text-warning",
+  green: "bg-success/10 text-success",
+  red: "bg-danger/10 text-danger",
+  blue: "bg-primary-ink/10 text-primary-ink",
 }
 
 function KpiCard({ label, value, icon: Icon, tone = "neutral", loading }: KpiCardProps) {
   return (
     <div className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-4 shadow-xs">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-black tracking-[0.16em] text-brand-text/45">
+        <p className="text-xs font-semibold text-text-muted">
           {label}
         </p>
         <div
@@ -76,7 +76,7 @@ export default function MopeduOverviewPage() {
   return (
     <div className="space-y-8">
       {dashboard.isError ? (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div className="rounded-xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm text-danger">
           {errorMessage(dashboard.error) || "Could not load dashboard."}
         </div>
       ) : null}
@@ -86,7 +86,7 @@ export default function MopeduOverviewPage() {
         <h2 className="mb-3 text-sm font-semibold text-brand-text/70">
           Key metrics
         </h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
           <KpiCard
             label="Total customers"
             value={fmt(counts?.total_customers)}
@@ -196,7 +196,7 @@ export default function MopeduOverviewPage() {
           <div className="grid gap-3 sm:grid-cols-2">
             <Link
               href="/admin/mopedu/partners?status=pending"
-              className="rounded-xl border border-gray-200 bg-gray-50 p-4 transition-colors hover:border-brand-text/30 hover:bg-white"
+              className="rounded-xl border border-brand-divider bg-brand-secondary p-4 transition-colors hover:border-brand-text/30 hover:bg-brand-card"
             >
               <p className="text-sm font-semibold text-brand-text">
                 Partner queue
@@ -207,7 +207,7 @@ export default function MopeduOverviewPage() {
             </Link>
             <Link
               href="/admin/mopedu/live-rides"
-              className="rounded-xl border border-gray-200 bg-gray-50 p-4 transition-colors hover:border-brand-text/30 hover:bg-white"
+              className="rounded-xl border border-brand-divider bg-brand-secondary p-4 transition-colors hover:border-brand-text/30 hover:bg-brand-card"
             >
               <p className="text-sm font-semibold text-brand-text">
                 Live rides
@@ -218,7 +218,7 @@ export default function MopeduOverviewPage() {
             </Link>
             <Link
               href="/admin/mopedu/payments"
-              className="rounded-xl border border-gray-200 bg-gray-50 p-4 transition-colors hover:border-brand-text/30 hover:bg-white"
+              className="rounded-xl border border-brand-divider bg-brand-secondary p-4 transition-colors hover:border-brand-text/30 hover:bg-brand-card"
             >
               <p className="text-sm font-semibold text-brand-text">
                 Payment proofs
@@ -229,7 +229,7 @@ export default function MopeduOverviewPage() {
             </Link>
             <Link
               href="/admin/mopedu/complaints"
-              className="rounded-xl border border-gray-200 bg-gray-50 p-4 transition-colors hover:border-brand-text/30 hover:bg-white"
+              className="rounded-xl border border-brand-divider bg-brand-secondary p-4 transition-colors hover:border-brand-text/30 hover:bg-brand-card"
             >
               <p className="text-sm font-semibold text-brand-text">
                 Complaints
@@ -251,13 +251,13 @@ export default function MopeduOverviewPage() {
               Loading…
             </div>
           ) : counts ? (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-brand-divider">
               <li className="flex items-center justify-between py-3">
                 <Link
                   href="/admin/mopedu/documents?status=pending"
                   className="flex items-center gap-2 text-sm font-medium text-brand-text hover:underline"
                 >
-                  <FileBadge2 className="h-4 w-4 text-amber-600" />
+                  <FileBadge2 className="h-4 w-4 text-warning" />
                   KYC documents
                 </Link>
                 <span className="text-sm font-semibold text-brand-text">
@@ -269,7 +269,7 @@ export default function MopeduOverviewPage() {
                   href="/admin/mopedu/vehicles?status=pending"
                   className="flex items-center gap-2 text-sm font-medium text-brand-text hover:underline"
                 >
-                  <CarFront className="h-4 w-4 text-amber-600" />
+                  <CarFront className="h-4 w-4 text-warning" />
                   Vehicle verifications
                 </Link>
                 <span className="text-sm font-semibold text-brand-text">
@@ -281,7 +281,7 @@ export default function MopeduOverviewPage() {
                   href="/admin/mopedu/payments?status=pending"
                   className="flex items-center gap-2 text-sm font-medium text-brand-text hover:underline"
                 >
-                  <Coins className="h-4 w-4 text-amber-600" />
+                  <Coins className="h-4 w-4 text-warning" />
                   Subscription payments
                 </Link>
                 <span className="text-sm font-semibold text-brand-text">
@@ -293,7 +293,7 @@ export default function MopeduOverviewPage() {
                   href="/admin/mopedu/partners?status=pending"
                   className="flex items-center gap-2 text-sm font-medium text-brand-text hover:underline"
                 >
-                  <Users className="h-4 w-4 text-amber-600" />
+                  <Users className="h-4 w-4 text-warning" />
                   Partner approvals
                 </Link>
                 <span className="text-sm font-semibold text-brand-text">

@@ -117,8 +117,8 @@ export default function MopeduSafetyPage() {
                 className={classNames(
                   "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
                   active
-                    ? "border-brand-text bg-brand-text text-white"
-                    : "border-gray-300 bg-white text-brand-text/70 hover:bg-gray-50",
+                    ? "border-primary-ink bg-primary-ink text-primary-foreground"
+                    : "border-brand-divider bg-brand-card text-brand-text/70 hover:bg-brand-secondary",
                 )}
               >
                 {f.label}
@@ -140,8 +140,8 @@ export default function MopeduSafetyPage() {
                 className={classNames(
                   "rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors",
                   active
-                    ? "border-brand-text bg-brand-text text-white"
-                    : "border-gray-300 bg-white text-brand-text/70 hover:bg-gray-50",
+                    ? "border-primary-ink bg-primary-ink text-primary-foreground"
+                    : "border-brand-divider bg-brand-card text-brand-text/70 hover:bg-brand-secondary",
                 )}
               >
                 {f.label}
@@ -158,7 +158,7 @@ export default function MopeduSafetyPage() {
             Loading…
           </div>
         ) : list.isError ? (
-          <div className="px-4 py-6 text-sm text-rose-700">
+          <div className="px-4 py-6 text-sm text-danger">
             {errorMessage(list.error)}
           </div>
         ) : sorted.length === 0 ? (
@@ -168,7 +168,7 @@ export default function MopeduSafetyPage() {
           />
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
+            <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
               <tr>
                 <th className="px-4 py-3">Incident</th>
                 <th className="px-4 py-3">Kind</th>
@@ -180,14 +180,14 @@ export default function MopeduSafetyPage() {
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-brand-divider">
               {sorted.map((s) => (
-                <tr key={s.id} className="hover:bg-gray-50">
+                <tr key={s.id} className="hover:bg-brand-secondary">
                   <td className="px-4 py-3 font-mono text-xs text-brand-text">
                     {shortId(s.id)}
                   </td>
                   <td className="px-4 py-3">
-                    <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-slate-700">
+                    <span className="inline-flex rounded-full bg-brand-secondary px-2 py-0.5 text-[11px] font-semibold tracking-wide text-brand-text">
                       {s.kind.replace(/_/g, " ")}
                     </span>
                   </td>
@@ -231,7 +231,7 @@ export default function MopeduSafetyPage() {
                           type="button"
                           disabled={ackM.isPending}
                           onClick={() => ackM.mutate(s.id)}
-                          className="rounded-md bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                          className="rounded-md bg-primary-ink px-2.5 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-primary-ink disabled:opacity-50"
                         >
                           {ackM.isPending && ackM.variables === s.id
                             ? "…"
@@ -242,7 +242,7 @@ export default function MopeduSafetyPage() {
                         <button
                           type="button"
                           onClick={() => setResolveTarget(s)}
-                          className="rounded-md bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-emerald-700"
+                          className="rounded-md bg-success px-2.5 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-success"
                         >
                           Resolve
                         </button>
@@ -257,7 +257,7 @@ export default function MopeduSafetyPage() {
       </div>
 
       {ackM.isError ? (
-        <p className="text-xs text-rose-700">{errorMessage(ackM.error)}</p>
+        <p className="text-xs text-danger">{errorMessage(ackM.error)}</p>
       ) : null}
 
       <ConfirmDialog

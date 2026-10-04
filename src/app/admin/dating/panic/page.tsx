@@ -40,23 +40,23 @@ export default function DatingPanicQueue() {
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Panic queue</h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-text-muted">
             15-minute SLA. Refreshes every 15 seconds.
           </p>
         </div>
         <button
           type="button"
           onClick={() => refetch()}
-          className="text-sm px-3 py-2 border rounded-sm hover:bg-gray-50"
+          className="text-sm px-3 py-2 border rounded-sm hover:bg-brand-secondary"
         >
           Refresh now
         </button>
       </header>
 
-      {isLoading && <p className="text-sm text-gray-500">Loading…</p>}
+      {isLoading && <p className="text-sm text-text-muted">Loading…</p>}
 
       {data && data.length === 0 && !isLoading && (
-        <div className="rounded-lg border bg-emerald-50 border-emerald-200 p-6 text-sm text-emerald-700">
+        <div className="rounded-lg border bg-success/10 border-success/20 p-6 text-sm text-success">
           ✓ No panic events.
         </div>
       )}
@@ -81,27 +81,27 @@ function PanicRow({ row }: { row: PanicRow }) {
     <li
       className={`border rounded-lg p-4 flex items-center gap-4 ${
         breached
-          ? 'bg-rose-50 border-rose-300'
+          ? 'bg-danger/10 border-danger/20'
           : within
-          ? 'bg-amber-50 border-amber-200'
-          : 'bg-white border-gray-200'
+          ? 'bg-warning/10 border-warning/20'
+          : 'bg-brand-card border-brand-divider'
       }`}
     >
       <div
         className={`h-10 w-10 rounded-full flex items-center justify-center text-xl ${
-          breached ? 'bg-rose-600 text-white' : 'bg-amber-500 text-white'
+          breached ? 'bg-danger text-primary-foreground' : 'bg-warning text-primary-foreground'
         }`}
       >
         ⚠
       </div>
       <div className="flex-1">
         <div className="font-medium font-mono text-sm">user {row.user_id.slice(0, 12)}…</div>
-        <div className="text-xs text-gray-600">
+        <div className="text-xs text-text-muted">
           {occurred.toLocaleString()} · {ageMin} min ago
-          {breached && <span className="text-rose-700 font-semibold ml-2">SLA BREACHED</span>}
+          {breached && <span className="text-danger font-semibold ml-2">SLA BREACHED</span>}
         </div>
         {row.details && Object.keys(row.details).length > 0 && (
-          <pre className="text-xs text-gray-500 mt-1 font-mono">
+          <pre className="text-xs text-text-muted mt-1 font-mono">
             {JSON.stringify(row.details)}
           </pre>
         )}
@@ -109,7 +109,7 @@ function PanicRow({ row }: { row: PanicRow }) {
       <button
         type="button"
         disabled
-        className="text-xs px-3 py-1.5 border rounded-sm text-gray-400 cursor-not-allowed"
+        className="text-xs px-3 py-1.5 border rounded-sm text-text-muted cursor-not-allowed"
         title="Acknowledge action lands in Phase 2"
       >
         Acknowledge

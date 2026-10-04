@@ -13,18 +13,17 @@ describe("APP_LAUNCHER", () => {
     expect(new Set(APP_LAUNCHER.map((t) => t.key)).size).toBe(APP_LAUNCHER.length);
   });
 
-  test("lists every unified service, with Feast and Ride marked soon", () => {
+  test("lists every unified service, with Feast live and Ride marked soon", () => {
     const byKey = new Map(APP_LAUNCHER.map((t) => [t.key, t]));
     for (const [key, href] of [
       ["home", "/"], ["reels", "/reels"], ["tube", "/posttube"], ["groups", "/groups"],
       ["communities", "/communities"], ["connections", "/connections"], ["messenger", "/messenger"],
       ["live", "/live"], ["ask", "/qa"], ["pages", "/pages"], ["shop", "/shop"], ["match", "/dating"],
-      ["trending", "/trending"], ["memories", "/memories"], ["saved", "/saved"], ["notifications", "/notifications"],
+      ["trending", "/trending"], ["memories", "/memories"], ["saved", "/saved"], ["notifications", "/notifications"], ["feast", "/feast"],
     ] as const) {
       expect(byKey.get(key)?.href).toBe(href);
       expect(byKey.get(key)?.soon).toBeFalsy();
     }
-    expect(byKey.get("feast")?.soon).toBe(true);
     expect(byKey.get("ride")?.soon).toBe(true);
   });
 });

@@ -63,14 +63,14 @@ export default function DatingReportsQueue() {
     <div className="max-w-6xl mx-auto p-6 space-y-4">
       <header className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Reports</h1>
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-text-muted">
           Filters apply server-side • {data?.length ?? 0} matches
         </div>
       </header>
 
       <div className="flex gap-3 items-end">
         <label className="text-sm">
-          <div className="text-gray-500 mb-1">Status</div>
+          <div className="text-text-muted mb-1">Status</div>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
@@ -82,7 +82,7 @@ export default function DatingReportsQueue() {
           </select>
         </label>
         <label className="text-sm">
-          <div className="text-gray-500 mb-1">Category</div>
+          <div className="text-text-muted mb-1">Category</div>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
@@ -95,13 +95,13 @@ export default function DatingReportsQueue() {
         </label>
       </div>
 
-      {isLoading && <p className="text-sm text-gray-500">Loading…</p>}
+      {isLoading && <p className="text-sm text-text-muted">Loading…</p>}
       {error && (
-        <p className="text-sm text-rose-700">Failed to load reports: {(error as Error).message}</p>
+        <p className="text-sm text-danger">Failed to load reports: {(error as Error).message}</p>
       )}
 
       {data && data.length === 0 && !isLoading && (
-        <div className="rounded-lg border bg-gray-50 p-6 text-sm text-gray-500">
+        <div className="rounded-lg border bg-brand-secondary p-6 text-sm text-text-muted">
           No reports match the current filters.
         </div>
       )}
@@ -109,7 +109,7 @@ export default function DatingReportsQueue() {
       {data && data.length > 0 && (
         <div className="overflow-x-auto border rounded-lg">
           <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 text-left text-xs text-gray-500">
+            <thead className="bg-brand-secondary text-left text-xs text-text-muted">
               <tr>
                 <th className="px-3 py-2">When</th>
                 <th className="px-3 py-2">Reporter → Target</th>
@@ -124,23 +124,23 @@ export default function DatingReportsQueue() {
                 const terminal = ['actioned', 'resolved', 'dismissed', 'closed_no_action'].includes(r.status)
                 return (
                   <tr key={r.id} className="border-t align-top">
-                    <td className="px-3 py-2 text-xs text-gray-600">
+                    <td className="px-3 py-2 text-xs text-text-muted">
                       {new Date(r.created_at).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 font-mono text-xs">
                       <div>{r.reporter_id.slice(0, 8)}</div>
-                      <div className="text-rose-600">→ {r.target_id.slice(0, 8)}</div>
+                      <div className="text-danger">→ {r.target_id.slice(0, 8)}</div>
                     </td>
                     <td className="px-3 py-2">{r.category.replace(/_/g, ' ')}</td>
                     <td className="px-3 py-2">
                       <StatusPill status={r.status} />
                     </td>
-                    <td className="px-3 py-2 max-w-md truncate text-gray-600" title={r.details}>
+                    <td className="px-3 py-2 max-w-md truncate text-text-muted" title={r.details}>
                       {r.details}
                     </td>
                     <td className="px-3 py-2">
                       {terminal ? (
-                        <span className="text-xs text-gray-400">—</span>
+                        <span className="text-xs text-text-muted">—</span>
                       ) : (
                         <div className="flex flex-wrap gap-1">
                           <ActionButton
@@ -180,7 +180,7 @@ export default function DatingReportsQueue() {
         </div>
       )}
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-text-muted">
         Action surfaces (suspend / warn / restrict) are wired to{' '}
         <code>POST /v1/dating/admin/reports/:id/action</code> in Phase 2.
       </p>
@@ -202,10 +202,10 @@ function ActionButton({
   confirm?: boolean
 }) {
   const palette = {
-    gray: 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-    amber: 'bg-amber-100 text-amber-800 hover:bg-amber-200',
-    orange: 'bg-orange-100 text-orange-800 hover:bg-orange-200',
-    rose: 'bg-rose-100 text-rose-800 hover:bg-rose-200',
+    gray: 'bg-brand-secondary text-brand-text hover:bg-brand-secondary',
+    amber: 'bg-warning/10 text-warning hover:bg-warning/10',
+    orange: 'bg-warning/10 text-warning hover:bg-warning/10',
+    rose: 'bg-danger/10 text-danger hover:bg-danger/10',
   }[tone]
   return (
     <button
@@ -229,14 +229,14 @@ function ActionButton({
 function StatusPill({ status }: { status: string }) {
   const palette = ((): { bg: string; fg: string } => {
     switch (status) {
-      case 'submitted':       return { bg: 'bg-gray-100',    fg: 'text-gray-700' }
-      case 'under_review':    return { bg: 'bg-amber-100',   fg: 'text-amber-700' }
-      case 'investigating':   return { bg: 'bg-amber-100',   fg: 'text-amber-700' }
-      case 'actioned':        return { bg: 'bg-emerald-100', fg: 'text-emerald-700' }
-      case 'resolved':        return { bg: 'bg-emerald-100', fg: 'text-emerald-700' }
-      case 'dismissed':       return { bg: 'bg-gray-100',    fg: 'text-gray-600' }
-      case 'closed_no_action':return { bg: 'bg-gray-100',    fg: 'text-gray-600' }
-      default:                return { bg: 'bg-gray-100',    fg: 'text-gray-600' }
+      case 'submitted':       return { bg: 'bg-brand-secondary',    fg: 'text-brand-text' }
+      case 'under_review':    return { bg: 'bg-warning/10',   fg: 'text-warning' }
+      case 'investigating':   return { bg: 'bg-warning/10',   fg: 'text-warning' }
+      case 'actioned':        return { bg: 'bg-success/10', fg: 'text-success' }
+      case 'resolved':        return { bg: 'bg-success/10', fg: 'text-success' }
+      case 'dismissed':       return { bg: 'bg-brand-secondary',    fg: 'text-text-muted' }
+      case 'closed_no_action':return { bg: 'bg-brand-secondary',    fg: 'text-text-muted' }
+      default:                return { bg: 'bg-brand-secondary',    fg: 'text-text-muted' }
     }
   })()
   return <span className={`text-xs px-2 py-0.5 rounded-full ${palette.bg} ${palette.fg}`}>{status}</span>

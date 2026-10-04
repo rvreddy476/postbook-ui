@@ -13,7 +13,6 @@ import {
   ShieldOff,
 } from "lucide-react";
 
-import AppShell from "@/components/AppShell";
 import api from "@/lib/api";
 
 const ADMIN_HEADERS = {
@@ -247,26 +246,25 @@ export default function AdminPage() {
   const exportRequest = exportStatusQuery.data ?? exportRequestMutation.data ?? null;
 
   const metricCards = [
-    { label: "Users", value: dashboardQuery.data?.total_users ?? 0 },
-    { label: "Posts", value: dashboardQuery.data?.total_posts ?? 0 },
-    { label: "Open reports", value: dashboardQuery.data?.open_reports ?? 0 },
-    { label: "Active suspensions", value: dashboardQuery.data?.active_suspensions ?? 0 },
-    { label: "Takedowns / 7d", value: dashboardQuery.data?.takedowns_last_7d ?? 0 },
-    { label: "Resolved reports / 7d", value: dashboardQuery.data?.reports_resolved_last_7d ?? 0 },
+    { label: "Users", value: dashboardQuery.data?.total_users ?? "—" },
+    { label: "Posts", value: dashboardQuery.data?.total_posts ?? "—" },
+    { label: "Open reports", value: dashboardQuery.data?.open_reports ?? "—" },
+    { label: "Active suspensions", value: dashboardQuery.data?.active_suspensions ?? "—" },
+    { label: "Takedowns / 7d", value: dashboardQuery.data?.takedowns_last_7d ?? "—" },
+    { label: "Resolved reports / 7d", value: dashboardQuery.data?.reports_resolved_last_7d ?? "—" },
   ];
 
   return (
-    <AppShell activeTab="Home">
-      <div className="mx-auto max-w-[1280px] px-6 py-8">
-        <div className="rounded-[30px] border border-amber-200 bg-amber-50 px-6 py-5 shadow-xs">
+      <div className="mx-auto max-w-[1480px]">
+        <div className="workspace-page-head">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-[11px] font-black tracking-[0.22em] text-amber-700">
-                Internal Only
+              <p className="workspace-eyebrow">
+                Restricted workspace
               </p>
               <h1 className="mt-1 text-[28px] font-bold text-brand-text">Admin Console</h1>
               <p className="mt-2 max-w-3xl text-[14px] leading-6 text-brand-text/65">
-                Minimal ship-week admin surface for dashboard, reports, audit log, takedown, suspend or unsuspend, and user data export visibility. This stays intentionally hidden from normal navigation.
+                Review platform activity, manage reports, and track administrative decisions.
               </p>
             </div>
             <button
@@ -280,7 +278,7 @@ export default function AdminPage() {
                   exportRequestId ? exportStatusQuery.refetch() : Promise.resolve(),
                 ])
               }
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-300 bg-white px-5 py-3 text-[11px] font-black tracking-[0.16em] text-amber-800 transition-colors hover:bg-amber-100"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-warning/20 bg-brand-card px-5 py-3 text-[11px] font-black tracking-[0.16em] text-warning transition-colors hover:bg-warning/10"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh data
@@ -292,17 +290,17 @@ export default function AdminPage() {
           reportsQuery.isError ||
           auditLogQuery.isError ||
           suspensionsQuery.isError) && (
-          <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-[12px] font-semibold text-rose-700">
+          <div className="mt-6 rounded-2xl border border-danger/20 bg-danger/10 px-4 py-3 text-[12px] font-semibold text-danger">
             {messageFromError(
               dashboardQuery.error ?? reportsQuery.error ?? auditLogQuery.error ?? suspensionsQuery.error,
             )}
           </div>
         )}
 
-        <div className="mt-8 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
           {metricCards.map((card) => (
             <div key={card.label} className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-4 shadow-xs">
-              <p className="text-[10px] font-black tracking-[0.18em] text-brand-text/45">
+              <p className="text-xs font-semibold text-text-muted">
                 {card.label}
               </p>
               <p className="mt-2 text-[26px] font-bold text-brand-text">
@@ -315,7 +313,7 @@ export default function AdminPage() {
   <div className="space-y-8">
     <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-xs">
       <div className="mb-5 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F3E6D2] text-muted-foreground">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-warning/10 text-warning">
           <Gavel className="h-5 w-5" />
         </div>
         <div>
@@ -374,7 +372,7 @@ export default function AdminPage() {
             !takedownForm.entity_id.trim() ||
             !takedownForm.reason.trim()
           }
-          className="inline-flex items-center gap-2 rounded-2xl bg-[#7B2D2D] px-5 py-3 text-[11px] font-black tracking-[0.16em] text-white transition-colors hover:bg-[#5f2020] disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-xl bg-danger px-5 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-danger/90 disabled:opacity-50"
         >
           {takedownMutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -384,7 +382,7 @@ export default function AdminPage() {
           Submit takedown
         </button>
         {takedownMutation.isError ? (
-          <span className="text-[12px] font-semibold text-rose-700">
+          <span className="text-[12px] font-semibold text-danger">
             {messageFromError(takedownMutation.error)}
           </span>
         ) : null}
@@ -393,7 +391,7 @@ export default function AdminPage() {
 
     <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-xs">
       <div className="mb-5 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EEF3FF] text-primary-ink">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-tint text-primary-ink">
           <Shield className="h-5 w-5" />
         </div>
         <div>
@@ -407,10 +405,10 @@ export default function AdminPage() {
         {(reportsQuery.data?.items ?? []).map((report) => (
           <div key={report.id} className="rounded-2xl border border-brand-divider bg-background px-4 py-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-[#E9EEF9] px-3 py-1 text-[10px] font-black tracking-[0.16em] text-primary-ink">
+              <span className="rounded-full bg-brand-tint px-3 py-1 text-xs font-semibold text-primary-ink">
                 {report.entity_type}
               </span>
-              <span className="rounded-full bg-[#F7E7D7] px-3 py-1 text-[10px] font-black tracking-[0.16em] text-warning">
+              <span className="rounded-full bg-warning/10 px-3 py-1 text-xs font-semibold text-warning">
                 {report.status}
               </span>
               <span className="text-[11px] text-brand-text/45">{formatDate(report.created_at)}</span>
@@ -439,7 +437,7 @@ export default function AdminPage() {
   <div className="space-y-8">
     <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-xs">
       <div className="mb-5 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F7E8E8] text-danger">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-danger/10 text-danger">
           <Ban className="h-5 w-5" />
         </div>
         <div>
@@ -495,7 +493,7 @@ export default function AdminPage() {
             !suspendForm.until ||
             !suspendForm.reason.trim()
           }
-          className="inline-flex items-center gap-2 rounded-2xl bg-[#8A2F2F] px-5 py-3 text-[11px] font-black tracking-[0.16em] text-white transition-colors hover:bg-[#712525] disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-xl bg-danger px-5 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-danger/90 disabled:opacity-50"
         >
           {suspendMutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -505,7 +503,7 @@ export default function AdminPage() {
           Suspend
         </button>
         {suspendMutation.isError ? (
-          <span className="text-[12px] font-semibold text-rose-700">
+          <span className="text-[12px] font-semibold text-danger">
             {messageFromError(suspendMutation.error)}
           </span>
         ) : null}
@@ -513,7 +511,7 @@ export default function AdminPage() {
     </section>
                     <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-xs">
                       <div className="mb-5 flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EEF7F1] text-success">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-success/10 text-success">
                           <Shield className="h-5 w-5" />
                         </div>
                         <div>
@@ -558,7 +556,7 @@ export default function AdminPage() {
 
                     <section className="rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-xs">
                       <div className="mb-5 flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EAF1FF] text-primary-ink">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-tint text-primary-ink">
                           <Download className="h-5 w-5" />
                         </div>
                         <div>
@@ -573,7 +571,7 @@ export default function AdminPage() {
                           type="button"
                           onClick={() => exportRequestMutation.mutate()}
                           disabled={exportRequestMutation.isPending}
-                          className="inline-flex items-center gap-2 rounded-2xl bg-[#3456A0] px-5 py-3 text-[11px] font-black tracking-[0.16em] text-white transition-colors hover:bg-[#294684] disabled:opacity-50"
+                          className="inline-flex items-center gap-2 rounded-xl bg-primary-ink px-5 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-ink/90 disabled:opacity-50"
                         >
                           {exportRequestMutation.isPending ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -594,12 +592,12 @@ export default function AdminPage() {
                         ) : null}
                       </div>
                       {exportRequestMutation.isError ? (
-                        <p className="mt-4 text-[12px] font-semibold text-rose-700">
+                        <p className="mt-4 text-[12px] font-semibold text-danger">
                           {messageFromError(exportRequestMutation.error)}
                         </p>
                       ) : null}
                       {exportStatusQuery.isError ? (
-                        <p className="mt-4 text-[12px] font-semibold text-rose-700">
+                        <p className="mt-4 text-[12px] font-semibold text-danger">
                           {messageFromError(exportStatusQuery.error)}
                         </p>
                       ) : null}
@@ -644,7 +642,7 @@ export default function AdminPage() {
 
                 <section className="mt-8 rounded-[28px] border border-brand-divider bg-brand-card px-6 py-6 shadow-xs">
                   <div className="mb-5 flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F4F0FF] text-primary-ink">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-tint text-primary-ink">
                       <RefreshCw className="h-5 w-5" />
                     </div>
                     <div>
@@ -658,10 +656,10 @@ export default function AdminPage() {
                     {(auditLogQuery.data?.items ?? []).map((entry) => (
                       <div key={entry.id} className="rounded-2xl border border-brand-divider bg-background px-4 py-4">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-[#EEE7FF] px-3 py-1 text-[10px] font-black tracking-[0.16em] text-primary-ink">
+                          <span className="rounded-full bg-brand-tint px-3 py-1 text-xs font-semibold text-primary-ink">
                             {entry.action}
                           </span>
-                          <span className="rounded-full bg-[#F2ECE4] px-3 py-1 text-[10px] font-black tracking-[0.16em] text-muted-foreground">
+                          <span className="rounded-full bg-brand-secondary px-3 py-1 text-xs font-semibold text-text-muted">
                             {entry.entity_type}
                           </span>
                           <span className="text-[11px] text-brand-text/45">{formatDate(entry.created_at)}</span>
@@ -669,7 +667,7 @@ export default function AdminPage() {
                         <p className="mt-3 text-[12px] text-brand-text/60">
                           Actor {entry.admin_actor} on <span className="font-mono">{entry.entity_id}</span>
                         </p>
-                        <pre className="mt-3 overflow-x-auto rounded-2xl bg-[#1F2430] px-4 py-4 text-[11px] leading-6 text-[#E6EDF3]">
+                        <pre className="mt-3 overflow-x-auto rounded-xl bg-brand-secondary px-4 py-4 text-xs leading-6 text-brand-text">
 {prettyJson(entry.payload)}
                         </pre>
                       </div>
@@ -682,6 +680,5 @@ export default function AdminPage() {
                   </div>
                 </section>
               </div>
-            </AppShell>
           );
         }

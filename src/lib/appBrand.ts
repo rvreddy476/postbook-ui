@@ -65,6 +65,8 @@ const HOME: AppBrand = {
 };
 
 export const APP_BRANDS: readonly AppBrand[] = [
+  { key: "mopedu", name: "Mopedu", href: "/admin/mopedu", icon: Bike, searchPlaceholder: "Search Mopedu...", prefixes: ["/admin/mopedu"] },
+  { key: "feast", name: "Feast", href: "/feast", icon: UtensilsCrossed, searchPlaceholder: "Search restaurants and cuisines...", prefixes: ["/feast", "/mini-apps/food"] },
   { key: "reels", name: "Reels", href: "/reels", icon: Clapperboard, searchPlaceholder: "Search reels, creators, hashtags...", prefixes: ["/reels"] },
   { key: "tube", name: "PostTube", href: "/posttube", icon: Tv, searchPlaceholder: "Search videos and channels...", searchHref: "/posttube/search", prefixes: ["/posttube", "/tube"] },
   { key: "groups", name: "Groups", href: "/groups", icon: Users, searchPlaceholder: "Search groups...", prefixes: ["/groups"] },
@@ -161,7 +163,7 @@ export const APP_LAUNCHER: readonly AppLauncherTile[] = [
   { key: "memories", name: "Memories", description: "On this day, years ago", href: "/memories", icon: BookOpen },
   { key: "saved", name: "Saved", description: "Everything you bookmarked", href: "/saved", icon: Bookmark },
   { key: "notifications", name: "Notifications", description: "Activity on your posts and profile", href: "/notifications", icon: Bell },
-  { key: "feast", name: "Feast", description: "Food delivery", href: "/feast", icon: UtensilsCrossed, soon: true },
+  { key: "feast", name: "Feast", description: "Food delivery", href: "/feast", icon: UtensilsCrossed },
   { key: "ride", name: "Ride", description: "Mopedu: rides across town", href: "/ride", icon: Bike, soon: true },
 ];
 

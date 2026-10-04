@@ -95,8 +95,8 @@ function MopeduDocumentsQueueContent() {
                 className={classNames(
                   "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
                   active
-                    ? "border-brand-text bg-brand-text text-white"
-                    : "border-gray-300 bg-white text-brand-text/70 hover:bg-gray-50",
+                    ? "border-primary-ink bg-primary-ink text-primary-foreground"
+                    : "border-brand-divider bg-brand-card text-brand-text/70 hover:bg-brand-secondary",
                 )}
               >
                 {f.label}
@@ -115,7 +115,7 @@ function MopeduDocumentsQueueContent() {
               Loading…
             </div>
           ) : list.isError ? (
-            <div className="px-4 py-6 text-sm text-rose-700">
+            <div className="px-4 py-6 text-sm text-danger">
               {errorMessage(list.error)}
             </div>
           ) : items.length === 0 ? (
@@ -125,7 +125,7 @@ function MopeduDocumentsQueueContent() {
             />
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
+              <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
                 <tr>
                   <th className="px-4 py-3">Partner</th>
                   <th className="px-4 py-3">Doc type</th>
@@ -135,13 +135,13 @@ function MopeduDocumentsQueueContent() {
                   <th className="px-4 py-3"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-brand-divider">
                 {items.map((d) => (
                   <tr
                     key={d.id}
                     className={classNames(
-                      "cursor-pointer transition-colors hover:bg-gray-50",
-                      selected?.id === d.id && "bg-blue-50/40",
+                      "cursor-pointer transition-colors hover:bg-brand-secondary",
+                      selected?.id === d.id && "bg-primary-ink/40",
                     )}
                     onClick={() => {
                       setSelected(d)
@@ -203,13 +203,13 @@ function MopeduDocumentsQueueContent() {
                 <button
                   type="button"
                   onClick={closePanel}
-                  className="rounded-full p-1 text-brand-text/40 hover:bg-gray-100 hover:text-brand-text"
+                  className="rounded-full p-1 text-brand-text/40 hover:bg-brand-secondary hover:text-brand-text"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
-              <div className="mt-3 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
+              <div className="mt-3 overflow-hidden rounded-lg border border-brand-divider bg-brand-secondary">
                 {selected.file_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -218,7 +218,7 @@ function MopeduDocumentsQueueContent() {
                     className="max-h-72 w-full object-contain"
                   />
                 ) : (
-                  <div className="flex h-40 items-center justify-center text-xs text-gray-500">
+                  <div className="flex h-40 items-center justify-center text-xs text-text-muted">
                     No file
                   </div>
                 )}
@@ -251,7 +251,7 @@ function MopeduDocumentsQueueContent() {
                   <dd>{formatDate(selected.created_at)}</dd>
                 </div>
                 {selected.rejection_reason ? (
-                  <div className="rounded-md bg-rose-50 px-2 py-1.5 text-rose-700">
+                  <div className="rounded-md bg-danger/10 px-2 py-1.5 text-danger">
                     {selected.rejection_reason}
                   </div>
                 ) : null}
@@ -302,13 +302,13 @@ function MopeduDocumentsQueueContent() {
               ) : null}
 
               {(verifyM.isError || rejectM.isError) && (
-                <p className="mt-2 text-xs text-rose-700">
+                <p className="mt-2 text-xs text-danger">
                   {errorMessage(verifyM.error ?? rejectM.error)}
                 </p>
               )}
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-center text-xs text-brand-text/55">
+            <div className="rounded-2xl border border-dashed border-brand-divider bg-brand-card p-6 text-center text-xs text-brand-text/55">
               Pick a document on the left to preview it here.
             </div>
           )}
@@ -322,7 +322,7 @@ export default function MopeduDocumentsQueuePage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center gap-2 text-sm text-slate-500">
+        <div className="flex items-center gap-2 text-sm text-text-muted">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading documents queue…
         </div>
       }

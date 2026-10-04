@@ -83,7 +83,7 @@ export default function MopeduLiveRidesPage() {
 
       <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
         <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-xs">
-          <div className="flex items-center justify-between border-b border-gray-100 px-4 py-2.5">
+          <div className="flex items-center justify-between border-b border-brand-divider px-4 py-2.5">
             <p className="text-xs font-semibold text-brand-text/70">
               Live rides
               <span className="ml-2 text-brand-text/40">
@@ -93,7 +93,7 @@ export default function MopeduLiveRidesPage() {
             <button
               type="button"
               onClick={() => void live.refetch()}
-              className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-2 py-1 text-[11px] font-semibold text-brand-text/70 hover:bg-gray-50"
+              className="inline-flex items-center gap-1 rounded-md border border-brand-divider bg-brand-card px-2 py-1 text-[11px] font-semibold text-brand-text/70 hover:bg-brand-secondary"
               title="Refresh now"
             >
               <RefreshCw
@@ -111,7 +111,7 @@ export default function MopeduLiveRidesPage() {
               Loading…
             </div>
           ) : live.isError ? (
-            <div className="px-4 py-6 text-sm text-rose-700">
+            <div className="px-4 py-6 text-sm text-danger">
               {errorMessage(live.error)}
             </div>
           ) : items.length === 0 ? (
@@ -121,7 +121,7 @@ export default function MopeduLiveRidesPage() {
             />
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
+              <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
                 <tr>
                   <th className="px-4 py-3">Ride</th>
                   <th className="px-4 py-3">Customer</th>
@@ -132,14 +132,14 @@ export default function MopeduLiveRidesPage() {
                   <th className="px-4 py-3">ETA</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-brand-divider">
                 {items.map((r) => (
                   <tr
                     key={r.id}
                     onClick={() => setSelectedId(r.id)}
                     className={classNames(
-                      "cursor-pointer transition-colors hover:bg-gray-50",
-                      selectedId === r.id && "bg-blue-50/40",
+                      "cursor-pointer transition-colors hover:bg-brand-secondary",
+                      selectedId === r.id && "bg-primary-ink/40",
                     )}
                   >
                     <td className="px-4 py-3 font-mono text-xs text-brand-text">
@@ -191,7 +191,7 @@ export default function MopeduLiveRidesPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedId(null)}
-                  className="rounded-full p-1 text-brand-text/40 hover:bg-gray-100 hover:text-brand-text"
+                  className="rounded-full p-1 text-brand-text/40 hover:bg-brand-secondary hover:text-brand-text"
                   aria-label="Close"
                 >
                   <X className="h-4 w-4" />
@@ -251,7 +251,7 @@ export default function MopeduLiveRidesPage() {
                     Loading…
                   </div>
                 ) : detail.isError ? (
-                  <p className="text-xs text-rose-700">
+                  <p className="text-xs text-danger">
                     {errorMessage(detail.error)}
                   </p>
                 ) : (
@@ -275,13 +275,13 @@ export default function MopeduLiveRidesPage() {
               </div>
 
               {cancelM.isError ? (
-                <p className="mt-2 text-xs text-rose-700">
+                <p className="mt-2 text-xs text-danger">
                   {errorMessage(cancelM.error)}
                 </p>
               ) : null}
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-center text-xs text-brand-text/55">
+            <div className="rounded-2xl border border-dashed border-brand-divider bg-brand-card p-6 text-center text-xs text-brand-text/55">
               Pick a ride on the left to inspect it here.
             </div>
           )}

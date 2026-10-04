@@ -90,8 +90,8 @@ export default function MopeduRidesHistoryPage() {
                 className={classNames(
                   "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
                   active
-                    ? "border-brand-text bg-brand-text text-white"
-                    : "border-gray-300 bg-white text-brand-text/70 hover:bg-gray-50",
+                    ? "border-primary-ink bg-primary-ink text-primary-foreground"
+                    : "border-brand-divider bg-brand-card text-brand-text/70 hover:bg-brand-secondary",
                 )}
               >
                 {f.label}
@@ -109,7 +109,7 @@ export default function MopeduRidesHistoryPage() {
             value={pendingQ}
             onChange={(e) => setPendingQ(e.target.value)}
             placeholder="Ride id or partner phone"
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           />
           <input
             type="date"
@@ -118,7 +118,7 @@ export default function MopeduRidesHistoryPage() {
               setStart(e.target.value)
               setOffset(0)
             }}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           />
           <input
             type="date"
@@ -127,11 +127,11 @@ export default function MopeduRidesHistoryPage() {
               setEnd(e.target.value)
               setOffset(0)
             }}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           />
           <button
             type="submit"
-            className="rounded-lg bg-primary-ink px-4 py-2 text-sm font-semibold text-white hover:bg-primary-ink/90"
+            className="rounded-lg bg-primary-ink px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-ink/90"
           >
             Search
           </button>
@@ -145,7 +145,7 @@ export default function MopeduRidesHistoryPage() {
             Loading…
           </div>
         ) : list.isError ? (
-          <div className="px-4 py-6 text-sm text-rose-700">
+          <div className="px-4 py-6 text-sm text-danger">
             {errorMessage(list.error)}
           </div>
         ) : items.length === 0 ? (
@@ -156,7 +156,7 @@ export default function MopeduRidesHistoryPage() {
         ) : (
           <>
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
+              <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
                 <tr>
                   <th className="px-4 py-3">Ride</th>
                   <th className="px-4 py-3">Customer</th>
@@ -168,12 +168,12 @@ export default function MopeduRidesHistoryPage() {
                   <th className="px-4 py-3">Created</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-brand-divider">
                 {items.map((r: RideHistoryRow) => (
                   <tr
                     key={r.id}
                     onClick={() => setSelectedId(r.id)}
-                    className="cursor-pointer transition-colors hover:bg-gray-50"
+                    className="cursor-pointer transition-colors hover:bg-brand-secondary"
                   >
                     <td className="px-4 py-3 font-mono text-xs text-brand-text">
                       {shortId(r.id)}
@@ -228,7 +228,7 @@ export default function MopeduRidesHistoryPage() {
             Loading…
           </div>
         ) : detail.isError ? (
-          <p className="text-sm text-rose-700">
+          <p className="text-sm text-danger">
             {errorMessage(detail.error)}
           </p>
         ) : detail.data ? (

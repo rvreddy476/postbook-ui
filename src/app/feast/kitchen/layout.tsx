@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { FeastKitchenFrame } from "@/features/feast/customer/components/FeastFrame"
 
 import "@/features/feast/kitchen/kitchen.css"
 
@@ -16,9 +17,9 @@ export const metadata: Metadata = {
 
 export default function KitchenLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="kit-zone">
+    <FeastKitchenFrame>
       <style>{`body > div:first-child > .pointer-events-none.fixed { display: none !important; }`}</style>
       {children}
-    </div>
+    </FeastKitchenFrame>
   )
 }

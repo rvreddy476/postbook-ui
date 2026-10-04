@@ -76,14 +76,14 @@ export function KitchenConsole() {
 
   if (!gate) {
     return (
-      <main className="kit-main">
+      <section className="kit-main">
         <p className="kit-meta">Checking your restaurant access…</p>
-      </main>
+      </section>
     )
   }
   if (gate.kind === "error") {
     return (
-      <main className="kit-main">
+      <section className="kit-main">
         <div style={{ maxWidth: 520, margin: "48px auto" }} className="kit-form">
           <Notice tone="danger">{gate.message}</Notice>
           <div>
@@ -92,19 +92,19 @@ export function KitchenConsole() {
             </button>
           </div>
         </div>
-      </main>
+      </section>
     )
   }
   if (gate.kind === "not-partner") {
     return (
-      <main className="kit-main">
+      <section className="kit-main">
         <BecomePartner onCreated={() => void check()} />
-      </main>
+      </section>
     )
   }
   if (!restaurantId) {
     return (
-      <main className="kit-main">
+      <section className="kit-main">
         <Picker
           restaurants={gate.restaurants}
           onPick={(id) => {
@@ -112,7 +112,7 @@ export function KitchenConsole() {
             setRestaurantId(id)
           }}
         />
-      </main>
+      </section>
     )
   }
   const initial = gate.restaurants.find((r) => r.id === restaurantId)
@@ -205,7 +205,7 @@ function Console({ initial, canSwitch, onSwitch }: { initial: PartnerRestaurant;
           ))}
         </div>
       </header>
-      <main className="kit-main">
+      <section className="kit-main">
         {/* The board stays mounted so the stream, the countdowns and the sound keep running behind other tabs. */}
         <div hidden={tab !== "orders"}>
           <OrderBoard restaurantId={restaurant.id} onNewCount={setNewCount} />
@@ -213,7 +213,7 @@ function Console({ initial, canSwitch, onSwitch }: { initial: PartnerRestaurant;
         {tab === "menu" ? <MenuEditor restaurantId={restaurant.id} onChanged={() => void reload()} /> : null}
         {tab === "setup" ? <Onboarding restaurant={restaurant} onRestaurantChanged={(r) => void reload(r)} onOpenMenu={() => setTab("menu")} /> : null}
         {tab === "earnings" ? <Earnings restaurantId={restaurant.id} /> : null}
-      </main>
+      </section>
     </>
   )
 }

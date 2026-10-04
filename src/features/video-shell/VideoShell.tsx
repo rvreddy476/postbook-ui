@@ -30,7 +30,9 @@ export interface VideoNavigationProps {
 }
 
 export interface VideoShellProps {
-  app: VideoApp;
+  app: VideoApp | "workspace";
+  /** Optional app-specific header; video apps retain the default. */
+  header?: ReactNode;
   /**
    * "header" (default): the app header on top, the menu below it — what
    * PostTube uses. "sidebar": no header; search sits at the top of the menu,
@@ -61,7 +63,7 @@ const SIDEBAR_ID = "video-shell-sidebar";
   the client from localStorage and the viewport — a deterministic first
   render, then a preference, rather than a hydration mismatch.
 */
-export function VideoShell({ app, chrome = "header", aside, immersive = false, compactSearch = false, navigation, children }: VideoShellProps) {
+export function VideoShell({ app, header, chrome = "header", aside, immersive = false, compactSearch = false, navigation, children }: VideoShellProps) {
   const [sidebar, dispatch] = useReducer(sidebarReducer, SIDEBAR_INITIAL);
   const [panel, dispatchPanel] = useReducer(sidebarPanelReducer, SIDEBAR_PANEL_INITIAL);
   const [exploreOpen, setExploreOpen] = useState(false);
@@ -141,7 +143,7 @@ export function VideoShell({ app, chrome = "header", aside, immersive = false, c
         data-search={compactSearch ? "gap" : undefined}
         data-hydrated={sidebar.hydrated ? "" : undefined}
       >
-        {chrome === "header" ? <HeaderBar /> : null}
+        {chrome === "header" ? (header ?? <HeaderBar />) : null}
         <div className="video-shell__body">
           {sidebar.drawer ? (
             <AnimatePresence>
@@ -165,14 +167,14 @@ export function VideoShell({ app, chrome = "header", aside, immersive = false, c
                     exit={{ x: reduceMotion ? 0 : -24, opacity: 0 }}
                     transition={{ duration: reduceMotion ? 0 : 0.2, ease: "circOut" }}
                   >
-                    {navigation ? navigation({ expanded: true, drawer: true, id: SIDEBAR_ID, onNavigate: closeDrawer }) : <VideoSidebar app={app} chrome={chrome} expanded drawer id={SIDEBAR_ID} onNavigate={closeDrawer} />}
+                    {navigation ? navigation({ expanded: true, drawer: true, id: SIDEBAR_ID, onNavigate: closeDrawer }) : <VideoSidebar app={app === "workspace" ? "tube" : app} chrome={chrome} expanded drawer id={SIDEBAR_ID} onNavigate={closeDrawer} />}
                   </motion.div>
                 </>
               ) : null}
             </AnimatePresence>
           ) : (
             <div className="video-shell__sidebar">
-              {navigation ? navigation({ expanded: sidebar.open, id: SIDEBAR_ID }) : <VideoSidebar app={app} chrome={chrome} expanded={sidebar.open} id={SIDEBAR_ID} />}
+              {navigation ? navigation({ expanded: sidebar.open, id: SIDEBAR_ID }) : <VideoSidebar app={app === "workspace" ? "tube" : app} chrome={chrome} expanded={sidebar.open} id={SIDEBAR_ID} />}
             </div>
           )}
 

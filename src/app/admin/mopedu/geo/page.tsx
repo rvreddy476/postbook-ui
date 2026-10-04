@@ -81,8 +81,8 @@ export default function MopeduGeoPage() {
                 className={classNames(
                   "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
                   active
-                    ? "border-brand-text bg-brand-text text-white"
-                    : "border-gray-300 bg-white text-brand-text/70 hover:bg-gray-50",
+                    ? "border-primary-ink bg-primary-ink text-primary-foreground"
+                    : "border-brand-divider bg-brand-card text-brand-text/70 hover:bg-brand-secondary",
                 )}
               >
                 {t.label}
@@ -129,7 +129,7 @@ function CitiesTab() {
             Loading…
           </div>
         ) : cities.isError ? (
-          <div className="px-4 py-6 text-sm text-rose-700">
+          <div className="px-4 py-6 text-sm text-danger">
             {errorMessage(cities.error)}
           </div>
         ) : items.length === 0 ? (
@@ -139,7 +139,7 @@ function CitiesTab() {
           />
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
+            <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
               <tr>
                 <th className="px-4 py-3">Name</th>
                 <th className="px-4 py-3">State</th>
@@ -150,9 +150,9 @@ function CitiesTab() {
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-brand-divider">
               {items.map((c) => (
-                <tr key={c.id} className="hover:bg-gray-50">
+                <tr key={c.id} className="hover:bg-brand-secondary">
                   <td className="px-4 py-3 font-medium text-brand-text">
                     {c.name}
                   </td>
@@ -173,8 +173,8 @@ function CitiesTab() {
                       className={classNames(
                         "rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wide transition-colors",
                         c.is_active
-                          ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200",
+                          ? "bg-success/10 text-success hover:bg-success/10"
+                          : "bg-brand-secondary text-text-muted hover:bg-brand-secondary",
                       )}
                     >
                       {c.is_active ? "Active" : "Inactive"}
@@ -304,7 +304,7 @@ function CityFormModal({
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
             required
           />
         </FormField>
@@ -313,7 +313,7 @@ function CityFormModal({
             type="text"
             value={state}
             onChange={(e) => setState(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           />
         </FormField>
         <div className="grid grid-cols-2 gap-3">
@@ -323,7 +323,7 @@ function CityFormModal({
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               maxLength={2}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+              className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
               required
             />
           </FormField>
@@ -333,7 +333,7 @@ function CityFormModal({
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
               maxLength={3}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+              className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
               required
             />
           </FormField>
@@ -347,7 +347,7 @@ function CityFormModal({
           Active
         </label>
 
-        <div className="rounded-xl border border-gray-200 bg-gray-50/60 px-3 py-3">
+        <div className="rounded-xl border border-brand-divider bg-brand-secondary/60 px-3 py-3">
           <p className="mb-2 text-[11px] font-semibold tracking-wider text-brand-text/55">
             Feature flags
           </p>
@@ -380,7 +380,7 @@ function CityFormModal({
         </div>
 
         {error ? (
-          <p className="text-xs text-rose-700">{errorMessage(error)}</p>
+          <p className="text-xs text-danger">{errorMessage(error)}</p>
         ) : null}
         <div className="flex justify-end gap-2 pt-2">
           <SecondaryButton onClick={onClose} disabled={pending}>
@@ -450,7 +450,7 @@ function ZonesTab() {
           <select
             value={cityId}
             onChange={(e) => setCityId(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           >
             <option value="">All cities</option>
             {cityList.map((c) => (
@@ -476,7 +476,7 @@ function ZonesTab() {
             Loading…
           </div>
         ) : zones.isError ? (
-          <div className="px-4 py-6 text-sm text-rose-700">
+          <div className="px-4 py-6 text-sm text-danger">
             {errorMessage(zones.error)}
           </div>
         ) : items.length === 0 ? (
@@ -486,7 +486,7 @@ function ZonesTab() {
           />
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
+            <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
               <tr>
                 <th className="px-4 py-3">City</th>
                 <th className="px-4 py-3">Name</th>
@@ -495,11 +495,11 @@ function ZonesTab() {
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-brand-divider">
               {items.map((z) => {
                 const city = cityList.find((c) => c.id === z.city_id)
                 return (
-                  <tr key={z.id} className="hover:bg-gray-50">
+                  <tr key={z.id} className="hover:bg-brand-secondary">
                     <td className="px-4 py-3 text-xs text-brand-text/70">
                       {city?.name ?? z.city_id.slice(0, 8)}
                     </td>
@@ -514,8 +514,8 @@ function ZonesTab() {
                         className={classNames(
                           "rounded-full px-2 py-0.5 text-[11px] font-semibold",
                           z.is_active
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-gray-100 text-gray-600",
+                            ? "bg-success/10 text-success"
+                            : "bg-brand-secondary text-text-muted",
                         )}
                       >
                         {z.is_active ? "Active" : "Inactive"}
@@ -621,7 +621,7 @@ function ZoneFormModal({
           <select
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
             required
           >
             <option value="">Select a city…</option>
@@ -637,7 +637,7 @@ function ZoneFormModal({
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
             required
           />
         </FormField>
@@ -647,7 +647,7 @@ function ZoneFormModal({
             onChange={(e) => setBoundary(e.target.value)}
             rows={6}
             placeholder='{"type":"Polygon","coordinates":[[[lng,lat],...]]}'
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs outline-hidden focus:border-brand-text"
+            className="w-full rounded-lg border border-brand-divider px-3 py-2 font-mono text-xs outline-hidden focus:border-brand-text"
           />
           <p className="mt-1 text-[11px] text-brand-text/55">
             v1 only ships a textarea — draw + copy from{" "}
@@ -671,7 +671,7 @@ function ZoneFormModal({
           Active
         </label>
         {error ? (
-          <p className="text-xs text-rose-700">{errorMessage(error)}</p>
+          <p className="text-xs text-danger">{errorMessage(error)}</p>
         ) : null}
         <div className="flex justify-end gap-2 pt-2">
           <SecondaryButton onClick={onClose} disabled={pending}>
@@ -711,7 +711,7 @@ function FareRulesTab() {
           <select
             value={cityId}
             onChange={(e) => setCityId(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           >
             <option value="">All cities</option>
             {cityList.map((c) => (
@@ -737,7 +737,7 @@ function FareRulesTab() {
             Loading…
           </div>
         ) : rules.isError ? (
-          <div className="px-4 py-6 text-sm text-rose-700">
+          <div className="px-4 py-6 text-sm text-danger">
             {errorMessage(rules.error)}
           </div>
         ) : items.length === 0 ? (
@@ -747,7 +747,7 @@ function FareRulesTab() {
           />
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
+            <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
               <tr>
                 <th className="px-4 py-3">City</th>
                 <th className="px-4 py-3">Vehicle</th>
@@ -762,11 +762,11 @@ function FareRulesTab() {
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-brand-divider">
               {items.map((r) => {
                 const city = cityList.find((c) => c.id === r.city_id)
                 return (
-                  <tr key={r.id} className="hover:bg-gray-50">
+                  <tr key={r.id} className="hover:bg-brand-secondary">
                     <td className="px-4 py-3 text-xs text-brand-text/70">
                       {city?.name ?? r.city_id.slice(0, 8)}
                     </td>
@@ -799,8 +799,8 @@ function FareRulesTab() {
                         className={classNames(
                           "rounded-full px-2 py-0.5 text-[11px] font-semibold",
                           r.is_active
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-gray-100 text-gray-600",
+                            ? "bg-success/10 text-success"
+                            : "bg-brand-secondary text-text-muted",
                         )}
                       >
                         {r.is_active ? "Active" : "Inactive"}
@@ -811,7 +811,7 @@ function FareRulesTab() {
                         <button
                           type="button"
                           onClick={() => setSurgeFor(r)}
-                          className="rounded-md bg-amber-500 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-amber-600"
+                          className="rounded-md bg-warning px-2.5 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-warning"
                         >
                           Set surge
                         </button>
@@ -919,12 +919,12 @@ function SurgeQuickModal({
             min="0.1"
             value={val}
             onChange={(e) => setVal(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
             required
           />
         </FormField>
         {error ? (
-          <p className="text-xs text-rose-700">{errorMessage(error)}</p>
+          <p className="text-xs text-danger">{errorMessage(error)}</p>
         ) : null}
         <div className="flex justify-end gap-2">
           <SecondaryButton onClick={onClose} disabled={pending}>
@@ -1016,7 +1016,7 @@ function FareRuleFormModal({
           <select
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
             required
             disabled={mode === "edit"}
           >
@@ -1032,7 +1032,7 @@ function FareRuleFormModal({
           <select
             value={vehicle}
             onChange={(e) => setVehicle(e.target.value as VehicleType)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
             disabled={mode === "edit"}
           >
             {VEHICLE_TYPES.map((v) => (
@@ -1058,7 +1058,7 @@ function FareRuleFormModal({
           Active
         </label>
         {error ? (
-          <p className="col-span-2 text-xs text-rose-700">
+          <p className="col-span-2 text-xs text-danger">
             {errorMessage(error)}
           </p>
         ) : null}
@@ -1094,7 +1094,7 @@ function FareNumberField({
         min="0"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+        className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
       />
     </FormField>
   )
@@ -1115,7 +1115,7 @@ function FormField({
     <label className="block text-xs">
       <span className="mb-1 block font-semibold tracking-wider text-brand-text/60">
         {label}
-        {required ? <span className="ml-0.5 text-rose-600">*</span> : null}
+        {required ? <span className="ml-0.5 text-danger">*</span> : null}
       </span>
       {children}
     </label>

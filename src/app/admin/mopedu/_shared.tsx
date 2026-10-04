@@ -84,13 +84,13 @@ export type PillTone =
   | "slate"
 
 const PILL_TONES: Record<PillTone, string> = {
-  neutral: "bg-gray-100 text-gray-700",
-  amber: "bg-amber-100 text-amber-800",
-  green: "bg-emerald-100 text-emerald-800",
-  red: "bg-rose-100 text-rose-800",
-  blue: "bg-blue-100 text-blue-800",
-  violet: "bg-violet-100 text-violet-800",
-  slate: "bg-slate-100 text-slate-700",
+  neutral: "bg-brand-secondary text-brand-text",
+  amber: "bg-warning/10 text-warning",
+  green: "bg-success/10 text-success",
+  red: "bg-danger/10 text-danger",
+  blue: "bg-primary-ink/10 text-primary-ink",
+  violet: "bg-tile-poll/10 text-tile-poll",
+  slate: "bg-brand-secondary text-brand-text",
 }
 
 export function StatusPill({
@@ -166,9 +166,9 @@ export function ReasonInput({
         onChange={(e) => onChange(e.target.value.slice(0, maxLength))}
         rows={3}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+        className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
       />
-      <p className="mt-1 text-right text-[11px] text-gray-500">
+      <p className="mt-1 text-right text-[11px] text-text-muted">
         {value.length}/{maxLength}
       </p>
     </div>
@@ -189,11 +189,11 @@ export function PrimaryButton({
   type?: "button" | "submit"
 }) {
   const tones: Record<typeof tone, string> = {
-    green: "bg-emerald-600 hover:bg-emerald-700 text-white",
-    red: "bg-rose-600 hover:bg-rose-700 text-white",
-    amber: "bg-amber-500 hover:bg-amber-600 text-white",
-    slate: "bg-slate-700 hover:bg-slate-800 text-white",
-    blue: "bg-blue-600 hover:bg-blue-700 text-white",
+    green: "bg-success hover:bg-success text-primary-foreground",
+    red: "bg-danger hover:bg-danger text-primary-foreground",
+    amber: "bg-warning hover:bg-warning text-primary-foreground",
+    slate: "bg-primary-ink hover:bg-primary-ink text-primary-foreground",
+    blue: "bg-primary-ink hover:bg-primary-ink text-primary-foreground",
   }
   return (
     <button
@@ -226,7 +226,7 @@ export function SecondaryButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+      className="inline-flex items-center justify-center rounded-lg border border-brand-divider bg-brand-card px-4 py-2 text-sm font-semibold text-brand-text transition-colors hover:bg-brand-secondary disabled:cursor-not-allowed disabled:opacity-50"
     >
       {children}
     </button>
@@ -241,9 +241,9 @@ export function EmptyState({
   body?: string
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center">
-      <p className="text-sm font-semibold text-gray-700">{title}</p>
-      {body ? <p className="mt-1 text-xs text-gray-500">{body}</p> : null}
+    <div className="rounded-2xl border border-dashed border-brand-divider bg-brand-card px-6 py-10 text-center">
+      <p className="text-sm font-semibold text-brand-text">{title}</p>
+      {body ? <p className="mt-1 text-xs text-text-muted">{body}</p> : null}
     </div>
   )
 }
@@ -301,23 +301,23 @@ export function Modal({
   }
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-brand-text/40 p-4 sm:items-center"
       onClick={onClose}
     >
       <div
         className={classNames(
-          "w-full rounded-2xl bg-white shadow-xl",
+          "w-full rounded-2xl bg-brand-card shadow-xl",
           widths[width],
         )}
         onClick={(e) => e.stopPropagation()}
       >
         {title ? (
-          <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
+          <div className="flex items-center justify-between border-b border-brand-divider px-5 py-3">
             <p className="text-sm font-bold text-brand-text">{title}</p>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full p-1 text-brand-text/40 hover:bg-gray-100 hover:text-brand-text"
+              className="rounded-full p-1 text-brand-text/40 hover:bg-brand-secondary hover:text-brand-text"
               aria-label="Close"
             >
               ×
@@ -405,7 +405,7 @@ export function JsonViewer({
   return (
     <pre
       className={classNames(
-        "overflow-auto rounded-lg bg-slate-900 p-3 font-mono text-xs leading-relaxed text-slate-100",
+        "overflow-auto rounded-xl bg-brand-secondary p-4 font-mono text-xs leading-relaxed text-brand-text",
         collapsedHeight,
       )}
     >
@@ -424,7 +424,7 @@ export function MapPlaceholder({
   body?: string
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-dashed border-gray-300 bg-linear-to-br from-blue-50 via-white to-emerald-50 px-6 py-12 text-center">
+    <div className="relative overflow-hidden rounded-2xl border border-dashed border-brand-divider bg-linear-to-br from-primary-ink/10 via-brand-card to-success/10 px-6 py-12 text-center">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(56,189,248,0.18),transparent_60%),radial-gradient(circle_at_70%_60%,rgba(16,185,129,0.18),transparent_60%)]"
@@ -448,7 +448,7 @@ export function StatusTimeline({
     )
   }
   return (
-    <ol className="relative space-y-3 border-l border-gray-200 pl-4">
+    <ol className="relative space-y-3 border-l border-brand-divider pl-4">
       {events.map((ev, i) => (
         <li key={`${ev.status}-${ev.at}-${i}`} className="relative">
           <span
@@ -488,7 +488,7 @@ export function Pagination({
   const canPrev = offset > 0
   const canNext = offset + limit < total
   return (
-    <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-4 py-2 text-xs text-brand-text/60">
+    <div className="flex items-center justify-between border-t border-brand-divider bg-brand-secondary px-4 py-2 text-xs text-brand-text/60">
       <span>
         {start}–{end} of {total}
       </span>
@@ -497,7 +497,7 @@ export function Pagination({
           type="button"
           disabled={!canPrev}
           onClick={() => onChange(Math.max(0, offset - limit))}
-          className="rounded-md border border-gray-300 bg-white px-2.5 py-1 font-semibold text-brand-text/70 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-md border border-brand-divider bg-brand-card px-2.5 py-1 font-semibold text-brand-text/70 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Prev
         </button>
@@ -505,7 +505,7 @@ export function Pagination({
           type="button"
           disabled={!canNext}
           onClick={() => onChange(offset + limit)}
-          className="rounded-md border border-gray-300 bg-white px-2.5 py-1 font-semibold text-brand-text/70 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-md border border-brand-divider bg-brand-card px-2.5 py-1 font-semibold text-brand-text/70 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Next
         </button>

@@ -38,11 +38,11 @@ const TARGET_KINDS = [
 const PAGE_SIZE = 50
 
 function statusTone(code: number): string {
-  if (code >= 500) return "bg-rose-100 text-rose-800"
-  if (code >= 400) return "bg-amber-100 text-amber-800"
-  if (code >= 300) return "bg-blue-100 text-blue-800"
-  if (code >= 200) return "bg-emerald-100 text-emerald-800"
-  return "bg-gray-100 text-gray-700"
+  if (code >= 500) return "bg-danger/10 text-danger"
+  if (code >= 400) return "bg-warning/10 text-warning"
+  if (code >= 300) return "bg-primary-ink/10 text-primary-ink"
+  if (code >= 200) return "bg-success/10 text-success"
+  return "bg-brand-secondary text-brand-text"
 }
 
 export default function MopeduAuditLogsPage() {
@@ -101,19 +101,19 @@ export default function MopeduAuditLogsPage() {
             value={actor}
             onChange={(e) => setActor(e.target.value)}
             placeholder="Actor user id"
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           />
           <input
             type="text"
             value={action}
             onChange={(e) => setAction(e.target.value)}
             placeholder="Action (e.g. partner.approve)"
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           />
           <select
             value={targetKind}
             onChange={(e) => setTargetKind(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           >
             {TARGET_KINDS.map((k) => (
               <option key={k} value={k}>
@@ -125,19 +125,19 @@ export default function MopeduAuditLogsPage() {
             type="datetime-local"
             value={since}
             onChange={(e) => setSince(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           />
           <div className="flex gap-2">
             <button
               type="submit"
-              className="flex-1 rounded-lg bg-primary-ink px-3 py-2 text-sm font-semibold text-white hover:bg-primary-ink/90"
+              className="flex-1 rounded-lg bg-primary-ink px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-ink/90"
             >
               Apply
             </button>
             <button
               type="button"
               onClick={clearFilters}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-brand-text/70 hover:bg-gray-50"
+              className="rounded-lg border border-brand-divider bg-brand-card px-3 py-2 text-sm font-semibold text-brand-text/70 hover:bg-brand-secondary"
             >
               Clear
             </button>
@@ -152,7 +152,7 @@ export default function MopeduAuditLogsPage() {
             Loading…
           </div>
         ) : list.isError ? (
-          <div className="px-4 py-6 text-sm text-rose-700">
+          <div className="px-4 py-6 text-sm text-danger">
             {errorMessage(list.error)}
           </div>
         ) : items.length === 0 ? (
@@ -163,7 +163,7 @@ export default function MopeduAuditLogsPage() {
         ) : (
           <>
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
+              <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
                 <tr>
                   <th className="px-4 py-3">When</th>
                   <th className="px-4 py-3">Actor</th>
@@ -175,12 +175,12 @@ export default function MopeduAuditLogsPage() {
                   <th className="px-4 py-3">Latency</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-brand-divider">
                 {items.map((row) => (
                   <tr
                     key={row.id}
                     onClick={() => setSelected(row)}
-                    className="cursor-pointer transition-colors hover:bg-gray-50"
+                    className="cursor-pointer transition-colors hover:bg-brand-secondary"
                   >
                     <td className="px-4 py-3 text-xs text-brand-text/70">
                       {formatDate(row.created_at)}

@@ -70,7 +70,7 @@ export default function DatingAuditLog() {
     <div className="max-w-6xl mx-auto p-6 space-y-4">
       <header>
         <h1 className="text-2xl font-semibold">Audit log</h1>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-text-muted">
           Append-only record of every admin action taken from the dating
           console. Rows cannot be modified or deleted — the
           <code className="mx-1">dating_admin_audit</code>table is
@@ -80,7 +80,7 @@ export default function DatingAuditLog() {
 
       <div className="flex flex-wrap gap-3 items-end">
         <label className="text-sm">
-          <div className="text-gray-500 mb-1">Action</div>
+          <div className="text-text-muted mb-1">Action</div>
           <select
             value={action}
             onChange={(e) => setAction(e.target.value)}
@@ -92,7 +92,7 @@ export default function DatingAuditLog() {
           </select>
         </label>
         <label className="text-sm">
-          <div className="text-gray-500 mb-1">Actor admin UUID</div>
+          <div className="text-text-muted mb-1">Actor admin UUID</div>
           <input
             value={actor}
             onChange={(e) => setActor(e.target.value.trim())}
@@ -101,7 +101,7 @@ export default function DatingAuditLog() {
           />
         </label>
         <label className="text-sm">
-          <div className="text-gray-500 mb-1">Target user UUID</div>
+          <div className="text-text-muted mb-1">Target user UUID</div>
           <input
             value={targetUserId}
             onChange={(e) => setTargetUserId(e.target.value.trim())}
@@ -113,22 +113,22 @@ export default function DatingAuditLog() {
           <button
             type="button"
             onClick={() => { setActor(''); setTargetUserId(''); setAction('') }}
-            className="text-xs px-3 py-2 border rounded-sm hover:bg-gray-50"
+            className="text-xs px-3 py-2 border rounded-sm hover:bg-brand-secondary"
           >
             Clear filters
           </button>
         )}
       </div>
 
-      {isLoading && <p className="text-sm text-gray-500">Loading…</p>}
+      {isLoading && <p className="text-sm text-text-muted">Loading…</p>}
       {error && (
-        <p className="text-sm text-rose-700">
+        <p className="text-sm text-danger">
           Failed to load audit log: {(error as Error).message}
         </p>
       )}
 
       {data && data.length === 0 && !isLoading && (
-        <div className="rounded-lg border bg-gray-50 p-6 text-sm text-gray-500">
+        <div className="rounded-lg border bg-brand-secondary p-6 text-sm text-text-muted">
           No audit rows match the current filters.
         </div>
       )}
@@ -136,7 +136,7 @@ export default function DatingAuditLog() {
       {data && data.length > 0 && (
         <div className="overflow-x-auto border rounded-lg">
           <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 text-left text-xs text-gray-500">
+            <thead className="bg-brand-secondary text-left text-xs text-text-muted">
               <tr>
                 <th className="px-3 py-2">When</th>
                 <th className="px-3 py-2">Actor</th>
@@ -148,12 +148,12 @@ export default function DatingAuditLog() {
             <tbody>
               {data.map((r) => (
                 <tr key={r.id} className="border-t align-top">
-                  <td className="px-3 py-2 text-xs text-gray-600 whitespace-nowrap">
+                  <td className="px-3 py-2 text-xs text-text-muted whitespace-nowrap">
                     {new Date(r.created_at).toLocaleString()}
                   </td>
                   <td className="px-3 py-2 font-mono text-xs">
                     {r.actor_admin_id === '00000000-0000-0000-0000-000000000000'
-                      ? <span className="text-amber-700">(missing X-Admin-Id)</span>
+                      ? <span className="text-warning">(missing X-Admin-Id)</span>
                       : <span title={r.actor_admin_id}>{r.actor_admin_id.slice(0, 8)}…</span>}
                   </td>
                   <td className="px-3 py-2">
@@ -166,17 +166,17 @@ export default function DatingAuditLog() {
                       </div>
                     )}
                     {r.target_resource && (
-                      <div className="text-gray-500" title={r.target_resource}>
+                      <div className="text-text-muted" title={r.target_resource}>
                         {r.target_resource.length > 32
                           ? `${r.target_resource.slice(0, 32)}…`
                           : r.target_resource}
                       </div>
                     )}
                   </td>
-                  <td className="px-3 py-2 max-w-md text-gray-600">
-                    {r.reason || <span className="text-gray-300">—</span>}
+                  <td className="px-3 py-2 max-w-md text-text-muted">
+                    {r.reason || <span className="text-text-muted">—</span>}
                     {r.policy_code && (
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-text-muted">
                         policy {r.policy_code}
                       </div>
                     )}
@@ -188,7 +188,7 @@ export default function DatingAuditLog() {
         </div>
       )}
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-text-muted">
         Showing the {data?.length ?? 0} most recent rows that match the
         current filters. Pagination ships in Phase 2.
       </p>
@@ -199,21 +199,21 @@ export default function DatingAuditLog() {
 function ActionPill({ action }: { action: string }) {
   const tone = ((): { bg: string; fg: string } => {
     if (action.startsWith('report_suspend') || action.startsWith('report_restrict')) {
-      return { bg: 'bg-rose-100', fg: 'text-rose-700' }
+      return { bg: 'bg-danger/10', fg: 'text-danger' }
     }
     if (action.startsWith('report_warn')) {
-      return { bg: 'bg-amber-100', fg: 'text-amber-700' }
+      return { bg: 'bg-warning/10', fg: 'text-warning' }
     }
     if (action.startsWith('report_dismiss') || action.startsWith('report_resolved')) {
-      return { bg: 'bg-gray-100', fg: 'text-gray-700' }
+      return { bg: 'bg-brand-secondary', fg: 'text-brand-text' }
     }
     if (action === 'photo_approved') {
-      return { bg: 'bg-emerald-100', fg: 'text-emerald-700' }
+      return { bg: 'bg-success/10', fg: 'text-success' }
     }
     if (action === 'photo_rejected') {
-      return { bg: 'bg-rose-100', fg: 'text-rose-700' }
+      return { bg: 'bg-danger/10', fg: 'text-danger' }
     }
-    return { bg: 'bg-indigo-100', fg: 'text-indigo-700' }
+    return { bg: 'bg-primary-ink/10', fg: 'text-primary-ink' }
   })()
   return (
     <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${tone.bg} ${tone.fg}`}>

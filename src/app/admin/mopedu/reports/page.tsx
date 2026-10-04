@@ -103,8 +103,8 @@ export default function MopeduReportsPage() {
                 className={classNames(
                   "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
                   active
-                    ? "border-brand-text bg-brand-text text-white"
-                    : "border-gray-300 bg-white text-brand-text/70 hover:bg-gray-50",
+                    ? "border-primary-ink bg-primary-ink text-primary-foreground"
+                    : "border-brand-divider bg-brand-card text-brand-text/70 hover:bg-brand-secondary",
                 )}
               >
                 {t.label}
@@ -203,7 +203,7 @@ function RevenueTab() {
           Loading…
         </div>
       ) : report.isError ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-6 text-sm text-rose-700">
+        <div className="rounded-2xl border border-danger/20 bg-danger/10 px-4 py-6 text-sm text-danger">
           {errorMessage(report.error)}
         </div>
       ) : !data || (data.rows?.length ?? 0) === 0 ? (
@@ -253,7 +253,7 @@ function RevenueFilters({
           <select
             value={by}
             onChange={(e) => setBy(e.target.value as "plan" | "city")}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           >
             <option value="plan">Plan</option>
             <option value="city">City</option>
@@ -265,7 +265,7 @@ function RevenueFilters({
             value={since}
             max={until}
             onChange={(e) => setSince(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           />
         </FilterField>
         <FilterField label="Until">
@@ -274,7 +274,7 @@ function RevenueFilters({
             value={until}
             min={since}
             onChange={(e) => setUntil(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           />
         </FilterField>
         <div className="ml-auto">
@@ -356,7 +356,7 @@ function RevenueBarChart({ rows }: { rows: RevenueReportRow[] }) {
                   {paiseToRupees(r.fare_total_paise)}
                 </span>
               </div>
-              <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+              <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-brand-secondary">
                 <div
                   className="h-2 rounded-full bg-brand-text/70"
                   style={{ width: `${Math.max(pct, 2)}%` }}
@@ -385,7 +385,7 @@ function RevenueTable({
     <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-xs">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
+          <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
             <tr>
               <SortHeader
                 label="Group"
@@ -445,9 +445,9 @@ function RevenueTable({
               />
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-brand-divider">
             {rows.map((r) => (
-              <tr key={r.group_key} className="hover:bg-gray-50">
+              <tr key={r.group_key} className="hover:bg-brand-secondary">
                 <td className="px-4 py-3 font-medium text-brand-text">
                   {r.group_name || r.group_key}
                 </td>
@@ -460,10 +460,10 @@ function RevenueTable({
                 <td className="px-4 py-3 font-mono text-xs">
                   {r.rides_count.toLocaleString()}
                 </td>
-                <td className="px-4 py-3 font-mono text-xs text-emerald-700">
+                <td className="px-4 py-3 font-mono text-xs text-success">
                   {r.rides_completed.toLocaleString()}
                 </td>
-                <td className="px-4 py-3 font-mono text-xs text-rose-700">
+                <td className="px-4 py-3 font-mono text-xs text-danger">
                   {r.rides_cancelled.toLocaleString()}
                 </td>
                 <td className="px-4 py-3 font-mono text-xs">
@@ -503,7 +503,7 @@ function SortHeader({
         onClick={() => onSort(k)}
         className={classNames(
           "inline-flex items-center gap-1 text-[11px] font-semibold tracking-wider",
-          active ? "text-brand-text" : "text-gray-500 hover:text-brand-text",
+          active ? "text-brand-text" : "text-text-muted hover:text-brand-text",
         )}
       >
         {label}
@@ -657,9 +657,9 @@ function RetentionBar({
           {clamped.toFixed(1)}%
         </span>
       </div>
-      <div className="mt-1 h-3 w-full overflow-hidden rounded-full bg-gray-100">
+      <div className="mt-1 h-3 w-full overflow-hidden rounded-full bg-brand-secondary">
         <div
-          className="h-3 rounded-full bg-emerald-500"
+          className="h-3 rounded-full bg-success"
           style={{ width: `${Math.max(clamped, 1)}%` }}
         />
       </div>
@@ -740,9 +740,9 @@ function AvgRidesBar({
           {value.toFixed(2)} avg
         </span>
       </div>
-      <div className="mt-1 h-3 w-full overflow-hidden rounded-full bg-gray-100">
+      <div className="mt-1 h-3 w-full overflow-hidden rounded-full bg-brand-secondary">
         <div
-          className="h-3 rounded-full bg-blue-500"
+          className="h-3 rounded-full bg-primary-ink"
           style={{ width: `${Math.max(pct, 1)}%` }}
         />
       </div>
@@ -769,7 +769,7 @@ function CohortFilter({
             type="month"
             value={cohortMonth}
             onChange={(e) => setCohortMonth(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+            className="rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
           />
         </FilterField>
         <div className="flex flex-wrap items-center gap-2">
@@ -787,8 +787,8 @@ function CohortFilter({
                 className={classNames(
                   "rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors",
                   active
-                    ? "border-brand-text bg-brand-text text-white"
-                    : "border-gray-300 bg-white text-brand-text/70 hover:bg-gray-50",
+                    ? "border-primary-ink bg-primary-ink text-primary-foreground"
+                    : "border-brand-divider bg-brand-card text-brand-text/70 hover:bg-brand-secondary",
                 )}
               >
                 {c.label}
@@ -842,7 +842,7 @@ function LoadingCard() {
 
 function ErrorCard({ message }: { message: string }) {
   return (
-    <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-6 text-sm text-rose-700">
+    <div className="rounded-2xl border border-danger/20 bg-danger/10 px-4 py-6 text-sm text-danger">
       {message}
     </div>
   )
@@ -867,25 +867,25 @@ function D2WindowPicker({
   return (
     <div className="flex flex-wrap items-end gap-3 rounded-md border border-brand-divider bg-brand-card p-3 text-sm">
       <label className="flex flex-col">
-        <span className="text-xs text-gray-500">From</span>
+        <span className="text-xs text-text-muted">From</span>
         <input
           type="datetime-local"
           value={value.from.slice(0, 16)}
           onChange={(e) =>
             onChange({ ...value, from: new Date(e.target.value).toISOString() })
           }
-          className="rounded-sm border border-gray-300 px-2 py-1"
+          className="rounded-sm border border-brand-divider px-2 py-1"
         />
       </label>
       <label className="flex flex-col">
-        <span className="text-xs text-gray-500">To</span>
+        <span className="text-xs text-text-muted">To</span>
         <input
           type="datetime-local"
           value={value.to.slice(0, 16)}
           onChange={(e) =>
             onChange({ ...value, to: new Date(e.target.value).toISOString() })
           }
-          className="rounded-sm border border-gray-300 px-2 py-1"
+          className="rounded-sm border border-brand-divider px-2 py-1"
         />
       </label>
       <SecondaryButton onClick={() => onChange(defaultD2Window())}>
@@ -974,7 +974,7 @@ function MatchingHealthTab() {
       >
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="text-left text-xs tracking-wide text-gray-500">
+            <tr className="text-left text-xs tracking-wide text-text-muted">
               <th className="px-3 py-2">City</th>
               <th className="px-3 py-2">Vehicle</th>
               <th className="px-3 py-2">Rides</th>
@@ -982,9 +982,9 @@ function MatchingHealthTab() {
               <th className="px-3 py-2">Avg time-to-first-offer (s)</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-brand-divider">
             {(q.data ?? []).map((r: MatchingHealthRow, i: number) => (
-              <tr key={`${r.city_id}-${r.vehicle_type}-${i}`} className="hover:bg-gray-50">
+              <tr key={`${r.city_id}-${r.vehicle_type}-${i}`} className="hover:bg-brand-secondary">
                 <td className="px-3 py-2 font-mono text-xs">
                   {r.city_id || "—"}
                 </td>
@@ -1020,7 +1020,7 @@ function PartnerQualityTab() {
       >
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="text-left text-xs tracking-wide text-gray-500">
+            <tr className="text-left text-xs tracking-wide text-text-muted">
               <th className="px-3 py-2">Partner</th>
               <th className="px-3 py-2">Received</th>
               <th className="px-3 py-2">Accepted</th>
@@ -1031,9 +1031,9 @@ function PartnerQualityTab() {
               <th className="px-3 py-2">Rating (30d)</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-brand-divider">
             {(q.data ?? []).map((r: PartnerQualityRow) => (
-              <tr key={r.partner_id} className="hover:bg-gray-50">
+              <tr key={r.partner_id} className="hover:bg-brand-secondary">
                 <td className="px-3 py-2 font-medium">{r.full_name || r.partner_id}</td>
                 <td className="px-3 py-2">{r.offers_received}</td>
                 <td className="px-3 py-2">{r.offers_accepted}</td>
@@ -1070,16 +1070,16 @@ function SupplyDemandTab() {
       >
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="text-left text-xs tracking-wide text-gray-500">
+            <tr className="text-left text-xs tracking-wide text-text-muted">
               <th className="px-3 py-2">City</th>
               <th className="px-3 py-2">Hour</th>
               <th className="px-3 py-2">Ride requests</th>
               <th className="px-3 py-2">Online partners (avg)</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-brand-divider">
             {(q.data ?? []).map((r: SupplyDemandRow, i: number) => (
-              <tr key={`${r.city_id}-${r.hour_bucket}-${i}`} className="hover:bg-gray-50">
+              <tr key={`${r.city_id}-${r.hour_bucket}-${i}`} className="hover:bg-brand-secondary">
                 <td className="px-3 py-2 font-mono text-xs">{r.city_id || "—"}</td>
                 <td className="px-3 py-2 text-xs">
                   {new Date(r.hour_bucket).toLocaleString()}
@@ -1110,25 +1110,25 @@ function SafetyTab() {
       >
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="text-left text-xs tracking-wide text-gray-500">
+            <tr className="text-left text-xs tracking-wide text-text-muted">
               <th className="px-3 py-2">Kind</th>
               <th className="px-3 py-2">Severity</th>
               <th className="px-3 py-2">Count</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-brand-divider">
             {(q.data ?? []).map((r: SafetyIncidentReportRow, i: number) => (
-              <tr key={`${r.kind}-${r.severity}-${i}`} className="hover:bg-gray-50">
+              <tr key={`${r.kind}-${r.severity}-${i}`} className="hover:bg-brand-secondary">
                 <td className="px-3 py-2">{r.kind}</td>
                 <td className="px-3 py-2">
                   <span
                     className={classNames(
                       "rounded-sm px-2 py-0.5 text-xs font-semibold",
                       r.severity === "critical"
-                        ? "bg-rose-100 text-rose-800"
+                        ? "bg-danger/10 text-danger"
                         : r.severity === "high"
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-gray-100 text-gray-700",
+                          ? "bg-warning/10 text-warning"
+                          : "bg-brand-secondary text-brand-text",
                     )}
                   >
                     {r.severity}
@@ -1153,13 +1153,13 @@ function PartnerComplianceTab() {
     <div className="space-y-3">
       <div className="flex flex-wrap items-end gap-3 rounded-md border border-brand-divider bg-brand-card p-3 text-sm">
         <label className="flex flex-col">
-          <span className="text-xs text-gray-500">City filter</span>
+          <span className="text-xs text-text-muted">City filter</span>
           <input
             type="text"
             value={city}
             onChange={(e) => setCity(e.target.value)}
             placeholder="e.g. Bengaluru"
-            className="rounded-sm border border-gray-300 px-2 py-1"
+            className="rounded-sm border border-brand-divider px-2 py-1"
           />
         </label>
       </div>
@@ -1170,7 +1170,7 @@ function PartnerComplianceTab() {
       >
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="text-left text-xs tracking-wide text-gray-500">
+            <tr className="text-left text-xs tracking-wide text-text-muted">
               <th className="px-3 py-2">Partner</th>
               <th className="px-3 py-2">City</th>
               <th className="px-3 py-2">Expired KYC docs</th>
@@ -1178,11 +1178,11 @@ function PartnerComplianceTab() {
               <th className="px-3 py-2">Oldest expiry</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-brand-divider">
             {(q.data ?? []).map((r: PartnerComplianceRow) => {
               const totalExpired = r.expired_docs + r.expired_vehicle_docs
               return (
-                <tr key={r.partner_id} className="hover:bg-gray-50">
+                <tr key={r.partner_id} className="hover:bg-brand-secondary">
                   <td className="px-3 py-2 font-medium">
                     {r.full_name || r.partner_id}
                   </td>
@@ -1191,7 +1191,7 @@ function PartnerComplianceTab() {
                     <span
                       className={
                         r.expired_docs > 0
-                          ? "rounded-sm bg-rose-100 px-2 py-0.5 text-xs text-rose-800"
+                          ? "rounded-sm bg-danger/10 px-2 py-0.5 text-xs text-danger"
                           : ""
                       }
                     >
@@ -1202,14 +1202,14 @@ function PartnerComplianceTab() {
                     <span
                       className={
                         r.expired_vehicle_docs > 0
-                          ? "rounded-sm bg-rose-100 px-2 py-0.5 text-xs text-rose-800"
+                          ? "rounded-sm bg-danger/10 px-2 py-0.5 text-xs text-danger"
                           : ""
                       }
                     >
                       {r.expired_vehicle_docs}
                     </span>
                   </td>
-                  <td className="px-3 py-2 text-xs text-gray-500">
+                  <td className="px-3 py-2 text-xs text-text-muted">
                     {r.oldest_expiry
                       ? new Date(r.oldest_expiry).toLocaleDateString()
                       : totalExpired === 0

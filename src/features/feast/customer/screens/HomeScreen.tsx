@@ -10,25 +10,28 @@
   but shows its card.
 */
 
-import { MapPin, Star, Store, UtensilsCrossed } from "lucide-react"
+import { MapPin, Search, Star, Store, UtensilsCrossed, X } from "lucide-react"
 import Link from "next/link"
+import { useMemo, useState } from "react"
 
 import { AddressBar } from "../components/AddressBar"
 import { ServiceCardView, Skel, StateBlock } from "../components/parts"
 import { useChosenAddress, useRestaurants } from "../hooks/queries"
 import { formatPaise } from "../model/money"
+import { filterRestaurants } from "../model/discovery"
 import { canOrder, formatDistance, serviceCard } from "../model/serviceability"
 import type { Restaurant } from "../model/wire"
 
 function RestaurantCard({ r }: { r: Restaurant }) {
+  const [failedImage,setFailedImage] = useState(false)
   const card = serviceCard(r)
   const distance = formatDistance(r.distanceMeters)
   return (
     <li>
       <Link href={`/feast/r/${encodeURIComponent(r.id)}`} className={canOrder(card) ? "fc-rest" : "fc-rest is-blocked"}>
-        {r.heroImageUrl ? (
+        {r.heroImageUrl && !failedImage ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img className="fc-rest__img" src={r.heroImageUrl} alt="" loading="lazy" />
+          <img className="fc-rest__img" src={r.heroImageUrl} alt="" loading="lazy" onError={() => setFailedImage(true)} />
         ) : (
           <div className="fc-rest__img" aria-hidden="true">
             <UtensilsCrossed size={28} />
@@ -58,25 +61,34 @@ function RestaurantCard({ r }: { r: Restaurant }) {
 }
 
 export function HomeScreen() {
+  const [query,setQuery] = useState("")
+  const [cuisine,setCuisine] = useState("")
   const { addresses, chosen, pin, choose } = useChosenAddress()
   const ready = !addresses.isLoading
   const restaurants = useRestaurants(pin, ready)
+  const cuisines = useMemo(() => Array.from(new Set((restaurants.data ?? []).flatMap(r => r.cuisines))).sort(),[restaurants.data])
+  const visible = filterRestaurants(restaurants.data ?? [],query,cuisine)
 
   return (
     <>
-      <div className="fc-head">
+      <div className="fc-head fc-discovery-head">
         <div>
-          <h1 className="fc-title">Order food</h1>
+          <span className="workspace-eyebrow"><UtensilsCrossed size={15} aria-hidden/>Made for your cravings</span>
+          <h1 className="fc-title">Find your next favourite.</h1>
           <p className="fc-sub">{pin ? "Restaurants that deliver to you come first." : "Choose an address to see who delivers to you."}</p>
         </div>
+        <AddressBar addresses={addresses.data ?? []} chosen={chosen} loading={addresses.isLoading} failed={addresses.isError} onChoose={choose} />
       </div>
-
-      <AddressBar addresses={addresses.data ?? []} chosen={chosen} loading={addresses.isLoading} failed={addresses.isError} onChoose={choose} />
       {chosen && !pin ? (
         <p className="fc-info" style={{ marginBottom: 16 }}>
           This address has no map pin, so delivery can&apos;t be checked yet. <Link className="fc-link" href="/feast/addresses">Add one with your location</Link>.
         </p>
       ) : null}
+
+      <div className="fc-discovery-controls">
+        <div className="fc-discovery-search"><Search size={18} aria-hidden/><input type="search" aria-label="Search restaurants and cuisines" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search restaurants and cuisines"/>{query ? <button type="button" onClick={() => setQuery("")} aria-label="Clear restaurant search"><X size={16}/></button> : null}</div>
+        {cuisines.length > 0 ? <div className="fc-cuisine-filters" role="group" aria-label="Filter by cuisine"><button type="button" aria-pressed={!cuisine} onClick={() => setCuisine("")}>All cuisines</button>{cuisines.map(value => <button key={value} type="button" aria-pressed={cuisine === value} onClick={() => setCuisine(value)}>{value}</button>)}</div> : null}
+      </div>
 
       {!ready || restaurants.isLoading ? (
         <ul className="fc-list" aria-busy="true">
@@ -105,12 +117,17 @@ export function HomeScreen() {
           title="No restaurants here yet"
           text={pin ? "Nobody is listed near this address. Try another one." : "Nothing is listed yet."}
         />
+      ) : !visible.length ? (
+        <StateBlock icon={<Search size={22}/>} title="No restaurants match" text="Try another name or cuisine." action={<button type="button" className="fc-btn fc-btn--outline" onClick={() => {setQuery("");setCuisine("")}}>Clear filters</button>}/>
       ) : (
+        <section aria-label="Restaurants">
+        <div className="fc-results-head"><h2>{pin ? "Restaurants near you" : "Explore restaurants"}</h2><span className="fc-meta" role="status">{visible.length} {visible.length === 1 ? "restaurant" : "restaurants"}</span></div>
         <ul className="fc-list">
-          {restaurants.data.map((r) => (
+          {visible.map((r) => (
             <RestaurantCard key={r.id} r={r} />
           ))}
         </ul>
+        </section>
       )}
     </>
   )

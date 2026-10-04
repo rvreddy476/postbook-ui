@@ -64,7 +64,7 @@ interface ReasonDialogState {
 function DocPreview({ url, alt }: { url?: string; alt: string }) {
   if (!url) {
     return (
-      <div className="flex h-20 w-20 items-center justify-center rounded-lg border border-dashed border-gray-300 text-[10px] text-gray-400">
+      <div className="flex h-20 w-20 items-center justify-center rounded-lg border border-dashed border-brand-divider text-[10px] text-text-muted">
         No file
       </div>
     )
@@ -75,7 +75,7 @@ function DocPreview({ url, alt }: { url?: string; alt: string }) {
       href={url}
       target="_blank"
       rel="noreferrer"
-      className="block h-20 w-20 overflow-hidden rounded-lg border border-gray-200 bg-gray-100"
+      className="block h-20 w-20 overflow-hidden rounded-lg border border-brand-divider bg-brand-secondary"
     >
       <img
         src={url}
@@ -158,7 +158,7 @@ export default function MopeduPartnerDetailPage() {
 
   if (detail.isError || !partner) {
     return (
-      <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-700">
+      <div className="rounded-2xl border border-danger/20 bg-danger/10 px-4 py-4 text-sm text-danger">
         {errorMessage(detail.error) || "Could not load partner."}
         <button
           type="button"
@@ -282,12 +282,12 @@ export default function MopeduPartnerDetailPage() {
           </div>
         </div>
         {partner.suspended_reason ? (
-          <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <div className="mt-3 rounded-lg bg-warning/10 px-3 py-2 text-xs text-warning">
             <strong>Suspended:</strong> {partner.suspended_reason}
           </div>
         ) : null}
         {partner.blocked_reason ? (
-          <div className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-800">
+          <div className="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-xs text-danger">
             <strong>Blocked:</strong> {partner.blocked_reason}
           </div>
         ) : null}
@@ -295,7 +295,7 @@ export default function MopeduPartnerDetailPage() {
           rejectM.isError ||
           suspendM.isError ||
           blockM.isError) && (
-          <div className="mt-3 text-xs text-rose-700">
+          <div className="mt-3 text-xs text-danger">
             {errorMessage(
               approveM.error ?? rejectM.error ?? suspendM.error ?? blockM.error,
             )}
@@ -463,7 +463,7 @@ export default function MopeduPartnerDetailPage() {
           <EmptyState title="No rides yet" />
         ) : (
           <table className="w-full text-sm">
-            <thead className="text-left text-[11px] tracking-wider text-gray-500">
+            <thead className="text-left text-[11px] tracking-wider text-text-muted">
               <tr>
                 <th className="pb-2 pr-4">Ride</th>
                 <th className="pb-2 pr-4">Status</th>
@@ -472,7 +472,7 @@ export default function MopeduPartnerDetailPage() {
                 <th className="pb-2">Requested</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-brand-divider">
               {recentRides.slice(0, 10).map((r) => (
                 <tr key={r.id}>
                   <td className="py-2 pr-4 font-mono text-xs text-brand-text/70">
@@ -502,15 +502,15 @@ export default function MopeduPartnerDetailPage() {
 
       {dialog ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-brand-text/40 p-4"
           onClick={closeDialog}
         >
           <div
-            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+            className="w-full max-w-md rounded-xl bg-brand-card p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-600" />
+              <AlertTriangle className="h-5 w-5 text-warning" />
               <h2 className="text-lg font-semibold">
                 {dialog.kind === "partner"
                   ? ACTION_COPY[dialog.action as PartnerAction].title
@@ -562,7 +562,7 @@ function DefRow({
         className={classNames(
           "truncate text-sm",
           tone === "red"
-            ? "font-semibold text-rose-700"
+            ? "font-semibold text-danger"
             : "text-brand-text",
         )}
       >
@@ -585,7 +585,7 @@ function DocumentRow({
 }) {
   const canAct = doc.status === "pending"
   return (
-    <li className="flex gap-3 rounded-lg border border-gray-100 bg-gray-50/50 p-3">
+    <li className="flex gap-3 rounded-lg border border-brand-divider bg-brand-secondary/50 p-3">
       <DocPreview url={doc.file_url} alt={doc.document_type} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
@@ -606,7 +606,7 @@ function DocumentRow({
           </p>
         ) : null}
         {doc.rejection_reason ? (
-          <p className="mt-1 text-[11px] text-rose-700">
+          <p className="mt-1 text-[11px] text-danger">
             {doc.rejection_reason}
           </p>
         ) : null}
@@ -616,7 +616,7 @@ function DocumentRow({
               type="button"
               onClick={onVerify}
               disabled={busy}
-              className="rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+              className="rounded-md border border-success/20 bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success hover:bg-success/10 disabled:opacity-50"
             >
               Verify
             </button>
@@ -624,7 +624,7 @@ function DocumentRow({
               type="button"
               onClick={onReject}
               disabled={busy}
-              className="rounded-md border border-rose-300 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-800 hover:bg-rose-100 disabled:opacity-50"
+              className="rounded-md border border-danger/20 bg-danger/10 px-2.5 py-1 text-[11px] font-semibold text-danger hover:bg-danger/10 disabled:opacity-50"
             >
               Reject
             </button>
@@ -654,7 +654,7 @@ function VehicleRow({
 }) {
   const canAct = vehicle.status === "pending"
   return (
-    <li className="rounded-lg border border-gray-100 bg-gray-50/50 p-3">
+    <li className="rounded-lg border border-brand-divider bg-brand-secondary/50 p-3">
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-sm font-semibold text-brand-text">
@@ -682,7 +682,7 @@ function VehicleRow({
               type="button"
               onClick={onVerifyVehicle}
               disabled={busy}
-              className="rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+              className="rounded-md border border-success/20 bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success hover:bg-success/10 disabled:opacity-50"
             >
               Verify
             </button>
@@ -690,7 +690,7 @@ function VehicleRow({
               type="button"
               onClick={onRejectVehicle}
               disabled={busy}
-              className="rounded-md border border-rose-300 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-800 hover:bg-rose-100 disabled:opacity-50"
+              className="rounded-md border border-danger/20 bg-danger/10 px-2.5 py-1 text-[11px] font-semibold text-danger hover:bg-danger/10 disabled:opacity-50"
             >
               Reject
             </button>
@@ -698,7 +698,7 @@ function VehicleRow({
         ) : null}
       </div>
       {docs.length > 0 ? (
-        <ul className="mt-3 space-y-2 border-t border-gray-200 pt-2">
+        <ul className="mt-3 space-y-2 border-t border-brand-divider pt-2">
           {docs.map((d) => (
             <li
               key={d.id}
@@ -719,14 +719,14 @@ function VehicleRow({
                   <button
                     type="button"
                     onClick={() => onVerifyDocument(d.id)}
-                    className="rounded-md border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 hover:bg-emerald-100"
+                    className="rounded-md border border-success/20 bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success hover:bg-success/10"
                   >
                     Verify
                   </button>
                   <button
                     type="button"
                     onClick={() => onRejectDocument(d.id)}
-                    className="rounded-md border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-800 hover:bg-rose-100"
+                    className="rounded-md border border-danger/20 bg-danger/10 px-2 py-0.5 text-[10px] font-semibold text-danger hover:bg-danger/10"
                   >
                     Reject
                   </button>
@@ -753,7 +753,7 @@ function PaymentRow({
 }) {
   const canAct = payment.status === "pending"
   return (
-    <li className="rounded-lg border border-gray-100 bg-gray-50/50 p-3">
+    <li className="rounded-lg border border-brand-divider bg-brand-secondary/50 p-3">
       <div className="flex items-start gap-3">
         <DocPreview url={payment.payment_proof_url} alt="payment proof" />
         <div className="min-w-0 flex-1">
@@ -773,7 +773,7 @@ function PaymentRow({
                 type="button"
                 onClick={onVerify}
                 disabled={busy}
-                className="rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+                className="rounded-md border border-success/20 bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success hover:bg-success/10 disabled:opacity-50"
               >
                 Verify
               </button>
@@ -781,7 +781,7 @@ function PaymentRow({
                 type="button"
                 onClick={onReject}
                 disabled={busy}
-                className="rounded-md border border-rose-300 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-800 hover:bg-rose-100 disabled:opacity-50"
+                className="rounded-md border border-danger/20 bg-danger/10 px-2.5 py-1 text-[11px] font-semibold text-danger hover:bg-danger/10 disabled:opacity-50"
               >
                 Reject
               </button>

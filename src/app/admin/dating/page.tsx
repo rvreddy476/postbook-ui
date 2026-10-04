@@ -16,12 +16,12 @@ import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/api'
 
-interface QueueCount { count: number; loaded: boolean }
+interface QueueCount { count: number; loaded: boolean; failed: boolean }
 
 const ADMIN_HEADERS = { 'X-Scopes': 'admin superadmin moderator' } as const
 
 function useQueueCount(path: string): QueueCount {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['admin-dating-count', path],
     queryFn: async () => {
       const res = await api.get(path, { headers: ADMIN_HEADERS })
@@ -31,7 +31,7 @@ function useQueueCount(path: string): QueueCount {
     refetchInterval: 60_000,
     retry: false,
   })
-  return { count: data ?? 0, loaded: !isLoading }
+  return { count: data ?? 0, loaded: !isLoading && !isError, failed: isError }
 }
 
 export default function DatingAdminDashboard() {
@@ -41,13 +41,15 @@ export default function DatingAdminDashboard() {
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-6">
-      <header>
+      <header className="workspace-page-head">
         <h1 className="text-2xl font-semibold">Dating safety console</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Trust + safety operations for PostMatch / Pulse. Each action is logged
-          to the dating_admin_audit append-only table — no anonymous moderation.
+        <p className="text-sm text-text-muted mt-1">
+          Review reports, respond to safety events, and moderate profile photos.
+          Sensitive actions require the appropriate permissions.
         </p>
       </header>
+
+      {reports.failed || panic.failed || photos.failed ? <p role="alert" className="rounded-xl border border-warning/20 bg-warning/10 p-4 text-sm text-brand-text">Some queues couldn't load. Open a queue to check access or try again.</p> : null}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <QueueCard
@@ -77,36 +79,24 @@ export default function DatingAdminDashboard() {
         />
       </div>
 
-      <section className="rounded-2xl border bg-white p-5 text-sm space-y-2">
-        <h2 className="font-semibold">Notes</h2>
-        <ul className="list-disc pl-5 text-gray-600 space-y-1">
+      <section className="rounded-2xl border bg-brand-card p-5 text-sm space-y-2">
+        <h2 className="font-semibold">Review with care</h2>
+        <ul className="list-disc pl-5 text-text-muted space-y-1">
           <li>
-            Reports queue lists rows with <code>status=submitted</code>. After
-            an action is taken the status transitions
-            (<code>under_review</code> → <code>actioned</code> /{' '}
-            <code>dismissed</code>) and the row drops from this default view.
+            Read the original report and available evidence before changing an account's status.
           </li>
           <li>
-            Panic events page on-call automatically (notification-service emits
-            the &quot;safety.panic&quot; push to the dating-admins group). This
-            console shows everything in the last 50 events.
+            Prioritise panic events using your team's safety-response process.
           </li>
           <li>
-            Photo moderation actions call{' '}
-            <code>POST /v1/dating/photos/:id/moderation</code>, which fires deck
-            cache invalidation + profile-state transition automatically.
+            Only approve profile photos that meet the community guidelines.
           </li>
           <li>
-            Every report transition + photo flip writes one row to the
-            append-only <code>dating_admin_audit</code> log — visit the{' '}
-            <Link href="/admin/dating/audit" className="text-indigo-700 underline">
+            Check the{' '}
+            <Link href="/admin/dating/audit" className="text-primary-ink underline">
               audit view
             </Link>{' '}
-            to see who-did-what.
-          </li>
-          <li>
-            Fake-account risk queue not built yet (§P0-7 — Phase 2). The
-            scoring schema is documented in <code>PHASE_0_TEST_PLANS.md</code>.
+            to understand previous decisions and who made them.
           </li>
         </ul>
       </section>
@@ -132,15 +122,15 @@ function QueueCard({
   urgent?: boolean
 }) {
   const palette = {
-    indigo: 'bg-indigo-50 border-indigo-200 text-indigo-900',
-    rose: 'bg-rose-50 border-rose-200 text-rose-900',
-    amber: 'bg-amber-50 border-amber-200 text-amber-900',
+    indigo: 'bg-primary-ink/10 border-primary-ink/20 text-primary-ink',
+    rose: 'bg-danger/10 border-danger/20 text-danger',
+    amber: 'bg-warning/10 border-warning/20 text-warning',
   }[tone]
   return (
     <Link
       href={href}
       className={`block rounded-2xl border p-5 ${palette} hover:shadow-xs transition ${
-        urgent ? 'ring-2 ring-rose-400' : ''
+        urgent ? 'ring-2 ring-danger' : ''
       }`}
     >
       <div className="text-sm opacity-70">{title}</div>

@@ -55,20 +55,20 @@ export default function DatingPhotosQueue() {
     <div className="max-w-6xl mx-auto p-6 space-y-4">
       <header>
         <h1 className="text-2xl font-semibold">Photo moderation</h1>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-text-muted">
           Oldest first. Approving graduates pending profiles to{' '}
           <code>pending_selfie</code>; rejecting pushes a
           <code>photo.moderation_rejected</code> notification to the owner.
         </p>
       </header>
 
-      {isLoading && <p className="text-sm text-gray-500">Loading…</p>}
+      {isLoading && <p className="text-sm text-text-muted">Loading…</p>}
       {error && (
-        <p className="text-sm text-rose-700">Failed to load: {(error as Error).message}</p>
+        <p className="text-sm text-danger">Failed to load: {(error as Error).message}</p>
       )}
 
       {data && data.length === 0 && !isLoading && (
-        <div className="rounded-lg border bg-emerald-50 border-emerald-200 p-6 text-sm text-emerald-700">
+        <div className="rounded-lg border bg-success/10 border-success/20 p-6 text-sm text-success">
           ✓ No photos awaiting moderation.
         </div>
       )}
@@ -103,19 +103,19 @@ function PhotoCard({
 }) {
   const [reason, setReason] = useState('')
   return (
-    <div className="border rounded-lg overflow-hidden bg-white">
+    <div className="border rounded-lg overflow-hidden bg-brand-card">
       {/* The media URL is rendered server-side by media-service; for
          the scaffold we link to its lookup endpoint. Replace with a
          signed-URL preview once that's exposed in Phase 2. */}
-      <div className="aspect-square bg-gray-100 flex items-center justify-center text-xs text-gray-400">
+      <div className="aspect-square bg-brand-secondary flex items-center justify-center text-xs text-text-muted">
         Media {photo.media_id.slice(0, 8)}…
-        {photo.is_primary && <span className="ml-2 px-1.5 py-0.5 rounded-sm bg-amber-100 text-amber-700">PRIMARY</span>}
+        {photo.is_primary && <span className="ml-2 px-1.5 py-0.5 rounded-sm bg-warning/10 text-warning">PRIMARY</span>}
       </div>
       <div className="p-3 space-y-2 text-sm">
-        <div className="font-mono text-xs text-gray-600">
+        <div className="font-mono text-xs text-text-muted">
           user {photo.user_id.slice(0, 8)}… · sort {photo.sort_order} · {photo.visibility}
         </div>
-        <div className="text-xs text-gray-400">
+        <div className="text-xs text-text-muted">
           Submitted {new Date(photo.created_at).toLocaleString()}
         </div>
         <textarea
@@ -130,7 +130,7 @@ function PhotoCard({
             type="button"
             onClick={onApprove}
             disabled={busy}
-            className="flex-1 bg-emerald-600 text-white text-sm py-1.5 rounded-sm disabled:bg-gray-300"
+            className="flex-1 bg-success text-primary-foreground text-sm py-1.5 rounded-sm disabled:bg-brand-secondary"
           >
             Approve
           </button>
@@ -138,7 +138,7 @@ function PhotoCard({
             type="button"
             onClick={() => reason && onReject(reason)}
             disabled={busy || !reason}
-            className="flex-1 bg-rose-600 text-white text-sm py-1.5 rounded-sm disabled:bg-gray-300"
+            className="flex-1 bg-danger text-primary-foreground text-sm py-1.5 rounded-sm disabled:bg-brand-secondary"
           >
             Reject
           </button>

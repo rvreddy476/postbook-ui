@@ -46,13 +46,13 @@ const PAGE_SIZE = 50
 // ── status pill ───────────────────────────────────────────────────────────
 
 const STATUS_TONES: Record<CronRunStatus, string> = {
-  succeeded: "bg-emerald-100 text-emerald-800",
-  running: "bg-blue-100 text-blue-800",
-  failed: "bg-rose-100 text-rose-800",
+  succeeded: "bg-success/10 text-success",
+  running: "bg-primary-ink/10 text-primary-ink",
+  failed: "bg-danger/10 text-danger",
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const tone = STATUS_TONES[status as CronRunStatus] ?? "bg-gray-100 text-gray-700"
+  const tone = STATUS_TONES[status as CronRunStatus] ?? "bg-brand-secondary text-brand-text"
   return (
     <span
       className={classNames(
@@ -135,7 +135,7 @@ export default function MopeduCronRunsPage() {
                 setJob(e.target.value)
                 setOffset(0)
               }}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+              className="rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
             >
               {JOBS.map((j) => (
                 <option key={j} value={j}>
@@ -152,24 +152,24 @@ export default function MopeduCronRunsPage() {
                 setSince(e.target.value)
                 setOffset(0)
               }}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-hidden focus:border-brand-text"
+              className="rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
             />
           </FilterField>
           <button
             type="submit"
-            className="rounded-lg bg-primary-ink px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
+            className="rounded-lg bg-primary-ink px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
           >
             Apply
           </button>
           <button
             type="button"
             onClick={resetFilters}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-brand-text/70 hover:bg-gray-50"
+            className="rounded-lg border border-brand-divider bg-brand-card px-4 py-2 text-sm font-semibold text-brand-text/70 hover:bg-brand-secondary"
           >
             Reset
           </button>
           <div className="ml-auto flex items-center gap-2 text-[11px] text-brand-text/55">
-            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-success" />
             Auto-refreshing every 60s
           </div>
         </div>
@@ -182,7 +182,7 @@ export default function MopeduCronRunsPage() {
             Loading…
           </div>
         ) : list.isError ? (
-          <div className="px-4 py-6 text-sm text-rose-700">
+          <div className="px-4 py-6 text-sm text-danger">
             {errorMessage(list.error)}
           </div>
         ) : items.length === 0 ? (
@@ -194,7 +194,7 @@ export default function MopeduCronRunsPage() {
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
+                <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
                   <tr>
                     <th className="px-4 py-3">Started</th>
                     <th className="px-4 py-3">Job</th>
@@ -205,12 +205,12 @@ export default function MopeduCronRunsPage() {
                     <th className="px-4 py-3">Run ID</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-brand-divider">
                   {items.map((r) => (
                     <tr
                       key={r.id}
                       onClick={() => setSelected(r)}
-                      className="cursor-pointer hover:bg-gray-50"
+                      className="cursor-pointer hover:bg-brand-secondary"
                     >
                       <td className="px-4 py-3 text-xs text-brand-text/70">
                         {formatDate(r.started_at)}
@@ -225,7 +225,7 @@ export default function MopeduCronRunsPage() {
                       <td className="px-4 py-3 font-mono text-xs">
                         {formatDuration(r.started_at, r.finished_at)}
                       </td>
-                      <td className="px-4 py-3 max-w-xs truncate text-xs text-rose-700">
+                      <td className="px-4 py-3 max-w-xs truncate text-xs text-danger">
                         {r.error_summary ?? ""}
                       </td>
                       <td className="px-4 py-3 font-mono text-[11px] text-brand-text/55">
@@ -281,8 +281,8 @@ export default function MopeduCronRunsPage() {
               <KvRow label="Run ID" value={selected.id} mono />
             </div>
             {selected.error_summary ? (
-              <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
-                <p className="mb-1 font-semibold tracking-wider text-rose-700">
+              <div className="rounded-lg border border-danger/20 bg-danger/10 px-3 py-2 text-xs text-danger">
+                <p className="mb-1 font-semibold tracking-wider text-danger">
                   Error summary
                 </p>
                 <p className="whitespace-pre-wrap wrap-break-word">

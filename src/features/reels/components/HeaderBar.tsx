@@ -6,12 +6,17 @@ import { useState, type FormEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { CreateButton } from "@/features/reels/components/CreateButton";
 import { ProfileDropdown } from "@/features/reels/components/ProfileDropdown";
-import { brandSearchHref, resolveAppBrand } from "@/lib/appBrand";
+import { brandSearchHref, resolveAppBrand, type AppBrand } from "@/lib/appBrand";
 import { useUnreadCount } from '@/hooks/useActivityNotifications';
 import { useVideoShell } from "@/features/video-shell/useVideoShell";
 import './app-bar.css';
 
 interface HeaderBarProps {
+  /** Embedded workspaces can explicitly supply their app identity. */
+  brand?: AppBrand;
+  /** Service workspaces do not pretend to offer video creation or global search. */
+  hideSearch?: boolean;
+  hideCreate?: boolean;
   /**
    * Overrides the wordmark. Normally left unset: the header names the app
    * the current route belongs to (see src/lib/appBrand.ts).
@@ -29,6 +34,9 @@ interface HeaderBarProps {
   own place instead of every page wearing the same generic bar.
 */
 export function HeaderBar({
+  brand: workspaceBrand,
+  hideSearch = false,
+  hideCreate = false,
   sectionLabel,
   searchValue: externalSearch,
   onSearchValueChange: externalOnChange,
@@ -36,7 +44,7 @@ export function HeaderBar({
 }: HeaderBarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const brand = resolveAppBrand(pathname);
+  const brand = workspaceBrand ?? resolveAppBrand(pathname);
   const BrandIcon = brand.icon;
   const [internalSearch, setInternalSearch] = useState("");
   const unread = useUnreadCount();
@@ -54,7 +62,7 @@ export function HeaderBar({
   return (
     <header
       data-app={brand.key}
-      className="context-app-bar"
+      className={`context-app-bar${hideSearch ? " context-app-bar--workspace" : ""}`}
     >
       <div className="context-app-bar__inner">
         {/* Left: product badge → home, then the app wordmark */}
@@ -84,7 +92,7 @@ export function HeaderBar({
         </div>
 
         {/* Center: Search */}
-        <div className="context-app-bar__search">
+        {!hideSearch ? <div className="context-app-bar__search">
           <form onSubmit={onSearchSubmit} role="search" className="w-full">
             <div className="group relative">
               <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
@@ -97,12 +105,12 @@ export function HeaderBar({
               />
             </div>
           </form>
-        </div>
+        </div> : <span className="context-app-bar__workspace-label" aria-hidden />}
 
         {/* Right: Create + Notifications + Profile */}
         <div className="context-app-bar__actions">
-          <CreateButton variant="pill" />
-          <Link href={brandSearchHref(brand)} className="context-app-bar__mobile-search" aria-label="Search"><Search size={19}/></Link>
+          {!hideCreate ? <CreateButton variant="pill" /> : null}
+          {!hideSearch ? <Link href={brandSearchHref(brand)} className="context-app-bar__mobile-search" aria-label="Search"><Search size={19}/></Link> : null}
           <Link href="/messenger" className="context-app-bar__action" aria-label="Messenger"><MessageCircle size={20}/></Link>
           <Link href="/notifications" className="context-app-bar__action" aria-label="Notifications">
             <Bell className="h-[18px] w-[18px]" />

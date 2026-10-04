@@ -107,8 +107,8 @@ function MopeduPartnersContent() {
                 className={classNames(
                   "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
                   active
-                    ? "border-brand-text bg-brand-text text-white"
-                    : "border-gray-300 bg-white text-brand-text/70 hover:bg-gray-50",
+                    ? "border-primary-ink bg-primary-ink text-primary-foreground"
+                    : "border-brand-divider bg-brand-card text-brand-text/70 hover:bg-brand-secondary",
                 )}
               >
                 {f.label}
@@ -120,17 +120,17 @@ function MopeduPartnersContent() {
             className="ml-auto flex w-full max-w-xs items-center gap-2"
           >
             <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Name, phone, email…"
-                className="w-full rounded-lg border border-gray-300 bg-white py-1.5 pl-8 pr-2 text-sm outline-hidden focus:border-brand-text"
+                className="w-full rounded-lg border border-brand-divider bg-brand-card py-1.5 pl-8 pr-2 text-sm outline-hidden focus:border-brand-text"
               />
             </div>
             <button
               type="submit"
-              className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-brand-text/70 hover:bg-gray-50"
+              className="rounded-lg border border-brand-divider bg-brand-card px-3 py-1.5 text-xs font-semibold text-brand-text/70 hover:bg-brand-secondary"
             >
               Search
             </button>
@@ -146,7 +146,7 @@ function MopeduPartnersContent() {
             Loading partners…
           </div>
         ) : list.isError ? (
-          <div className="px-4 py-6 text-sm text-rose-700">
+          <div className="px-4 py-6 text-sm text-danger">
             {errorMessage(list.error)}
           </div>
         ) : items.length === 0 ? (
@@ -156,7 +156,7 @@ function MopeduPartnersContent() {
           />
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
+            <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
               <tr>
                 <th className="px-4 py-3">Partner</th>
                 <th className="px-4 py-3">Phone</th>
@@ -168,11 +168,11 @@ function MopeduPartnersContent() {
                 <th className="px-4 py-3">Joined</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-brand-divider">
               {items.map((p) => (
                 <tr
                   key={p.id}
-                  className="cursor-pointer transition-colors hover:bg-gray-50"
+                  className="cursor-pointer transition-colors hover:bg-brand-secondary"
                   onClick={() => router.push(`/admin/mopedu/partners/${p.id}`)}
                 >
                   <td className="px-4 py-3">
@@ -243,7 +243,7 @@ function MopeduPartnersContent() {
                   offset: Math.max(0, offsetParam - PAGE_SIZE),
                 })
               }
-              className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-brand-text/70 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg border border-brand-divider bg-brand-card px-3 py-1.5 text-xs font-semibold text-brand-text/70 hover:bg-brand-secondary disabled:cursor-not-allowed disabled:opacity-40"
             >
               Previous
             </button>
@@ -253,7 +253,7 @@ function MopeduPartnersContent() {
               onClick={() =>
                 pushParams({ offset: offsetParam + PAGE_SIZE })
               }
-              className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-brand-text/70 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg border border-brand-divider bg-brand-card px-3 py-1.5 text-xs font-semibold text-brand-text/70 hover:bg-brand-secondary disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next
             </button>
@@ -286,7 +286,7 @@ export default function MopeduPartnersPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center gap-2 text-sm text-slate-500">
+        <div className="flex items-center gap-2 text-sm text-text-muted">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading partners…
         </div>
       }

@@ -2,10 +2,11 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ChevronDown, Crown, Gem, Home, Layers, MessagesSquare, Settings, ShieldCheck, Sparkles, type LucideIcon } from "lucide-react"
+import { ChevronDown, Crown, Gem, Layers, MessagesSquare, Settings, ShieldCheck, Sparkles, type LucideIcon } from "lucide-react"
 
 import { usePicksKnownOff } from "../hooks/discovery"
 import { DATING_BASE } from "../model/profile"
+import { WorkspaceShell } from "@/features/video-shell/WorkspaceShell"
 
 export interface NavEntry {
   label: string
@@ -78,31 +79,20 @@ export function DatingNav({ pathname, picksOff = false }: { pathname: string; pi
   )
 }
 
-/** The Pulse zone: its own header and tabs, then <main>. */
+/** Pulse pages keep their guards and actions inside the shared app workspace. */
 export function DatingFrame({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || DATING_BASE
   const picksOff = usePicksKnownOff()
   return (
+    <WorkspaceShell kind="dating" title="Your connections" links={hidesNav(pathname) ? [] : [...primaryNav(picksOff), ...MORE_NAV]}>
     <div className="pulse-zone">
       <a href="#pulse-content" className="pulse-skip">
         Skip to content
       </a>
-      <header className="pulse-top">
-        <div className="pulse-top__row">
-          <Link href={DATING_BASE} className="pulse-brand" aria-label="Pulse home">
-            <Sparkles size={18} aria-hidden="true" />
-            <span>Pulse</span>
-          </Link>
-          <Link href="/" className="pulse-top__exit" aria-label="Back to Momentum">
-            <Home size={16} aria-hidden="true" />
-            <span>Momentum</span>
-          </Link>
-        </div>
-        <DatingNav pathname={pathname} picksOff={picksOff} />
-      </header>
-      <main id="pulse-content" className="pulse-main" tabIndex={-1}>
+      <section id="pulse-content" className="pulse-main" tabIndex={-1}>
         {children}
-      </main>
+      </section>
     </div>
+    </WorkspaceShell>
   )
 }

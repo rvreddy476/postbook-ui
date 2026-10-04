@@ -99,8 +99,8 @@ export default function MopeduComplaintsPage() {
                 className={classNames(
                   "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
                   active
-                    ? "border-brand-text bg-brand-text text-white"
-                    : "border-gray-300 bg-white text-brand-text/70 hover:bg-gray-50",
+                    ? "border-primary-ink bg-primary-ink text-primary-foreground"
+                    : "border-brand-divider bg-brand-card text-brand-text/70 hover:bg-brand-secondary",
                 )}
               >
                 {t.label}
@@ -118,7 +118,7 @@ export default function MopeduComplaintsPage() {
               Loading…
             </div>
           ) : list.isError ? (
-            <div className="px-4 py-6 text-sm text-rose-700">
+            <div className="px-4 py-6 text-sm text-danger">
               {errorMessage(list.error)}
             </div>
           ) : items.length === 0 ? (
@@ -128,7 +128,7 @@ export default function MopeduComplaintsPage() {
             />
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-[11px] tracking-wider text-gray-500">
+              <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
                 <tr>
                   <th className="px-4 py-3">Complaint</th>
                   <th className="px-4 py-3">Ride</th>
@@ -138,14 +138,14 @@ export default function MopeduComplaintsPage() {
                   <th className="px-4 py-3">Created</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-brand-divider">
                 {items.map((c) => (
                   <tr
                     key={c.id}
                     onClick={() => pickRow(c)}
                     className={classNames(
-                      "cursor-pointer transition-colors hover:bg-gray-50",
-                      selected?.id === c.id && "bg-blue-50/40",
+                      "cursor-pointer transition-colors hover:bg-brand-secondary",
+                      selected?.id === c.id && "bg-primary-ink/40",
                     )}
                   >
                     <td className="px-4 py-3 font-mono text-xs text-brand-text">
@@ -161,7 +161,7 @@ export default function MopeduComplaintsPage() {
                       </Link>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-violet-800">
+                      <span className="inline-flex rounded-full bg-tile-poll/10 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-tile-poll">
                         {c.category.replace(/_/g, " ")}
                       </span>
                     </td>
@@ -196,7 +196,7 @@ export default function MopeduComplaintsPage() {
                 <button
                   type="button"
                   onClick={closePanel}
-                  className="rounded-full p-1 text-brand-text/40 hover:bg-gray-100 hover:text-brand-text"
+                  className="rounded-full p-1 text-brand-text/40 hover:bg-brand-secondary hover:text-brand-text"
                   aria-label="Close"
                 >
                   <X className="h-4 w-4" />
@@ -236,7 +236,7 @@ export default function MopeduComplaintsPage() {
               <p className="mt-3 text-[11px] font-bold tracking-wider text-brand-text/60">
                 Description
               </p>
-              <p className="mt-1 whitespace-pre-wrap rounded-lg bg-gray-50 px-3 py-2 text-xs text-brand-text/80">
+              <p className="mt-1 whitespace-pre-wrap rounded-lg bg-brand-secondary px-3 py-2 text-xs text-brand-text/80">
                 {selected.description ?? "—"}
               </p>
 
@@ -245,7 +245,7 @@ export default function MopeduComplaintsPage() {
                   <p className="mt-3 text-[11px] font-bold tracking-wider text-brand-text/60">
                     Resolution note
                   </p>
-                  <p className="mt-1 whitespace-pre-wrap rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+                  <p className="mt-1 whitespace-pre-wrap rounded-lg bg-success/10 px-3 py-2 text-xs text-success">
                     {selected.resolution_note}
                   </p>
                 </>
@@ -253,7 +253,7 @@ export default function MopeduComplaintsPage() {
 
               {selected.status !== "resolved" &&
               selected.status !== "dismissed" ? (
-                <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <div className="mt-4 rounded-lg border border-brand-divider bg-brand-secondary p-3">
                   <p className="text-[11px] font-bold tracking-wider text-brand-text/60">
                     Update status
                   </p>
@@ -279,7 +279,7 @@ export default function MopeduComplaintsPage() {
                     onChange={(e) => setNote(e.target.value.slice(0, 400))}
                     rows={3}
                     placeholder="Resolution note (optional)"
-                    className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-xs outline-hidden focus:border-brand-text"
+                    className="mt-2 w-full rounded-lg border border-brand-divider px-3 py-2 text-xs outline-hidden focus:border-brand-text"
                   />
                   <div className="mt-2 flex justify-end">
                     <PrimaryButton
@@ -294,7 +294,7 @@ export default function MopeduComplaintsPage() {
                     </PrimaryButton>
                   </div>
                   {updateM.isError ? (
-                    <p className="mt-2 text-xs text-rose-700">
+                    <p className="mt-2 text-xs text-danger">
                       {errorMessage(updateM.error)}
                     </p>
                   ) : null}
@@ -302,7 +302,7 @@ export default function MopeduComplaintsPage() {
               ) : null}
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-center text-xs text-brand-text/55">
+            <div className="rounded-2xl border border-dashed border-brand-divider bg-brand-card p-6 text-center text-xs text-brand-text/55">
               Pick a complaint on the left to inspect it here.
             </div>
           )}

@@ -57,7 +57,7 @@ function PaymentCard({
     <div className="rounded-2xl border border-brand-divider bg-brand-card p-4 shadow-xs">
       <div className="flex flex-wrap items-start gap-4">
         {/* Proof preview */}
-        <div className="h-32 w-32 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
+        <div className="h-32 w-32 shrink-0 overflow-hidden rounded-lg border border-brand-divider bg-brand-secondary">
           {row.payment_proof_url ? (
             isImageUrl(row.payment_proof_url) ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -83,7 +83,7 @@ function PaymentCard({
               </a>
             )
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-[11px] text-gray-400">
+            <div className="flex h-full w-full items-center justify-center text-[11px] text-text-muted">
               No proof
             </div>
           )}
@@ -95,7 +95,7 @@ function PaymentCard({
             <p className="text-lg font-bold text-brand-text">
               {paiseToRupees(row.amount_paise)}
             </p>
-            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold tracking-wider text-blue-800">
+            <span className="rounded-full bg-primary-ink/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-primary-ink">
               {row.payment_method}
             </span>
             <StatusPill
@@ -123,7 +123,7 @@ function PaymentCard({
             {relativeTime(row.submitted_at)}
           </p>
           {row.verified_at ? (
-            <p className="text-[11px] text-emerald-700">
+            <p className="text-[11px] text-success">
               Verified {formatDate(row.verified_at)}
             </p>
           ) : null}
@@ -232,8 +232,8 @@ function MopeduPaymentsQueueContent() {
                 className={classNames(
                   "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
                   active
-                    ? "border-brand-text bg-brand-text text-white"
-                    : "border-gray-300 bg-white text-brand-text/70 hover:bg-gray-50",
+                    ? "border-primary-ink bg-primary-ink text-primary-foreground"
+                    : "border-brand-divider bg-brand-card text-brand-text/70 hover:bg-brand-secondary",
                 )}
               >
                 {f.label}
@@ -249,7 +249,7 @@ function MopeduPaymentsQueueContent() {
           Loading payments…
         </div>
       ) : list.isError ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div className="rounded-2xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm text-danger">
           {errorMessage(list.error)}
         </div>
       ) : items.length === 0 ? (
@@ -274,7 +274,7 @@ function MopeduPaymentsQueueContent() {
       )}
 
       {(verifyM.isError || rejectM.isError) && (
-        <p className="text-xs text-rose-700">
+        <p className="text-xs text-danger">
           {errorMessage(verifyM.error ?? rejectM.error)}
         </p>
       )}
@@ -286,7 +286,7 @@ export default function MopeduPaymentsQueuePage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center gap-2 text-sm text-slate-500">
+        <div className="flex items-center gap-2 text-sm text-text-muted">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading payments queue…
         </div>
       }
