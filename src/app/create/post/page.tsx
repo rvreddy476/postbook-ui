@@ -42,10 +42,12 @@ import emojiData from "@emoji-mart/data";
 
 const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 
+// Exactly what post-service accepts (oneof public followers private
+// unlisted). "Trusted" was offered here too; the close-friends audience was
+// retired server-side, so choosing it failed the post with a 400.
 const VISIBILITY = [
   { value: "public", label: "Everyone", icon: Globe },
   { value: "followers", label: "Followers", icon: Users },
-  { value: "trusted", label: "Trusted", icon: ShieldCheck },
   { value: "private", label: "Only me", icon: Lock },
 ] as const;
 

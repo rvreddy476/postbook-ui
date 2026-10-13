@@ -22,7 +22,6 @@ import {
   MoreHorizontal,
   Plus,
   Send,
-  ShieldCheck,
   Smile,
   Type,
   UserRoundX,
@@ -88,7 +87,11 @@ interface CreatePortalProps {
   groupId?: string;
 }
 
-type PostVisibility = 'public' | 'followers' | 'trusted' | 'private';
+// Exactly what post-service accepts (CreatePostRequest.Visibility, oneof
+// public followers private unlisted). "Trusted" used to be offered here; the
+// close-friends audience was retired server-side, so picking it failed the
+// whole post with a 400.
+type PostVisibility = 'public' | 'followers' | 'private';
 
 // Rainbow palette, ROYGBIV-ordered so the picker can lay them out as
 // a half-circle. No black/dark-near-black swatches by request — the
@@ -109,7 +112,6 @@ const BACKGROUNDS: { value: string | null; label: string; dark?: boolean }[] = [
 const VIS_OPTIONS: { value: PostVisibility; label: string; Icon: typeof Globe }[] = [
   { value: 'public', label: 'Everyone', Icon: Globe },
   { value: 'followers', label: 'Followers', Icon: Users },
-  { value: 'trusted', label: 'Trusted', Icon: ShieldCheck },
   { value: 'private', label: 'Only me', Icon: Lock },
 ];
 
@@ -856,7 +858,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               A chip, not a menu. A group post ignores the audience selector
               entirely — group-service decides who can see it from the group's
               own privacy and membership — so offering public / followers /
-              trusted / only-me here would be a control that changes nothing,
+              only-me here would be a control that changes nothing,
               which is a lie about how the post will be seen.
             */
             <span
