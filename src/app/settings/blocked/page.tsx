@@ -54,15 +54,17 @@ export default function BlockedUsersPage() {
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{name}</div>
                     {username ? <div className="text-xs text-neutral-500">@{username}</div> : null}
-                    <div className="text-xs text-neutral-400 mt-0.5">
-                      Blocked {new Date(b.created_at).toLocaleDateString()}
-                    </div>
+                    {b.created_at ? (
+                      <div className="text-xs text-neutral-400 mt-0.5">
+                        Blocked {new Date(b.created_at).toLocaleDateString()}
+                      </div>
+                    ) : null}
                   </div>
                   <button
                     onClick={() => {
-                      if (username && confirm(`Unblock ${name}?`)) unblock.mutate(username)
+                      if (confirm(`Unblock ${name}?`)) unblock.mutate(b.blocked_id)
                     }}
-                    disabled={unblock.isPending || !username}
+                    disabled={unblock.isPending}
                     className="text-sm text-violet-600 hover:underline disabled:opacity-50"
                   >
                     Unblock

@@ -499,14 +499,14 @@ export function ProfilePage({ username }: ProfilePageProps) {
     // Handlers
     const handleFollow = useCallback(() => {
         if (!profile) return
-        followMutation.mutate(profile.username || profile.id, {
+        followMutation.mutate(profile.id || profile.username, {
             onError: (e) => toast({ type: "error", title: authErrMsg(e) }),
         })
     }, [profile, followMutation, toast])
 
     const handleUnfollow = useCallback(() => {
         if (!profile) return
-        unfollowMutation.mutate(profile.username || profile.id, {
+        unfollowMutation.mutate(profile.id || profile.username, {
             onError: (e) => toast({ type: "error", title: authErrMsg(e) }),
         })
     }, [profile, unfollowMutation, toast])
@@ -524,7 +524,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
 
     const handleConfirmBlock = useCallback(() => {
         if (!profile) return
-        blockMutation.mutate(profile.username, {
+        blockMutation.mutate(profile.id || profile.username, {
             onSuccess: () => setBlockDialogOpen(false),
         })
     }, [profile, blockMutation])
@@ -533,7 +533,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
 
     const handleConfirmUnblock = useCallback(() => {
         if (!profile) return
-        unblockMutation.mutate(profile.username, {
+        unblockMutation.mutate(profile.id || profile.username, {
             onSuccess: () => setUnblockDialogOpen(false),
         })
     }, [profile, unblockMutation])

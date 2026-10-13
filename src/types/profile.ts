@@ -96,6 +96,9 @@ export interface Relationship {
     // `connection_status` is one of: none, pending_sent, pending_received, accepted.
     is_connection?: boolean
     connection_status?: "none" | "pending_sent" | "pending_received" | "accepted"
+    // Private-account follow requests (graph-service): pending_sent means the
+    // viewer asked to follow and is waiting; pending_received the reverse.
+    follow_request_status?: "none" | "pending_sent" | "pending_received"
     // Block
     blocked: boolean
     blocked_by: boolean
