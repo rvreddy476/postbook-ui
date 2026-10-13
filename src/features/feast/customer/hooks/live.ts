@@ -26,8 +26,6 @@ export interface LiveHandlers {
   onFix: (fix: Point) => void
 }
 
-const MAX_RECONNECTS = 5
-
 export function parseFrame(raw: string): { eventType: string; fix: Point | null } | null {
   try {
     const env = JSON.parse(raw) as { event_type?: unknown; data?: unknown }
@@ -78,6 +76,7 @@ export function useLiveOrder(orderId: string, active: boolean, handlers: LiveHan
         source.addEventListener("connected", () => {
           attempts = 0
           setConnected(true)
+          ref.current.onChange()
         })
         source.addEventListener(topic, (e: MessageEvent) => {
           const frame = parseFrame(String(e.data))
@@ -89,11 +88,12 @@ export function useLiveOrder(orderId: string, active: boolean, handlers: LiveHan
           setConnected(false)
           source?.close()
           source = null
-          if (!cancelled && attempts < MAX_RECONNECTS) retry = setTimeout(open, Math.min(30_000, 2_000 * 2 ** attempts))
+          if (!cancelled) retry = setTimeout(open, Math.min(30_000, 2_000 * 2 ** Math.min(attempts, 4)))
         }
       } catch {
         // 503 FOOD_REALTIME_NOT_CONFIGURED, 404, offline: polling carries on.
         setConnected(false)
+        if (!cancelled) retry = setTimeout(open, 30_000)
       }
     }
     void open()

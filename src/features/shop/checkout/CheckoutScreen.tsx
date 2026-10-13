@@ -27,7 +27,7 @@ import "../shop.css"
 import "../shop-offers.css"
 
 import { AddressForm } from "../components/addresses/AddressForm"
-import { AddressPicker, BagLines, PaymentMethodPicker, QuoteBreakdown } from "../components/checkout/CheckoutParts"
+import { BagLines, PaymentMethodPicker, QuoteBreakdown } from "../components/checkout/CheckoutParts"
 import { CouponBox } from "../components/coupons/CouponBox"
 import { BankOffers } from "../components/offers/BankOffers"
 import { useCheckoutAddresses, useCheckoutBag, useCreateAddress, usePlaceOrder, useQuote } from "../hooks/checkout"
@@ -42,7 +42,6 @@ import {
   errorCode,
   forgetCheckoutAttempt,
   payBlockReason,
-  preselectedAddressId,
   quoteRefusal,
   quoteSecondsLeft,
   type AddressFormValues,
@@ -67,6 +66,9 @@ import {
 import { offersSheetNote } from "../model/offers"
 import { rememberIntent } from "../model/payments"
 import { startPayment } from "./startPayment"
+import { CurrentLocationBoundary, CurrentLocationBar } from "@/features/maps/CurrentLocation"
+import { useDetectedAddress } from "@/features/maps/useDetectedAddress"
+import { useAuthUser } from "@/store/auth"
 
 const QUOTE_DEBOUNCE_MS = 350
 
@@ -98,6 +100,12 @@ function RefusalLine({ refusal }: { refusal: CheckoutRefusal }) {
 }
 
 export function CheckoutScreen() {
+  return <CurrentLocationBoundary><LocationCheckoutScreen /></CurrentLocationBoundary>
+}
+
+function LocationCheckoutScreen() {
+  const detected = useDetectedAddress()
+  const user = useAuthUser()
   const router = useRouter()
   const toast = useGlobalToast()
   const bagQuery = useCheckoutBag()
@@ -136,10 +144,13 @@ export function CheckoutScreen() {
     if (bagQuery.isSuccess && bag && bag.lines.length === 0) router.replace(BAG_HREF)
   }, [bagQuery.isSuccess, bag, router])
 
-  // The default address, once.
+  // Only use the detected current address; never fall back to a saved default.
   useEffect(() => {
-    if (!addressId && addresses.length) setAddressId(preselectedAddressId(addresses))
-  }, [addresses, addressId])
+    if (!detected.data || addressId) return
+    const current = addresses.find(a => a.line1 === detected.data!.address.slice(0, 200) && a.pincode === detected.data!.postalCode)
+    if (current) { setAddressId(current.id); setAdding(false) }
+    else setAdding(true)
+  }, [addresses, addressId, detected.data])
 
   // The countdown.
   useEffect(() => {
@@ -305,13 +316,12 @@ export function CheckoutScreen() {
       <div className="shop-checkout__grid">
         <div className="shop-checkout__main">
           <section className="shop-w2-sec">
-            <h2 className="shop-w2-sec__title">Deliver to</h2>
-            {addressesQuery.isLoading ? (
+            <h2 className="shop-w2-sec__title">Deliver to your current location</h2>
+            <CurrentLocationBar />
+            {addressesQuery.isLoading || detected.isPending ? (
               <Skeleton className="h-20 w-full" />
-            ) : (
-              <AddressPicker addresses={addresses} selectedId={addressId} onSelect={setAddressId} onAdd={() => setAdding(true)} adding={adding} />
-            )}
-            {adding ? <AddressForm submitLabel="Save and use" onSubmit={onAddAddress} onCancel={() => setAdding(false)} busy={createAddress.isPending} /> : null}
+            ) : detected.isError ? <div className="current-location"><p role="alert">{(detected.error as Error).message}</p><button type="button" onClick={() => void detected.refetch()}>Try automatic address lookup again</button></div> : detected.data ? <><p>{detected.data.address}</p>{addressId && !adding ? <button type="button" className="shop-link" onClick={() => setAdding(true)}>Edit contact or entrance instructions</button> : null}</> : null}
+            {adding && detected.data ? <AddressForm key={`${detected.data.lat},${detected.data.lng}`} automaticLocation={detected.data} initial={{ contactName: user?.name ?? "", phone: addresses.find(a => a.phone)?.phone ?? (/^(?:\+91)?[6-9]\d{9}$/.test(user?.loginId ?? "") ? user!.loginId : "") }} submitLabel="Confirm delivery contact" hideDefault onSubmit={onAddAddress} busy={createAddress.isPending} /> : null}
           </section>
 
           <section className="shop-w2-sec">

@@ -1,86 +1,31 @@
 "use client"
 
-/* /doorstep/c/[slug] — the services in one category (GET /categories/:slug?city=HYD). */
-
-import { ArrowLeft, Clock, Search } from "lucide-react"
+import { ArrowLeft, ArrowRight, Clock, Search, ShieldCheck } from "lucide-react"
 import Link from "next/link"
-
-import { categoryIcon, DuesBanner, ErrorState, FromPrice, Skel, StateBlock } from "../components/parts"
+import { DuesBanner, ErrorState, FromPrice, Skel, StateBlock } from "../components/parts"
+import { StorefrontArtwork } from "../components/StorefrontArtwork"
 import { useCategory, useOutstanding } from "../hooks/queries"
 import { formatDuration, genderRuleNote } from "../model/selection"
+import type { CategoryPage } from "../model/wire"
 
 export function CategoryScreen({ slug }: { slug: string }) {
   const page = useCategory(slug)
   const outstanding = useOutstanding()
-  const p = page.data
+  return <>
+    <DuesBanner outstanding={outstanding.data} />
+    {page.isLoading ? <div className="dsc-home-loading"><Skel h={220} /><Skel h={200} /></div> : page.isError || !page.data ? <ErrorState error={page.error} what="This category" onRetry={() => void page.refetch()} /> : <StorefrontCategory page={page.data} />}
+  </>
+}
 
-  return (
-    <>
-      <div className="ds-head">
-        <div className="ds-row">
-          <Link href="/doorstep" className="ds-back" aria-label="Back to all services">
-            <ArrowLeft size={18} aria-hidden="true" />
-          </Link>
-          {p ? (
-            <>
-              <span className="ds-cat__icon" aria-hidden="true">
-                {(() => {
-                  const Icon = categoryIcon(p.category.slug, p.category.family)
-                  return <Icon size={20} />
-                })()}
-              </span>
-              <div className="ds-grow">
-                <h1 className="ds-title">{p.category.name}</h1>
-                <p className="ds-sub">{p.category.description}</p>
-              </div>
-            </>
-          ) : (
-            <h1 className="ds-title">Services</h1>
-          )}
-        </div>
-      </div>
-
-      <DuesBanner outstanding={outstanding.data} />
-      {p && genderRuleNote(p.category.genderRule) ? <p className="ds-info" style={{ marginBottom: 16 }}>{genderRuleNote(p.category.genderRule)}</p> : null}
-
-      {page.isLoading ? (
-        <div className="ds-card">
-          <Skel h={56} />
-          <Skel h={56} />
-          <Skel h={56} />
-        </div>
-      ) : page.isError ? (
-        <ErrorState error={page.error} what="This category" onRetry={() => void page.refetch()} />
-      ) : !p?.services.length ? (
-        <StateBlock icon={<Search size={22} />} title="No services here yet" />
-      ) : (
-        <section className="ds-card" aria-label="Services">
-          <ul className="ds-svcs">
-            {p.services.map((s) => (
-              <li key={s.id}>
-                <Link href={`/doorstep/s/${encodeURIComponent(s.id)}`} className="ds-svc">
-                  <div className="ds-grow">
-                    <p className="ds-svc__name">{s.name}</p>
-                    <p className="ds-svc__desc">{s.description}</p>
-                    <div className="ds-row ds-wrap" style={{ marginTop: 4 }}>
-                      <FromPrice paise={s.startingPricePaise} />
-                      {s.durationMinutes ? (
-                        <span className="ds-meta ds-row" style={{ gap: 4 }}>
-                          <Clock size={12} aria-hidden="true" />
-                          {formatDuration(s.durationMinutes)}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                  <span className="ds-btn ds-btn--outline ds-btn--sm" aria-hidden="true">
-                    View
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </>
-  )
+export function StorefrontCategory({ page }: { page: CategoryPage }) {
+  const { category, services } = page
+  return <>
+    <div className="dsc-breadcrumb"><Link href="/doorstep"><ArrowLeft size={15} aria-hidden />Home services</Link><span aria-hidden>/</span><span>{category.name}</span></div>
+    <section className="dsc-service-hero"><div><p className="dsc-eyebrow">Home comfort, taken care of</p><h1>{category.name}</h1><p>{category.description}</p><div className="dsc-service-points"><span><ShieldCheck size={17} aria-hidden />Reviewed professionals</span><span><Clock size={17} aria-hidden />Choose your time</span></div></div><StorefrontArtwork slug={category.slug} family={category.family} imageUrl={category.imageUrl} /></section>
+    {genderRuleNote(category.genderRule) && <p className="ds-info">{genderRuleNote(category.genderRule)}</p>}
+    {!services.length ? <StateBlock icon={<Search size={22} />} title="No services here yet" text="Please check back soon, or explore another category." action={<Link href="/doorstep" className="ds-btn ds-btn--outline">Explore services</Link>} /> :
+      <div className="dsc-service-layout"><section className="dsc-service-list" aria-label="Services"><h2 className="dsc-list-heading">Choose your service</h2>{services.map(service => <article className="dsc-catalogue-service" key={service.id}><div><h2><Link href={`/doorstep/s/${encodeURIComponent(service.id)}`}>{service.name}</Link></h2><p>{service.description}</p><div className="dsc-service-meta"><FromPrice paise={service.startingPricePaise} />{service.durationMinutes > 0 && <span><Clock size={14} aria-hidden />{formatDuration(service.durationMinutes)}</span>}</div></div><div className="dsc-catalogue-service__action"><StorefrontArtwork slug={service.slug} categorySlug={category.slug} family={category.family} imageUrl={service.imageUrl} /><Link href={`/doorstep/s/${encodeURIComponent(service.id)}`} className="ds-btn ds-btn--outline" aria-label={`View ${service.name}`}>View options<ArrowRight size={14} aria-hidden /></Link></div></article>)}</section>
+        <aside className="dsc-summary dsc-summary--category"><span className="dsc-summary__icon"><ShieldCheck size={25} aria-hidden /></span><h2>Care that fits your home</h2><p>Choose a service to see its options and inclusions. Then compare professionals and available times.</p><Link href="/doorstep/bookings" className="dsc-link">Already booked? View your bookings<ArrowRight size={15} aria-hidden /></Link></aside>
+      </div>}
+  </>
 }

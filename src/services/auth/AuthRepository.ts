@@ -73,6 +73,11 @@ export class AuthRepository {
     return this.sessionStore.getUser();
   }
 
+  /** Only for an immediate navigation through the server's cookie-clearing logout route. */
+  prepareLogoutNavigation() {
+    this.sessionStore.clear();
+  }
+
   /**
    * End the session on the server, then locally.
    *

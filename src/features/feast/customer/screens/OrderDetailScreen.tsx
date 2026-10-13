@@ -1,4 +1,5 @@
 "use client"
+import { GoogleLocation } from "@/features/maps/GoogleLocation"
 
 /*
   /feast/orders/[id] — payment, live tracking and the invoice for one order.
@@ -27,7 +28,7 @@ import { useOrderPayment } from "../hooks/payment"
 import { keys, useCancelOrder, useOrder, useTracking } from "../hooks/queries"
 import { formatPaise } from "../model/money"
 import { PAYMENT_LINES, PAYMENT_METHODS, type PaymentMethod } from "../model/payment"
-import { canCancel, deliveryCodeVisible, isTerminal, LIVE_POLL_MS, mapsLink, newerRiderFix, statusLabel } from "../model/tracking"
+import { canCancel, deliveryCodeVisible, isTerminal, LIVE_POLL_MS, mapsLink, newerRiderFix, parseServerTime, statusLabel } from "../model/tracking"
 import type { Order, Point } from "../model/wire"
 
 const SLOW_POLL_MS = 30_000
@@ -101,6 +102,8 @@ function PaymentPanel({ order, autoMethod, onAutoDone }: { order: Order; autoMet
 }
 
 function Tracker({ order }: { order: Order }) {
+  const [now, setNow] = useState(Date.now())
+  useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 5_000); return () => clearInterval(timer) }, [])
   const qc = useQueryClient()
   const live = !isTerminal(order.status) && order.status !== "PAYMENT_PENDING"
   const [fix, setFix] = useState<Point | null>(null)
@@ -128,7 +131,10 @@ function Tracker({ order }: { order: Order }) {
     ? t.timeline.map((s) => ({ key: `${s.toStatus}-${s.createdAt}`, label: s.label || statusLabel(s.toStatus), done: s.completed, at: s.createdAt }))
     : order.history.map((h) => ({ key: `${h.toStatus}-${h.createdAt}`, label: statusLabel(h.toStatus), done: true, at: h.createdAt }))
   const eta = t?.etaAt ?? order.etaAt
-  const riderLink = mapsLink(fix)
+  const fixAt = parseServerTime(fix?.recordedAt)
+  const fixAge = fixAt == null ? Infinity : now - fixAt
+  const recentFix = fixAge >= 0 && fixAge <= 120_000 ? fix : null
+  const riderLink = mapsLink(recentFix)
 
   return (
     <section className="fc-card" aria-labelledby="fc-track">
@@ -149,11 +155,18 @@ function Tracker({ order }: { order: Order }) {
       ) : null}
 
       {live ? (
+        <GoogleLocation label="Live delivery map" points={[
+          ...(recentFix?.latitude != null && recentFix.longitude != null ? [{ point: { lat: recentFix.latitude, lng: recentFix.longitude }, label: "Delivery partner" }] : []),
+          ...(t?.customerLocation?.latitude != null && t.customerLocation.longitude != null ? [{ point: { lat: t.customerLocation.latitude, lng: t.customerLocation.longitude }, label: "Delivery address" }] : []),
+          ...(t?.restaurantLocation?.latitude != null && t.restaurantLocation.longitude != null ? [{ point: { lat: t.restaurantLocation.latitude, lng: t.restaurantLocation.longitude }, label: "Restaurant" }] : []),
+        ]} />
+      ) : null}
+      {live ? (
         <div className="fc-map">
           <Bike size={22} aria-hidden="true" />
-          {fix ? (
+          {recentFix ? (
             <>
-              <span>Your delivery partner was last seen at {fix.recordedAt ? formatWhen(fix.recordedAt) : "a recent point"}.</span>
+              <span>Your delivery partner was last seen at {recentFix.recordedAt ? formatWhen(recentFix.recordedAt) : "a recent point"}.</span>
               {riderLink ? (
                 <a className="fc-link" href={riderLink} target="_blank" rel="noopener noreferrer">
                   Open in maps
@@ -161,7 +174,7 @@ function Tracker({ order }: { order: Order }) {
               ) : null}
             </>
           ) : (
-            <span>A live map isn&apos;t available here yet. You&apos;ll see the rider&apos;s position once they&apos;re on the way.</span>
+            <span>Waiting for a recent delivery partner location. Your order status continues to update.</span>
           )}
         </div>
       ) : null}

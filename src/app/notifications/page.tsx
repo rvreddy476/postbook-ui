@@ -95,13 +95,14 @@ export default function NotificationsInboxPage() {
   const [tab, setTab] = useState<FilterKey>('all')
 
   // Backend now filters by category server-side, including 'qa'.
-  const { data, isLoading } = useNotificationInbox(tab)
+  const [cursors, setCursors] = useState<(string | null)[]>([null])
+  const { data, isLoading, isError, refetch } = useNotificationInbox(tab, cursors[cursors.length - 1])
   const markRead = useMarkNotificationRead()
 
   const notifs = data?.notifications ?? []
 
   const unreadIds = useMemo(
-    () => notifs.filter((n) => !n.is_read).map((n) => n.id),
+    () => notifs.filter((n) => !n.is_read),
     [notifs]
   )
 
@@ -116,7 +117,7 @@ export default function NotificationsInboxPage() {
               disabled={markRead.isPending}
               className="text-sm text-violet-600 hover:underline disabled:opacity-50"
             >
-              Mark all read
+              Mark this page as read
             </button>
           ) : null}
         </div>
@@ -125,7 +126,7 @@ export default function NotificationsInboxPage() {
           {TABS.map((t) => (
             <button
               key={t.key}
-              onClick={() => setTab(t.key)}
+              onClick={() => { setTab(t.key); setCursors([null]) }}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 tab === t.key
                   ? 'border-violet-600 text-violet-600'
@@ -137,7 +138,8 @@ export default function NotificationsInboxPage() {
           ))}
         </div>
 
-        {isLoading ? (
+        {markRead.isError && <p role="alert">Could not update read status. Please try again.</p>}
+        {isError ? <div role="alert">Notifications couldn’t be loaded. <button onClick={() => void refetch()}>Try again</button></div> : isLoading ? (
           <div className="py-12 text-center text-neutral-500">Loading…</div>
         ) : notifs.length === 0 ? (
           <div className="py-16 text-center text-neutral-500">Nothing here.</div>
@@ -176,7 +178,7 @@ export default function NotificationsInboxPage() {
                 <Link
                   key={n.id}
                   href={n.deep_link}
-                  onClick={() => !n.is_read && markRead.mutate([n.id])}
+                  onClick={() => !n.is_read && markRead.mutate([n])}
                 >
                   {body}
                 </Link>
@@ -186,6 +188,7 @@ export default function NotificationsInboxPage() {
             })}
           </div>
         )}
+        <div className="flex gap-4 mt-5">{cursors.length > 1 && <button onClick={() => setCursors(v => v.slice(0, -1))}>Newer updates</button>}{data?.next_cursor && <button onClick={() => setCursors(v => [...v, data.next_cursor])}>Older updates</button>}</div>
       </div>
     </AppShell>
   )

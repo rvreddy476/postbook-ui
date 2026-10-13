@@ -166,7 +166,7 @@ export function genderRuleNote(rule: GenderRule): string | null {
 export interface QuoteBody {
   service_id: string
   /** B1: the professional the customer picked from the professionals list. */
-  pro_id: string
+  pro_id?: string
   option_id: string
   quantity: number
   addons: { addon_id: string }[]
@@ -177,10 +177,10 @@ export interface QuoteBody {
 /** The quote for the picked professional; null while the sheet has a problem or nobody is picked. */
 export function quoteBody(service: ServiceDetail, sel: Selection, at: { lat: number; lng: number }, proId: string): QuoteBody | null {
   const opt = chosenOption(service, sel)
-  if (!opt || !proId || selectionProblems(service, sel).length) return null
+  if (!opt || (!proId && service.assignmentMode !== "automatic") || selectionProblems(service, sel).length) return null
   return {
     service_id: service.id,
-    pro_id: proId,
+    ...(service.assignmentMode === "automatic" ? {} : { pro_id: proId }),
     option_id: opt.id,
     quantity: sel.quantity,
     addons: chosenAddonIds(service, sel).map((addon_id) => ({ addon_id })),

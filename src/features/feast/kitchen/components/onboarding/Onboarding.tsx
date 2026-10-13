@@ -22,6 +22,7 @@ import { FssaiPanel } from "./FssaiPanel"
 import { HoursPanel } from "./HoursPanel"
 import { LocationPanel } from "./LocationPanel"
 import { PayoutPanel } from "./PayoutPanel"
+import { IntroductionSubmission } from "@/features/partners/IntroductionSubmission"
 
 type Panel = "basics" | StepPanel | "submit"
 
@@ -164,6 +165,8 @@ export function Onboarding({
             <h2 className="kit-card__title">FSSAI licence</h2>
             <FssaiPanel restaurantId={restaurant.id} onSaved={saved} />
           </>
+        ) : panel === "selfie" ? (
+          <IntroductionSubmission module="food" restaurantId={restaurant.id} onSaved={saved}/>
         ) : panel === "payout" ? (
           <>
             <h2 className="kit-card__title">Bank account</h2>

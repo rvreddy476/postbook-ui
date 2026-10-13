@@ -1,0 +1,11 @@
+.partner-business-menu__toggle { width:100%; text-align:left; }
+.partner-business-menu__toggle > span { flex:1; min-width:0; }
+.partner-business-menu__toggle > svg:last-child { flex-shrink:0; transition:transform .15s; }
+.partner-business-menu__toggle > svg.is-open { transform:rotate(180deg); }
+.partner-business-menu__sections { list-style:none; padding:4px 0 10px 32px; margin:0; }
+.partner-business-menu__sections a { display:block; padding:11px 12px; border-radius:10px; color:rgb(var(--text-muted)); font-size:14px; text-decoration:none; }
+.partner-business-menu__sections a:hover { background:rgb(var(--brand-secondary)); }
+.partner-business-menu__sections a.is-current { color:rgb(var(--brand-ink)); background:rgb(var(--brand-secondary)); font-weight:650; }
+.partner-business-menu a:focus-visible,.partner-business-menu button:focus-visible { outline:2px solid rgb(var(--brand-ink)); outline-offset:2px; }
+.partner-business-menu__note { padding:12px; font-size:12px; color:rgb(var(--text-muted)); }
+.partner-business-menu__note button { text-decoration:underline; }

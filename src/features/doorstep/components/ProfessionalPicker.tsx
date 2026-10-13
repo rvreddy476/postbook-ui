@@ -14,7 +14,7 @@
       as timed picks — the choices already made are kept.
 */
 
-import { CalendarX2, MapPin, Star, UserRound, Zap } from "lucide-react"
+import { ArrowRight, CalendarX2, MapPin, Star, UserRound, Zap } from "lucide-react"
 import { useState } from "react"
 
 import { changeMoney, changeMoneyLine } from "../model/proChange"
@@ -83,6 +83,7 @@ function ProCardItem({
   zone,
   oneDate,
   showDifference,
+  confirmPick,
   busy,
   onPick,
 }: {
@@ -91,12 +92,15 @@ function ProCardItem({
   zone: string
   oneDate: boolean
   showDifference: boolean
+  confirmPick: boolean
   busy: boolean
   onPick: (pick: ProPick, card: ProfessionalCard) => void
 }) {
   const v = cardView(card, mode, { zone, oneDate })
   const money = showDifference ? changeMoney(card.differencePaise) : null
   const [open, setOpen] = useState(false)
+  const [selectedTime, setSelectedTime] = useState<string | null>(null)
+  const selected = v.times.find(t => t.start === selectedTime)
   const pick = (how: { asap: true } | { slotStart: string }) => {
     const p = pickFor(card, how)
     if (p) onPick(p, card)
@@ -151,7 +155,7 @@ function ProCardItem({
             {v.eta ?? "Available now"}
           </span>
           <button type="button" className="ds-btn ds-btn--primary ds-btn--sm" disabled={busy || card.etaMinutes === null} onClick={() => pick({ asap: true })}>
-            Book {v.name} now
+            {confirmPick ? `Continue with ${v.name}` : `Book ${v.name} now`}
           </button>
         </div>
       ) : v.times.length ? (
@@ -160,12 +164,13 @@ function ProCardItem({
           <ul className="ds-slots" aria-label={`${v.name}'s free times`}>
             {v.times.map((t) => (
               <li key={t.start}>
-                <button type="button" className="ds-slot" disabled={busy} onClick={() => pick({ slotStart: t.start })}>
+                <button type="button" className="ds-slot" disabled={busy} aria-pressed={confirmPick ? selectedTime === t.start : undefined} onClick={() => confirmPick ? setSelectedTime(t.start) : pick({ slotStart: t.start })}>
                   {t.label}
                 </button>
               </li>
             ))}
           </ul>
+          {confirmPick && <div className="dsc-procard__continue"><span>{selected ? `${selected.label} · selected` : "Select a time to continue"}</span><button type="button" className="ds-btn ds-btn--primary ds-btn--sm" disabled={busy || !selected} onClick={() => selected && pick({ slotStart: selected.start })}>{busy ? "Please wait…" : "Continue"}<ArrowRight size={16} aria-hidden /></button></div>}
         </div>
       ) : (
         <p className="ds-note">No free time {oneDate ? "on this day" : "soon"}.</p>
@@ -186,6 +191,7 @@ export function ProList({
   error,
   onRetry,
   showDifference = false,
+  confirmPick = false,
   busy,
   onPick,
   onSwitchToScheduled,
@@ -196,6 +202,7 @@ export function ProList({
   error: unknown
   onRetry: () => void
   showDifference?: boolean
+  confirmPick?: boolean
   busy: boolean
   onPick: (pick: ProPick, card: ProfessionalCard) => void
   onSwitchToScheduled: () => void
@@ -234,14 +241,15 @@ export function ProList({
       {outcome.kind === "empty" ? (
         <StateBlock icon={<CalendarX2 size={22} />} title={outcome.mode === "asap" ? "Nobody is free right now" : "No professional is free"} text={emptyText} />
       ) : null}
+      {confirmPick && cards.length > 0 && <div className="dsc-professional-count" role="status"><strong>{cards.length} professional{cards.length === 1 ? "" : "s"} available</strong><span>Prices include GST</span></div>}
       {cards.length ? (
         <ul className="ds-procards" aria-label="Professionals">
           {cards.map((c) => (
-            <ProCardItem key={c.proId} card={c} mode={mode} zone={list.timezone} oneDate={oneDate && outcome.kind === "cards"} showDifference={showDifference} busy={busy} onPick={onPick} />
+            <ProCardItem key={c.proId} card={c} mode={mode} zone={list.timezone} oneDate={oneDate && outcome.kind === "cards"} showDifference={showDifference} confirmPick={confirmPick} busy={busy} onPick={onPick} />
           ))}
         </ul>
       ) : null}
-      <p className="ds-note">Times are in Hyderabad time. Distance is shown as a range only; a professional&apos;s exact location is never shared.</p>
+      <p className="ds-note">Times shown in India Standard Time. Distances are approximate.</p>
     </div>
   )
 }

@@ -34,6 +34,7 @@ import { orderOfferLine } from "../model/offers"
 import { canShowInvoice, formatOrderDate, retryPaymentLabel } from "../model/orders"
 import { forgetIntent, recallIntent, rememberIntent, showsStubButton, stubConfirmBody, toPaymentIntent, type PaymentIntent } from "../model/payments"
 import { buildTimeline, trackingSummary } from "./timeline"
+import { LocalDeliveryTracking } from "./LocalDeliveryTracking"
 
 function sessionStore(): Storage | null {
   try {
@@ -257,6 +258,7 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
 
       <div className="shop-order__grid">
         <div className="shop-order__main">
+          {order.paymentStatus === "paid" ? <LocalDeliveryTracking orderId={order.id} /> : null}
           <section className="shop-w2-sec">
             <h2 className="shop-w2-sec__title">Items</h2>
             <OrderItems items={order.items} orderId={order.id} canReview={order.paymentStatus === "paid"} />

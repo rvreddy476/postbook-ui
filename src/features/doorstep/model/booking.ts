@@ -21,6 +21,7 @@ import type { Booking, BookingStatus, Extra, Photo } from "./wire"
 /* ── status ───────────────────────────────────────────────────────── */
 
 const STATUS_LABELS: Record<BookingStatus, string> = {
+  matching: "Finding a professional",
   pending_payment: "Waiting for payment",
   confirmed: "Confirmed",
   assigned: "Professional assigned",
@@ -88,14 +89,20 @@ export interface TimelineStep {
 
 /**
   The timeline from the server's status_history (oldest first): every
-  recorded step is done, the last one is the current step (done when the
+  recorded step is done, the last active state is the current step (done when the
   booking completed, "stopped" when it ended off the happy path), and a live
   booking shows what is still ahead on the happy path. Nothing is inferred
   from the status alone: a step the server did not record is not drawn as
   reached. Should the history lag the status (a poll racing a transition),
   the booking's status is appended as the current step, time unknown.
 */
-export function timeline(b: Pick<Booking, "status" | "statusHistory">): TimelineStep[] {
+export function timeline(b: Pick<Booking, "status" | "statusHistory"> & Pick<Partial<Booking>, "assignmentMode" | "paidPaise">): TimelineStep[] {
+  const path = b.assignmentMode === "automatic" ? [
+    { status: "matching" as const, label: "Finding a professional" },
+    { status: "pending_payment" as const, label: "Professional accepted · payment due" },
+    { status: "assigned" as const, label: "Payment confirmed · appointment booked" },
+    ...TIMELINE.slice(3),
+  ] : TIMELINE
   const reached: { status: BookingStatus; at: string | null }[] = []
   for (const s of b.statusHistory) {
     if (reached.length && reached[reached.length - 1].status === s.toStatus) continue
@@ -105,20 +112,28 @@ export function timeline(b: Pick<Booking, "status" | "statusHistory">): Timeline
 
   const last = reached.length - 1
   const ended = isTerminal(b.status)
+  // These are completed milestones, not work still in progress. In particular,
+  // payment confirmation must not look unpaid while an offer awaits acceptance.
+  const milestone = b.status === "confirmed" || b.status === "assigned"
   const steps: TimelineStep[] = reached.map((s, i) => ({
     status: s.status,
-    label: stepLabel(s.status),
-    state: i < last ? "done" : b.status === "completed" ? "done" : ended ? "stopped" : "current",
+    label: path.find(p => p.status === s.status)?.label ?? stepLabel(s.status),
+    state: i < last || b.status === "completed" || milestone ? "done" : ended ? "stopped" : "current",
     at: s.at,
   }))
   if (ended) return steps
 
-  const happy = TIMELINE.map((s) => s.status)
+  const happy: readonly BookingStatus[] = path.map((s) => s.status)
   // Extras due sits after the job started; a booking waiting for a new
   // professional is paid and goes back to "assigned" once someone accepts.
   const along = b.status === "awaiting_extras_payment" ? "in_progress" : b.status === "pro_unavailable" ? "confirmed" : b.status
   const pos = happy.indexOf(along)
-  for (const s of TIMELINE.slice(pos + 1)) steps.push({ status: s.status, label: s.label, state: "todo", at: null })
+  for (const s of path.slice(pos + 1)) {
+    if (b.assignmentMode === "automatic" && (b.paidPaise ?? 0) > 0 && s.status === "pending_payment") continue
+    const awaiting = milestone && s.status === path[pos + 1]?.status
+    const label = awaiting ? b.status === "confirmed" ? "Awaiting professional acceptance" : "Waiting for your visit to begin" : s.label
+    steps.push({ status: s.status, label, state: awaiting ? "current" : "todo", at: null })
+  }
   return steps
 }
 

@@ -14,6 +14,7 @@ import {
   HardHat,
   House,
   Loader2,
+  MapPin,
   PaintRoller,
   PlugZap,
   Scissors,
@@ -51,16 +52,31 @@ export function StateBlock({ icon, title, text, action }: { icon?: ReactNode; ti
   )
 }
 
-/** The error state for a failed read, with the pilot gate said plainly. */
+/** Customer-facing availability, without exposing internal rollout terminology. */
+export function AvailabilityState({ text = "We're gradually expanding home-service availability. There's nothing to book here at the moment. Please check back later, or explore our other apps." }: { text?: string }) {
+  return (
+    <div className="ds-availability">
+      <StateBlock
+        icon={<MapPin size={26} />}
+        title="No home services available in your area right now"
+        text={text}
+        action={<Link href="/apps" className="ds-btn ds-btn--outline">Explore other apps</Link>}
+      />
+    </div>
+  )
+}
+
+/** Keep a genuine read failure distinct from restricted availability. */
 export function ErrorState({ error, what, onRetry }: { error: unknown; what: string; onRetry?: () => void }) {
   const e = toDoorstepError(error)
+  if (isNotOpen(e)) return <StateBlock icon={<CircleAlert size={22} />} title="We couldn’t check service availability" text="Home services are temporarily unavailable. Please try again shortly." action={onRetry ? <button type="button" className="ds-btn ds-btn--outline" onClick={onRetry}>Try again</button> : undefined} />
   return (
     <StateBlock
-      icon={isNotOpen(e) ? <House size={22} /> : <CircleAlert size={22} />}
-      title={isNotOpen(e) ? "Doorstep is in a small pilot" : `${what} couldn't be loaded`}
+      icon={<CircleAlert size={22} />}
+      title={`${what} couldn't be loaded`}
       text={refusalLine(e)}
       action={
-        onRetry && !isNotOpen(e) ? (
+        onRetry ? (
           <button type="button" className="ds-btn ds-btn--outline ds-btn--sm" onClick={onRetry}>
             Try again
           </button>
@@ -140,9 +156,9 @@ export function PriceTag({ price, mrp, from }: { price: number; mrp: number | nu
   plain "No professional yet" while nobody prices it. Never the city's
   suggested price (it is never charged).
 */
-export function FromPrice({ paise, unit, mrp = null }: { paise: number | null; unit?: string; mrp?: number | null }) {
-  const label = fromPriceLabel(paise, unit)
-  if (label === null || paise === null) return <span className="ds-meta">No professional yet</span>
+export function FromPrice({ paise, unit, mrp = null, fixed = false }: { paise: number | null; unit?: string; mrp?: number | null; fixed?: boolean }) {
+  const label = fromPriceLabel(paise, unit, fixed)
+  if (label === null || paise === null) return <span className="ds-meta">{fixed ? "Price not available" : "No professional yet"}</span>
   const off = percentOff(paise, mrp)
   return (
     <span>

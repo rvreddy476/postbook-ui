@@ -411,11 +411,11 @@ describe("slots and the hold", () => {
 describe("timeline and live frames", () => {
   const states = (b: Booking) => timeline(b).map((s) => [s.label, s.state])
 
-  it("draws the server's history, the last step current, then what is ahead", () => {
+  it("marks received payment complete and waits for actual professional acceptance", () => {
     expect(states(decodeBooking(fixtureData("booking_get_200"), STRICT))).toEqual([
       ["Booked", "done"],
-      ["Payment confirmed", "current"],
-      ["Professional assigned", "todo"],
+      ["Payment confirmed", "done"],
+      ["Awaiting professional acceptance", "current"],
       ["On the way", "todo"],
       ["Arrived", "todo"],
       ["Job started", "todo"],
@@ -426,6 +426,16 @@ describe("timeline and live frames", () => {
       ["Payment confirmed", "todo"],
     ])
     expect(timeline(decodeBooking(fixtureData("booking_get_200"), STRICT))[0].at).toBe("2026-10-04T06:30:00Z")
+  })
+
+  it("does not invent assignment or payment timestamps when history lags", () => {
+    const paid = booking({ status: "confirmed", status_history: [] })
+    expect(timeline(paid)[0]).toMatchObject({ label: "Payment confirmed", state: "done", at: null })
+    expect(timeline(paid)[1]).toMatchObject({ label: "Awaiting professional acceptance", state: "current", at: null })
+    expect(timeline(paid).some(s => s.status === "assigned" && s.state === "done")).toBe(false)
+    const assigned = booking({ status: "assigned", status_history: [step(null, "pending_payment"), step("pending_payment", "confirmed"), step("confirmed", "assigned")] })
+    expect(timeline(assigned).find(s => s.status === "assigned")?.state).toBe("done")
+    expect(timeline(assigned).find(s => s.state === "current")?.label).toBe("Waiting for your visit to begin")
   })
 
   it("ends an off-path booking with its own end, exactly as recorded", () => {

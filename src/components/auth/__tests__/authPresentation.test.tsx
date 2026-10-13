@@ -24,6 +24,11 @@ describe("auth presentation", () => {
     expect(html).toContain('aria-label="Create your VChat account"');
     expect(html).toContain('href="/login"');
   });
+  test("auth header keeps a safe partner destination through mode switches", () => {
+    expect(renderToStaticMarkup(<AuthShell mode="login" redirectTo="/doorstep/partner">Sign in</AuthShell>)).toContain('href="/register?redirect=%2Fdoorstep%2Fpartner"');
+    expect(renderToStaticMarkup(<AuthShell mode="register" redirectTo="/doorstep/partner">Register</AuthShell>)).toContain('href="/login?redirect=%2Fdoorstep%2Fpartner"');
+    expect(renderToStaticMarkup(<AuthShell mode="register" redirectTo="//outside.example">Register</AuthShell>)).toContain('href="/login"');
+  });
   test("errors announce themselves and escape server messages", () => {
     const html = renderToStaticMarkup(
       <AuthAlert id="error">{"<script>bad</script>"}</AuthAlert>,

@@ -5,6 +5,7 @@ import { User } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { RoleMenuLink } from '@/components/auth/RoleMenuLink';
 import { useMyProfile } from '@/hooks/useEditProfile';
 import { searchUsers } from '@/services/userService';
 import {
@@ -531,6 +532,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                     </div>
 
                                     <div className="mt-1 pt-1 border-t border-brand-divider/60">
+                                        <RoleMenuLink onClick={() => setIsProfileOpen(false)} />
                                         <button
                                             onClick={handleLogout}
                                             className="group w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-rose-50/50 transition-all text-rose-500"

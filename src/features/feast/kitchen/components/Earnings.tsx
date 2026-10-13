@@ -19,19 +19,20 @@ export function Earnings({ restaurantId }: { restaurantId: string }) {
           <Stat label="Orders" value={String(s.orders)} />
           <Stat label="Delivered" value={String(s.delivered)} />
           <Stat label="Refunded" value={String(s.refunded)} />
-          <Stat label="Gross sales" value={formatPaise(s.grossPaise)} />
+          <Stat label="Delivered supply" value={formatPaise(s.grossPaise)} />
           <Stat label="Feast commission" value={formatPaise(s.commissionPaise)} />
           <Stat label="Refunds" value={formatPaise(s.refundsPaise)} />
-          <Stat label="Your payout" value={formatPaise(s.payoutPaise)} />
+          <Stat label="All-time earned payout estimate" value={formatPaise(s.payoutPaise)} />
         </div>
       ) : summary.loading ? (
         <p className="kit-meta">Loading earnings…</p>
       ) : null}
 
       <section className="kit-card">
+        <p className="kit-meta">Estimates include delivered food supply and applicable tax deductions, not customer delivery or platform fees. Confirmed transfers are recorded below after reconciliation.</p>
         <h2 className="kit-card__title">Settlements</h2>
         <FailureNotice failure={settlements.failure} />
-        {settlements.data && settlements.data.length === 0 ? <div className="kit-empty">No settlements yet. They are made weekly once you have delivered orders.</div> : null}
+        {settlements.data && settlements.data.length === 0 ? <div className="kit-empty">No settlements yet. Eligible delivered orders will appear when a settlement period is prepared.</div> : null}
         {settlements.data && settlements.data.length > 0 ? (
           <div className="kit-table-wrap">
             <table className="kit-table">

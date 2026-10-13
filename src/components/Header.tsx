@@ -27,6 +27,7 @@ import { playNotificationSound } from '@/hooks/useNotificationSound';
 import { useGlobalToast } from '@/contexts/ToastContext';
 import './header.css';
 import { resolveAppBrand } from '@/lib/appBrand';
+import { RoleMenuLink } from '@/components/auth/RoleMenuLink';
 import { useFeedSearchAlignment } from './feed/useFeedSearchAlignment';
 
 /**
@@ -884,6 +885,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                 </div>
 
                 {/* 3. Session Section */}
+                <RoleMenuLink onClick={() => setIsProfileOpen(false)} />
                 <div className="mt-1 pt-1 border-t border-brand-divider/60">
                   <button
                     onClick={onLogout}

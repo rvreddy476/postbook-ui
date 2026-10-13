@@ -285,6 +285,12 @@ export const logoutUser = () => {
   authRepository.logout();
 };
 
+/** Server logout is the following navigation, not a competing background request. */
+export const prepareLogoutNavigation = () => {
+  noteOfflineSignOut(authRepository.getSessionUser()?.id);
+  authRepository.prepareLogoutNavigation();
+};
+
 export const getSession = (): User | null => {
   return authRepository.getSessionUser();
 };

@@ -23,25 +23,27 @@
 */
 
 import { useQueryClient } from "@tanstack/react-query"
-import { ArrowLeft, CalendarClock, ReceiptText, UserRound, Zap } from "lucide-react"
+import { CalendarClock, ReceiptText, Zap } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 
 import { createBooking, openBookingPaymentIntent, toDoorstepError } from "../api/client"
 import { HoldCountdown, useNow } from "../components/HoldCountdown"
-import { DuesBanner, ErrorState, QuoteBill, Skel, StateBlock } from "../components/parts"
+import { DuesBanner, ErrorState, Skel, StateBlock } from "../components/parts"
 import { PayPanel } from "../components/PayPanel"
 import { SlotPicker } from "../components/SlotPicker"
+import { BookingHeading } from "../components/BookingJourney"
+import { CheckoutReview } from "../components/CheckoutReview"
 import { DOORSTEP, keys, useAddresses, useBooking, useOutstanding, useQuote } from "../hooks/queries"
 import { addressLine } from "../model/address"
 import { attemptSignature, bookWithSavedKey, clearAttempt, readAttempt } from "../model/bookingAttempt"
-import { formatPaise } from "../model/money"
 import { bookingBody, prosHref, selectionFromQuote } from "../model/professionals"
 import { refusalLine } from "../model/refusals"
-import { formatDuration } from "../model/selection"
 import { formatSlot, formatTime, holdExpired } from "../model/slots"
 import type { Booking, PaymentIntent } from "../model/wire"
+import { useCurrentLocation } from "@/features/maps/CurrentLocation"
+import { sameCurrentPin } from "@/features/maps/useCurrentAddress"
 
 function localStore(): Storage | null {
   try {
@@ -72,7 +74,7 @@ function PayStep({ booking, intent }: { booking: Booking; intent: PaymentIntent 
   }, [lapsed])
 
   return (
-    <div className="ds-stack">
+    <div className="ds-stack dsc-payment-stage">
       <section className="ds-card" aria-label="Your booking">
         <h2 className="ds-h2">{booking.serviceName}</h2>
         {booking.professional ? <p style={{ margin: 0 }}>With {booking.professional.firstName}</p> : null}
@@ -96,7 +98,7 @@ function PayStep({ booking, intent }: { booking: Booking; intent: PaymentIntent 
         amountPaise={booking.totalPaise}
         autoIntent={lapsed ? null : intent}
         readFirst={!intent}
-        disabled={lapsed ? "The hold lapsed. Go back to the service and pick a professional again." : null}
+        disabled={lapsed ? "The payment window has closed. Return to the service to request a new appointment." : null}
         onSettled={onSettled}
       />
       <Link href={`/doorstep/bookings/${encodeURIComponent(booking.id)}`} className="ds-link" style={{ fontSize: 12 }}>
@@ -108,9 +110,10 @@ function PayStep({ booking, intent }: { booking: Booking; intent: PaymentIntent 
 
 /** A booking made by an earlier press of Book, read back by id. */
 function PendingPay({ bookingId }: { bookingId: string }) {
-  const booking = useBooking(bookingId)
+  const booking = useBooking(bookingId, 5_000)
   if (booking.isLoading) return <Skel h={200} />
   if (booking.isError || !booking.data) return <ErrorState error={booking.error} what="Your booking" onRetry={() => void booking.refetch()} />
+  if (booking.data.status === "matching") return <StateBlock icon={<CalendarClock size={24} />} title="Finding an available professional" text="Your request has been sent. We’ll notify you when a professional accepts, then you can confirm payment. You haven’t been charged." action={<Link href={`/doorstep/bookings/${encodeURIComponent(bookingId)}`} className="ds-btn ds-btn--outline">View request</Link>} />
   if (booking.data.status !== "pending_payment") {
     return (
       <StateBlock
@@ -131,6 +134,8 @@ function PendingPay({ bookingId }: { bookingId: string }) {
 const PICK_AGAIN = new Set(["DOORSTEP_SLOT_TAKEN", "DOORSTEP_SLOT_UNAVAILABLE", "DOORSTEP_PRICE_UNAVAILABLE", "DOORSTEP_QUOTE_EXPIRED", "DOORSTEP_HOLD_EXPIRED"])
 
 export function CheckoutScreen() {
+  const { point } = useCurrentLocation()
+  const now = useNow(10_000)
   const params = useSearchParams()
   const quoteId = params.get("quote") ?? ""
   const addressId = params.get("address") ?? ""
@@ -156,18 +161,19 @@ export function CheckoutScreen() {
     if (a?.bookingId && a.signature.startsWith(`${quoteId}|`)) setPendingId(a.bookingId)
   }, [quoteId])
 
-  const address = (addresses.data ?? []).find((a) => a.id === addressId) ?? null
+  const address = (addresses.data ?? []).find((a) => a.id === addressId && point && sameCurrentPin(a.lat, a.lng, point)) ?? null
   const q = quote.data
+  const automatic = (made?.booking.assignmentMode ?? q?.assignmentMode) === "automatic"
 
   if (!quoteId || !addressId) {
     return <StateBlock icon={<ReceiptText size={22} />} title="Nothing to book" text="Choose a service first." action={<Link href="/doorstep" className="ds-btn ds-btn--primary ds-btn--sm">Browse services</Link>} />
   }
-  if (made) return <Shell back={null}><PayStep booking={made.booking} intent={made.intent} /></Shell>
-  if (pendingId) return <Shell back={null}><PendingPay bookingId={pendingId} /></Shell>
+  if (made) return <Shell back={null} automatic={automatic}>{made.booking.status === "matching" ? <PendingPay bookingId={made.booking.id} /> : <PayStep booking={made.booking} intent={made.intent} />}</Shell>
+  if (pendingId) return <Shell back={null} automatic={automatic}><PendingPay bookingId={pendingId} /></Shell>
 
   if (quote.isLoading || addresses.isLoading) {
     return (
-      <Shell back={null}>
+      <Shell back={null} automatic={automatic}>
         <div className="ds-grid2">
           <div className="ds-stack">
             <Skel h={80} />
@@ -178,21 +184,23 @@ export function CheckoutScreen() {
       </Shell>
     )
   }
-  if (quote.isError || !q) return <Shell back={null}><ErrorState error={quote.error} what="The price" onRetry={() => void quote.refetch()} /></Shell>
+  if (quote.isError || !q) return <Shell back={null} automatic={automatic}><ErrorState error={quote.error} what="The price" onRetry={() => void quote.refetch()} /></Shell>
 
-  const again = prosHref(q.serviceId, selectionFromQuote(q, female), addressId, { mode: asap ? "asap" : "scheduled", date: null, sort: "price" })
+  if (addresses.isError) return <Shell back={null} automatic={automatic}><ErrorState error={addresses.error} what="Your address" onRetry={() => void addresses.refetch()} /></Shell>
+
+  const again = automatic ? `/doorstep/s/${encodeURIComponent(q.serviceId)}?${selectionFromQuote(q, female)}` : prosHref(q.serviceId, selectionFromQuote(q, female), addressId, { mode: asap ? "asap" : "scheduled", date: null, sort: "price" })
   const scheduledAgain = prosHref(q.serviceId, selectionFromQuote(q, female), addressId, { mode: "scheduled", date: null, sort: "price" })
-  const expired = q.status !== "open" || Date.parse(q.expiresAt) <= Date.now()
+  const expired = q.status !== "open" || !Number.isFinite(Date.parse(q.expiresAt)) || Date.parse(q.expiresAt) <= now
   if (expired) {
     return (
-      <Shell back={again}>
+      <Shell back={again} automatic={automatic}>
         <StateBlock
           icon={<ReceiptText size={22} />}
           title="This price has expired"
           text="Prices hold for 15 minutes. Pick again; your choices are kept."
           action={
             <Link href={again} className="ds-btn ds-btn--primary ds-btn--sm">
-              Back to the professionals
+              {automatic ? "Review service" : "Back to the professionals"}
             </Link>
           }
         />
@@ -201,10 +209,11 @@ export function CheckoutScreen() {
   }
 
   const dues = (outstanding.data?.totalPaise ?? 0) > 0
-  const blocked = dues ? "Pay your dues to book again." : !address ? "That address is no longer saved. Go back and choose it again." : !asap && !slot ? "Pick a time." : null
+  const blocked = dues ? "Pay your dues to book again." : !address ? "Your location changed. Go back to the service to refresh the professionals and price." : !asap && !slot ? "Pick a time." : null
 
   const onBook = async () => {
     if (blocked || booking || !address || (!asap && !slot)) return
+    if (Date.parse(q.expiresAt) <= Date.now()) { setRefusal({ line: "This price has expired. Refresh your selection before paying.", pickAgain: true }); return }
     setBooking(true)
     setRefusal(null)
     const when = asap ? ({ asap: true } as const) : { slotStart: slot as string }
@@ -222,7 +231,7 @@ export function CheckoutScreen() {
       return
     }
     if (outcome.kind === "lost") {
-      setRefusal({ line: "We couldn't hear back about your booking. Check your connection and press Book again — you won't be booked twice.", pickAgain: false })
+      setRefusal({ line: "We couldn't hear back about your booking. Check your connection and continue again — you won't be booked twice.", pickAgain: false })
       return
     }
     const e = toDoorstepError(outcome.error)
@@ -238,113 +247,19 @@ export function CheckoutScreen() {
   }
 
   return (
-    <Shell back={again}>
+    <Shell back={again} automatic={automatic}>
       <DuesBanner outstanding={outstanding.data} />
-      <div className="ds-grid2">
-        <div className="ds-stack">
-          <section className="ds-card" aria-label="Your professional">
-            <div className="ds-pro">
-              <span className="ds-avatar" aria-hidden="true">
-                <UserRound size={20} />
-              </span>
-              <div className="ds-grow">
-                <strong>{proName || "Your professional"}</strong>
-                <span className="ds-meta" style={{ display: "block" }}>
-                  The job is offered to them only. If they can&apos;t take it, you choose someone else or get a full refund.
-                </span>
-              </div>
-              <Link href={again} className="ds-link" style={{ fontSize: 12 }}>
-                Change
-              </Link>
-            </div>
-          </section>
-
-          <section className="ds-card" aria-label="Visit address">
-            <div className="ds-row">
-              <h2 className="ds-h2 ds-grow">Visit address</h2>
-              <Link href="/doorstep/addresses" className="ds-link" style={{ fontSize: 12 }}>
-                Edit addresses
-              </Link>
-            </div>
-            {address ? (
-              <p style={{ margin: 0 }}>
-                <strong>{address.label}</strong>
-                <span className="ds-meta" style={{ display: "block" }}>
-                  {addressLine(address)}
-                </span>
-              </p>
-            ) : (
-              <p className="ds-alert">That address is no longer saved.</p>
-            )}
-            {female ? <p className="ds-note">You asked for a woman professional.</p> : null}
-          </section>
-
-          <section className="ds-card" aria-label="Time">
-            {asap ? (
-              <>
-                <h2 className="ds-h2 ds-row" style={{ gap: 6 }}>
-                  <Zap size={14} aria-hidden="true" /> As soon as possible
-                </h2>
-                <p style={{ margin: 0 }}>{eta ? `${proName || "Your professional"} can be there in about ${eta} minutes.` : "Today, as soon as your professional can get there."}</p>
-                <p className="ds-note">They have 3 minutes to accept once you&apos;ve paid. If they don&apos;t, you choose someone else or a later time, or get a full refund.</p>
-              </>
-            ) : (
-              <>
-                <h2 className="ds-h2">{proName ? `${proName}'s free times` : "Pick a time"}</h2>
-                <SlotPicker query={{ quoteId: q.id, addressId: address?.id, requireFemalePro: female }} enabled={Boolean(address)} value={slot} onChange={setSlot} />
-              </>
-            )}
-          </section>
-
-          <section className="ds-card">
-            <label className="ds-field">
-              Anything the professional should know? (optional)
-              <textarea className="ds-input" value={notes} maxLength={500} onChange={(e) => setNotes(e.target.value)} placeholder="Gate code, parking, pets…" />
-            </label>
-            <p className="ds-note">The professional sees only your locality until they accept the job.</p>
-          </section>
-        </div>
-
-        <aside className="ds-card ds-sticky" aria-label="Bill">
-          <h2 className="ds-h2">Bill</h2>
-          <QuoteBill lines={q.lines} totalPaise={q.totalPaise} taxablePaise={q.taxablePaise} taxPaise={q.taxPaise} note={q.taxNote} provisional={q.taxProvisional} />
-          <p className="ds-meta" style={{ margin: 0 }}>
-            About {formatDuration(q.durationMinutes)}
-            {asap ? " · as soon as possible" : slot ? ` · ${formatSlot(slot)}` : ""}
-          </p>
-          {refusal ? (
-            <div className="ds-alert ds-stack" role="alert" style={{ gap: 6 }}>
-              <span>{refusal.line}</span>
-              {refusal.pickAgain ? (
-                <Link href={asap ? scheduledAgain : again} className="ds-link">
-                  {asap ? "See the next free times" : "Pick again"}
-                </Link>
-              ) : null}
-            </div>
-          ) : null}
-          <button type="button" className="ds-btn ds-btn--primary ds-btn--block" onClick={() => void onBook()} disabled={Boolean(blocked) || booking}>
-            {booking ? "Holding your professional…" : `Book and pay ${formatPaise(q.totalPaise)}`}
-          </button>
-          {blocked && !booking ? <p className="ds-note">{blocked}</p> : null}
-          <p className="ds-note">Your professional is held for you for a few minutes while you pay. Online payment only. Free cancellation until they accept, or up to 3 hours before.</p>
-        </aside>
-      </div>
+      <CheckoutReview
+        quote={q} address={address} name={proName} female={female} asap={asap} eta={eta}
+        slot={slot} notes={notes} onNotes={setNotes} changeHref={again}
+        slotPicker={<SlotPicker query={{ quoteId: q.id, addressId: address?.id, requireFemalePro: female }} enabled={Boolean(address)} value={slot} onChange={setSlot} />}
+        busy={booking} blocked={blocked} onBook={() => void onBook()}
+        error={refusal ? <div className="ds-alert ds-stack" role="alert"><span>{refusal.line}</span>{refusal.pickAgain && <Link href={asap ? scheduledAgain : again} className="dsc-link">{asap ? "See available appointments" : "Review availability"}</Link>}</div> : null}
+      />
     </Shell>
   )
 }
 
-function Shell({ back, children }: { back: string | null; children: React.ReactNode }) {
-  return (
-    <>
-      <div className="ds-head">
-        <div className="ds-row">
-          <Link href={back ?? "/doorstep"} className="ds-back" aria-label="Back">
-            <ArrowLeft size={18} aria-hidden="true" />
-          </Link>
-          <h1 className="ds-title">Book</h1>
-        </div>
-      </div>
-      {children}
-    </>
-  )
+function Shell({ back, children, automatic = false }: { back: string | null; children: React.ReactNode; automatic?: boolean }) {
+  return <><BookingHeading active={automatic ? 1 : 2} automatic={automatic} title={automatic ? "Choose your appointment" : "Review your booking"} description={automatic ? "Choose a time. We’ll assign an available professional at your fixed service price." : "Your service, your time. One final check before payment."} back={back ?? "/doorstep"} backLabel={back && !automatic ? "Back to professionals" : "Back to services"} />{children}</>
 }

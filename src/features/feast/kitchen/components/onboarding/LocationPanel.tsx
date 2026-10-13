@@ -3,12 +3,13 @@
 /*
   Location: browser geolocation ONLY after a rationale the partner reads and
   accepts (the permission prompt is never the first thing they see), or the
-  coordinates typed by hand. No map key exists, so a calm placeholder stands
-  where a map would be, with a plain Google Maps search link to check the pin.
+  coordinates typed by hand. Google Maps and Places are optional, with a
+  plain Google Maps search link available to check the pin manually.
 */
 
 import { LocateFixed, MapPin } from "lucide-react"
 import { useEffect, useState } from "react"
+import { GoogleLocation } from "@/features/maps/GoogleLocation"
 
 import { fetchLocation, putLocation } from "../../api/client"
 import { toFailure, type ApiFailure } from "../../model/errors"
@@ -121,7 +122,8 @@ export function LocationPanel({ restaurantId, onSaved }: { restaurantId: string;
     <form className="kit-form kit-form--2" onSubmit={save} noValidate>
       <FailureNotice failure={loadFailure} />
       <div className="kit-span">
-        <div className="kit-map" aria-label="Map placeholder">
+        <GoogleLocation point={coordsOk ? { lat: latN, lng: lngN } : null} onPin={(p) => { setLat(String(p.lat)); setLng(String(p.lng)) }} onPlace={(p) => { setLat(String(p.lat)); setLng(String(p.lng)); setLine1(p.address); setCity(p.city); if (LOCATION_STATE_NAMES.includes(p.state)) setState(p.state); setPostal(p.postalCode) }} label="Kitchen location" />
+        <div className="kit-map" aria-label="Location details">
           <MapPin size={18} aria-hidden />
           {coordsOk ? (
             <>

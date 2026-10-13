@@ -8,6 +8,7 @@ import { chooseTheme, readThemeChoice, type ThemeChoice } from "@/features/video
 import { useShopSession } from "../hooks/storefront"
 import { SHOP_BASE, STORE_NAME, signInHref } from "../model/storefront"
 import { ShopHeader } from "./ShopHeader"
+import { PortalLink } from "@/components/auth/PortalLink"
 
 const LINKS = [
   { label: "Shop", href: SHOP_BASE, icon: Store, public: true },
@@ -38,6 +39,11 @@ function Appearance() {
 
 /** Commerce-specific navigation, with the same compact icon/label treatment as Reels. */
 export function ShopFrame({ children, context = "shop" }: { children: React.ReactNode; context?: "shop" | "live" }) {
+  const pathname = usePathname() || ""
+  if (pathname === "/shop/sell" || pathname.startsWith("/shop/sell/")) return <>{children}</>
+  return <CustomerShopFrame context={context}>{children}</CustomerShopFrame>
+}
+function CustomerShopFrame({ children, context }: { children: React.ReactNode; context: "shop" | "live" }) {
   const pathname = usePathname()
   const { signedIn, known } = useShopSession()
   const [open, setOpen] = useState(false)
@@ -95,7 +101,7 @@ export function ShopFrame({ children, context = "shop" }: { children: React.Reac
             ))}
           </nav>
           <div className="shop-sidebar__bottom">
-            <Link href={gated(`${SHOP_BASE}/sell`)} className="shop-nav-link shop-nav-link--sell" aria-label={`Sell on ${STORE_NAME}`} title={`Sell on ${STORE_NAME}`}><Store size={20} aria-hidden="true" /><span>Seller workspace</span></Link>
+            <PortalLink href={`${SHOP_BASE}/sell`} className="shop-nav-link shop-nav-link--sell" aria-label={`Sell on ${STORE_NAME}`} title={`Sell on ${STORE_NAME}`}><Store size={20} aria-hidden="true" /><span>Seller workspace</span></PortalLink>
             <Appearance />
           </div>
         </aside>

@@ -1,26 +1,28 @@
 "use client"
 
 /*
-  Doorstep uses the shared workspace chrome (the Reels shell, as Feast and
-  Pulse do) with its own customer navigation. WorkspaceShell's `kind` and the
-  app-brand table do not list Doorstep yet, so the frame composes the same
-  parts with Doorstep's own brand rather than editing those shared files.
+  Customer and partner pages have separate light-theme shells.
+  Authentication, registered-business navigation and onboarding rules are unchanged.
 */
 
 import { CalendarCheck, CircleDollarSign, House, MapPin, Wrench } from "lucide-react"
 import type { ReactNode } from "react"
+import { usePathname } from "next/navigation"
+import { CurrentLocationBoundary, CurrentLocationGate } from "@/features/maps/CurrentLocation"
+import { locationRequired } from "@/features/maps/locationController"
+import { NearbyServices } from "./NearbyServices"
+import { StorefrontFrame } from "./StorefrontFrame"
 
 import "../doorstep.css"
+import "../partner/partner.css"
 
-import { HeaderBar } from "@/features/reels/components/HeaderBar"
-import { VideoShell } from "@/features/video-shell/VideoShell"
-import { WorkspaceNavigation } from "@/features/video-shell/WorkspaceShell"
+import { PartnerFrame } from "../partner/PartnerFrame"
 import type { WorkspaceLink } from "@/features/video-shell/workspaceNavigation"
 import type { AppBrand } from "@/lib/appBrand"
 
-import "@/features/video-shell/workspace.css"
 
 import { useOutstanding } from "../hooks/queries"
+import { useAuthUser } from "@/store/auth"
 
 export const DOORSTEP_BRAND: AppBrand = {
   key: "doorstep",
@@ -39,26 +41,15 @@ export const DOORSTEP_LINKS: readonly WorkspaceLink[] = [
   { label: "Dues", href: "/doorstep/outstanding", icon: CircleDollarSign },
 ]
 
-export function DoorstepFrame({ children }: { children: ReactNode }) {
-  const dues = useOutstanding()
-  const count = dues.data?.bills.length ?? 0
-  const links = DOORSTEP_LINKS.map((l) => (l.href === "/doorstep/outstanding" && count ? { ...l, count } : l))
-  return (
-    <div className="service-workspace" data-workspace="doorstep">
-      <a className="workspace-skip" href="#workspace-content">
-        Skip to content
-      </a>
-      <VideoShell
-        app="workspace"
-        header={<HeaderBar hideSearch hideCreate brand={DOORSTEP_BRAND} />}
-        navigation={(props) => <WorkspaceNavigation {...props} links={links} title="Home services" />}
-      >
-        <div id="workspace-content" tabIndex={-1} className="workspace-content">
-          <div className="ds-zone">
-            <section className="ds-main">{children}</section>
-          </div>
-        </div>
-      </VideoShell>
-    </div>
-  )
+export function DoorstepFrame({ children, partner = false }: { children: ReactNode; partner?: boolean }) {
+  const user = useAuthUser()
+  const pathname = usePathname()
+  const needsLocation = !partner && locationRequired(pathname, "doorstep")
+  const dues = useOutstanding(Boolean(user) && !partner)
+  const count = user && !partner ? dues.data?.bills.length ?? 0 : 0
+  if (!partner) {
+    const customer = <StorefrontFrame needsLocation={needsLocation} duesCount={count}>{needsLocation ? <CurrentLocationGate><NearbyServices>{children}</NearbyServices></CurrentLocationGate> : children}</StorefrontFrame>
+    return needsLocation ? <CurrentLocationBoundary gate={false}>{customer}</CurrentLocationBoundary> : customer
+  }
+  return <PartnerFrame>{children}</PartnerFrame>
 }

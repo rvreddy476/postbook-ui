@@ -13,7 +13,9 @@
 */
 
 import { useQueryClient } from "@tanstack/react-query"
-import { ArrowLeft, CalendarClock, KeyRound, MapPin, MessageCircle, Star, UserRound } from "lucide-react"
+import { freshLocation } from "@/lib/customerTracking"
+import { GoogleLocation } from "@/features/maps/GoogleLocation"
+import { ArrowLeft, CalendarClock, Check, KeyRound, MapPin, MessageCircle, Star, UserRound } from "lucide-react"
 import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
 
@@ -53,6 +55,8 @@ function OtpCard({ booking }: { booking: Booking }) {
 }
 
 function ProCard({ booking, fix }: { booking: Booking; fix: ProFix | null }) {
+  const now = useNow()
+  const recentFix = fix && freshLocation({ lat: fix.lat, lng: fix.lng, recorded_at: fix.at }, now) ? fix : null
   const pro = booking.professional
   if (!pro) return null
   return (
@@ -61,6 +65,7 @@ function ProCard({ booking, fix }: { booking: Booking; fix: ProFix | null }) {
         {pro.photoMediaId ? <MediaImg mediaId={pro.photoMediaId} alt={pro.firstName} className="ds-avatar" /> : <span className="ds-avatar" aria-hidden="true"><UserRound size={20} /></span>}
         <div className="ds-grow">
           <strong>{pro.firstName}</strong>
+          {booking.status === "confirmed" && <span className="ds-meta" style={{ display: "block" }}>Awaiting acceptance · not assigned yet</span>}
           <span className="ds-meta ds-row" style={{ gap: 4 }}>
             {pro.ratingAvg !== null ? (
               <>
@@ -76,25 +81,27 @@ function ProCard({ booking, fix }: { booking: Booking; fix: ProFix | null }) {
           </Link>
         ) : null}
       </div>
-      {booking.status === "en_route" && fix?.etaMinutes !== null && fix?.etaMinutes !== undefined ? (
+      {booking.status === "en_route" && recentFix?.etaMinutes !== null && recentFix?.etaMinutes !== undefined ? (
         <p className="ds-info">
-          Arriving in about {fix.etaMinutes} min · updated {formatTime(fix.at)}
+          Arriving in about {recentFix.etaMinutes} min · updated {formatTime(recentFix.at)}
         </p>
       ) : null}
-      <p className="ds-note">Calls stay in the app: chat with your professional here. Their number is never shared, nor is yours.</p>
+      {booking.status === "en_route" ? recentFix ? <GoogleLocation label="Professional location" points={[{ point: { lat: recentFix.lat, lng: recentFix.lng }, label: 'Your professional' }]} /> : <p className="ds-note">Waiting for a recent professional location.</p> : null}
+      <p className="ds-note">Your verified mobile number is shared with the assigned professional during your active booking, for directions and service coordination.</p>
     </section>
   )
 }
 
 /** The server's status_history, oldest first, then what is still ahead (model/booking.ts timeline). */
-function Timeline({ booking }: { booking: Booking }) {
+export function Timeline({ booking }: { booking: Booking }) {
   return (
     <ol className="ds-steps" aria-label="Progress">
       {timeline(booking).map((s, i) => (
         <li key={`${i}-${s.status}`} className={`ds-step is-${s.state}`} aria-current={s.state === "current" ? "step" : undefined}>
-          <span className="ds-step__dot" aria-hidden="true" />
+          <span className="ds-step__dot" aria-hidden="true">{s.state === "done" && <Check size={12} strokeWidth={3} />}</span>
           <span>
             {s.label}
+            <span className="sr-only">{s.state === "done" ? " · Complete" : s.state === "current" ? " · Current step" : s.state === "todo" ? " · Upcoming" : " · Stopped"}</span>
             {s.at ? (
               <span className="ds-meta" style={{ display: "block", fontWeight: 400 }}>
                 {formatWhen(s.at)}
@@ -214,6 +221,7 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
   const live = Boolean(b && isLive(b.status))
 
   const onChange = useCallback(() => {
+    setFix(null)
     void qc.invalidateQueries({ queryKey: keys.booking(bookingId) })
     void qc.invalidateQueries({ queryKey: keys.extras(bookingId) })
     void qc.invalidateQueries({ queryKey: keys.extrasBill(bookingId) })
@@ -263,6 +271,7 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
       <div className="ds-grid2">
         <div className="ds-stack">
           {b.status === "pending_payment" ? <PendingPayment booking={b} /> : null}
+          {b.status === "matching" && <section className="ds-card" role="status"><h2 className="ds-h2">Finding your professional</h2><p>{b.paidPaise > 0 ? "We’re finding a replacement at the same price. You won’t be charged again. If no professional accepts, we’ll cancel the booking and request a full refund." : "We’ve sent your request to available professionals. You’ll be notified when someone accepts, then you can pay to confirm. No payment has been taken."}</p></section>}
           <OtpCard booking={b} />
           <ProCard booking={b} fix={fix} />
           {showExtras ? <ExtrasPanel booking={b} refetchInterval={live ? interval : false} /> : null}

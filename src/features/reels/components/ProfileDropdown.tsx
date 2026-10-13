@@ -7,7 +7,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { User, Settings, Bookmark, LogOut } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import { useMyProfile } from "@/hooks/useEditProfile";
-import { logoutUser } from '@/services/authService';
+import { RoleMenuLink } from '@/components/auth/RoleMenuLink';
+import { roleForPath } from '@/components/auth/portalRoles';
+import { PortalLink } from '@/components/auth/PortalLink';
+import { prepareLogoutNavigation } from '@/services/authService';
+import { usePartnerPortal } from '@/components/auth/usePartnerPortal';
 
 export interface ProfileDropdownProps {
   /**
@@ -43,6 +47,9 @@ export function ProfileDropdown({ size = "md" }: ProfileDropdownProps) {
   }, [open, handleClickOutside]);
 
   const pathname = usePathname();
+  const portal = roleForPath(pathname ?? "/");
+  const partnerPortal = usePartnerPortal();
+  const isPartner = partnerPortal || portal.id.endsWith("-partner");
   const isPosttube = pathname?.startsWith("/posttube") || pathname?.startsWith("/reels");
 
   const menuItems = [
@@ -117,7 +124,7 @@ export function ProfileDropdown({ size = "md" }: ProfileDropdownProps) {
 
             {/* Menu */}
             <div className="space-y-0.5">
-              {menuItems.map((item) => (
+              {(isPartner ? [{ label: "My businesses", href: "/partners", icon: User, hoverColor: "" }] : menuItems).map((item) => (
                 <Link key={item.href} href={item.href} onClick={() => setOpen(false)}>
                   <div className="group flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 transition-all hover:bg-brand-secondary">
                     <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-brand-secondary text-brand-text/60 transition-colors ${item.hoverColor}`}>
@@ -132,12 +139,14 @@ export function ProfileDropdown({ size = "md" }: ProfileDropdownProps) {
             </div>
 
             {/* Logout */}
+            <RoleMenuLink onClick={() => setOpen(false)} />
+            {isPartner && <PortalLink href="/" className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold">Switch to customer</PortalLink>}
             <div className="mt-1 border-t border-brand-divider/60 pt-1">
               <button
                 type="button"
                 onClick={() => {
                   setOpen(false);
-                  logoutUser();
+                  prepareLogoutNavigation();
                   window.location.assign("/api/auth/logout");
                 }}
                 className="group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-rose-500 transition-all hover:bg-rose-50/50"

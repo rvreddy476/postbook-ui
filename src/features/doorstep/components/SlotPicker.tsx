@@ -22,8 +22,8 @@ export function SlotPicker({ query, enabled, value, onChange }: { query: SlotQue
   // Start on the first day with an open slot.
   useEffect(() => {
     if (!data) return
-    if (!day || !data.days.some((d) => d.date === day)) setDay(firstOpenDate(data))
-  }, [data, day])
+    if (!day || !data.days.some((d) => d.date === day)) setDay(data.days.find(d => d.slots.some(s => s.start === value))?.date ?? firstOpenDate(data))
+  }, [data, day, value])
 
   // A picked slot that someone else took disappears from the selection.
   useEffect(() => {
@@ -48,7 +48,7 @@ export function SlotPicker({ query, enabled, value, onChange }: { query: SlotQue
   const open = openSlots(current)
 
   if (!strip.some((d) => d.open > 0)) {
-    return <StateBlock icon={<CalendarX2 size={22} />} title="No slots right now" text="Every professional near you is booked for the coming days. Check again later." />
+    return <StateBlock icon={<CalendarX2 size={22} />} title="No appointments available" text="There are no available times for this selection. Try a different professional or check again later." />
   }
 
   return (
@@ -80,7 +80,7 @@ export function SlotPicker({ query, enabled, value, onChange }: { query: SlotQue
       ) : (
         <p className="ds-note">This day is fully booked. Pick another day.</p>
       )}
-      <p className="ds-note">Times are in Hyderabad time. Availability is confirmed when you submit.</p>
+      <p className="ds-note">Times are in India Standard Time. Availability is checked again when you continue.</p>
     </div>
   )
 }

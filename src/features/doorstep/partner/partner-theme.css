@@ -1,0 +1,110 @@
+/* The partner workspace shares Doorstep's white / turquoise visual language.
+   Only presentation changes here; approval and verification rules stay intact. */
+.dsp-shell.dsp-home-style {
+  --brand-text: 67 67 67; --text-muted: 102 102 102; --brand-card: 255 255 255;
+  --brand-bg: 249 250 250; --canvas: 249 250 250; --brand-secondary: 246 248 248;
+  --brand-tint: 233 248 250; --brand-outline: 188 220 224;
+  --brand-ink: 0 124 140; --brand-ink-hover: 0 100 115; --brand-accent: 0 183 207;
+  --brand-divider: rgb(67 67 67 / .14); --info: 0 124 140;
+  font-family: var(--font-doorstep, "Helvetica Neue"), Helvetica, Arial, sans-serif;
+  font-size: 15px; line-height: 1.6;
+}
+.dsp-home-style :is(button,input,select,textarea) { font-family: inherit; }
+.dsp-home-style :is(button,a,input,select,summary):focus-visible { outline-color: #007c8c; }
+.dsp-home-style .dsp-header { min-height: 66px; padding: 10px 26px; gap: 26px; position: sticky; top: 0; z-index: 40; }
+.dsp-home-style .dsp-brand { flex-basis: 184px; font-size: 21px; color: #007c8c; gap: 10px; }
+.dsp-home-style .dsp-brand>span { background: none; color: #00abc2; width: 28px; height: 32px; border-radius: 0; }
+.dsp-home-style .dsp-brand small { font-size: 8px; letter-spacing: 1.35px; font-weight: 500; color: #666; }
+.dsp-home-style .dsp-header__context { color: #777; font-size: 12px; }
+.dsp-home-style .dsp-header__context strong { color: #434343; }
+.dsp-header-help { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: #666; min-height: 44px; }
+.dsp-notification-bell { width: 44px; height: 44px; display: grid; place-items: center; position: relative; color: #555; border-radius: 4px; }
+.dsp-notification-bell:hover { background: #edf8f9; }
+.dsp-notification-bell>span { position: absolute; right: 1px; top: 2px; min-width: 17px; height: 17px; padding-inline: 3px; background: #007c8c; color: #fff; border-radius: 12px; font-size: 9px; display: grid; place-items: center; }
+.dsp-home-style .dsp-menu-toggle { border-radius: 4px; color: #555; }
+.dsp-home-style .dsp-layout { min-height: calc(100dvh - 66px); }
+.dsp-home-style .dsp-navigation { padding: 30px 16px; }
+.dsp-home-style .dsp-nav-label { font-weight: 500; color: #777; letter-spacing: 1px; }
+.dsp-home-style .dsp-navigation .video-nav__item { color: #555; font-weight: 400; border-radius: 3px; }
+.dsp-home-style .dsp-navigation .video-nav__item.is-current { background: #e9f8fa; color: #007c8c; font-weight: 600; box-shadow: inset 3px 0 #00b7cf; }
+.dsp-home-style .dsp-navigation .partner-business-menu__sections { border-color: #deebec; }
+.dsp-home-style .dsp-navigation .partner-business-menu__sections a.is-current { background: #eff9fa; color: #007c8c; border-radius: 3px; }
+.dsp-home-style .dsp-nav-footer,.dsp-home-style .dsp-nav-footer p { color: #777; }
+.dsp-home-style .dsp-nav-dot { background: #00b7cf; }
+.dsp-home-style .dsp-page-heading h1 { color: #434343; font-weight: 700; letter-spacing: -.025em; }
+.dsp-home-style .dsp-eyebrow { color: #007c8c; font-weight: 500; }
+.dsp-home-style :is(.dsp-page-heading>div>p:last-child,.dsp-locality,.dsp-inline-note) { color: #666; }
+.dsp-home-style .ds-partner .ds-card { border-radius: 5px; box-shadow: 0 2px 5px #00000004; }
+.dsp-home-style .ds-partner .ds-btn { border-radius: 4px; font-size: 14px; font-weight: 600; }
+.dsp-home-style .ds-partner .ds-input { border-color: #d9dede; border-radius: 4px; background: #fff; min-height: 48px; }
+.dsp-home-style .ds-partner :is(.ds-alert,.ds-info,.ds-area-layout,.ds-area-notice,.ds-choice,.ds-setup-warning,.ds-partner-error,.ds-partner-price) { border-radius: 4px; }
+.dsp-home-style :is(.dsp-ready,.dsp-quick-links>a,.dsp-earnings-hero,.dsp-price-overview,.dsp-job-icon,.dsp-empty>span) { border-radius: 4px; }
+.dsp-home-style :is(.dsp-metric__icon,.dsp-job-icon,.dsp-empty>span) { background: #edf8f9; color: #007c8c; border-radius: 4px; }
+.dsp-home-style .dsp-quick-links>a { border-color: #dee8e9; color: #007c8c; }
+.dsp-home-style .dsp-quick-links>a:hover { background: #f7fcfc; border-color: #9ed6dc; }
+.dsp-home-style :is(.dsp-quick-links strong,.dsp-job-details h3) { color: #434343; }
+.dsp-home-style :is(.dsp-link,.dsp-filters [aria-pressed=true]) { color: #007c8c; }
+.dsp-home-style .dsp-filters,.dsp-home-style .dsp-filters button { border-radius: 4px; }
+.dsp-home-style .dsp-earnings-hero { background: #eef9fa; border-color: #cfe7e9; }
+.dsp-home-style .ds-partner-price { background: #fafcfc; border-color: #e0e7e8; }
+.dsp-home-style .ds-partner-checklist li button { border-radius: 4px; }
+.dsp-home-style .ds-application-wizard { max-width: 1000px; width: 100%; margin: 0 auto; gap: 28px; }
+.dsp-home-style .ds-application-wizard>header { padding-bottom: 24px; border-bottom: 1px solid var(--brand-divider); }
+.dsp-home-style .ds-application-wizard>header h1 { font-size: clamp(28px,3vw,38px); line-height: 1.25; letter-spacing: -.03em; font-weight: 700; margin: 8px 0 10px; }
+.dsp-home-style .ds-intake-steps { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 8px; margin: 0; padding: 0 0 25px; border-bottom: 1px solid var(--brand-divider); list-style: none; }
+.dsp-home-style .ds-intake-steps li { min-width: 0; }
+.dsp-home-style .ds-intake-steps button { display: flex; align-items: center; gap: 9px; min-height: 44px; width: 100%; padding: 6px; border: 0; background: none; color: #777; font-size: 12px; }
+.dsp-home-style .ds-intake-steps button>span { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid #d9e4e5; border-radius: 50%; flex: none; background: #fff; }
+.dsp-home-style .ds-intake-steps [aria-current=step] button { color: #007c8c; font-weight: 600; }
+.dsp-home-style .ds-intake-steps [aria-current=step] button>span { background: #007c8c; color: #fff; border-color: #007c8c; }
+.dsp-home-style .ds-partner-fields { border: 0; margin: 0; padding: 0; min-width: 0; }
+.dsp-home-style .ds-application-wizard .ds-stack { gap: 22px; }
+.dsp-home-style .ds-application-wizard>form { scroll-margin-top: 88px; }
+.dsp-home-style .partner-introduction__grid>section { border-radius: 4px; border-color: #dce4e5; background: #fafcfc; }
+.dsp-home-style .partner-introduction input[type=file] { width: 100%; min-width: 0; font-size: 12px; }
+.dsp-home-style .partner-introduction input[type=file]::file-selector-button { padding: 10px 12px; margin-right: 10px; border: 0; border-radius: 3px; background: #e8f6f8; color: #007c8c; font: inherit; font-weight: 600; cursor: pointer; }
+.dsp-home-style .ds-service-picker { display: grid; gap: 16px; border: 0; padding: 0; min-width: 0; }
+.dsp-home-style .ds-service-picker legend { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.dsp-home-style .ds-service-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; max-height: 340px; overflow-y: auto; padding: 3px; }
+.dsp-home-style .ds-service-options label { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 1px solid #dce4e5; border-radius: 4px; cursor: pointer; font-size: 14px; }
+.dsp-home-style .ds-service-options input { margin-top: 3px; }
+.dsp-home-style .ds-service-options small { display: block; margin-top: 4px; color: #777; font-size: 12px; line-height: 1.5; }
+.dsp-home-style .ds-service-options label.is-selected { background: #f1fafb; border-color: #00a6ba; }
+.dsp-home-style .ds-partner-file { border: 1px dashed #a3cfd4; border-radius: 4px; background: #f8fcfc; font-size: 13px; width: 100%; min-width: 0; }
+.dsp-home-style .ds-partner-file::file-selector-button { border-radius: 3px; background: #e8f6f8; color: #007c8c; padding: 10px 14px; border: 0; margin-right: 12px; font: inherit; font-weight: 600; cursor: pointer; }
+.dsp-home-style .ds-intake-review { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 14px 20px; padding: 22px; background: #f8fbfb; border: 1px solid #dfe8e8; border-radius: 4px; }
+.dsp-home-style .ds-intake-review dt { color: #777; font-size: 13px; }.dsp-home-style .ds-intake-review dd { margin: 0; overflow-wrap: anywhere; font-size: 14px; }
+.dsp-home-style .ds-application-consent { display: flex; gap: 12px; font-size: 13px; align-items: flex-start; }.dsp-home-style .ds-application-consent input { margin-top: 3px; }
+.dsp-notification-list { display: grid; gap: 12px; list-style: none; margin: 0; padding: 0; }
+.dsp-notification-list li { padding: 18px 20px; border: 1px solid #e0e6e6; background: #fff; border-radius: 4px; }
+.dsp-notification-list li[data-unread=true] { border-left: 3px solid #00b7cf; background: #f9fdfd; }
+.dsp-notification-list strong { font-size: 14px; font-weight: 600; }.dsp-notification-list p { margin: 5px 0; font-size: 13px; color: #666; }.dsp-notification-list time { font-size: 11px; color: #777; }
+.dsp-notification-list a { display: block; color: #434343; }
+.dsp-notifications { display: grid; gap: 22px; }
+.dsp-notifications .ds-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+.dsp-notifications .ds-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 16px; border: 1px solid #bcdce0; border-radius: 4px; background: white; color: #007c8c; font-size: 13px; font-weight: 600; width: fit-content; }
+.dsp-notifications .ds-button:disabled { opacity: .6; }
+.dsp-notifications li { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.dsp-notifications li>div { flex: 1 1 240px; min-width: 0; }
+.dsp-unread-dot { display: inline-block; width: 7px; height: 7px; margin-left: 8px; border-radius: 50%; background: #007c8c; }
+@media(max-width:850px) {
+  .dsp-home-style .dsp-header { padding: 10px 16px; gap: 12px; }
+  .dsp-home-style .dsp-brand { flex-basis: auto; }
+  .dsp-home-style .dsp-header-help { display: none; }
+  .dsp-home-style .dsp-header__actions { gap: 8px; }
+  .dsp-home-style .ds-intake-steps { display: flex; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 18px; }
+  .dsp-home-style .ds-intake-steps li { flex: none; }.dsp-home-style .ds-intake-steps button { padding-inline: 8px; }
+}
+@media(max-width:599px) {
+  .dsp-home-style .dsp-brand { font-size: 18px; }.dsp-home-style .dsp-brand small { font-size: 7px; }
+  .dsp-home-style .dsp-content { padding: 22px 14px 40px; }
+  .dsp-home-style .ds-partner .ds-application-wizard { padding: 24px 18px; }
+  .dsp-home-style .ds-service-options { grid-template-columns: 1fr; max-height: 360px; }
+  .dsp-home-style .ds-intake-review { grid-template-columns: 1fr; gap: 4px; padding: 18px; }.dsp-home-style .ds-intake-review dd { margin-bottom: 12px; }
+  .dsp-home-style .ds-partner-form-footer { display: flex; flex-wrap: nowrap; gap: 12px; }.dsp-home-style .ds-partner-form-footer>.ds-btn { width: auto; padding-inline: 14px; }.dsp-home-style .ds-partner-form-footer>.ds-btn:last-child { margin-left: auto; }
+  .dsp-home-style .ds-partner .ds-input { font-size: 16px; }
+}
+.dsp-home-style .dsp-offer { display:flex; justify-content:space-between; gap:24px; padding:20px 0; border-top:1px solid #e6e9eb; }
+.dsp-home-style .dsp-offer p { display:flex; align-items:center; gap:6px; margin:8px 0; }
+.dsp-home-style .dsp-offer > div:last-child { display:flex; flex-direction:column; justify-content:center; gap:12px; }
+@media (max-width:600px) { .dsp-home-style .dsp-offer { flex-direction:column; gap:12px; } }

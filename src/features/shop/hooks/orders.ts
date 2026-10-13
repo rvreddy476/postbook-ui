@@ -30,7 +30,9 @@ export function useOrder(orderId: string, options: { refetchIntervalMs?: number 
     queryKey: orderDetailKey(orderId),
     enabled: !!orderId,
     queryFn: async () => toOrderDetail(await fetchOrder(orderId)),
-    refetchInterval: options.refetchIntervalMs || false,
+    refetchInterval: options.refetchIntervalMs || 5_000,
+    refetchOnWindowFocus: "always",
+    refetchOnReconnect: "always",
   })
 }
 
@@ -39,6 +41,9 @@ export function useShipments(orderId: string, enabled = true) {
     queryKey: orderShipmentsKey(orderId),
     enabled: !!orderId && enabled,
     queryFn: async () => (await fetchShipments(orderId)).shipments || [],
+    refetchInterval: 5_000,
+    refetchOnWindowFocus: "always",
+    refetchOnReconnect: "always",
   })
 }
 

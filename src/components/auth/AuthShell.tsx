@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   ArrowUpRight,
+  BriefcaseBusiness,
   MessageCircle,
   Moon,
   Sparkles,
@@ -11,6 +12,10 @@ import {
   Users,
 } from "lucide-react";
 import "./auth.css";
+import { authRedirect } from "./authRedirect";
+import { partnerForDestination } from "./portalRoles";
+import { RoleMenuLink } from "./RoleMenuLink";
+import { CUSTOMER_ORIGIN, partnerAuthHref, type BusinessPartnerId } from "./partnerPortal";
 
 /** Auth pages share the same theme preference as the signed-in header. */
 function AppearanceToggle() {
@@ -50,31 +55,42 @@ function AppearanceToggle() {
 export function AuthShell({
   children,
   mode,
+  redirectTo,
+  partnerPortal = false,
+  businessIds = [],
 }: {
   children: ReactNode;
   mode: "login" | "register";
+  redirectTo?: string;
+  partnerPortal?: boolean;
+  businessIds?: readonly BusinessPartnerId[];
 }) {
+  const destination = authRedirect(redirectTo ?? null);
+  const partnerType = partnerForDestination(destination);
+  const partner = partnerPortal || partnerType;
+  const switchHref = partnerPortal ? partnerAuthHref(mode === "login" ? "register" : "login", businessIds, destination) : `${mode === "login" ? "/register" : "/login"}${destination === "/" ? "" : `?redirect=${encodeURIComponent(destination)}`}`;
   return (
     <div className="auth-page">
       <a href="#auth-form" className="auth-skip-link">
         Skip to form
       </a>
       <header className="auth-header">
-        <Link href="/" className="auth-wordmark" aria-label="VChat home">
+        <Link href={partnerPortal ? "/partners" : "/"} className="auth-wordmark" aria-label={partnerPortal ? "Clee Partners home" : "VChat home"}>
           <span className="auth-brand-mark">
-            <MessageCircle size={21} strokeWidth={2.2} aria-hidden="true" />
+            {partnerPortal ? <BriefcaseBusiness size={21} strokeWidth={2.2} aria-hidden="true" /> : <MessageCircle size={21} strokeWidth={2.2} aria-hidden="true" />}
           </span>
-          VChat
+          {partnerPortal ? "Clee Partners" : "VChat"}
           <span className="auth-wordmark-dot" aria-hidden="true">
             .
           </span>
         </Link>
         <div className="flex items-center gap-3 sm:gap-5">
+          {!partnerPortal && <RoleMenuLink floating />}
           <Link
-            href={mode === "login" ? "/register" : "/login"}
+            href={switchHref}
             className="auth-header-link"
           >
-            {mode === "login" ? "Create an account" : "Sign in"}
+            {mode === "login" ? partnerPortal ? "Register as a partner" : "Create an account" : "Sign in"}
             <ArrowUpRight size={15} aria-hidden="true" />
           </Link>
           <AppearanceToggle />
@@ -82,24 +98,23 @@ export function AuthShell({
       </header>
 
       <main className="auth-layout">
-        <aside className="auth-story" aria-label="Welcome to VChat">
+        <aside className="auth-story" aria-label={partnerPortal ? "Welcome to Clee Partners" : "Welcome to VChat"}>
           <div>
             <p className="auth-eyebrow">
               <span aria-hidden="true" />
-              YOUR PEOPLE. YOUR PERSPECTIVE.
+              {partner ? "YOUR EXPERTISE. YOUR WORKSPACE." : "YOUR PEOPLE. YOUR PERSPECTIVE."}
             </p>
             <h2 className="auth-headline">
-              Life is better
+              {partner ? "Build your business" : "Life is better"}
               <br />
-              when it’s <span>shared.</span>
+              {partner ? <span>with us.</span> : <>when it’s <span>shared.</span></>}
             </h2>
             <p className="auth-story-description">
-              The everyday moments. The big ideas. The conversations that become
-              connections. Make room for all of them.
+              {partnerPortal ? "Sell products, serve food, offer rides, deliver orders or bring your skills to people's homes. One partner account, with the right workspace and application for every business." : partnerType ? `${partnerType.label}. Sign in with your account, then complete the details and verification for your module. Existing partners go straight to their workspace.` : "The everyday moments. The big ideas. The conversations that become connections. Make room for all of them."}
             </p>
           </div>
 
-          <div className="auth-illustration" aria-hidden="true">
+          {!partner && <div className="auth-illustration" aria-hidden="true">
             <div className="auth-orbit auth-orbit-one" />
             <div className="auth-orbit auth-orbit-two" />
             <div className="auth-moment-card">
@@ -121,16 +136,16 @@ export function AuthShell({
               <MessageCircle size={19} />
               <span>It starts with a hello.</span>
             </div>
-          </div>
+          </div>}
 
           <div className="auth-story-footer">
             <span>
               <Users size={17} aria-hidden="true" />
-              Find your people
+              {partner ? "One account. Multiple businesses." : "Find your people"}
             </span>
             <span>
               <Sparkles size={17} aria-hidden="true" />
-              Share your perspective
+              {partner ? "Verification before approval" : "Share your perspective"}
             </span>
           </div>
         </aside>
@@ -140,15 +155,16 @@ export function AuthShell({
           tabIndex={-1}
           className="auth-form-panel"
           aria-label={
-            mode === "login" ? "Sign in to VChat" : "Create your VChat account"
+            partnerPortal ? mode === "login" ? "Partner sign in" : "Register as a business partner" : mode === "login" ? "Sign in to VChat" : "Create your VChat account"
           }
         >
           <div className="auth-form-content">{children}</div>
           <footer className="auth-form-footer">
-            <span>© {new Date().getFullYear()} VChat</span>
+            <span>© {new Date().getFullYear()} {partnerPortal ? "Clee Partners" : "VChat"}</span>
             <nav aria-label="Legal">
               <Link href="/privacy">Privacy</Link>
               <Link href="/terms">Terms</Link>
+              {partnerPortal && <a href={CUSTOMER_ORIGIN}>Customer portal</a>}
             </nav>
           </footer>
         </section>

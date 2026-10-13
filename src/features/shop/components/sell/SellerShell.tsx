@@ -10,8 +10,13 @@ import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSellerStatus } from "../../hooks/sell"
-import { SELLER_RAIL, activeRailHref, sellerNeedsWizard, sellerStatusBanner, type SellerWire } from "../../model/sell"
+import { sellerNeedsWizard, sellerStatusBanner, type SellerWire } from "../../model/sell"
 import { ErrorState, Notice, TONE_CLASS } from "./primitives"
+import { HeaderBar } from "@/features/reels/components/HeaderBar"
+import { Store } from "lucide-react"
+import { VideoShell } from "@/features/video-shell/VideoShell"
+import { WorkspaceNavigation } from "@/features/video-shell/WorkspaceShell"
+import "@/features/video-shell/workspace.css"
 
 const START = "/shop/sell/start"
 const ONBOARDING = "/shop/sell/onboarding"
@@ -67,38 +72,22 @@ export function SellerShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="shop-sell shop-sell--framed">
-      <Wordmark storeName={seller.store_name} />
-      <nav className="shop-sell__rail" aria-label="MSeller">
-        <ul>
-          {SELLER_RAIL.map((entry) => (
-            <li key={entry.href}>
-              <Link href={entry.href} className={cn("shop-sell__rail-link", activeRailHref(pathname) === entry.href && "is-active")}>
-                {entry.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
+    <div className="shop-sell">
+      <VideoShell app="workspace" header={<HeaderBar hideSearch hideCreate brand={{ key: "seller", name: "MSeller", href: "/shop/sell", icon: Store, searchPlaceholder: "", prefixes: ["/shop/sell"] }} />} navigation={props => <WorkspaceNavigation {...props} partner title="Partner workspace" links={[]} />}>
       <div className="shop-sell__body">
         {onOnboarding ? null : <StatusBanner seller={seller} />}
         {children}
       </div>
+      </VideoShell>
     </div>
   )
 }
 
 function Wordmark({ storeName }: { storeName?: string }) {
   return (
-    <header className="shop-sell__top">
-      <Link href="/shop/sell" className="shop-sell__wordmark">
-        MSeller
-      </Link>
-      {storeName ? <span className="shop-sell__store">{storeName}</span> : null}
-      <Link href="/shop" className="shop-sell__back">
-        MStore
-      </Link>
-    </header>
+    <div className="shop-sell__top" style={{ display: "block", padding: 0 }}>
+      <HeaderBar hideSearch hideCreate brand={{ key: "seller", name: storeName ? `MSeller · ${storeName}` : "MSeller", href: "/shop/sell", icon: Store, searchPlaceholder: "", prefixes: ["/shop/sell"] }} />
+    </div>
   )
 }
 

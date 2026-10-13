@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Search, Bell, MessageCircle, Menu } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { CreateButton } from "@/features/reels/components/CreateButton";
 import { ProfileDropdown } from "@/features/reels/components/ProfileDropdown";
@@ -17,6 +17,8 @@ interface HeaderBarProps {
   /** Service workspaces do not pretend to offer video creation or global search. */
   hideSearch?: boolean;
   hideCreate?: boolean;
+  /** Compact workspace control (e.g. customer location) next to the brand. */
+  headerContent?: ReactNode;
   /**
    * Overrides the wordmark. Normally left unset: the header names the app
    * the current route belongs to (see src/lib/appBrand.ts).
@@ -37,6 +39,7 @@ export function HeaderBar({
   brand: workspaceBrand,
   hideSearch = false,
   hideCreate = false,
+  headerContent,
   sectionLabel,
   searchValue: externalSearch,
   onSearchValueChange: externalOnChange,
@@ -62,7 +65,7 @@ export function HeaderBar({
   return (
     <header
       data-app={brand.key}
-      className={`context-app-bar${hideSearch ? " context-app-bar--workspace" : ""}`}
+      className={`context-app-bar${hideSearch ? " context-app-bar--workspace" : ""}${headerContent ? " context-app-bar--context" : ""}`}
     >
       <div className="context-app-bar__inner">
         {/* Left: product badge → home, then the app wordmark */}
@@ -92,7 +95,7 @@ export function HeaderBar({
         </div>
 
         {/* Center: Search */}
-        {!hideSearch ? <div className="context-app-bar__search">
+        {headerContent ? <div className="context-app-bar__context">{headerContent}</div> : !hideSearch ? <div className="context-app-bar__search">
           <form onSubmit={onSearchSubmit} role="search" className="w-full">
             <div className="group relative">
               <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />

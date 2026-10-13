@@ -1,0 +1,17 @@
+.transport-partner{width:100%;max-width:1160px;margin:auto;padding:clamp(18px,3vw,36px);color:rgb(var(--brand-text));font-size:14px;line-height:1.6}
+.transport-partner__heading{margin-bottom:24px}.transport-partner__heading>p{font-size:11px;letter-spacing:.12em;color:rgb(var(--text-muted));font-weight:700}
+.transport-partner h1{font-size:clamp(24px,3vw,36px);font-weight:700;letter-spacing:-.035em;margin:4px 0}
+.transport-partner__grid{display:grid;gap:20px;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);align-items:start}
+.transport-partner__card{min-width:0;padding:clamp(18px,2.5vw,28px);border:1px solid var(--brand-divider);border-radius:20px;background:rgb(var(--brand-card));display:grid;gap:16px}
+.transport-partner h2{font-size:18px;font-weight:650;margin:0}.transport-partner h3{font-weight:600;margin:0}
+.transport-partner p{margin:0;color:rgb(var(--text-muted))}.transport-partner ul{padding-left:20px;list-style:disc;margin:0}
+.transport-partner__fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;border:0;margin:0;padding:0;min-width:0}
+.transport-partner label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600}
+.transport-partner :is(input,select){width:100%;min-width:0;min-height:44px;border:1px solid var(--brand-divider);border-radius:10px;padding:8px 12px;background:rgb(var(--brand-secondary));color:rgb(var(--brand-text));font:inherit}
+.transport-partner button{min-height:44px;justify-self:start;padding:10px 20px;border:0;border-radius:10px;background:rgb(var(--brand-ink));color:rgb(var(--on-primary));font-weight:600;cursor:pointer}
+.transport-partner :is(button,input,select):focus-visible{outline:2px solid rgb(var(--brand-ink));outline-offset:3px}
+.transport-partner button:disabled{opacity:.55;cursor:not-allowed}.transport-partner .transport-partner__error{color:rgb(var(--danger))}
+.transport-partner .transport-partner__status{padding:10px 14px;background:rgb(var(--brand-tint));border-radius:10px;color:rgb(var(--brand-ink));font-weight:600}
+.transport-partner__note{font-size:12px;border-top:1px solid var(--brand-divider);padding-top:14px}
+@media(max-width:900px){.transport-partner__grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:520px){.transport-partner__fields{grid-template-columns:minmax(0,1fr)}.transport-partner button{width:100%}}

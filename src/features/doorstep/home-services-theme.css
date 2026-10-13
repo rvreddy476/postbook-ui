@@ -1,0 +1,220 @@
+/* Handy-inspired visual language; original Doorstep content and booking behaviour.
+   Scope is deliberately customer-only: admin/partner/global preferences are unchanged. */
+.ds-storefront.ds-home-services,
+.ds-storefront.ds-home-services:has(.dsc-pro-booking) {
+  --brand-text: 67 67 67;
+  --text-muted: 102 102 102;
+  --brand-card: 255 255 255;
+  --brand-bg: 255 255 255;
+  --canvas: 255 255 255;
+  --brand-secondary: 246 247 247;
+  --brand-tint: 233 248 250;
+  --brand-outline: 188 220 224;
+  --brand-ink: 0 124 140;
+  --brand-ink-hover: 0 100 115;
+  --brand-accent: 0 183 207;
+  --brand-divider: rgb(67 67 67 / .14);
+  --info: 0 124 140;
+  font-family: var(--font-doorstep, "Helvetica Neue"), Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.ds-home-services :is(h1,h2,h3) { letter-spacing: -.025em; }
+.ds-home-services h1 { font-size: clamp(30px,3vw,42px); font-weight: 700; line-height: 1.22; }
+.ds-home-services h2 { font-size: 29px; font-weight: 500; line-height: 1.3; }
+.ds-home-services :is(button,input,select,textarea) { font-family: inherit; }
+.ds-home-services .dsc-brand { color: rgb(var(--brand-ink)); font-weight: 700; letter-spacing: -.6px; }
+.ds-home-services .dsc-brand__icon { color: #00abc2; }
+.ds-home-services .dsc-header-search { background: #fafafa; border-color: #e5e5e5; border-radius: 4px; }
+.ds-home-services .dsc-header-search input::placeholder { color: #757575; }
+.ds-home-services .dsc-sidebar { padding-top: 28px; }
+.ds-home-services .dsc-sidebar a { border-radius: 3px; font-size: 14px; font-weight: 400; }
+.ds-home-services .dsc-sidebar a[aria-current=page] { box-shadow: inset 3px 0 #00b7cf; font-weight: 600; }
+.ds-home-services .dsc-sidebar__heading { font-weight: 500; letter-spacing: .7px; }
+.ds-home-services .ds-header-location__refresh { border-radius: 4px; background: #f0f9fa; }
+.ds-home-services .dsc-header__notification { border-radius: 4px; }
+.ds-home-services .dsc-main { max-width: 1380px; }
+.ds-home-services .dsc-main :is(.ds-card,.ds-bitem,.dsc-summary,.dsc-option,.dsc-checkout-section,.ds-procard) { border-radius: 5px; box-shadow: none; }
+.ds-home-services .dsc-main .ds-btn { border-radius: 4px; font-size: 14px; font-weight: 600; }
+.ds-home-services .dsc-main :is(.ds-input,.ds-select) { border-radius: 4px; }
+.ds-home-services .dsc-main .ds-btn--primary { background: rgb(var(--brand-ink)); color: #fff; box-shadow: none; }
+.ds-home-services .dsc-main .ds-btn--primary:hover:not(:disabled) { background: rgb(var(--brand-ink-hover)); }
+.ds-home-services .dsc-eyebrow { letter-spacing: 1.2px; }
+.ds-home-services .dsc-service-hero h1 { font-size: clamp(30px,3vw,40px); font-weight: 700; }
+.ds-home-services .dsc-service-hero>.dsc-art,
+.ds-home-services .dsc-catalogue-service__action>.dsc-art { border-radius: 3px; }
+.ds-home-services .dsc-catalogue-service h2 { font-weight: 600; }
+.ds-home-services .dsc-summary h2 { font-weight: 600; letter-spacing: -.02em; }
+.ds-home-services .dsc-footer { background: #f5f5f5; }
+.ds-home-services .dsc-footer__brand { color: rgb(var(--brand-ink)); }
+.ds-home-services .dsc-section { scroll-margin-top: 80px; }
+
+/* Photo-backed search and a simple, searchable services directory. */
+.dsh-hero {
+  min-height: 355px;
+  margin: 0 -28px;
+  padding: 52px 24px;
+  display: grid;
+  place-items: center;
+  background: #e4eddf url('/images/doorstep/home-welcome-20261009.webp') center 53% / cover no-repeat;
+}
+.dsh-hero__panel { width: min(100%,690px); background: #fff; border-radius: 4px; padding: 34px 38px 38px; box-shadow: 0 3px 14px #0002; text-align: center; }
+.ds-home-services .dsh-hero h1 { font-size: clamp(28px,2.7vw,38px); letter-spacing: -.03em; }
+.dsh-hero__panel>p { font-size: 15px; color: rgb(var(--text-muted)); margin-top: 10px; }
+.dsh-search { display: flex; align-items: stretch; margin-top: 25px; border: 1px solid #c7c7c7; border-radius: 4px; background: white; min-height: 52px; }
+.dsh-search:focus-within { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 3px; }
+.dsh-search input { width: 100%; flex: 1; min-width: 0; border: 0; background: none; padding: 13px 15px; font-size: 15px; color: rgb(var(--brand-text)); outline: 0; }
+.dsh-search input::placeholder { color: #747474; }
+.dsh-search input::-webkit-search-cancel-button { appearance: none; }
+.dsh-search button { border: 0; padding: 0; display: flex; align-items: center; justify-content: center; gap: 8px; flex: none; }
+.dsh-search__submit { background: rgb(var(--brand-ink)); color: #fff; width: 108px; font-size: 14px; font-weight: 600; border-radius: 0 3px 3px 0; }
+.dsh-search__submit:hover { background: rgb(var(--brand-ink-hover)); }
+.dsh-search__clear { background: white; color: rgb(var(--text-muted)); width: 38px; }
+.dsh-directory { padding: 38px 0 48px; scroll-margin-top: 84px; }
+.dsh-directory__heading { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; margin-bottom: 28px; }
+.ds-home-services .dsh-directory__heading h2 { font-size: 29px; font-weight: 500; }
+.dsh-directory__heading>span { font-size: 13px; color: rgb(var(--text-muted)); }
+.dsh-directory__layout { display: grid; grid-template-columns: 198px minmax(0,1fr); gap: 28px; align-items: start; }
+.dsh-category-nav { position: sticky; top: 84px; }
+.ds-home-services .dsh-category-nav h3 { font-size: 13px; font-weight: 500; color: rgb(var(--text-muted)); margin: 0 12px 14px; letter-spacing: 0; }
+.dsh-category-nav>div { display: flex; flex-direction: column; gap: 3px; }
+.dsh-category-nav button { border: 0; background: white; color: rgb(var(--brand-text)); text-align: left; padding: 13px 12px; min-height: 45px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; line-height: 1.5; border-radius: 3px; }
+.dsh-category-nav button>svg { flex: none; opacity: 0; }
+.dsh-category-nav button:hover { background: #f7f7f7; }
+.dsh-category-nav button[aria-pressed=true] { color: rgb(var(--brand-ink)); background: rgb(var(--brand-tint)); font-weight: 600; }
+.dsh-category-nav button[aria-pressed=true]>svg { opacity: 1; }
+.dsh-directory-help { display: flex; align-items: center; gap: 12px; padding: 22px 12px; border-top: 1px solid var(--brand-divider); margin-top: 25px; color: rgb(var(--brand-text)); font-size: 14px; }
+.dsh-directory-help>svg { color: rgb(var(--brand-ink)); flex: none; }
+.dsh-directory-help small { display: block; color: rgb(var(--brand-ink)); font-size: 12px; margin-top: 3px; }
+.dsh-directory__results { min-width: 0; }
+.dsh-results-title { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin: 0 0 20px; min-height: 24px; }
+.ds-home-services .dsh-results-title h3 { font-size: 18px; font-weight: 500; letter-spacing: -.01em; }
+.dsh-results-title>span { font-size: 12px; color: rgb(var(--text-muted)); white-space: nowrap; }
+.dsh-service-grid { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 22px; }
+.dsh-service-grid>li { min-width: 0; }
+.dsh-service-card { display: flex; flex-direction: column; height: 100%; color: rgb(var(--brand-text)); border: 1px solid #e5e5e5; background: #fff; border-radius: 3px; overflow: hidden; box-shadow: 0 2px 4px #0000000b; transition: border-color .15s, box-shadow .15s; }
+.dsh-service-card:hover { border-color: #89cad2; box-shadow: 0 4px 14px #00495514; }
+.dsh-service-card>.dsc-art { width: 100%; height: 163px; }
+.dsh-service-card>.dsc-art--icon { background: #edf7f7; color: #429b9f; }
+.dsh-service-card>.dsc-art--icon>svg { width: 48px; height: 48px; }
+/* Original generated category photography, not provider profile photos. The square
+   sprite cells are cropped with their natural aspect ratio, never stretched. */
+.ds-home-services :is(.dsc-art--ac,.dsc-art--kitchen,.dsc-art--appliance,.dsc-art--electrician,.dsc-art--plumber,.dsc-art--carpenter,.dsc-art--salon-women,.dsc-art--salon-men,.dsc-art--house-help) { position: relative; background-image: none; }
+.ds-home-services :is(.dsc-art--ac,.dsc-art--kitchen,.dsc-art--appliance,.dsc-art--electrician,.dsc-art--plumber,.dsc-art--carpenter,.dsc-art--salon-women,.dsc-art--salon-men,.dsc-art--house-help)::before { content: ""; position: absolute; width: 100%; aspect-ratio: 1; top: 50%; left: 0; transform: translateY(-50%); background: url('/images/doorstep/service-categories-20261009.webp') var(--photo-x,0%) var(--photo-y,0%) / 300% 300% no-repeat; }
+.ds-home-services .dsc-art--ac { --photo-x: 50%; }
+.ds-home-services .dsc-art--appliance { --photo-x: 100%; }
+.ds-home-services .dsc-art--electrician { --photo-y: 50%; }
+.ds-home-services .dsc-art--plumber { --photo-x: 50%; --photo-y: 50%; }
+.ds-home-services .dsc-art--carpenter { --photo-x: 100%; --photo-y: 50%; }
+.ds-home-services .dsc-art--salon-women { --photo-y: 100%; }
+.ds-home-services .dsc-art--salon-men { --photo-x: 50%; --photo-y: 100%; }
+.ds-home-services .dsc-art--house-help { --photo-x: 100%; --photo-y: 100%; }
+.dsh-service-card>div { padding: 16px; display: flex; flex-direction: column; flex: 1; }
+.ds-home-services .dsh-service-card h3 { font-size: 17px; font-weight: 500; letter-spacing: -.02em; line-height: 1.4; }
+.dsh-service-card p { font-size: 13px; color: rgb(var(--text-muted)); line-height: 1.6; margin: 8px 0 16px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.dsh-service-card__footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: rgb(var(--brand-ink)); }
+.dsh-service-card__footer .ds-price { font-size: 13px; font-weight: 500; }
+.dsh-service-card__footer>svg { flex: none; }
+.dsh-how { background: #f6f7f7; margin: 0 -28px; padding: 40px 38px; text-align: center; }
+.ds-home-services .dsh-how h2 { font-size: 29px; font-weight: 500; }
+.dsh-how>div { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 30px; margin: 30px auto 0; max-width: 980px; }
+.dsh-how article>span { width: 60px; height: 60px; display: grid; place-items: center; border: 1px solid #a5dfe4; border-radius: 50%; color: rgb(var(--brand-ink)); margin: 0 auto 17px; }
+.ds-home-services .dsh-how h3 { font-size: 18px; font-weight: 500; letter-spacing: -.02em; }
+.dsh-how p { font-size: 14px; line-height: 1.7; color: rgb(var(--text-muted)); margin: 9px auto 0; max-width: 275px; }
+.dsh-professional-cta { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 42px 16px 12px; }
+.ds-home-services .dsh-professional-cta h2 { font-size: 26px; font-weight: 500; }
+.dsh-professional-cta p { font-size: 14px; color: rgb(var(--text-muted)); margin-top: 8px; }
+.dsh-professional-cta .ds-btn { flex: none; }
+
+/* Keep the established service/options/appointment/checkout layout, restyle it consistently. */
+.ds-home-services .dsc-pro-booking__main,
+.ds-home-services .dsc-pro-summary,
+.ds-home-services .dsc-professional { background: #fff; border-color: #e4e7e7; border-radius: 5px; box-shadow: none; }
+.ds-home-services .dsc-pro-booking .dsc-journey li>span { background: #f5f7f7; border-color: #d5e2e2; }
+.ds-home-services .dsc-pro-booking .dsc-journey li[aria-current=step]>span { background: rgb(var(--brand-ink)); color: #fff; box-shadow: none; }
+.ds-home-services .dsc-pro-booking .dsc-journey .is-complete>span { background: rgb(var(--brand-tint)); color: rgb(var(--brand-ink)); }
+.ds-home-services .dsc-pro-booking .dsc-journey li.is-complete::after { background: #00b7cf; }
+.ds-home-services .dsc-pro-booking .dsc-journey li:not(:last-child)::after { background: #c5dede; }
+.ds-home-services .dsc-pro-heading h1 { font-weight: 700; letter-spacing: -.025em; }
+.ds-home-services :is(.dsc-pro-dates>button,.dsc-pro-calendar,.dsc-pro-filter select,.dsc-pro-filters>button,.dsc-professional__times button) { border-radius: 4px; border-color: #d9e2e3; }
+.ds-home-services :is(.dsc-pro-dates>button:hover,.dsc-professional__times button:hover) { background: #f2fafa; }
+.ds-home-services :is(.dsc-pro-dates>button[aria-pressed=true],.dsc-professional__times button[aria-pressed=true]) { background: #eaf8f9; color: rgb(var(--brand-ink)); border-color: #00a5bb; box-shadow: none; }
+.ds-home-services .dsc-professional.is-selected { background: #fbfefe; border-color: #00a5bb; box-shadow: 0 0 0 1px #00a5bb15; }
+.ds-home-services .dsc-professional__avatar { background: #edf7f7; color: #589da3; border-color: #d7e9ea; }
+.ds-home-services .dsc-professional__tag { background: #eef7f7; color: #347b82; border-radius: 3px; }
+.ds-home-services .dsc-booking-reassurance { background: #f1fafa; border-color: #d9ecee; border-radius: 4px; }
+.ds-home-services .dsc-pro-summary__service>span { background: #edf7f7; color: rgb(var(--brand-ink)); border-radius: 4px; }
+.ds-home-services .dsc-pro-location>svg { color: rgb(var(--brand-ink)); }
+.ds-home-services .dsc-pro-help { background: #fafcfc; border-color: #dfe8e8; border-radius: 4px; }
+.ds-home-services .dsc-pro-map .google-location { border-color: #dfe8e8; border-radius: 4px; }
+.ds-home-services .dsc-pro-map .google-location__intro { background: #f6fafa; }
+
+@media(min-width:1101px) and (max-width:1399px) {
+  .dsh-directory__layout { grid-template-columns: 175px minmax(0,1fr); gap: 22px; }
+  .dsh-service-grid { gap: 16px; }
+  .dsh-service-card>.dsc-art { height: 145px; }
+}
+@media(max-width:1000px) {
+  .dsh-directory__layout { grid-template-columns: 180px minmax(0,1fr); gap: 22px; }
+  .dsh-service-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:720px) {
+  .dsh-hero { min-height: 305px; padding: 32px 22px; }
+  .dsh-hero__panel { padding: 26px 24px; }
+  .ds-home-services .dsh-hero h1 { font-size: 30px; }
+  .dsh-directory__heading { align-items: flex-start; flex-direction: column; gap: 7px; margin-bottom: 20px; }
+  .dsh-directory__layout { display: flex; flex-direction: column; gap: 26px; }
+  .dsh-category-nav { position: static; width: 100%; min-width: 0; }
+  .dsh-category-nav h3,.dsh-directory-help { display: none; }
+  .dsh-category-nav>div { flex-direction: row; overflow-x: auto; gap: 8px; padding: 3px 3px 8px; margin: -3px; scrollbar-width: thin; }
+  .dsh-category-nav button { border: 1px solid #dce5e5; white-space: nowrap; flex: none; padding: 10px 13px; font-size: 13px; }
+  .dsh-category-nav button>svg { display: none; }
+  .dsh-category-nav button[aria-pressed=true] { border-color: #00a5bb; }
+  .dsh-directory__results { width: 100%; }
+  .dsh-how { padding: 34px 24px; }
+  .dsh-how>div { gap: 22px; }
+  .dsh-professional-cta { padding: 34px 0 8px; }
+}
+@media(max-width:640px) {
+  .dsh-hero { margin: 0 -20px; min-height: 292px; padding: 30px 18px; background-position: center; }
+  .dsh-hero__panel { padding: 25px 19px; }
+  .ds-home-services .dsh-hero h1 { font-size: 28px; max-width: 300px; margin: auto; }
+  .dsh-hero__panel>p { font-size: 13px; line-height: 1.7; margin-top: 11px; }
+  .dsh-search { margin-top: 19px; min-height: 49px; }
+  .dsh-search input { font-size: 16px; padding: 11px; }
+  .dsh-search input::placeholder { font-size: 12px; }
+  .dsh-search__submit { width: 46px; }
+  .dsh-search__submit>span { display: none; }
+  .dsh-search__clear { width: 27px; }
+  .dsh-directory { padding: 28px 0 34px; }
+  .ds-home-services .dsh-directory__heading h2 { font-size: 25px; }
+  .dsh-directory__heading>span { font-size: 12px; }
+  .dsh-results-title { margin-bottom: 15px; }
+  .ds-home-services .dsh-results-title h3 { font-size: 17px; }
+  .dsh-service-grid { gap: 14px 12px; }
+  .dsh-service-card>.dsc-art { height: 112px; }
+  .dsh-service-card>.dsc-art--icon>svg { width: 38px; height: 38px; }
+  .dsh-service-card>div { padding: 13px 11px; }
+  .ds-home-services .dsh-service-card h3 { font-size: 15px; }
+  .dsh-service-card p { font-size: 12px; margin: 7px 0 13px; line-height: 1.6; }
+  .dsh-service-card__footer { font-size: 11px; gap: 5px; }
+  .dsh-service-card__footer .ds-price { font-size: 11px; }
+  .dsh-service-card__footer>svg { width: 15px; }
+  .dsh-how { margin: 0 -20px; }
+  .ds-home-services .dsh-how h2 { font-size: 25px; }
+  .dsh-how>div { grid-template-columns: 1fr; gap: 26px; }
+  .dsh-how article { display: grid; grid-template-columns: 46px minmax(0,1fr); column-gap: 15px; text-align: left; }
+  .dsh-how article>span { width: 46px; height: 46px; grid-row: span 2; margin: 0; }
+  .dsh-how article svg { width: 23px; }
+  .ds-home-services .dsh-how h3 { font-size: 17px; }
+  .dsh-how p { margin: 5px 0 0; max-width: none; font-size: 13px; }
+  .dsh-professional-cta { flex-direction: column; text-align: center; gap: 18px; }
+  .ds-home-services .dsh-professional-cta h2 { font-size: 24px; }
+}
+@media(max-width:380px) {
+  .dsh-hero { margin-left: -16px; margin-right: -16px; padding-left: 13px; padding-right: 13px; }
+  .dsh-how { margin-left: -16px; margin-right: -16px; padding-left: 20px; padding-right: 20px; }
+  .dsh-hero__panel { padding: 24px 15px; }
+  .dsh-service-grid { gap: 12px 10px; }
+  .dsh-service-card>.dsc-art { height: 99px; }
+}

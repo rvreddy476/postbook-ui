@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { portalHostname, portalLogoutDestination } from "@/components/auth/partnerPortal"
 import {
     API_GATEWAY_URL,
     REFRESH_COOKIE,
@@ -143,6 +144,8 @@ export async function POST(req: NextRequest) {
         },
     })
     clearSession(res)
+    res.cookies.delete({ name: "pm_rt", path: "/api/postmatch" })
+    res.cookies.delete({ name: "csrf_token", path: "/" })
     return res
 }
 
@@ -168,8 +171,10 @@ export async function GET(req: NextRequest) {
         new NextRequest(req.url, { method: "POST", headers: req.headers }),
     )
 
-    const target = new URL("/login", req.url)
-    const res = NextResponse.redirect(target, { status: 303 })
+    // Relative Location keeps the browser's origin. req.url can contain the
+    // Docker bind host (0.0.0.0); forwarded/Host headers are not trusted here.
+    const target = portalLogoutDestination(portalHostname(req.nextUrl.hostname, req.headers.get("host")), req.nextUrl.searchParams.get("portal"), req.nextUrl.searchParams.get("intent"), req.nextUrl.searchParams.get("partner") === "1", req.nextUrl.searchParams.get("businesses"))
+    const res = new NextResponse(null, { status: 303, headers: { Location: target } })
 
     // Carry over the Set-Cookie headers the POST produced; a fresh response
     // does not inherit them.

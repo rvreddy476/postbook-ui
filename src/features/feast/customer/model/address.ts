@@ -51,6 +51,13 @@ export function pinOf(address: Address | null): LatLng | null {
   return { lat, lng }
 }
 
+/** Checkout never requests GPS or substitutes a different address silently. */
+export function checkoutAddressIssue(address: Address | null): string | null {
+  if (!address) return "Choose a saved delivery address or add one manually."
+  if (!pinOf(address)) return "This address needs a map pin to check delivery coverage. Add a pinned address using manual search or optional device location."
+  return null
+}
+
 export function addressTitle(a: Address): string {
   return a.label?.trim() || a.addressLine1 || "Address"
 }

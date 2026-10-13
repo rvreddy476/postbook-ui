@@ -1,9 +1,9 @@
 "use client"
 
-import Link from "next/link"
+import { PortalLink as Link } from "@/components/auth/PortalLink"
 import { usePathname } from "next/navigation"
-import { useEffect, useRef, useState, type ReactNode } from "react"
-import { Compass, Home, MessageCircle, Moon, PanelLeftClose, Sun, X } from "lucide-react"
+import { Suspense, useEffect, useRef, useState, type ReactNode } from "react"
+import { BriefcaseBusiness, Compass, Home, MessageCircle, Moon, PanelLeftClose, Sun, X } from "lucide-react"
 import { HeaderBar } from "@/features/reels/components/HeaderBar"
 import { VideoShell, type VideoNavigationProps } from "./VideoShell"
 import { useVideoShell } from "./useVideoShell"
@@ -11,8 +11,9 @@ import { applyTheme, chooseTheme, readThemeChoice, resolveTheme, type ThemeChoic
 import { workspaceLinkCurrent, type WorkspaceLink } from "./workspaceNavigation"
 import { resolveAppBrand } from "@/lib/appBrand"
 import "./workspace.css"
+import { PartnerBusinessMenu } from "@/features/partners/PartnerBusinessMenu"
 
-export function WorkspaceNavigation({ links, title, ...props }: VideoNavigationProps & { links: readonly WorkspaceLink[]; title: string }) {
+export function WorkspaceNavigation({ links, title, partner = false, ...props }: VideoNavigationProps & { links: readonly WorkspaceLink[]; title: string; partner?: boolean }) {
   const pathname = usePathname() || "/"
   const shell = useVideoShell()
   const navRef = useRef<HTMLElement>(null)
@@ -61,13 +62,14 @@ export function WorkspaceNavigation({ links, title, ...props }: VideoNavigationP
     </div>
     <div className="video-nav__scroll">
       <ul className="video-nav__list">
-        {links.map(({href,label,icon:Icon,count}) => { const current = workspaceLinkCurrent(pathname,href,links); return <li key={href}><Link href={href} onClick={props.onNavigate} title={!props.expanded ? label : undefined} className={`video-nav__item${current ? " is-current" : ""}`} aria-current={current ? "page" : undefined} aria-label={count ? `${label}, ${count} items` : label}><Icon className="video-nav__icon" size={20} strokeWidth={1.75} aria-hidden/><span className="video-nav__label">{label}</span>{props.expanded && count ? <span className="workspace-nav__count">{count > 99 ? "99+" : count}</span> : null}</Link></li> })}
+        {partner && <Suspense fallback={<li>Loading menu…</li>}><PartnerBusinessMenu expanded={props.expanded} onNavigate={props.onNavigate} /></Suspense>}
+        {!partner && links.map(({href,label,icon:Icon,count}) => { const current = workspaceLinkCurrent(pathname,href,links); return <li key={href}><Link href={href} onClick={props.onNavigate} title={!props.expanded ? label : undefined} className={`video-nav__item${current ? " is-current" : ""}`} aria-current={current ? "page" : undefined} aria-label={count ? `${label}, ${count} items` : label}><Icon className="video-nav__icon" size={20} strokeWidth={1.75} aria-hidden/><span className="video-nav__label">{label}</span>{props.expanded && count ? <span className="workspace-nav__count">{count > 99 ? "99+" : count}</span> : null}</Link></li> })}
       </ul>
-      <ul className="video-nav__list workspace-nav__shared">
+      {!partner && <ul className="video-nav__list workspace-nav__shared">
         <li><Link href="/messenger" className="video-nav__item" onClick={props.onNavigate} aria-label="Messenger"><MessageCircle className="video-nav__icon" size={20}/><span className="video-nav__label">Messenger</span></Link></li>
         <li><button type="button" className="video-nav__item" onClick={() => { props.onNavigate?.(); shell.openExplore() }} aria-haspopup="dialog" aria-label="Explore apps"><Compass className="video-nav__icon" size={20}/><span className="video-nav__label">Explore apps</span></button></li>
         <li><Link href="/" className="video-nav__item" onClick={props.onNavigate} aria-label="Home"><Home className="video-nav__icon" size={20}/><span className="video-nav__label">Home</span></Link></li>
-      </ul>
+      </ul>}
     </div>
     <div className="workspace-nav__appearance" aria-label="Appearance">
       <button type="button" aria-label="Light appearance" aria-pressed={appearance === "light"} onClick={() => setTheme("light")}><Sun size={18}/></button>
@@ -81,7 +83,7 @@ export function WorkspaceShell({ children, links, title, kind }: { children: Rea
   const route = {dating:"/dating",feast:"/feast",kitchen:"/feast/kitchen",admin:"/admin",mopedu:"/admin/mopedu"}[kind]
   return <div className="service-workspace" data-workspace={kind}>
     <a className="workspace-skip" href="#workspace-content">Skip to content</a>
-    <VideoShell app="workspace" header={<HeaderBar hideSearch hideCreate brand={resolveAppBrand(route)} />} navigation={props => <WorkspaceNavigation {...props} links={links} title={title} />}>
+    <VideoShell app="workspace" header={<HeaderBar hideSearch hideCreate brand={resolveAppBrand(route)} />} navigation={props => <WorkspaceNavigation {...props} links={links} title={title} partner={kind === "kitchen"} />}>
       <div id="workspace-content" tabIndex={-1} className="workspace-content">{children}</div>
     </VideoShell>
   </div>

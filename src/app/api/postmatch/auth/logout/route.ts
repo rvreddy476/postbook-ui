@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { portalRole } from '@/components/auth/portalRoles'
+import { businessSelections } from '@/components/auth/partnerPortal'
 
 /**
  * P1-5 session redesign — Postmatch logout BFF route.
@@ -20,6 +22,7 @@ export async function POST(req: NextRequest) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh_token: refresh }),
+        signal: AbortSignal.timeout(5000),
       })
     } catch {
       // best-effort
@@ -27,5 +30,23 @@ export async function POST(req: NextRequest) {
   }
   const res = NextResponse.json({ data: { status: 'ok' } })
   res.cookies.delete({ name: COOKIE_NAME, path: '/api/postmatch' })
+  return res
+}
+
+/** Navigation chain: receive pm_rt at its own path before clearing main auth. */
+export async function GET(req: NextRequest) {
+  const cleared = await POST(req)
+  const role = portalRole(req.nextUrl.searchParams.get('portal'))
+  const params = new URLSearchParams()
+  if (role) params.set('portal', role.id)
+  if (req.nextUrl.searchParams.get('partner') === '1') {
+    params.set('partner', '1')
+    const choices = businessSelections(req.nextUrl.searchParams.get('businesses'))
+    if (choices.length) params.set('businesses', choices.join(','))
+  }
+  if (req.nextUrl.searchParams.get('intent') === 'register') params.set('intent', 'register')
+  const target = '/api/auth/logout' + (params.size ? '?' + params : '')
+  const res = new NextResponse(null, { status: 303, headers: { Location: target, 'Cache-Control': 'no-store, must-revalidate' } })
+  for (const cookie of cleared.headers.getSetCookie()) res.headers.append('set-cookie', cookie)
   return res
 }

@@ -13,6 +13,7 @@
 
 import { Crosshair, LocateFixed, MapPin, MapPinOff, Plus, Trash2 } from "lucide-react"
 import { useEffect, useState } from "react"
+import { GoogleLocation } from "@/features/maps/GoogleLocation"
 
 import { checkServiceability, toDoorstepError } from "../api/client"
 import { ErrorState, Skel, StateBlock } from "../components/parts"
@@ -104,6 +105,7 @@ function AddAddress({ onDone, first }: { onDone: (id: string) => void; first: bo
       <h2 id="ds-add" className="ds-h2">
         New address
       </h2>
+      <GoogleLocation point={pin} onPin={(p) => edit("pin", formatPin(p))} onPlace={(p) => setForm((f) => ({ ...f, pin: formatPin(p), line1: p.address, locality: p.locality, pincode: p.postalCode }))} label="Home service address" />
 
       <div className="ds-stack" style={{ gap: 8 }}>
         {loc.kind === "asking" ? (

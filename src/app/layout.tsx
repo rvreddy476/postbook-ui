@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Outfit, Space_Mono } from 'next/font/google';
+import { DM_Sans, Outfit, Space_Mono } from 'next/font/google';
 import { Providers } from './providers';
 import './globals.css';
 
@@ -7,6 +7,15 @@ const outfit = Outfit({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700', '800', '900'],
   variable: '--font-outfit',
+});
+
+// A self-hosted, open-source geometric face for the Doorstep storefront only.
+const doorstepSans = DM_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  preload: false,
+  variable: '--font-doorstep',
 });
 
 const spaceMono = Space_Mono({
@@ -59,7 +68,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="light" style={{ colorScheme: 'light' }} suppressHydrationWarning>
-      <body className={`${outfit.variable} ${spaceMono.variable} bg-canvas text-brand-text antialiased`}>
+      <body className={`${outfit.variable} ${spaceMono.variable} ${doorstepSans.variable} bg-canvas text-brand-text antialiased`}>
         <script
           dangerouslySetInnerHTML={{
             __html: `

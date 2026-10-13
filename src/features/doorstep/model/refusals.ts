@@ -57,7 +57,7 @@ function detail(e: Refusal, key: string): string | null {
 }
 
 export function refusalLine(e: Refusal): string {
-  if (isNotOpen(e)) return "Doorstep isn't open for your account yet."
+  if (isNotOpen(e)) return "Home services aren't available to book here right now. Please check back later."
   if (e.code === "DOORSTEP_SLOT_UNAVAILABLE") {
     const reason = detail(e, "reason")
     if (reason && SLOT_REASONS[reason]) return SLOT_REASONS[reason]

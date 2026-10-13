@@ -74,6 +74,7 @@ export const EXTRAS_POLICIES = ["rate_card", "catalogue_addons_only"] as const
 export type ExtrasPolicy = (typeof EXTRAS_POLICIES)[number]
 
 export const BOOKING_STATUSES = [
+  "matching",
   "pending_payment",
   "confirmed",
   "assigned",
@@ -300,6 +301,7 @@ function decodeServiceCategoryRef(raw: unknown, ctx: Ctx): ServiceCategoryRef {
 }
 
 export interface ServiceDetail {
+  assignmentMode?: string
   id: string
   category: ServiceCategoryRef
   slug: string
@@ -334,9 +336,10 @@ function decodeServiceDetail(raw: unknown, ctx: Ctx): ServiceDetail {
     "min_after_photos",
     "options",
     "addon_groups",
-  ])
+  ], ["assignment_mode"])
   return {
     id: reqStr(o, "id", ctx),
+    assignmentMode: optStr(o, "assignment_mode", ctx) ?? undefined,
     category: reqObj(o, "category", ctx, decodeServiceCategoryRef),
     slug: reqStr(o, "slug", ctx),
     name: reqStr(o, "name", ctx),
@@ -424,6 +427,7 @@ export function decodeQuoteLine(raw: unknown, ctx: Ctx): QuoteLine {
 }
 
 export interface Quote {
+  assignmentMode?: string
   id: string
   status: "open" | "expired" | "consumed"
   serviceId: string
@@ -465,7 +469,7 @@ export function decodeQuote(raw: unknown, ctx: Ctx): Quote {
     "duration_minutes",
     "expires_at",
     "created_at",
-  ])
+  ], ["assignment_mode"])
   return {
     id: reqStr(o, "id", ctx),
     status: oneOf(o, "status", ctx, ["open", "expired", "consumed"] as const),
@@ -473,6 +477,7 @@ export function decodeQuote(raw: unknown, ctx: Ctx): Quote {
     optionId: reqStr(o, "option_id", ctx),
     quantity: intOr(o, "quantity", ctx, 1),
     proId: reqStr(o, "pro_id", ctx),
+    assignmentMode: optStr(o, "assignment_mode", ctx) ?? undefined,
     cityCode: reqStr(o, "city_code", ctx),
     zoneId: reqStr(o, "zone_id", ctx),
     lines: arr(o, "lines", ctx, decodeQuoteLine),
@@ -713,6 +718,8 @@ export function decodeStatusStep(raw: unknown, ctx: Ctx): StatusStep {
 }
 
 export interface Booking {
+  assignmentMode?: string
+  matchingDeadline?: string | null
   id: string
   status: BookingStatus
   serviceId: string
@@ -798,8 +805,10 @@ const BOOKING_KEYS = [
 ] as const
 
 export function decodeBooking(raw: unknown, ctx: Ctx): Booking {
-  const o = obj(raw, ctx, BOOKING_KEYS)
+  const o = obj(raw, ctx, BOOKING_KEYS, ["assignment_mode", "matching_deadline"])
   return {
+    assignmentMode: optStr(o, "assignment_mode", ctx) ?? undefined,
+    matchingDeadline: optStr(o, "matching_deadline", ctx),
     id: reqStr(o, "id", ctx),
     status: oneOf(o, "status", ctx, BOOKING_STATUSES),
     serviceId: reqStr(o, "service_id", ctx),

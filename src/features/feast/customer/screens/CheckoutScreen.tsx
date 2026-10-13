@@ -16,7 +16,7 @@
 */
 
 import { useQueryClient } from "@tanstack/react-query"
-import { ArrowLeft, MapPin, ShoppingBag } from "lucide-react"
+import { ArrowLeft, ShoppingBag } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -24,11 +24,12 @@ import { useEffect, useState } from "react"
 import { placeOrder, toFeastError } from "../api/client"
 import { Bill, ServiceCardView, Skel, StateBlock } from "../components/parts"
 import { keys, useCart, useChosenAddress } from "../hooks/queries"
-import { addressLine, addressTitle, pinOf } from "../model/address"
+import { addressLine, addressTitle, checkoutAddressIssue } from "../model/address"
 import { attemptSignature, placeWithSavedKey, readAttempt, type CheckoutAttempt } from "../model/checkoutAttempt"
 import { formatPaise } from "../model/money"
 import { PAYMENT_METHODS, type PaymentMethod } from "../model/payment"
 import { fromRefusal, type ServiceCard } from "../model/serviceability"
+import { AddAddress } from "./AddressesScreen"
 
 function localStore(): Storage | null {
   try {
@@ -43,6 +44,7 @@ export function CheckoutScreen() {
   const qc = useQueryClient()
   const cart = useCart()
   const { addresses, chosen, choose } = useChosenAddress()
+  const [addingAddress, setAddingAddress] = useState(false)
   const [method, setMethod] = useState<PaymentMethod>("upi")
   const [note, setNote] = useState("")
   const [placing, setPlacing] = useState(false)
@@ -56,7 +58,7 @@ export function CheckoutScreen() {
   }, [])
 
   const c = cart.data
-  if (cart.isLoading || addresses.isLoading) {
+  if (cart.isLoading) {
     return (
       <div className="fc-grid2">
         <div className="fc-stack">
@@ -106,11 +108,11 @@ export function CheckoutScreen() {
   }
 
   const totals = c.totalsPaise
-  const list = [...(addresses.data ?? [])].sort((a, b) => addressTitle(a).localeCompare(addressTitle(b)))
-  const blocked = !chosen ? "Add a delivery address first." : !totals || c.pricingError ? c.pricingError?.message || "This order can't be priced right now." : null
+  const addressIssue = checkoutAddressIssue(chosen)
+  const blocked = addingAddress ? "Save or cancel your address changes before paying." : addresses.isError ? "Reload your saved addresses before paying." : addressIssue ?? (!totals || c.pricingError ? c.pricingError?.message || "This order can't be priced right now." : null)
 
   const onPay = async () => {
-    if (!chosen || !totals || placing) return
+    if (!chosen || !totals || placing || blocked) return
     setPlacing(true)
     setRefusal(null)
     const signature = attemptSignature({
@@ -136,7 +138,8 @@ export function CheckoutScreen() {
       return
     }
     if (e.status === 404) {
-      setRefusal({ card: null, message: "That address is no longer saved. Choose your address again." })
+      setRefusal({ card: null, message: "This delivery address is no longer available. Choose a saved address or add a new one." })
+      void addresses.refetch()
       void qc.invalidateQueries({ queryKey: keys.addresses })
       return
     }
@@ -168,34 +171,21 @@ export function CheckoutScreen() {
         <div className="fc-stack">
           <section className="fc-card" aria-labelledby="fc-deliver">
             <div className="fc-row">
-              <h2 id="fc-deliver" className="fc-h2 fc-grow">Deliver to</h2>
-              <Link href="/feast/addresses" className="fc-link" style={{ fontSize: 12 }}>
-                Add or edit
-              </Link>
+              <h2 id="fc-deliver" className="fc-h2 fc-grow">Delivery address</h2>
+              <button type="button" className="fc-btn fc-btn--outline fc-btn--sm" disabled={placing} onClick={() => setAddingAddress((value) => !value)}>{addingAddress ? "Cancel changes" : "Add address"}</button>
             </div>
-            {!list.length ? (
-              <div className="fc-row">
-                <MapPin size={16} aria-hidden="true" />
-                <span className="fc-grow">No saved address yet.</span>
-                <Link href="/feast/addresses" className="fc-btn fc-btn--outline fc-btn--sm">
-                  Add address
-                </Link>
-              </div>
-            ) : (
-              <div className="fc-stack" role="radiogroup" aria-label="Delivery address" style={{ gap: 8 }}>
-                {list.map((a) => (
-                  <label key={a.id} className={chosen?.id === a.id ? "fc-choice is-on" : "fc-choice"}>
-                    <input type="radio" name="address" checked={chosen?.id === a.id} onChange={() => choose(a.id)} />
-                    <span className="fc-grow">
-                      <strong>{addressTitle(a)}</strong> {a.isDefault ? <span className="fc-tag">Default</span> : null}
-                      <span className="fc-meta" style={{ display: "block" }}>{addressLine(a)}</span>
-                      {!pinOf(a) ? <span className="fc-meta" style={{ display: "block" }}>No map pin — delivery is checked when you pay.</span> : null}
-                    </span>
-                  </label>
-                ))}
+            {addresses.isLoading ? <p role="status">Loading saved addresses…</p> : addresses.isError ? <p role="alert">{toFeastError(addresses.error).message} <button type="button" className="fc-link" onClick={() => void addresses.refetch()}>Try again</button></p> : (
+              <div className="fc-stack" role="radiogroup" aria-label="Delivery address">
+                {(addresses.data ?? []).map((address) => <label key={address.id} className={chosen?.id === address.id ? "fc-choice is-on" : "fc-choice"}>
+                  <input type="radio" name="delivery-address" checked={chosen?.id === address.id} onChange={() => choose(address.id)} disabled={placing || addingAddress} />
+                  <span><strong>{addressTitle(address)}</strong><span className="fc-meta" style={{ display: "block" }}>{addressLine(address)}</span><span className="fc-meta" style={{ display: "block" }}>{[address.receiverName, address.phone].filter(Boolean).join(" · ") || "No receiver contact saved"}</span></span>
+                </label>)}
               </div>
             )}
+            {addressIssue && !addresses.isLoading ? <p className="fc-note">{addressIssue}</p> : null}
+            <p className="fc-note">Review your flat, entrance and receiver contact before paying. You can search for an address manually; device location is optional.</p>
           </section>
+          {addingAddress ? <AddAddress first={!addresses.data?.length} onDone={(id) => { choose(id); void addresses.refetch().then((result) => { if (!result.isError) setAddingAddress(false) }) }} /> : null}
 
           <section className="fc-card" aria-labelledby="fc-method">
             <h2 id="fc-method" className="fc-h2">Pay with</h2>
@@ -212,8 +202,8 @@ export function CheckoutScreen() {
 
           <section className="fc-card" aria-labelledby="fc-note">
             <label id="fc-note" className="fc-field">
-              Note for the restaurant (optional)
-              <input className="fc-input" value={note} maxLength={200} onChange={(e) => setNote(e.target.value)} placeholder="Less spicy, no onions…" />
+              Delivery and restaurant instructions (optional)
+              <input className="fc-input" value={note} maxLength={200} onChange={(e) => setNote(e.target.value)} placeholder="Flat, entrance, landmark or food preferences…" />
             </label>
           </section>
 

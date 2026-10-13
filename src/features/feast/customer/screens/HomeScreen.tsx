@@ -14,13 +14,13 @@ import { MapPin, Search, Star, Store, UtensilsCrossed, X } from "lucide-react"
 import Link from "next/link"
 import { useMemo, useState } from "react"
 
-import { AddressBar } from "../components/AddressBar"
 import { ServiceCardView, Skel, StateBlock } from "../components/parts"
-import { useChosenAddress, useRestaurants } from "../hooks/queries"
+import { useRestaurants } from "../hooks/queries"
 import { formatPaise } from "../model/money"
 import { filterRestaurants } from "../model/discovery"
 import { canOrder, formatDistance, serviceCard } from "../model/serviceability"
 import type { Restaurant } from "../model/wire"
+import { useCurrentLocation } from "@/features/maps/CurrentLocation"
 
 function RestaurantCard({ r }: { r: Restaurant }) {
   const [failedImage,setFailedImage] = useState(false)
@@ -63,8 +63,8 @@ function RestaurantCard({ r }: { r: Restaurant }) {
 export function HomeScreen() {
   const [query,setQuery] = useState("")
   const [cuisine,setCuisine] = useState("")
-  const { addresses, chosen, pin, choose } = useChosenAddress()
-  const ready = !addresses.isLoading
+  const { point: pin } = useCurrentLocation()
+  const ready = Boolean(pin)
   const restaurants = useRestaurants(pin, ready)
   const cuisines = useMemo(() => Array.from(new Set((restaurants.data ?? []).flatMap(r => r.cuisines))).sort(),[restaurants.data])
   const visible = filterRestaurants(restaurants.data ?? [],query,cuisine)
@@ -75,15 +75,9 @@ export function HomeScreen() {
         <div>
           <span className="workspace-eyebrow"><UtensilsCrossed size={15} aria-hidden/>Made for your cravings</span>
           <h1 className="fc-title">Find your next favourite.</h1>
-          <p className="fc-sub">{pin ? "Restaurants that deliver to you come first." : "Choose an address to see who delivers to you."}</p>
+          <p className="fc-sub">Restaurants that deliver to your current location come first.</p>
         </div>
-        <AddressBar addresses={addresses.data ?? []} chosen={chosen} loading={addresses.isLoading} failed={addresses.isError} onChoose={choose} />
       </div>
-      {chosen && !pin ? (
-        <p className="fc-info" style={{ marginBottom: 16 }}>
-          This address has no map pin, so delivery can&apos;t be checked yet. <Link className="fc-link" href="/feast/addresses">Add one with your location</Link>.
-        </p>
-      ) : null}
 
       <div className="fc-discovery-controls">
         <div className="fc-discovery-search"><Search size={18} aria-hidden/><input type="search" aria-label="Search restaurants and cuisines" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search restaurants and cuisines"/>{query ? <button type="button" onClick={() => setQuery("")} aria-label="Clear restaurant search"><X size={16}/></button> : null}</div>

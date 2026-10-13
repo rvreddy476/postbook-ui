@@ -1,0 +1,22 @@
+{
+  "generatedBy": "OpenAI built-in image generation",
+  "generatedFor": "Doorstep customer storefront",
+  "references": [
+    "https://www.handy.com/",
+    "https://www.handy.com/services"
+  ],
+  "assets": [
+    {
+      "path": "/images/doorstep/home-welcome-20261009.webp",
+      "purpose": "Original fictional home background, decorative",
+      "prompt": "Use case: photorealistic-natural. Asset type: wide home-services website hero background, landscape 3:1. Primary request: an original welcoming contemporary Indian urban home exterior, modest well-kept two-storey cream and warm stone house with a teal front door, leafy garden and tiled entry, natural architectural photography. Composition: straight-on wide view, house and greenery visible across width; the middle will be covered by a white search panel, so recognizable architectural details towards both sides. Lighting: soft bright daylight, natural realistic colors, calm inviting mood. No people, no text, no logos, no watermark, no website UI. Not an image of an existing branded property."
+    },
+    {
+      "path": "/images/doorstep/service-categories-20261009.webp",
+      "purpose": "Original illustrative category photos, not real provider profile photos",
+      "prompt": "Use case: photorealistic-natural. Asset type: one 3 by 3 photographic sprite sheet for a home-services website's category thumbnails, square canvas. Create EXACTLY nine equally sized square photographic cells in a precise 3 columns by 3 rows grid, edge-to-edge, no gutters, no frames, no text. Each cell is a distinct realistic service scene in a clean lived-in contemporary Indian home with natural daylight and calm neutral colours, adult Indian professionals wearing plain muted teal work shirts where appropriate. Row 1 left-to-right: a house-cleaning professional wiping a kitchen counter; an AC technician servicing a wall-mounted air conditioner; an appliance technician inspecting a front-loading washing machine. Row 2: electrician checking a wall switch safely with a tool; plumber repairing a kitchen sink tap; carpenter assembling a wooden cabinet. Row 3: adult female beautician giving an adult woman a manicure at home; adult male barber trimming an adult man's hair at home; adult household helper neatly folding fresh towels in a laundry area. Keep relevant action centered within EACH square cell, natural hands, no badges, no logos, no text, no watermarks, no celebrity likeness. This is illustrative category imagery, not professional profile portraits."
+    }
+  ],
+  "processing": "WebP encoding only; originals retained in the image-generation output directory.",
+  "typography": "DM Sans, self-hosted by next/font; Circular font files were not copied."
+}

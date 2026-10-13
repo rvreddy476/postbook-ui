@@ -18,15 +18,17 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useGlobalToast } from "@/contexts/ToastContext"
 
 import { toFeastError } from "../api/client"
-import { AddressBar } from "../components/AddressBar"
 import { ItemSheet } from "../components/ItemSheet"
 import { ServiceCardView, Skel, StateBlock, VegMark } from "../components/parts"
-import { keys, useAddToCart, useChosenAddress, useMenu, useRestaurant } from "../hooks/queries"
+import { keys, useAddToCart, useMenu, useRestaurant } from "../hooks/queries"
 import { CHOSEN_ADDRESS_KEY } from "../model/address"
 import { cartBody, initialSheet, needsSheet, type SheetState } from "../model/itemSheet"
 import { formatPaise } from "../model/money"
 import { canOrder, formatDistance, fromRefusal, recallRefusal, rememberRefusal, serviceCard, type ServiceCard } from "../model/serviceability"
 import type { MenuItem } from "../model/wire"
+import type { Address } from "../model/wire"
+import { useCurrentLocation } from "@/features/maps/CurrentLocation"
+import { useCurrentAddress } from "@/features/maps/useCurrentAddress"
 
 function localStore(): Storage | null {
   try {
@@ -70,8 +72,10 @@ function DishRow({ item, blocked, onAdd }: { item: MenuItem; blocked: boolean; o
 export function RestaurantScreen({ restaurantId }: { restaurantId: string }) {
   const qc = useQueryClient()
   const toast = useGlobalToast()
-  const { addresses, chosen, pin, choose } = useChosenAddress()
-  const restaurant = useRestaurant(restaurantId, pin, !addresses.isLoading)
+  const { point: pin } = useCurrentLocation()
+  const currentAddress = useCurrentAddress("feast")
+  const chosen = currentAddress.data as Address | undefined
+  const restaurant = useRestaurant(restaurantId, pin, Boolean(pin))
   const menu = useMenu(restaurantId)
   const add = useAddToCart()
 
@@ -84,7 +88,7 @@ export function RestaurantScreen({ restaurantId }: { restaurantId: string }) {
   useEffect(() => setRemembered(recallRefusal(localStore(), restaurantId, addressId)), [restaurantId, addressId])
 
   const card = restaurant.data ? serviceCard(restaurant.data, remembered) : null
-  const blocked = card ? !canOrder(card) : false
+  const blocked = !chosen || (card ? !canOrder(card) : false)
 
   const categories = useMemo(
     () => (menu.data?.categories ?? []).slice().sort((a, b) => a.sortOrder - b.sortOrder).filter((c) => c.items.length),
@@ -115,7 +119,8 @@ export function RestaurantScreen({ restaurantId }: { restaurantId: string }) {
             }
             void qc.invalidateQueries({ queryKey: keys.addresses })
             void qc.invalidateQueries({ queryKey: keys.menu(restaurantId) })
-            setSheetError("That address or dish is no longer available. Choose your address again and retry.")
+            void currentAddress.refetch()
+            setSheetError("The location or dish is no longer available. Refresh your location and retry.")
             return
           }
           const refusal = fromRefusal(e.code, e.fromServer ? e.message : "")
@@ -129,7 +134,7 @@ export function RestaurantScreen({ restaurantId }: { restaurantId: string }) {
         },
       })
     },
-    [add, addressId, qc, restaurantId, toast],
+    [add, addressId, qc, restaurantId, toast, currentAddress.refetch],
   )
 
   const onAddClicked = (item: MenuItem) => {
@@ -204,7 +209,7 @@ export function RestaurantScreen({ restaurantId }: { restaurantId: string }) {
         </section>
       )}
 
-      <AddressBar addresses={addresses.data ?? []} chosen={chosen} loading={addresses.isLoading} failed={addresses.isError} onChoose={choose} />
+      {!chosen ? <div className="current-location"><p role={currentAddress.isError ? "alert" : "status"}>{currentAddress.isError ? (currentAddress.error as Error).message : "Identifying your current delivery address…"}</p>{currentAddress.isError ? <button type="button" onClick={() => void currentAddress.refetch()}>Try address lookup again</button> : null}</div> : null}
 
       {conflict ? (
         <div className="fc-card" role="alertdialog" aria-labelledby="fc-conflict" style={{ marginBottom: 16 }}>

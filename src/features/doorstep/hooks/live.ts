@@ -30,8 +30,6 @@ export interface LiveHandlers {
   onFix: (fix: ProFix) => void
 }
 
-const MAX_RECONNECTS = 5
-
 export function bookingTopic(bookingId: string): string {
   return `doorstep.booking.${bookingId}`
 }
@@ -41,7 +39,7 @@ export function parseFrame(raw: string): { eventType: string; fix: ProFix | null
     const env = JSON.parse(raw) as { event_type?: unknown; data?: unknown; at?: unknown }
     const eventType = typeof env.event_type === "string" ? env.event_type : ""
     let fix: ProFix | null = null
-    if (eventType === "pro_location" && env.data && typeof env.data === "object") {
+    if ((eventType === "pro_location" || eventType === "doorstep.booking.pro_location") && env.data && typeof env.data === "object") {
       const d = env.data as Record<string, unknown>
       const at = typeof d.at === "string" ? d.at : typeof env.at === "string" ? env.at : ""
       if (typeof d.lat === "number" && typeof d.lng === "number" && at) {
@@ -79,6 +77,7 @@ export function useLiveBooking(bookingId: string, active: boolean, handlers: Liv
         source.addEventListener("connected", () => {
           attempts = 0
           setConnected(true)
+          ref.current.onChange("reconnected")
         })
         source.addEventListener(topic, (e: MessageEvent) => {
           const frame = parseFrame(String(e.data))
@@ -90,11 +89,12 @@ export function useLiveBooking(bookingId: string, active: boolean, handlers: Liv
           setConnected(false)
           source?.close()
           source = null
-          if (!cancelled && attempts < MAX_RECONNECTS) retry = setTimeout(open, Math.min(30_000, 2_000 * 2 ** attempts))
+          if (!cancelled) retry = setTimeout(open, Math.min(30_000, 2_000 * 2 ** Math.min(attempts, 4)))
         }
       } catch {
         // Not configured, not ours, offline: polling carries on.
         setConnected(false)
+        if (!cancelled) retry = setTimeout(open, 30_000)
       }
     }
     void open()

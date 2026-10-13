@@ -10,6 +10,7 @@ import { connectToHub } from "@/services/messageService"
 import { ensureAccessToken, lastRefreshOutcome } from "@/lib/accessToken"
 import { getSession, logoutUser } from "@/services/authService"
 import CallOverlay from "@/components/CallOverlay"
+import { CurrentLocationProvider } from "@/features/maps/CurrentLocation"
 
 /**
  * SessionReconciler makes the httpOnly refresh cookie the single authority
@@ -106,7 +107,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     /messenger an incoming call_offer had no listener and no
                     overlay: it was dropped before anything could ring. */}
                 <CallOverlay />
-                <AppNotifications>{children}</AppNotifications>
+                <AppNotifications><CurrentLocationProvider>{children}</CurrentLocationProvider></AppNotifications>
             </ToastProvider>
         </QueryClientProvider>
     )

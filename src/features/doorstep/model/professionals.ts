@@ -45,10 +45,10 @@ export function quantityLabel(unit: string): string {
   instead of inventing a price (the city's suggested price is never shown as
   one: it is never charged).
 */
-export function fromPriceLabel(paise: number | null, unit?: string): string | null {
+export function fromPriceLabel(paise: number | null, unit?: string, fixed = false): string | null {
   if (paise === null || !Number.isSafeInteger(paise)) return null
   const u = unit ? unitWord(unit) : ""
-  return `From ${formatPaise(paise)}${u ? ` ${u}` : ""}`
+  return `${fixed ? "" : "From "}${formatPaise(paise)}${u ? ` ${u}` : ""}`
 }
 
 /* ── one card, as the customer reads it ───────────────────────────── */

@@ -6,6 +6,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
 import { useAuthUser } from "@/store/auth"
 import { playNotificationSound } from "@/hooks/useNotificationSound"
+import { notificationSseDecoder } from '@/lib/notificationSse'
+import { customerQueryPrefix } from '@/lib/customerTracking'
 
 export interface ActivityNotification {
     user_id: string
@@ -75,6 +77,10 @@ export function useNotificationStream(onNotification?: (notif: ActivityNotificat
 
         // EventSource doesn't support custom headers, so we use fetch-based SSE
         const controller = new AbortController()
+        let retry: ReturnType<typeof setTimeout> | undefined
+        const reconnect = (delay = 5000) => {
+            if (!controller.signal.aborted) retry = setTimeout(() => void connect(), delay)
+        }
 
         const connect = async () => {
             try {
@@ -89,8 +95,7 @@ export function useNotificationStream(onNotification?: (notif: ActivityNotificat
                     // is a 401 per attempt in the server log and nothing
                     // else. The 30s poll still runs; try the stream again
                     // once a token exists.
-                    await new Promise(r => setTimeout(r, 30_000))
-                    if (!controller.signal.aborted) connect()
+                    reconnect(30_000)
                     return
                 }
 
@@ -107,68 +112,52 @@ export function useNotificationStream(onNotification?: (notif: ActivityNotificat
                     // reconnecting; retrying with the same one is what made
                     // this stream fail forever once a token had expired.
                     await forceRefresh()
-                    await new Promise(r => setTimeout(r, 2000))
-                    if (!controller.signal.aborted) connect()
+                    reconnect(2000)
                     return
                 }
-                if (!response.ok || !response.body) return
+                if (!response.ok || !response.body) { reconnect(); return }
+
+                // The connection may have missed events while offline. Read back
+                // persisted inbox and visible customer work before consuming hints.
+                for (const queryKey of [
+                    ['activity-notifications'], ['notification-inbox'], ['unread-count'],
+                    ['doorstep', 'customer'], ['feast', 'customer'], ['shop', 'orders'], ['mopedu', 'customer'],
+                ]) void qc.invalidateQueries({ queryKey })
 
                 const reader = response.body.getReader()
                 const decoder = new TextDecoder()
-                let buffer = ""
+                const consume = notificationSseDecoder((eventType, dataStr) => {
+                    if (eventType !== 'notification') return
+                    try {
+                        const parsed = JSON.parse(dataStr)
+                        const notif = parsed.payload as ActivityNotification
+                        if (!notif?.notification_id) return
+                        callbackRef.current?.(notif)
+                        void qc.invalidateQueries({ queryKey: ['activity-notifications'] })
+                        void qc.invalidateQueries({ queryKey: ['notification-inbox'] })
+                        void qc.invalidateQueries({ queryKey: ['unread-count'] })
+                        const customer = customerQueryPrefix(notif.type)
+                        if (customer) void qc.invalidateQueries({ queryKey: customer })
+                    } catch { /* Ignore malformed events, not subsequent valid events. */ }
+                })
 
                 while (true) {
                     const { done, value } = await reader.read()
                     if (done) break
 
-                    buffer += decoder.decode(value, { stream: true })
-                    const lines = buffer.split("\n")
-                    buffer = lines.pop() ?? ""
-
-                    let eventType = ""
-                    let dataStr = ""
-
-                    for (const line of lines) {
-                        if (line.startsWith("event: ")) {
-                            eventType = line.slice(7).trim()
-                        } else if (line.startsWith("data: ")) {
-                            dataStr = line.slice(6).trim()
-                        } else if (line === "" && dataStr) {
-                            // End of event
-                            if (eventType === "notification" && dataStr) {
-                                try {
-                                    const parsed = JSON.parse(dataStr)
-                                    const notif = parsed.payload as ActivityNotification
-                                    if (notif?.notification_id) {
-                                        // Trigger callback (for toast/sound)
-                                        callbackRef.current?.(notif)
-                                        // Refresh the list AND the badge. Only the
-                                        // list was invalidated before, so a live
-                                        // event updated the panel while the number
-                                        // on the bell waited for the 30s poll —
-                                        // which read as "no notification arrived".
-                                        qc.invalidateQueries({ queryKey: ["activity-notifications"] })
-                                        qc.invalidateQueries({ queryKey: ["unread-count"] })
-                                    }
-                                } catch {
-                                    // Ignore malformed events
-                                }
-                            }
-                            eventType = ""
-                            dataStr = ""
-                        }
-                    }
+                    consume(decoder.decode(value, { stream: true }))
                 }
+                reader.releaseLock()
+                reconnect()
             } catch (err: unknown) {
                 if (err instanceof DOMException && err.name === "AbortError") return
                 // Reconnect after 5s on failure
-                await new Promise(r => setTimeout(r, 5000))
-                if (!controller.signal.aborted) connect()
+                reconnect()
             }
         }
 
         connect()
-        return () => controller.abort()
+        return () => { controller.abort(); if (retry) clearTimeout(retry) }
     }, [authUser?.id, qc])
 }
 

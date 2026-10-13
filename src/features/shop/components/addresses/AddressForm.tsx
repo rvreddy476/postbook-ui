@@ -1,6 +1,7 @@
 "use client"
 
 import { useId, useState } from "react"
+import type { SelectedPlace } from "@/features/maps/google"
 import {
   ADDRESS_TYPE_LABELS,
   EMPTY_ADDRESS_FORM,
@@ -24,6 +25,7 @@ export interface AddressFormProps {
   submitLabel?: string
   /** Hide the "make this my default" row (a checkout that saves a first address does not need it). */
   hideDefault?: boolean
+  automaticLocation?: SelectedPlace
 }
 
 /**
@@ -31,8 +33,8 @@ export interface AddressFormProps {
  * checkout, which imports it from this path. Validation is
  * model/addresses.ts `validateAddress`; the form only shows the errors.
  */
-export function AddressForm({ initial, onSubmit, onCancel, busy, submitLabel = "Save address", hideDefault }: AddressFormProps) {
-  const [values, setValues] = useState<AddressFormValues>({ ...EMPTY_ADDRESS_FORM, ...initial })
+export function AddressForm({ initial, onSubmit, onCancel, busy, submitLabel = "Save address", hideDefault, automaticLocation }: AddressFormProps) {
+  const [values, setValues] = useState<AddressFormValues>({ ...EMPTY_ADDRESS_FORM, ...initial, ...(automaticLocation ? { line1: automaticLocation.address.slice(0, 200), city: automaticLocation.city, state: automaticLocation.state, pincode: automaticLocation.postalCode, type: "other" as const, isDefault: false } : {}) })
   const [errors, setErrors] = useState<AddressErrors>({})
   const [touched, setTouched] = useState<Partial<Record<AddressField, boolean>>>({})
   const baseId = useId()
@@ -85,20 +87,20 @@ export function AddressForm({ initial, onSubmit, onCancel, busy, submitLabel = "
     >
       {field("contactName", "Full name", { autoComplete: "name" }, true)}
       {field("phone", "Mobile number", { autoComplete: "tel", inputMode: "tel", placeholder: "10 digits" }, true)}
-      {field("line1", "House / flat, street", { autoComplete: "address-line1" }, true)}
-      {field("line2", "Area, colony (optional)", { autoComplete: "address-line2" }, true)}
+      {automaticLocation ? <p className="shop-field--full">Detected from your current location: {automaticLocation.address}<br /><small>Address lookup by Google Maps</small></p> : field("line1", "House / flat, street", { autoComplete: "address-line1" }, true)}
+      {field("line2", automaticLocation ? "Flat / entrance instructions (optional)" : "Area, colony (optional)", { autoComplete: "address-line2" }, true)}
       {field("landmark", "Landmark (optional)", {}, true)}
-      {field("city", "City", { autoComplete: "address-level2" })}
+      {!automaticLocation ? <>{field("city", "City", { autoComplete: "address-level2" })}
       {field("state", "State", { autoComplete: "address-level1" })}
-      {field("pincode", "PIN code", { autoComplete: "postal-code", inputMode: "numeric", placeholder: "6 digits" })}
-      <div className="shop-field">
+      {field("pincode", "PIN code", { autoComplete: "postal-code", inputMode: "numeric", placeholder: "6 digits" })}</> : null}
+      {!automaticLocation ? <div className="shop-field">
         <label className="shop-field__label" htmlFor={`${baseId}-type`}>Address type</label>
         <select id={`${baseId}-type`} className="shop-input" value={values.type} onChange={set("type")} disabled={busy}>
           {(Object.keys(ADDRESS_TYPE_LABELS) as AddressType[]).map((type) => (
             <option key={type} value={type}>{ADDRESS_TYPE_LABELS[type]}</option>
           ))}
         </select>
-      </div>
+      </div> : null}
       {!hideDefault ? (
         <label className="shop-form__check">
           <input type="checkbox" checked={values.isDefault} onChange={set("isDefault")} disabled={busy} />

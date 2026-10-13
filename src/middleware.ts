@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
+import { partnerForDestination, portalLogoutHref, roleForPath } from "./components/auth/portalRoles"
+import { businessSelections, isCustomerHost, isPartnerHost, partnerEntryLogoutHref, portalHostname, PARTNER_ORIGIN } from "./components/auth/partnerPortal"
 
 /**
  * Route gate.
@@ -49,10 +51,15 @@ const PUBLIC_EXACT = new Set([
     "/",
     "/login",
     "/register",
+    "/partners/login",
+    "/partners/register",
     // Marketing / statutory pages built for signed-out visitors. /commerce is
     // the seller pitch and links to /login?redirect=/seller/onboarding itself;
     // /grievance is the grievance-officer contact page.
     "/commerce",
+    // Informational partner entry only; all professional APIs still enforce
+    // authentication and the pilot gate. No broad /doorstep/ exemption.
+    "/doorstep-pro/digilocker",
     // The MStore storefront works signed out: the home page and the browse
     // page are exact entries here, and product pages are a prefix below.
     // Listed one by one on purpose — a "/shop/" prefix would also open
@@ -156,22 +163,58 @@ const isUngatedPath = (pathname: string) => {
 export function middleware(req: NextRequest) {
     const { pathname, search } = req.nextUrl
     const path = normalise(pathname)
+    const hostname = portalHostname(req.nextUrl.hostname, req.headers.get("host"))
+    const partnerHost = isPartnerHost(hostname)
 
-    if (isUngatedPath(path) || isPublicPath(path)) {
-        return NextResponse.next()
+    if (isCustomerHost(hostname)) {
+        const legacyPartner = ["/login", "/register"].includes(path) ? partnerForDestination(req.nextUrl.searchParams.get("redirect") ?? "") : undefined
+        const workspace = roleForPath(path)
+        const requested = legacyPartner ?? (workspace.id.endsWith("-partner") ? workspace : undefined)
+        if (requested) {
+            const response = new NextResponse(null, { status: 303, headers: { Location: portalLogoutHref(requested.id) + (path === "/register" ? "&intent=register" : ""), "Cache-Control": "no-store, must-revalidate" } })
+            return response
+        }
+        if (path === "/partners" || path.startsWith("/partners/")) {
+            // Do not move a customer cookie, token or cached user to the partner origin.
+            const target = partnerEntryLogoutHref(businessSelections(req.nextUrl.searchParams.get("businesses")), path === "/partners/register" ? "register" : "login")
+            return new NextResponse(null, { status: 303, headers: { Location: target, "Cache-Control": "no-store, must-revalidate" } })
+        }
+    }
+
+    const effectivePath = partnerHost && path === "/" ? "/partners" : path
+    const partnerAuth = partnerHost && ["/login", "/register"].includes(path)
+    const partnerRewrite = partnerHost && (path === "/" || partnerAuth)
+    const nextPage = () => {
+        if (!partnerRewrite) return NextResponse.next()
+        const url = req.nextUrl.clone()
+        url.pathname = partnerAuth ? `/partners${path}` : "/partners"
+        const response = NextResponse.rewrite(url)
+        response.headers.set("Cache-Control", "private, no-store")
+        return response
+    }
+
+    if (path === "/doorstep-pro/digilocker") {
+        const response = NextResponse.next()
+        response.headers.set("Referrer-Policy", "no-referrer")
+        response.headers.set("Cache-Control", "private, no-store")
+        return response
+    }
+
+    if (isUngatedPath(effectivePath) || isPublicPath(effectivePath)) {
+        return nextPage()
     }
 
     if (req.cookies.get(SESSION_FLAG_COOKIE)?.value) {
-        return NextResponse.next()
+        return nextPage()
     }
 
-    const loginUrl = new URL("/login", req.url)
+    const loginUrl = new URL(partnerHost ? "/login" : path.startsWith("/partners") ? "/partners/login" : "/login", partnerHost ? PARTNER_ORIGIN : req.url)
 
     // `next` is the parameter this gate defines. `redirect` is what
     // src/app/login/page.tsx actually reads today, so both are set — without
     // the second one the return path silently drops and everyone lands on /.
     // Once the login page prefers `next`, `redirect` can go.
-    const returnTo = `${pathname}${search}`
+    const returnTo = `${effectivePath}${search}`
     loginUrl.searchParams.set("next", returnTo)
     loginUrl.searchParams.set("redirect", returnTo)
 

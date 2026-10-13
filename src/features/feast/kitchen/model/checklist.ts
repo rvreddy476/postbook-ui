@@ -15,6 +15,7 @@ export const ONBOARDING_STEPS = [
   "operating_hours",
   "compliance",
   "fssai_document",
+  "selfie",
   "payout_account",
   "menu_item",
 ] as const
@@ -22,7 +23,7 @@ export const ONBOARDING_STEPS = [
 export type OnboardingStep = (typeof ONBOARDING_STEPS)[number]
 
 /** The panel that completes a step. `state` is set on the location panel. */
-export type StepPanel = "location" | "hours" | "compliance" | "fssai" | "payout" | "menu"
+export type StepPanel = "location" | "hours" | "compliance" | "fssai" | "selfie" | "payout" | "menu"
 
 export const STEP_COPY: Readonly<Record<OnboardingStep, { title: string; detail: string; panel: StepPanel }>> = {
   location: { title: "Restaurant location", detail: "Pin, address and how far you deliver", panel: "location" },
@@ -30,6 +31,7 @@ export const STEP_COPY: Readonly<Record<OnboardingStep, { title: string; detail:
   operating_hours: { title: "Opening hours", detail: "When you take orders, in India time", panel: "hours" },
   compliance: { title: "Tax details", detail: "Tax category, PAN and GSTIN", panel: "compliance" },
   fssai_document: { title: "FSSAI licence", detail: "Licence number, expiry and a photo", panel: "fssai" },
+  selfie: { title: "Selfie & introduction", detail: "Required selfie and optional one-minute video", panel: "selfie" },
   payout_account: { title: "Bank account", detail: "Where your earnings are paid", panel: "payout" },
   menu_item: { title: "Menu", detail: "At least one dish customers can order", panel: "menu" },
 }

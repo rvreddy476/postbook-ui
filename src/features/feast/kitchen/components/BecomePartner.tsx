@@ -9,7 +9,7 @@ import { createRestaurant, type NewRestaurant } from "../api/client"
 import { FailureNotice, Field, Notice, useAction } from "./ui"
 
 export function BecomePartner({ onCreated }: { onCreated: () => void }) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(true)
   const [form, setForm] = useState<NewRestaurant>({ name: "", displayName: "", legalName: "", phone: "", email: "", addressLine1: "", city: "" })
   const [local, setLocal] = useState<string | null>(null)
   const action = useAction()

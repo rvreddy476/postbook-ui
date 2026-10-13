@@ -6,12 +6,12 @@
   Location: a rationale first, then ONE browser geolocation read on the
   customer's tap, used only to pin this address (the pin is what lets the
   server check who delivers). Declining is fine: the address is typed in by
-  hand and simply has no pin. There is no map key, so a calm placeholder
-  stands where a map would be.
+  hand. Google Maps and Places are optional; manual entry remains available.
 */
 
 import { Crosshair, LocateFixed, MapPin, Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
+import { GoogleLocation } from "@/features/maps/GoogleLocation"
 
 import { useGlobalToast } from "@/contexts/ToastContext"
 
@@ -55,7 +55,7 @@ function Field({
   )
 }
 
-function AddAddress({ onDone, first }: { onDone: (id: string) => void; first: boolean }) {
+export function AddAddress({ onDone, first }: { onDone: (id: string) => void; first: boolean }) {
   const toast = useGlobalToast()
   const create = useCreateAddress()
   const [form, setForm] = useState<AddressForm>({ ...EMPTY_FORM, makeDefault: first })
@@ -104,6 +104,7 @@ function AddAddress({ onDone, first }: { onDone: (id: string) => void; first: bo
   return (
     <form className="fc-card" onSubmit={submit} noValidate aria-labelledby="fc-add-title">
       <h2 id="fc-add-title" className="fc-h2">New address</h2>
+      <GoogleLocation point={form.latitude !== null && form.longitude !== null ? { lat: form.latitude, lng: form.longitude } : null} onPin={(p) => { setForm((f) => ({ ...f, latitude: p.lat, longitude: p.lng })); setLoc({ kind: "pinned" }) }} onPlace={(p) => { setForm((f) => ({ ...f, latitude: p.lat, longitude: p.lng, addressLine1: p.address, city: p.city, state: p.state, postalCode: p.postalCode })); setLoc({ kind: "pinned" }) }} label="Delivery address" />
 
       <div className="fc-map">
         {loc.kind === "pinned" && form.latitude !== null && form.longitude !== null ? (

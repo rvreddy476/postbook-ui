@@ -10,6 +10,8 @@ import { useCategories, useShopSession } from "../hooks/storefront"
 import { favouriteCount, favouritesLabel } from "../model/favourites"
 import { ACCOUNT_MENU, SHOP_BASE, STORE_NAME, avatarInitial, bagLabel, browseHref, signInHref, type CategoryCard } from "../model/storefront"
 import { Wordmark } from "./storefront/Wordmark"
+import { RoleMenuLink } from "@/components/auth/RoleMenuLink"
+import { PortalLink } from "@/components/auth/PortalLink"
 
 const MENU_ICONS: Record<string, React.ComponentType<{ size?: number; "aria-hidden"?: boolean | "true" }>> = {
   Addresses: MapPin,
@@ -100,12 +102,13 @@ function AccountMenu({ initial }: { initial: string }) {
           const Icon = MENU_ICONS[entry.label] ?? User
           return (
             <li key={entry.href} role="none">
-              <Link href={entry.href} role="menuitem" className="shop-menu__item">
+              <PortalLink href={entry.href} role="menuitem" className="shop-menu__item">
                 <Icon size={16} aria-hidden="true" /> {entry.label}
-              </Link>
+              </PortalLink>
             </li>
           )
         })}
+        <li role="none"><RoleMenuLink menuItem className="shop-menu__item" /></li>
       </ul>
     </div>
   )

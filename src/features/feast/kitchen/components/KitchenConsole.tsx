@@ -12,6 +12,7 @@
 
 import { ArrowLeftRight, ChefHat, ClipboardList, IndianRupee, Settings2, UtensilsCrossed } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 
 import { fetchCapabilitiesRaw, fetchRestaurant, fetchRestaurantsRaw } from "../api/client"
 import { restaurantStatusLabel, restaurantStatusTone } from "../model/checklist"
@@ -155,7 +156,11 @@ function Picker({ restaurants, onPick }: { restaurants: PartnerRestaurant[]; onP
 
 function Console({ initial, canSwitch, onSwitch }: { initial: PartnerRestaurant; canSwitch: boolean; onSwitch: () => void }) {
   const [restaurant, setRestaurant] = useState(initial)
-  const [tab, setTab] = useState<Tab>(initial.status === "ACTIVE" ? "orders" : "setup")
+  const router = useRouter()
+  const search = useSearchParams()
+  const selectedTab = search.get("tab")
+  const tab: Tab = selectedTab === "menu" || selectedTab === "setup" || selectedTab === "earnings" ? selectedTab : "orders"
+  const setTab = (value: Tab) => router.push("/feast/kitchen?tab=" + value)
   const [newCount, setNewCount] = useState(0)
 
   const reload = useCallback(

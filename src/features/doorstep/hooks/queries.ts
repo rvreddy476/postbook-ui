@@ -39,6 +39,7 @@ import {
 import { fullBody, readChosenId, resolveChosen, writeChosenId, type AddressBody } from "../model/address"
 import { professionalsSearch, bookingProfessionalsSearch, type BookingProQuery, type ProListQuery } from "../model/professionals"
 import type { Address, Booking, ProfessionalList } from "../model/wire"
+import { useCurrentServiceArea } from "../components/NearbyServices"
 
 /** The professionals lists refresh every 30 s (free times and on-duty professionals move). */
 export const PROS_REFRESH_MS = 30_000
@@ -78,15 +79,21 @@ function localStore(): Storage | null {
 /* catalogue */
 
 export function useCatalogue() {
-  return useQuery({ queryKey: keys.catalogue, queryFn: () => getCatalogue(), staleTime: 60_000, retry: 1 })
+  const area = useCurrentServiceArea()
+  const city = area.data?.city?.code
+  return useQuery({ queryKey: [...keys.catalogue, city], queryFn: () => getCatalogue(city!), enabled: Boolean(area.data?.serviceable && city), staleTime: 60_000, retry: 1 })
 }
 
 export function useCategory(slug: string) {
-  return useQuery({ queryKey: keys.category(slug), queryFn: () => getCategory(slug), enabled: Boolean(slug), staleTime: 60_000, retry: 1 })
+  const area = useCurrentServiceArea()
+  const city = area.data?.city?.code
+  return useQuery({ queryKey: [...keys.category(slug), city], queryFn: () => getCategory(slug, city!), enabled: Boolean(slug && area.data?.serviceable && city), staleTime: 60_000, retry: 1 })
 }
 
 export function useService(id: string) {
-  return useQuery({ queryKey: keys.service(id), queryFn: () => getService(id), enabled: Boolean(id), staleTime: 60_000, retry: 1 })
+  const area = useCurrentServiceArea()
+  const city = area.data?.city?.code
+  return useQuery({ queryKey: [...keys.service(id), city], queryFn: () => getService(id, city!), enabled: Boolean(id && area.data?.serviceable && city), staleTime: 60_000, retry: 1 })
 }
 
 export function useQuote(id: string) {
@@ -219,8 +226,8 @@ export function useExtrasBill(bookingId: string, enabled: boolean) {
   return useQuery({ queryKey: keys.extrasBill(bookingId), queryFn: () => getExtrasBill(bookingId), enabled: enabled && Boolean(bookingId), retry: false })
 }
 
-export function useOutstanding() {
-  return useQuery({ queryKey: keys.outstanding, queryFn: getOutstanding, staleTime: 30_000, retry: 1 })
+export function useOutstanding(enabled = true) {
+  return useQuery({ queryKey: keys.outstanding, queryFn: getOutstanding, staleTime: 30_000, retry: 1, enabled })
 }
 
 /* after the visit */
