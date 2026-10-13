@@ -10,11 +10,12 @@ interface FeedDeltaResult {
 }
 
 interface UseFeedDeltaOptions {
-  feedType: 'home' | 'following' | 'group' | 'group_channel' | 'channel' | 'community' | 'community_space' | 'flicks' | 'posttube'
-  groupId?: string
-  channelId?: string
-  communityId?: string
-  spaceId?: string
+  /*
+    The viewer's own feeds only. feed-service dropped the group, channel,
+    community and space counts: they ran with no membership check, so any
+    signed-in user could watch a private group's activity.
+  */
+  feedType: 'home' | 'following' | 'flicks' | 'posttube'
   enabled?: boolean
 }
 
@@ -31,20 +32,15 @@ interface UseFeedDeltaOptions {
   everything since the anchor, so a longer interval means a later banner, never
   a smaller number. Refreshing the page always shows the current state.
 */
-const POLL_INTERVALS: Record<string, number> = {
+const POLL_INTERVALS: Record<UseFeedDeltaOptions['feedType'], number> = {
   home: 600000,
   following: 600000,
-  group: 30000,
-  group_channel: 30000,
-  channel: 30000,
-  community: 30000,
-  community_space: 45000,
   flicks: 20000,
   posttube: 60000,
 }
 
 export function useFeedDelta(options: UseFeedDeltaOptions) {
-  const { feedType, groupId, channelId, communityId, spaceId, enabled = true } = options
+  const { feedType, enabled = true } = options
   const [newCount, setNewCount] = useState(0)
   const [newestAnchor, setNewestAnchor] = useState<string | null>(null)
   const anchorRef = useRef<string | null>(null)
@@ -65,17 +61,14 @@ export function useFeedDelta(options: UseFeedDeltaOptions) {
         feed_type: feedType,
         anchor: anchorRef.current,
       })
-      if (groupId) params.set('group_id', groupId)
-      if (channelId) params.set('channel_id', channelId)
-      if (communityId) params.set('community_id', communityId)
-      if (spaceId) params.set('space_id', spaceId)
 
       const res = await api.get<{ data: FeedDeltaResult }>(`/v1/feed/delta?${params}`)
       const data = res.data.data
       if (data) {
         setNewCount(data.newCount ?? data.new_count ?? 0)
-        // Kept for callers that want to know the newest id; NOT used as the
-        // next anchor — see consumeNew.
+        // The newest counted item's created_at (the server now returns a
+        // timestamp, a valid anchor). Still NOT used as the next anchor —
+        // see consumeNew.
         const anchor = data.newestAnchor ?? data.newest_anchor
         if (anchor) {
           setNewestAnchor(anchor)
@@ -84,7 +77,7 @@ export function useFeedDelta(options: UseFeedDeltaOptions) {
     } catch {
       // silently fail — delta is non-critical
     }
-  }, [feedType, groupId, channelId, communityId, spaceId])
+  }, [feedType])
 
   // Set initial anchor
   const setAnchor = useCallback((anchor: string) => {
@@ -96,13 +89,11 @@ export function useFeedDelta(options: UseFeedDeltaOptions) {
   /*
     Consume new items: clear the count and let the CALLER re-anchor.
 
-    This used to set the anchor to the response's `newest_anchor`. That field
-    is a post ID, and the server parses the anchor as an RFC3339 timestamp
-    only (feed-service/internal/service/delta.go:25) — so the first tap poisoned
-    the anchor and every poll after it answered 500. The hook swallows errors,
-    so the count would simply have stopped updating with nothing to show why.
-    Verified against the running service: an ISO anchor returns a count, the
-    same call with a post ID returns INTERNAL_ERROR.
+    This used to set the anchor to the response's `newest_anchor`, which was
+    then a post ID; the server parses the anchor as an RFC3339 timestamp, so
+    the first tap poisoned the anchor and every poll after it failed (the
+    hook swallows errors, so the count simply stopped updating). The server
+    now returns a timestamp there, and answers a bad anchor with 400.
 
     Anchoring from the newest post the caller has actually RENDERED is also
     the more honest measure: it counts from what the reader has seen, not from
