@@ -14,14 +14,17 @@ import {
     HelpCircle,
     ShoppingBag,
     CalendarCheck,
+    Heart,
 } from "lucide-react"
 
 interface ProfileTabsProps {
     activeTab: ProfileTab
     onTabChange: (tab: ProfileTab) => void
     isOwn: boolean
-    hasVideos: boolean
-    hasFlicks: boolean
+    /** @deprecated Videos and Reels tabs always show; kept for callers. */
+    hasVideos?: boolean
+    /** @deprecated Videos and Reels tabs always show; kept for callers. */
+    hasFlicks?: boolean
     hasMedia: boolean
     isSticky?: boolean
 }
@@ -101,10 +104,19 @@ const tabDefinitions: TabDef[] = [
     },
     {
         key: "stashed",
-        label: "Stash",
+        label: "Saved",
         icon: Bookmark,
         activeColor: "bg-rose-100 text-rose-600",
         inactiveColor: "text-rose-400",
+        selfOnly: true,
+    },
+    {
+        // The viewer's liked reels; post-service serves likes to their owner only.
+        key: "liked",
+        label: "Liked",
+        icon: Heart,
+        activeColor: "bg-primary-tint text-primary-ink",
+        inactiveColor: "text-muted-foreground",
         selfOnly: true,
     },
     {
@@ -116,12 +128,26 @@ const tabDefinitions: TabDef[] = [
     },
 ]
 
+/**
+ * The tabs a viewer sees. Videos and Reels are always there (an empty grid
+ * says so, with a sort control once there is content) rather than appearing
+ * only when the content count is non-zero; Saved and Liked, like Orders and
+ * Bookings, belong to the owner only.
+ */
+export function visibleProfileTabKeys({ isOwn, hasMedia = false }: { isOwn: boolean; hasMedia?: boolean }): ProfileTab[] {
+    return tabDefinitions
+        .filter((tab) => {
+            if (tab.selfOnly && !isOwn) return false
+            if (tab.key === "media" && !hasMedia) return false
+            return true
+        })
+        .map((tab) => tab.key)
+}
+
 export function ProfileTabs({
     activeTab,
     onTabChange,
     isOwn,
-    hasVideos,
-    hasFlicks,
     hasMedia,
     isSticky = false,
 }: ProfileTabsProps) {
@@ -129,13 +155,8 @@ export function ProfileTabs({
     const [canScrollLeft, setCanScrollLeft] = useState(false)
     const [canScrollRight, setCanScrollRight] = useState(false)
 
-    const visibleTabs = tabDefinitions.filter((tab) => {
-        if (tab.selfOnly && !isOwn) return false
-        if (tab.key === "videos" && !hasVideos) return false
-        if (tab.key === "flicks" && !hasFlicks) return false
-        if (tab.key === "media" && !hasMedia) return false
-        return true
-    })
+    const visibleKeys = new Set(visibleProfileTabKeys({ isOwn, hasMedia }))
+    const visibleTabs = tabDefinitions.filter((tab) => visibleKeys.has(tab.key))
 
     useEffect(() => {
         const el = scrollRef.current
@@ -161,6 +182,8 @@ export function ProfileTabs({
 
                 <div
                     ref={scrollRef}
+                    role="tablist"
+                    aria-label="Profile sections"
                     className="flex overflow-x-auto scrollbar-hide gap-1"
                 >
                     {visibleTabs.map((tab) => {
@@ -169,6 +192,10 @@ export function ProfileTabs({
                         return (
                             <button
                                 key={tab.key}
+                                type="button"
+                                role="tab"
+                                aria-selected={isActive}
+                                data-tab={tab.key}
                                 onClick={() => onTabChange(tab.key)}
                                 className={`relative flex items-center gap-2 px-4 py-3 text-[11px] font-bold tracking-[0.14em] whitespace-nowrap transition-all duration-200 group ${
                                     isActive

@@ -72,13 +72,17 @@ export function idsFromGraphList(data: unknown): { ids: string[]; nextCursor: st
  * The BATCH route (POST /v1/graph/relationships/batch) reads `blocked` as
  * "the viewer blocked the target", which already matches the UI; do not run
  * batch rows through this function.
+ *
+ * graph-service now also sends the unambiguous `viewer_blocked_target` and
+ * `target_blocked_viewer` (parity 1-B2). When a response carries them
+ * they win; an older graph-service without them falls back to the crossed
+ * legacy pair above.
  */
 export function relationshipFromGraph(raw: Record<string, unknown> | null | undefined): Relationship | null {
     if (!raw || typeof raw !== "object") return null
     const isConnection = !!raw.is_connection
     const status = (raw.connection_status as Relationship["connection_status"]) ?? "none"
-    const viewerBlockedTarget = !!raw.blocked_by
-    const targetBlockedViewer = !!raw.blocked
+    const { viewerBlockedTarget, targetBlockedViewer } = blockFlagsFromGraph(raw)
     return {
         following: !!raw.follows,
         followed_by: !!raw.followed_by,
@@ -95,6 +99,23 @@ export function relationshipFromGraph(raw: Record<string, unknown> | null | unde
         can_see_online: false,
         can_add_to_group: isConnection,
     }
+}
+
+/**
+ * Both block directions from a GET /v1/graph/relationship body: the explicit
+ * fields when present (a boolean, even false, is authoritative), otherwise
+ * the crossed legacy fields (`blocked_by` = viewer blocked target, `blocked`
+ * = target blocked viewer on this route).
+ */
+export function blockFlagsFromGraph(raw: Record<string, unknown>): {
+    viewerBlockedTarget: boolean
+    targetBlockedViewer: boolean
+} {
+    const viewerBlockedTarget =
+        typeof raw.viewer_blocked_target === "boolean" ? raw.viewer_blocked_target : !!raw.blocked_by
+    const targetBlockedViewer =
+        typeof raw.target_blocked_viewer === "boolean" ? raw.target_blocked_viewer : !!raw.blocked
+    return { viewerBlockedTarget, targetBlockedViewer }
 }
 
 /**

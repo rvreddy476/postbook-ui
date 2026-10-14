@@ -34,6 +34,17 @@ export interface UserProfile {
     following_count: number
     friend_count: number
     post_count: number
+    /**
+     * Private account (profile-service mirrors identity account_visibility).
+     * Display only: post-service gates the posts themselves.
+     */
+    is_private?: boolean
+    /**
+     * The signed-in viewer's edge toward this profile, from profile-service:
+     * none | requested (a pending follow request) | following. Absent for the
+     * owner, signed-out viewers and older services.
+     */
+    follow_status?: "none" | "requested" | "following"
     created_at: string
     updated_at: string
 }
@@ -145,6 +156,7 @@ export type ProfileTab =
     | "videos"
     | "flicks"
     | "stashed"
+    | "liked"
     | "portfolio"
     | "qa"
     | "orders"
