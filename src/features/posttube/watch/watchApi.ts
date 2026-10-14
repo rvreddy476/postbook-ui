@@ -214,17 +214,7 @@ export async function setPass(postId: string, on: boolean): Promise<void> {
   else await api.delete(`/v1/posts/${postId}/tune`);
 }
 
-/* ── Creator heart / pin on comments ────────────────────── */
-
-export async function setCommentHeart(commentId: string, on: boolean): Promise<void> {
-  if (on) await api.post(`/v1/comments/${commentId}/heart`);
-  else await api.delete(`/v1/comments/${commentId}/heart`);
-}
-
-export async function setCommentPin(commentId: string, on: boolean): Promise<void> {
-  if (on) await api.put(`/v1/comments/${commentId}/pin`);
-  else await api.delete(`/v1/comments/${commentId}/pin`);
-}
+/* Creator heart / pin on comments: components/comments/creatorTools, shared by every comment surface. */
 
 /* ── Up next ────────────────────────────────────────────── */
 

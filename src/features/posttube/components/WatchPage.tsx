@@ -57,7 +57,8 @@ import { TubeStage } from "../watch/miniPlayer";
 import { RAIL_IDLE, railReducer } from "../watch/railState";
 import { showThanks } from "../watch/thanks";
 import { upNextPills, type UpNextChip } from "../watch/upNext";
-import { ageGateFromError, recordElementEvent, sendThanks, setCommentHeart, setCommentPin, setPass, thanksErrorMessage, viewerSubtitleTracks, type ElementEvent, type ElementSurface } from "../watch/watchApi";
+import { ageGateFromError, recordElementEvent, sendThanks, setPass, thanksErrorMessage, viewerSubtitleTracks, type ElementEvent, type ElementSurface } from "../watch/watchApi";
+import { commentCreatorTools } from "@/components/comments/creatorTools";
 import { ThanksSheet } from "../watch/components/ThanksSheet";
 import { UpNext, type UpNextRow } from "../watch/components/UpNext";
 import { VideoElementsOverlay } from "../watch/components/VideoElementsOverlay";
@@ -545,7 +546,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
     }
   };
 
-  const creatorTools = useMemo(() => ({ onHeart: setCommentHeart, onPin: setCommentPin }), []);
+  const creatorTools = commentCreatorTools;
 
   /* ── render ────────────────────────────────────────── */
   if (videoId && detailQuery.isLoading) {

@@ -18,6 +18,7 @@ import { useBlockUser } from '@/hooks/useBlocking';
 import { usePoll, useCastVote } from '@/hooks/usePollVote';
 import { useMyProfile, useUserProfile } from '@/hooks/useEditProfile';
 import CommentSection from '@/components/CommentSection';
+import { commentCreatorTools } from '@/components/comments/creatorTools';
 import CommentPreview from '@/components/CommentPreview';
 import ShareDialog from '@/components/ShareDialog';
 import VideoPlayer from '@/components/VideoPlayer';
@@ -780,7 +781,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       {/* Comment Section */}
       <AnimatePresence>
         {showComments && !post.no_comments && (
-          <CommentSection postId={post.id} postAuthorId={post.author_id} commentsCount={commentsCount} alwaysExpanded />
+          <CommentSection postId={post.id} postAuthorId={post.author_id} commentsCount={commentsCount} alwaysExpanded creatorTools={commentCreatorTools} />
         )}
       </AnimatePresence>
 
