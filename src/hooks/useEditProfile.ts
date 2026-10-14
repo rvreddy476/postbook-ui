@@ -185,14 +185,23 @@ function invalidateAfterFollowChange(qc: ReturnType<typeof useQueryClient>) {
     qc.invalidateQueries({ queryKey: ["connections"] })
 }
 
+/** POST /v1/graph/follow { user_id } — the request useFollowUser sends. */
+export async function followUser(usernameOrId: string): Promise<FollowResult> {
+    const userId = await resolveUserId(usernameOrId)
+    const res = await api.post<{ data: FollowResult }>(GRAPH_ROUTES.follow, graphUserIdBody(userId))
+    return res.data.data
+}
+
+/** POST /v1/graph/unfollow { user_id } — the request useUnfollowUser sends. */
+export async function unfollowUser(usernameOrId: string): Promise<void> {
+    const userId = await resolveUserId(usernameOrId)
+    await api.post(GRAPH_ROUTES.unfollow, graphUserIdBody(userId))
+}
+
 export function useFollowUser() {
     const qc = useQueryClient()
     return useMutation({
-        mutationFn: async (usernameOrId: string): Promise<FollowResult> => {
-            const userId = await resolveUserId(usernameOrId)
-            const res = await api.post<{ data: FollowResult }>(GRAPH_ROUTES.follow, graphUserIdBody(userId))
-            return res.data.data
-        },
+        mutationFn: followUser,
         onSuccess: () => invalidateAfterFollowChange(qc),
     })
 }
@@ -200,10 +209,7 @@ export function useFollowUser() {
 export function useUnfollowUser() {
     const qc = useQueryClient()
     return useMutation({
-        mutationFn: async (usernameOrId: string) => {
-            const userId = await resolveUserId(usernameOrId)
-            await api.post(GRAPH_ROUTES.unfollow, graphUserIdBody(userId))
-        },
+        mutationFn: unfollowUser,
         onSuccess: () => invalidateAfterFollowChange(qc),
     })
 }

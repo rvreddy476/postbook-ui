@@ -32,7 +32,8 @@ import { fetchReel, fetchSubtitles } from "@/features/reels/data/reelFeedApi";
 import { hasPlayableSubtitle } from "@/features/reels/playback/useSubtitleTrack";
 import { OfflineBadge, useOfflineRow, useOfflineSource, type OfflineNotice } from "@/features/offline";
 import { feedFromSearch } from "@/features/reels/feed";
-import { patchReelEverywhere, useReelFeed } from "@/features/reels/hooks/useReelFeed";
+import { patchReelEverywhere, reelFeedKey, useReelFeed } from "@/features/reels/hooks/useReelFeed";
+import { FollowingEmpty } from "@/features/reels/explore/FollowingEmpty";
 import {
   useBlockAuthor,
   useDeleteReel,
@@ -670,6 +671,9 @@ export function ReelsScreen() {
                 }
               />
             </StateLayout>
+          ) : empty && feedKind === "following" && viewerId ? (
+            // Empty Following (T-19): suggested creators with Follow; a follow refetches this feed.
+            <FollowingEmpty viewerId={viewerId} onFollowChange={() => void qc.invalidateQueries({ queryKey: reelFeedKey(true) })} />
           ) : empty ? (
             <StateLayout stageRef={stageRef}>
               {feedKind === "following" ? (
