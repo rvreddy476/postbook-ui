@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { useQuery } from "@tanstack/react-query"
@@ -9,9 +9,8 @@ import {
     Bell,
     Mail,
     Smartphone,
-    MessageSquare,
     Moon,
-    VolumeX,
+    SlidersHorizontal,
     BookOpen,
 } from "lucide-react"
 import {
@@ -19,32 +18,20 @@ import {
     useUpdateNotificationPreferences,
 } from "@/hooks/useActivityNotifications"
 import api from "@/lib/api"
-
-/* ------------------------------------------------------------------ */
-/*  Types                                                               */
-/* ------------------------------------------------------------------ */
-
-interface NotificationPreferences {
-    email_enabled: boolean
-    push_enabled: boolean
-    sms_enabled: boolean
-    quiet_hours_start?: string
-    quiet_hours_end?: string
-    muted_types: string[]
-}
-
-/* ------------------------------------------------------------------ */
-/*  Constants                                                           */
-/* ------------------------------------------------------------------ */
-
-const MUTED_TYPE_LABELS: { value: string; label: string; description: string }[] = [
-    { value: "reaction", label: "Reactions", description: "When someone reacts to your post" },
-    { value: "comment", label: "Comments", description: "When someone comments on your post" },
-    { value: "follow", label: "Follows", description: "When someone follows you" },
-    { value: "friend_request", label: "Friend Requests", description: "When someone sends you a friend request" },
-    { value: "friend_accepted", label: "Friend Accepted", description: "When your friend request is accepted" },
-    { value: "comment_reaction", label: "Comment Reactions", description: "When someone reacts to your comment" },
-]
+import {
+    NOTIFICATION_CATEGORIES,
+    categoryTogglePatch,
+    channelKey,
+    globalTogglePatch,
+    quietHoursPatch,
+    type Channel,
+    type NotificationCategory,
+    type NotificationPatch,
+    type NotificationSettings,
+} from "../_lib/notificationPreferences"
+import { failedSave } from "../_lib/saveFeedback"
+import { useSaveToast } from "../_components/useSaveToast"
+import { SettingsLoadError } from "../_components/SettingsLoadState"
 
 /* ------------------------------------------------------------------ */
 /*  Toggle Switch                                                       */
@@ -54,16 +41,19 @@ function ToggleSwitch({
     checked,
     onChange,
     disabled,
+    label,
 }: {
     checked: boolean
     onChange: (checked: boolean) => void
     disabled?: boolean
+    label?: string
 }) {
     return (
         <button
             type="button"
             role="switch"
             aria-checked={checked}
+            aria-label={label}
             disabled={disabled}
             onClick={() => onChange(!checked)}
             className={[
@@ -236,58 +226,128 @@ function DigestsSection() {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Category rows                                                       */
+/* ------------------------------------------------------------------ */
+
+function CategoryRows({
+    categories,
+    prefs,
+    pendingKey,
+    onToggle,
+}: {
+    categories: NotificationCategory[]
+    prefs: NotificationSettings
+    pendingKey: string | null
+    onToggle: (category: string, channel: Channel, on: boolean) => void
+}) {
+    return (
+        <div className="divide-y divide-brand-secondary">
+            {categories.map((c) => (
+                <div key={c.key} className="flex items-center justify-between gap-4 py-3">
+                    <p className="text-sm font-semibold text-brand-text">{c.label}</p>
+                    <div className="flex items-center gap-6">
+                        {(["inapp", "push"] as const).map((channel) => {
+                            const key = channelKey(channel, c.key)
+                            return (
+                                <ToggleSwitch
+                                    key={channel}
+                                    label={`${c.label}: ${channel === "inapp" ? "in-app" : "push"}`}
+                                    checked={prefs.channels[key] ?? true}
+                                    disabled={pendingKey !== null}
+                                    onChange={(on) => onToggle(c.key, channel, on)}
+                                />
+                            )
+                        })}
+                    </div>
+                </div>
+            ))}
+        </div>
+    )
+}
+
+function ChannelHeader() {
+    return (
+        <div className="flex justify-end gap-6 pb-1 text-xs font-semibold text-brand-highlight">
+            <span className="w-11 text-center">In-app</span>
+            <span className="w-11 text-center">Push</span>
+        </div>
+    )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main Page                                                           */
 /* ------------------------------------------------------------------ */
 
-export default function NotificationPreferencesPage() {
-    const { data: rawPrefs, isLoading } = useNotificationPreferences()
-    const updatePrefs = useUpdateNotificationPreferences()
+function browserTimeZone(): string {
+    try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone ?? ""
+    } catch {
+        return ""
+    }
+}
 
-    // Cast the opaque query data to our typed shape with safe defaults
-    const prefs: NotificationPreferences = {
-        email_enabled: false,
-        push_enabled: false,
-        sms_enabled: false,
-        quiet_hours_start: "",
-        quiet_hours_end: "",
-        muted_types: [],
-        ...(rawPrefs as Partial<NotificationPreferences> | undefined),
+export default function NotificationPreferencesPage() {
+    const prefsQuery = useNotificationPreferences()
+    const updatePrefs = useUpdateNotificationPreferences()
+    const { showResult, Toast } = useSaveToast()
+    const [pendingKey, setPendingKey] = useState<string | null>(null)
+
+    const prefs = prefsQuery.data
+
+    // Quiet hours are edited locally and saved as one group.
+    const [quiet, setQuiet] = useState<{ enabled: boolean; start: string; end: string } | null>(null)
+    useEffect(() => {
+        if (prefs && !quiet) {
+            setQuiet({
+                enabled: prefs.quiet_hours_enabled,
+                start: prefs.quiet_hours_start || "22:00",
+                end: prefs.quiet_hours_end || "07:00",
+            })
+        }
+    }, [prefs, quiet])
+
+    const save = async (patch: NotificationPatch, key: string) => {
+        setPendingKey(key)
+        try {
+            const stored = await updatePrefs.mutateAsync(patch)
+            showResult({ ok: true, data: stored })
+            return stored
+        } catch (err) {
+            showResult(failedSave(err))
+            return null
+        } finally {
+            setPendingKey(null)
+        }
     }
 
-    const patch = useCallback(
-        (partial: Partial<NotificationPreferences>) => {
-            updatePrefs.mutate({ ...prefs, ...partial })
-        },
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [prefs, updatePrefs]
-    )
+    const handleCategoryToggle = (category: string, channel: Channel, on: boolean) => {
+        void save(categoryTogglePatch(category, channel, on), channelKey(channel, category))
+    }
 
-    const handleChannelToggle = useCallback(
-        (field: "email_enabled" | "push_enabled" | "sms_enabled", value: boolean) => {
-            patch({ [field]: value })
-        },
-        [patch]
-    )
+    const handleGlobalToggle = (key: "push_enabled" | "email_enabled", on: boolean) => {
+        void save(globalTogglePatch(key, on), key)
+    }
 
-    const handleQuietHoursChange = useCallback(
-        (field: "quiet_hours_start" | "quiet_hours_end", value: string) => {
-            patch({ [field]: value || undefined })
-        },
-        [patch]
-    )
+    const handleSaveQuietHours = async () => {
+        if (!quiet) return
+        const built = quietHoursPatch({ ...quiet, timeZone: browserTimeZone() })
+        if ("error" in built) {
+            showResult({ ok: false, message: built.error })
+            return
+        }
+        const stored = await save(built.patch, "quiet_hours")
+        if (stored) {
+            setQuiet({
+                enabled: stored.quiet_hours_enabled,
+                start: stored.quiet_hours_start || quiet.start,
+                end: stored.quiet_hours_end || quiet.end,
+            })
+        }
+    }
 
-    const handleMutedTypeToggle = useCallback(
-        (type: string, muted: boolean) => {
-            const current = prefs.muted_types ?? []
-            const next = muted
-                ? [...current, type]
-                : current.filter((t) => t !== type)
-            patch({ muted_types: next })
-        },
-        [prefs.muted_types, patch]
-    )
-
-    const isSaving = updatePrefs.isPending
+    const busy = pendingKey !== null
+    const primaries = NOTIFICATION_CATEGORIES.filter((c) => c.primary)
+    const secondaries = NOTIFICATION_CATEGORIES.filter((c) => !c.primary)
 
     return (
         <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
@@ -304,18 +364,21 @@ export default function NotificationPreferencesPage() {
             <div>
                 <div className="flex items-center gap-2">
                     <h1 className="text-2xl font-bold text-brand-text">Notification Preferences</h1>
-                    {isSaving && (
+                    {busy && (
                         <span className="rounded-full bg-brand-text/10 px-2.5 py-0.5 text-xs font-semibold text-brand-text">
                             Saving...
                         </span>
                     )}
                 </div>
                 <p className="mt-1 text-sm text-brand-highlight">
-                    Control how and when VChat notifies you. Changes are saved automatically.
+                    Control how and when you are notified. Switches save as you change them.
                 </p>
+                {Toast}
             </div>
 
-            {isLoading ? (
+            {prefsQuery.isError ? (
+                <SettingsLoadError onRetry={() => void prefsQuery.refetch()} />
+            ) : !prefs || !quiet ? (
                 <PageSkeleton />
             ) : (
                 <>
@@ -325,28 +388,10 @@ export default function NotificationPreferencesPage() {
                     <SectionCard
                         icon={<Bell className="h-6 w-6 text-brand-text/50" />}
                         title="Notification Channels"
-                        description="Choose which channels VChat can use to reach you."
+                        description="Choose which channels can reach you."
                         delay={0.05}
                     >
                         <div className="divide-y divide-brand-secondary">
-                            {/* Email */}
-                            <div className="flex items-center justify-between py-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50">
-                                        <Mail className="h-4 w-4 text-blue-500" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-semibold text-brand-text">Email</p>
-                                        <p className="text-xs text-brand-highlight">Notifications sent to your email address</p>
-                                    </div>
-                                </div>
-                                <ToggleSwitch
-                                    checked={prefs.email_enabled}
-                                    onChange={(val) => handleChannelToggle("email_enabled", val)}
-                                    disabled={isSaving}
-                                />
-                            </div>
-
                             {/* Push */}
                             <div className="flex items-center justify-between py-3">
                                 <div className="flex items-center gap-3">
@@ -355,34 +400,68 @@ export default function NotificationPreferencesPage() {
                                     </div>
                                     <div>
                                         <p className="text-sm font-semibold text-brand-text">Push</p>
-                                        <p className="text-xs text-brand-highlight">Real-time push notifications on your devices</p>
+                                        <p className="text-xs text-brand-highlight">Push notifications on your devices</p>
                                     </div>
                                 </div>
                                 <ToggleSwitch
+                                    label="Push notifications"
                                     checked={prefs.push_enabled}
-                                    onChange={(val) => handleChannelToggle("push_enabled", val)}
-                                    disabled={isSaving}
+                                    onChange={(val) => handleGlobalToggle("push_enabled", val)}
+                                    disabled={busy}
                                 />
                             </div>
 
-                            {/* SMS */}
+                            {/* Email */}
                             <div className="flex items-center justify-between py-3">
                                 <div className="flex items-center gap-3">
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50">
-                                        <MessageSquare className="h-4 w-4 text-emerald-500" />
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-text/5">
+                                        <Mail className="h-4 w-4 text-brand-text/50" />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-semibold text-brand-text">SMS</p>
-                                        <p className="text-xs text-brand-highlight">Text message alerts to your phone number</p>
+                                        <p className="text-sm font-semibold text-brand-text">Email</p>
+                                        <p className="text-xs text-brand-highlight">Notifications sent to your email address</p>
                                     </div>
                                 </div>
                                 <ToggleSwitch
-                                    checked={prefs.sms_enabled}
-                                    onChange={(val) => handleChannelToggle("sms_enabled", val)}
-                                    disabled={isSaving}
+                                    label="Email notifications"
+                                    checked={prefs.email_enabled}
+                                    onChange={(val) => handleGlobalToggle("email_enabled", val)}
+                                    disabled={busy}
                                 />
                             </div>
                         </div>
+                    </SectionCard>
+
+                    {/* ------------------------------------------------- */}
+                    {/*  Categories Section                                 */}
+                    {/* ------------------------------------------------- */}
+                    <SectionCard
+                        icon={<SlidersHorizontal className="h-6 w-6 text-brand-text/50" />}
+                        title="What you're notified about"
+                        description="In-app controls your notification inbox; Push controls alerts on your devices."
+                        delay={0.1}
+                    >
+                        <ChannelHeader />
+                        <CategoryRows
+                            categories={primaries}
+                            prefs={prefs}
+                            pendingKey={pendingKey}
+                            onToggle={handleCategoryToggle}
+                        />
+                        <details className="mt-3 group">
+                            <summary className="cursor-pointer select-none text-sm font-semibold text-brand-text hover:opacity-80">
+                                More categories
+                            </summary>
+                            <div className="mt-2">
+                                <ChannelHeader />
+                                <CategoryRows
+                                    categories={secondaries}
+                                    prefs={prefs}
+                                    pendingKey={pendingKey}
+                                    onToggle={handleCategoryToggle}
+                                />
+                            </div>
+                        </details>
                     </SectionCard>
 
                     {/* ------------------------------------------------- */}
@@ -391,102 +470,52 @@ export default function NotificationPreferencesPage() {
                     <SectionCard
                         icon={<Moon className="h-6 w-6 text-brand-text/50" />}
                         title="Quiet Hours"
-                        description="During quiet hours, notifications will be held and delivered after the period ends."
-                        delay={0.1}
-                    >
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                                <label
-                                    htmlFor="quiet-start"
-                                    className="block text-xs font-semibold text-brand-highlight"
-                                >
-                                    Start time
-                                </label>
-                                <input
-                                    id="quiet-start"
-                                    type="time"
-                                    value={prefs.quiet_hours_start ?? ""}
-                                    onChange={(e) => handleQuietHoursChange("quiet_hours_start", e.target.value)}
-                                    disabled={isSaving}
-                                    className={[
-                                        "w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2.5",
-                                        "text-sm font-medium text-brand-text placeholder-slate-400",
-                                        "transition-colors focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20",
-                                        "disabled:cursor-not-allowed disabled:opacity-50",
-                                    ].join(" ")}
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <label
-                                    htmlFor="quiet-end"
-                                    className="block text-xs font-semibold text-brand-highlight"
-                                >
-                                    End time
-                                </label>
-                                <input
-                                    id="quiet-end"
-                                    type="time"
-                                    value={prefs.quiet_hours_end ?? ""}
-                                    onChange={(e) => handleQuietHoursChange("quiet_hours_end", e.target.value)}
-                                    disabled={isSaving}
-                                    className={[
-                                        "w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2.5",
-                                        "text-sm font-medium text-brand-text placeholder-slate-400",
-                                        "transition-colors focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20",
-                                        "disabled:cursor-not-allowed disabled:opacity-50",
-                                    ].join(" ")}
-                                />
-                            </div>
-                        </div>
-                        {prefs.quiet_hours_start && prefs.quiet_hours_end && (
-                            <p className="mt-3 text-xs text-brand-highlight">
-                                Notifications will be silenced from{" "}
-                                <span className="font-semibold text-brand-text">{prefs.quiet_hours_start}</span>
-                                {" "}to{" "}
-                                <span className="font-semibold text-brand-text">{prefs.quiet_hours_end}</span>.
-                            </p>
-                        )}
-                    </SectionCard>
-
-                    {/* ------------------------------------------------- */}
-                    {/*  Muted Types Section                                */}
-                    {/* ------------------------------------------------- */}
-                    <SectionCard
-                        icon={<VolumeX className="h-6 w-6 text-brand-text/50" />}
-                        title="Muted Notification Types"
-                        description="Select which types of activity you do not want to be notified about."
+                        description="During quiet hours, push notifications are held back."
                         delay={0.15}
                     >
-                        <div className="divide-y divide-brand-secondary">
-                            {MUTED_TYPE_LABELS.map(({ value, label, description }) => {
-                                const isMuted = (prefs.muted_types ?? []).includes(value)
-                                const checkboxId = `muted-type-${value}`
-                                return (
-                                    <label
-                                        key={value}
-                                        htmlFor={checkboxId}
-                                        className="flex cursor-pointer items-center justify-between gap-4 py-3 hover:opacity-80"
-                                    >
-                                        <div>
-                                            <p className="text-sm font-semibold text-brand-text">{label}</p>
-                                            <p className="text-xs text-brand-highlight">{description}</p>
-                                        </div>
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm font-semibold text-brand-text">Use quiet hours</p>
+                                <ToggleSwitch
+                                    label="Use quiet hours"
+                                    checked={quiet.enabled}
+                                    onChange={(val) => setQuiet({ ...quiet, enabled: val })}
+                                    disabled={busy}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                {(["start", "end"] as const).map((field) => (
+                                    <div key={field} className="space-y-1.5">
+                                        <label
+                                            htmlFor={`quiet-${field}`}
+                                            className="block text-xs font-semibold text-brand-highlight"
+                                        >
+                                            {field === "start" ? "Start time" : "End time"}
+                                        </label>
                                         <input
-                                            id={checkboxId}
-                                            type="checkbox"
-                                            checked={isMuted}
-                                            disabled={isSaving}
-                                            onChange={(e) => handleMutedTypeToggle(value, e.target.checked)}
+                                            id={`quiet-${field}`}
+                                            type="time"
+                                            value={quiet[field]}
+                                            onChange={(e) => setQuiet({ ...quiet, [field]: e.target.value })}
+                                            disabled={busy || !quiet.enabled}
                                             className={[
-                                                "h-4 w-4 shrink-0 cursor-pointer rounded-sm border-brand-text/30",
-                                                "text-brand-text/50 accent-brand-text/50",
-                                                "focus:ring-2 focus:ring-brand-text/50 focus:ring-offset-1",
+                                                "w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2.5",
+                                                "text-sm font-medium text-brand-text",
+                                                "transition-colors focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20",
                                                 "disabled:cursor-not-allowed disabled:opacity-50",
                                             ].join(" ")}
                                         />
-                                    </label>
-                                )
-                            })}
+                                    </div>
+                                ))}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleSaveQuietHours}
+                                disabled={busy}
+                                className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-primary-ink transition-colors disabled:opacity-50"
+                            >
+                                Save quiet hours
+                            </button>
                         </div>
                     </SectionCard>
 

@@ -37,7 +37,6 @@ import {
     useRemoveTrustedDevice,
     useTrustDevice,
     useForgotPassword,
-    useDeleteAccount,
     useLoginAnomalies,
     useAcknowledgeAnomaly,
     type Setup2FAResponse,
@@ -45,6 +44,7 @@ import {
     type TrustedDevice,
     type LoginAnomaly,
 } from "@/hooks/useSecurity"
+import { DeleteAccountDialog } from "../_components/DeleteAccountDialog"
 
 /* ------------------------------------------------------------------ */
 /*  Constants & Colors                                                 */
@@ -591,118 +591,6 @@ function Disable2FADialog({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Delete Account Dialog                                              */
-/* ------------------------------------------------------------------ */
-
-function DeleteAccountDialog({
-    open,
-    onClose,
-    toast,
-}: {
-    open: boolean
-    onClose: () => void
-    toast: (opts: { type?: "success" | "error" | "info" | "warning"; title: string; description?: string }) => string
-}) {
-    const router = useRouter()
-    const [confirmText, setConfirmText] = useState("")
-    const [error, setError] = useState("")
-    const deleteAccount = useDeleteAccount()
-
-    useEffect(() => {
-        if (!open) {
-            setConfirmText("")
-            setError("")
-        }
-    }, [open])
-
-    const handleDelete = useCallback(() => {
-        if (confirmText !== "DELETE") {
-            setError('Please type "DELETE" to confirm.')
-            return
-        }
-        setError("")
-
-        deleteAccount.mutate(undefined, {
-            onSuccess: () => {
-                toast({
-                    type: "info",
-                    title: "Account Scheduled for Deletion",
-                    description: "Your account will be permanently deleted after 30 days. You can log in within that period to cancel.",
-                })
-                onClose()
-                router.push("/login")
-            },
-            onError: (err) => {
-                const message =
-                    (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-                    "Failed to delete account. Please try again."
-                setError(message)
-            },
-        })
-    }, [confirmText, deleteAccount, toast, onClose, router])
-
-    return (
-        <Dialog open={open} onClose={onClose} title="Delete Account">
-            <div className="space-y-5">
-                <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
-                    <div className="flex items-start gap-2">
-                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
-                        <div>
-                            <p className="text-sm font-semibold text-rose-700">
-                                This action is irreversible after 30 days.
-                            </p>
-                            <p className="mt-1 text-xs text-rose-600">
-                                Your account and all associated data will be permanently deleted after a 30-day grace period.
-                                During this period, you can log in to cancel the deletion.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="space-y-2">
-                    <label className="text-xs font-semibold text-muted-foreground">
-                        Type <strong className="text-rose-600">DELETE</strong> to confirm
-                    </label>
-                    <Input
-                        type="text"
-                        placeholder="DELETE"
-                        value={confirmText}
-                        onChange={(e) => {
-                            setConfirmText(e.target.value)
-                            if (error) setError("")
-                        }}
-                        className="border-border focus-visible:ring-rose-500"
-                    />
-                </div>
-
-                {error && (
-                    <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
-                        {error}
-                    </div>
-                )}
-
-                <div className="flex gap-3">
-                    <Button variant="outline" onClick={onClose} className="flex-1 border-border text-muted-foreground hover:bg-background">
-                        Cancel
-                    </Button>
-                    <Button
-                        onClick={handleDelete}
-                        disabled={deleteAccount.isPending || confirmText !== "DELETE"}
-                        className="flex-1 bg-rose-600 text-white hover:bg-rose-700"
-                    >
-                        {deleteAccount.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            "Delete Account"
-                        )}
-                    </Button>
-                </div>
-            </div>
-        </Dialog>
-    )
-}
-
-/* ------------------------------------------------------------------ */
 /*  Login Anomaly Item                                                 */
 /* ------------------------------------------------------------------ */
 
@@ -1195,7 +1083,6 @@ export default function SecuritySettingsPage() {
             <DeleteAccountDialog
                 open={deleteDialogOpen}
                 onClose={() => setDeleteDialogOpen(false)}
-                toast={toast}
             />
 
             <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
