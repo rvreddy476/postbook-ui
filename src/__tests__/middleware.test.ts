@@ -48,3 +48,21 @@ describe("middleware: channel feed", () => {
     expect(passes(visit("/posttube/channel/raghu.builds/feed.xml", "pb_auth=1"))).toBe(true);
   });
 });
+
+describe("middleware: sound and hashtag pages (audit T-34)", () => {
+  test("a sound's page passes signed out — it renders without a session", () => {
+    expect(passes(visit("/reels/sound/22222222-2222-4222-8222-222222222222"))).toBe(true);
+  });
+
+  test("the reels stage a sound tile opens stays gated", () => {
+    const res = visit("/reels");
+    expect(passes(res)).toBe(false);
+    expect(new URL(res.headers.get("location") as string).pathname).toBe("/login");
+  });
+
+  test("the hashtag page stays gated: AppShell sends a visitor with no session to /login", () => {
+    const res = visit("/hashtag/sunset");
+    expect(passes(res)).toBe(false);
+    expect(new URL(res.headers.get("location") as string).pathname).toBe("/login");
+  });
+});

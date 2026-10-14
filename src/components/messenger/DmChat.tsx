@@ -48,6 +48,8 @@ import { initiateCall } from '@/services/callService'
 import { uploadMedia } from '@/lib/mediaUpload'
 import { useMediaKinds } from '@/hooks/useMediaKinds'
 import { toChatSource, useDatingKindChat, type ChatSource } from '@/features/dating/components/KindChat'
+import { PostMessageCard } from './PostMessageCard'
+import { postCardIds, postCardView, usePostCards } from './postCards'
 import type { User } from '@/types'
 import {
   ArrowLeft, Phone, Video, MoreVertical, Plus,
@@ -88,6 +90,8 @@ interface DisplayMessage {
   ts: string
   type: string
   mediaId?: string
+  /** A shared post (type "post"); hydrated by usePostCards, never by the sender's copy. */
+  postId?: string
   replyToId?: string
   /** Quote snapshot from the server; the only text available when the
    *  original message sits outside the loaded page. */
@@ -136,6 +140,7 @@ function toDisplay(msg: BackendMessage): DisplayMessage {
     ts: msg.ts || msg.created_at,
     type: msg.type || 'text',
     mediaId: msg.media_id,
+    postId: msg.post_id,
     replyToId: msg.reply_to_id,
     replyToPreview: msg.reply_to_preview,
     replyToSenderId: msg.reply_to_sender_id,
@@ -220,6 +225,8 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
   // Pulse kind messages (M13). Inert unless this is a Pulse match's chat.
   const [chatSource, setChatSource] = useState<ChatSource | null>(null)
   const kindChat = useDatingKindChat({ conversationId: openConversationId, conversation: chatSource, myId, peerName: userName, messages })
+  // Shared posts (type "post", audit T-25): one viewer-scoped batch read for every card on screen.
+  const postCards = usePostCards(postCardIds(messages))
 
   // M1 conversation presence — enter/heartbeat/leave + 10s polled rollup.
   const { data: presence } = useConversationPresence(conversationId)
@@ -1064,6 +1071,14 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
 
                   {msg.isDeleted ? (
                     'This message was deleted'
+                  ) : msg.type === 'post' && msg.postId ? (
+                    <>
+                      <PostMessageCard
+                        view={postCardView(msg.postId, { status: postCards.status, posts: postCards.data })}
+                        onRetry={() => void postCards.refetch()}
+                      />
+                      {msg.text ? <p className="mt-2">{msg.text}</p> : null}
+                    </>
                   ) : mediaKind === 'image' && msg.mediaId ? (
                     <img src={`/v1/media/${msg.mediaId}/serve`} alt="Image" className="max-w-full rounded-xl" />
                   ) : mediaKind === 'video' && msg.mediaId ? (

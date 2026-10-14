@@ -199,7 +199,12 @@ export function VideoShell({ app, header, chrome = "header", aside, immersive = 
                   <Menu size={22} strokeWidth={1.75} aria-hidden />
                 </button>
               ) : null}
-              <VideoTopCluster compact={compactSearch} />
+              {/*
+                The expanded menu carries the search field at its top
+                (audit T-33), so the corner pill shows only when the menu
+                is the icon rail or a phone drawer — never two fields.
+              */}
+              {mode !== "expanded" ? <VideoTopCluster compact={compactSearch} /> : null}
             </>
           ) : null}
         </div>

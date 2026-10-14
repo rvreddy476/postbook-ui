@@ -186,6 +186,7 @@ function SidebarBody({ app, chrome = "header", expanded, drawer = false, id, onN
         <>
           <div className="video-nav__column">
             <SidebarTop />
+            <SidebarSearch expanded={false} onNavigate={onNavigate} />
             {list}
           </div>
           <VideoMorePanel onClose={closeMore} onNavigate={onNavigate} />
@@ -197,7 +198,13 @@ function SidebarBody({ app, chrome = "header", expanded, drawer = false, id, onN
         </>
       ) : (
         <>
-          {tiktok ? <SidebarTop /> : null}
+          {tiktok ? (
+            <>
+              <SidebarTop />
+              {/* Search at the top of the menu (audit T-33); the corner pill steps aside while it shows (VideoShell). */}
+              <SidebarSearch expanded={listExpanded} onNavigate={onNavigate} />
+            </>
+          ) : null}
           {list}
         </>
       )}
