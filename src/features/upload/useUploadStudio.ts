@@ -22,7 +22,7 @@ import {
   updateVideoTrim,
 } from "@/features/posttube/data/posttubeApi";
 
-import { STEP_SCHEMAS, CONTENT_TYPE_META, type ContentType, type StepId } from "./tokens";
+import { STEP_SCHEMAS, CONTENT_TYPE_META, FLICK_MAX_DURATION_SECONDS, type ContentType, type StepId } from "./tokens";
 import { getPublishDefaults } from "@/features/posttube/hub";
 import { chapterRowsToWire } from "@/features/posttube/hub/chaptersModel";
 
@@ -67,19 +67,22 @@ function mergeHashtags(chips: string[], caption: string): string[] {
 }
 
 /**
- * Classify video per spec v2.1:
- * - Flick: duration ≤ 180s AND (portrait OR square)
- * - LongVideo: duration > 180s (any orientation) OR landscape (any duration)
+ * Classify video per spec v2.1, mirroring postclassify.Classify on the server:
+ * - Flick: 0 < duration ≤ 300s (exactly 300s is a flick) AND portrait or
+ *   square (height ≥ width)
+ * - LongVideo: duration > 300s (any orientation), landscape (any duration),
+ *   or an unknown/zero duration or dimension (the server's safe default)
  */
 export function classifyVideo(
   durationSec: number | null,
   width: number | null,
   height: number | null,
 ): "flick" | "long_video" {
-  if (durationSec == null) return "long_video";
-  const isLandscape = (width ?? 0) > (height ?? 0);
-  if (durationSec <= 180 && !isLandscape) return "flick";
-  return "long_video";
+  if (durationSec == null || !(durationSec > 0)) return "long_video";
+  if (width == null || height == null || !(width > 0) || !(height > 0)) return "long_video";
+  if (durationSec > FLICK_MAX_DURATION_SECONDS) return "long_video";
+  if (height < width) return "long_video";
+  return "flick";
 }
 
 /** Extract a single frame from a local video as a JPEG data URL. Client-side only. */
