@@ -13,9 +13,15 @@ import {
   Track,
 } from "livekit-client"
 
+import { useQueryClient } from "@tanstack/react-query"
+
 import { useLiveRoom, useLiveStream, useViewerToken } from "@/hooks/useLiveV2"
-import { useBatchProfiles } from "@/hooks/useProfile"
+import { useBatchProfiles, useRelationship } from "@/hooks/useProfile"
+import { useFollowUser, useUnfollowUser } from "@/hooks/useEditProfile"
+import { useGlobalToast } from "@/contexts/ToastContext"
 import { getCurrentUserId } from "@/lib/api"
+import { ShareSheet } from "@/features/reels/components/ShareSheet"
+import { LiveRoomActions } from "@/features/live/components/LiveRoomActions"
 import { Skeleton } from "@/components/ui/skeleton"
 import { chatRole, streamTools } from "@/features/live/chat"
 import { isHostIdentity } from "@/features/live/encoder"
@@ -58,6 +64,34 @@ function LiveViewer({ streamId }: { streamId: string }) {
   const creator = stream && creatorProfiles.data instanceof Map
     ? (creatorProfiles.data as Map<string, { display_name?: string; username?: string }>).get(stream.creator_user_id)
     : null
+
+  // Follow the host (viewers only). The relationship is graph-service's
+  // GET /v1/graph/relationship; the follow itself reuses the app's
+  // useFollowUser / useUnfollowUser (by handle), like the Reels Live room.
+  const qc = useQueryClient()
+  const toast = useGlobalToast()
+  const hostId = stream?.creator_user_id
+  const hostHandle = stream?.creator?.handle || creator?.username || ""
+  const isHost = !!meId && meId === hostId
+  const relationship = useRelationship(isHost ? null : meId, hostId)
+  const blocked = !!relationship.data && (relationship.data.blocked || relationship.data.blocked_by)
+  const following = meId && !isHost ? relationship.data?.following : undefined
+  const followMut = useFollowUser()
+  const unfollowMut = useUnfollowUser()
+  const toggleFollow = async () => {
+    if (!hostHandle || !meId || !hostId) return
+    const wasFollowing = following === true
+    try {
+      if (wasFollowing) await unfollowMut.mutateAsync(hostHandle)
+      else await followMut.mutateAsync(hostHandle)
+      await qc.invalidateQueries({ queryKey: ["relationship", meId, hostId] })
+    } catch {
+      toast({ type: "error", title: wasFollowing ? "Couldn't unfollow. Try again." : "Couldn't follow. Try again." })
+    }
+  }
+  const [shareOpen, setShareOpen] = useState(false)
+  const [shareUrl, setShareUrl] = useState("")
+  useEffect(() => setShareUrl(`${window.location.origin}/live/${encodeURIComponent(streamId)}`), [streamId])
 
   const token = tokenQuery.data?.token
   const serverUrl = tokenQuery.data?.server_url
@@ -147,6 +181,15 @@ function LiveViewer({ streamId }: { streamId: string }) {
             {role === "host" && (
               <Link href={`/live/${stream.id}/broadcast`} className="live-btn live-btn--ghost">Open your studio</Link>
             )}
+            <LiveRoomActions
+              role={role}
+              canFollow={!!hostHandle && !blocked}
+              following={following}
+              pending={followMut.isPending || unfollowMut.isPending}
+              signInHref={`/login?next=${encodeURIComponent(`/live/${stream.id}`)}`}
+              onToggleFollow={() => void toggleFollow()}
+              onShare={() => setShareOpen(true)}
+            />
             {tools.reportStream && (
               <button
                 type="button"
@@ -218,6 +261,9 @@ function LiveViewer({ streamId }: { streamId: string }) {
         </div>
       </div>
       <ReportSheet open={reportOpen} onClose={() => setReportOpen(false)} streamId={stream.id} />
+      {role !== "host" && (
+        <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} url={shareUrl} title={stream.title || "Live now"} />
+      )}
     </div>
   )
 }

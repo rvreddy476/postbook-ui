@@ -77,8 +77,8 @@ describe("parseLiveFrame (live-service-v2 room events)", () => {
     expect(parseLiveFrame(roomEvent("moderation.moderators", { stream_id: S, user_ids: ["a", "", "b"] })))
       .toEqual({ kind: "moderators", stream_id: S, user_ids: ["a", "b"] })
   })
-  it("moderation events the web does not show parse to null", () => {
-    for (const type of ["moderation.mute", "moderation.unmute", "moderation.word_filter_added", "moderation.word_filter_removed", "moderation.pin", "moderation.unpin"]) {
+  it("word-filter events parse to null (the host's own panel keeps its list)", () => {
+    for (const type of ["moderation.word_filter_added", "moderation.word_filter_removed"]) {
       expect(parseLiveFrame(roomEvent(type, { stream_id: S, user_id: "u2", word: "w", message_id: "m" }))).toBeNull()
     }
   })
