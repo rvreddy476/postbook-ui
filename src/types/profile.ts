@@ -251,6 +251,8 @@ export interface PostDetail {
     // preview instead.
     tier_required_id?: string | null
     body_redacted?: boolean
+    /** Age-restricted (post-service age_gate.go): never embeddable. */
+    age_restricted?: boolean
 }
 
 // --- Stories ---

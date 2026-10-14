@@ -86,11 +86,11 @@ describe("videoNav (tube)", () => {
     expect(css).toContain(".video-nav.is-rail .video-nav__tag { display: none; }");
   });
 
-  test("the footer has Settings, Help, Terms, Privacy and is not in the rail", () => {
+  test("the footer has Settings, Terms, Privacy and is not in the rail (no Help until a page exists)", () => {
     const footer = videoNav("tube").find((s) => s.key === "footer")!;
     expect(footer.rail).toBe(false);
     expect(footer.items.map((i) => [i.label, i.href])).toEqual([
-      ["Settings", "/settings"], ["Help", "/help"], ["Terms", "/terms"], ["Privacy", "/privacy"],
+      ["Settings", "/settings"], ["Terms", "/terms"], ["Privacy", "/privacy"],
     ]);
     expect(videoNav("tube").filter((s) => s.rail).map((s) => s.key)).toEqual(["top", "you"]);
   });
@@ -184,11 +184,11 @@ describe("videoNav (reels, sidebar chrome)", () => {
     expect(apps.items.map((i) => i.href ?? i.action)).toEqual(["/", "/posttube", "/reels/liked", "/posttube/offline", "explore"]);
   });
 
-  test("the footer reads About · Help / Terms & Policies · Privacy, then © 2026 VChat, and stays out of the rail", () => {
+  test("the footer reads Terms & Policies · Privacy, then © 2026 VChat, and stays out of the rail", () => {
     const footer = sections[1];
     expect(footer.rail).toBe(false);
     expect(footer.items.map((i) => [i.label, i.href])).toEqual([
-      ["About", "/about"], ["Help", "/help"], ["Terms & Policies", "/terms"], ["Privacy", "/privacy"],
+      ["Terms & Policies", "/terms"], ["Privacy", "/privacy"],
     ]);
     expect(REELS_SIDEBAR_COPYRIGHT).toBe("© 2026 VChat");
   });
@@ -258,7 +258,24 @@ describe("REELS_MORE_PANEL", () => {
     expect(rows.settings).toEqual([["General", "/settings"], ["Dark mode", "theme"]]);
     expect(rows.tools).toEqual([["Upload", "/reels/create"], ["Your channel", "/posttube/channel"], ["LIVE tools", "/live"]]);
     expect(rows.apps).toEqual([["Home", "/"], ["PostTube", "/posttube"], ["Liked reels", "/reels/liked"], ["Offline", "/posttube/offline"], ["Explore", "explore"]]);
-    expect(rows.other).toEqual([["Help Center", "/help"], ["Log out", "logout"]]);
+    expect(rows.other).toEqual([["Log out", "logout"]]);
+  });
+
+  test("every footer and More-panel link resolves to a page under src/app — no dead Help or About", () => {
+    const pathOf = (href: string) => href.split("?")[0];
+    const links = [
+      ...VIDEO_NAV_FOOTER,
+      ...REELS_SIDEBAR_FOOTER,
+      ...REELS_MORE_PANEL.flatMap((s) => s.items),
+      // And every other menu row, under every app and chrome.
+      ...videoNav("tube").flatMap((s) => s.items),
+      ...videoNav("reels").flatMap((s) => s.items),
+      ...videoNav("reels", "sidebar").flatMap((s) => s.items),
+    ].filter((i) => i.href && !("comingSoon" in i && i.comingSoon));
+    expect(links.length).toBeGreaterThan(0);
+    const dead = links.map((i) => pathOf(i.href!)).filter((path) => !routeExists(path));
+    // /help and /about 404'd here before (audit T-24).
+    expect(dead).toEqual([]);
   });
 
   test("every row has an icon, a unique key, and exactly one of href or action", () => {

@@ -871,7 +871,7 @@ export function ReelsScreen() {
         {active ? (
           <>
             <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} url={reelPermalink(active.id)} title={active.title || `Reel by ${active.authorName}`} />
-            <ReelReportDialog open={reportOpen} reelId={active.id} onClose={() => setReportOpen(false)} />
+            <ReelReportDialog open={reportOpen} targetId={active.id} onClose={() => setReportOpen(false)} />
             {active ? <ReelAudioTracksDialog open={audioOpen} mediaId={active.media.mediaId} onClose={() => setAudioOpen(false)} /> : null}
             <ReelConfirmDialog
               open={blockOpen}
