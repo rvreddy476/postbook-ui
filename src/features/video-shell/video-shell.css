@@ -166,6 +166,9 @@
 .video-nav__item.is-soon:hover { background: transparent; color: rgb(var(--brand-text) / .45); }
 .video-nav__tag { flex: 0 0 auto; padding: 1px 6px; border-radius: 999px; font-size: 10px; font-weight: 700; line-height: 1.4; letter-spacing: .04em; text-transform: uppercase; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text) / .6); }
 .video-nav.is-rail .video-nav__tag { display: none; }
+/* The Activity unread count: a pill after the label; on the icon in the rail. */
+.video-nav__badge { flex: 0 0 auto; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; background: rgb(var(--danger)); color: rgb(var(--on-primary)); }
+.video-nav.is-rail .video-nav__badge { position: absolute; top: 2px; left: calc(50% + 4px); min-width: 16px; height: 16px; padding: 0 4px; font-size: 10px; line-height: 16px; }
 
 /* Rail: icon + 10px label, like a mini guide. */
 .video-nav.is-rail .video-nav__scroll { padding: 8px 6px; }
