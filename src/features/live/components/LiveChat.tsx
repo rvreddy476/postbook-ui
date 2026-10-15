@@ -18,10 +18,31 @@ import {
 } from "@/hooks/useLiveV2"
 import { errorCode, type LiveChatMessage } from "../model"
 import type { LiveStatusView } from "../status"
-import { canSendChat, chatRole, messageActions, nextModerators, streamTools, type MessageActionKey } from "../chat"
-import { chatSendErrorCopy, isChatBan, moderationErrorCopy } from "../errors"
+import {
+  canSendChat,
+  chatRole,
+  messageActions,
+  moderationTools,
+  nextModerators,
+  streamTools,
+  type MessageActionKey,
+} from "../chat"
+import { MUTED_COPY, chatSendErrorCopy, isChatBan, isChatMute, moderationErrorCopy } from "../errors"
 import { chatAuthorAvatar, chatAuthorName, chatRoleTag, collectAuthors, nameFromAuthors } from "../author"
+import { chatTimeline } from "../joins"
+import {
+  useAddWordFilter,
+  useMuteUser,
+  usePinMessage,
+  usePinnedMessage,
+  useRemoveWordFilter,
+  useStreamMutes,
+  useUnmuteUser,
+  useUnpinMessage,
+  useWordFilters,
+} from "../useLiveModeration"
 import { ChatMessageRow } from "./ChatMessageRow"
+import { ChatJoinRow, PinnedMessageBar } from "./ChatSystemRows"
 import { ModerationPanel } from "./ModerationPanel"
 import { ReportSheet } from "./ReportSheet"
 import { TopSupporters } from "./TopSupporters"
@@ -59,6 +80,26 @@ export function LiveChat({
     if (bans.data) dispatch({ type: "bans_seed", user_ids: bans.data })
   }, [bans.data, dispatch])
 
+  // Mutes (host, moderators), word filters (host) and the pin (everyone):
+  // live-service-v2's chat moderation routes (features/live/moderation.ts).
+  const sections = moderationTools(role)
+  const mutes = useStreamMutes(streamId, sections.mutes)
+  useEffect(() => {
+    if (mutes.data) dispatch({ type: "mutes_seed", user_ids: mutes.data })
+  }, [mutes.data, dispatch])
+  const pinnedQuery = usePinnedMessage(streamId)
+  useEffect(() => {
+    if (pinnedQuery.data !== undefined) dispatch({ type: "pinned_seed", pinned: pinnedQuery.data })
+  }, [pinnedQuery.data, dispatch])
+  const wordFilters = useWordFilters(streamId, sections.wordFilters)
+  const mute = useMuteUser(streamId)
+  const unmute = useUnmuteUser(streamId)
+  const pin = usePinMessage(streamId)
+  const unpin = useUnpinMessage(streamId)
+  const addWord = useAddWordFilter(streamId)
+  const removeWord = useRemoveWordFilter(streamId)
+  const [wordError, setWordError] = useState<string | null>(null)
+
   const [draft, setDraft] = useState("")
   const [sendError, setSendError] = useState<string | null>(null)
   const [banTarget, setBanTarget] = useState<string | null>(null)
@@ -84,8 +125,19 @@ export function LiveChat({
     else setUnseen(true)
   }, [chat.messages.length])
 
-  const mayType = canSendChat({ role, meId, banned: chat.banned, chatOpen: view.chatOpen })
+  // A join row follows the tail like a message but never raises "Latest messages".
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (el && nearBottom.current) el.scrollTop = el.scrollHeight
+  }, [chat.joins])
+
+  const mayType = canSendChat({ role, meId, banned: chat.banned, chatOpen: view.chatOpen, muted: chat.muted })
   const amBanned = !!meId && chat.banned.includes(meId)
+  const amMuted = !!meId && chat.muted.includes(meId)
+  // Join notices are system rows beside the messages, never mixed into them.
+  const timeline = chatTimeline(chat.messages, chat.joins, meId)
+  const pinned = chat.pinned
+  const pinnedName = pinned ? (pinned.author ? chatAuthorName(pinned.author) : nameOf(pinned.user_id)) : ""
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -101,6 +153,9 @@ export function LiveChat({
       // CHAT_BANNED: this stream banned me; close the composer like a
       // moderation.ban frame would. STREAM_NOT_LIVE: our status is behind.
       if (isChatBan(err) && meId) dispatch({ type: "frame", frame: { kind: "ban", stream_id: streamId, user_id: meId } })
+      // CHAT_MUTED: close the composer like a moderation.mute frame would.
+      if (isChatMute(err) && meId) dispatch({ type: "frame", frame: { kind: "mute", stream_id: streamId, user_id: meId } })
+      // CHAT_BLOCKED_WORD keeps the draft so it can be edited (BLOCKED_WORD_COPY says so).
       if (errorCode(err) === "STREAM_NOT_LIVE") void qc.invalidateQueries({ queryKey: liveV2Keys.stream(streamId) })
     }
   }
@@ -131,8 +186,68 @@ export function LiveChat({
     }
   }
 
+  const doUnmute = async (userId: string) => {
+    try {
+      await unmute.mutateAsync(userId)
+      dispatch({ type: "frame", frame: { kind: "unmute", stream_id: streamId, user_id: userId } })
+    } catch (err) {
+      toast({ type: "error", title: moderationErrorCopy(err) })
+    }
+  }
+
+  const doUnpin = async (messageId: string) => {
+    try {
+      await unpin.mutateAsync(messageId)
+      dispatch({ type: "frame", frame: { kind: "unpin", stream_id: streamId, message_id: messageId } })
+    } catch (err) {
+      toast({ type: "error", title: moderationErrorCopy(err) })
+    }
+  }
+
+  const doAddWord = async (word: string) => {
+    setWordError(null)
+    try {
+      await addWord.mutateAsync(word)
+      return true
+    } catch (err) {
+      setWordError(moderationErrorCopy(err))
+      return false
+    }
+  }
+
+  const doRemoveWord = async (word: string) => {
+    setWordError(null)
+    try {
+      await removeWord.mutateAsync(word)
+    } catch (err) {
+      setWordError(moderationErrorCopy(err))
+    }
+  }
+
   const onAction = async (key: MessageActionKey, m: LiveChatMessage) => {
     switch (key) {
+      case "mute":
+        try {
+          await mute.mutateAsync(m.user_id)
+          dispatch({ type: "frame", frame: { kind: "mute", stream_id: streamId, user_id: m.user_id } })
+        } catch (err) {
+          toast({ type: "error", title: moderationErrorCopy(err) })
+        }
+        return
+      case "unmute":
+        await doUnmute(m.user_id)
+        return
+      case "pin":
+        try {
+          await pin.mutateAsync(m.id)
+          dispatch({ type: "pinned_seed", pinned: { message_id: m.id, user_id: m.user_id, text: m.text, author: m.author ?? null } })
+        } catch (err) {
+          toast({ type: "error", title: moderationErrorCopy(err) })
+        }
+        return
+      case "unpin":
+        await doUnpin(m.id)
+        return
       case "remove":
         try {
           await remove.mutateAsync(m.id)
@@ -180,30 +295,44 @@ export function LiveChat({
           {room.polling && <span className="live-chat__mode">Updating every few seconds</span>}
           <TopSupporters streamId={streamId} status={view.kind} />
         </div>
+        {pinned ? (
+          <PinnedMessageBar
+            name={pinnedName}
+            text={pinned.text}
+            canUnpin={sections.pin}
+            busy={unpin.isPending}
+            onUnpin={() => void doUnpin(pinned.message_id)}
+          />
+        ) : null}
         <div ref={scrollerRef} className="live-chat__list" role="log" aria-label="Live messages" aria-live="polite" aria-relevant="additions text" onScroll={(event) => {
           const el = event.currentTarget
           nearBottom.current = el.scrollHeight - el.clientHeight - el.scrollTop < 60
           if (nearBottom.current) setUnseen(false)
         }}>
-          {room.chatLoading && chat.messages.length === 0 ? (
+          {room.chatLoading && timeline.length === 0 ? (
             <p className="live-chat__empty">Loading chat…</p>
-          ) : chat.messages.length === 0 ? (
+          ) : timeline.length === 0 ? (
             <p className="live-chat__empty">No messages yet.</p>
           ) : (
-            chat.messages.map((m) => (
-              <ChatMessageRow
-                key={m.id}
-                message={m}
-                name={chatAuthorName(m.author)}
-                avatarUrl={chatAuthorAvatar(m.author)}
-                roleTag={chatRoleTag(m, hostId, chat.moderators)}
-                badges={m.author?.badges}
-                actions={messageActions({
-                  role, meId, hostId, authorId: m.user_id, moderators: chat.moderators, banned: chat.banned,
-                })}
-                onAction={onAction}
-              />
-            ))
+            timeline.map((item) => {
+              if (item.kind === "joins") return <ChatJoinRow key={item.key} label={item.label} />
+              const m = item.message
+              return (
+                <ChatMessageRow
+                  key={m.id}
+                  message={m}
+                  name={chatAuthorName(m.author)}
+                  avatarUrl={chatAuthorAvatar(m.author)}
+                  roleTag={chatRoleTag(m, hostId, chat.moderators)}
+                  badges={m.author?.badges}
+                  actions={messageActions({
+                    role, meId, hostId, authorId: m.user_id, moderators: chat.moderators, banned: chat.banned,
+                    muted: chat.muted, messageId: m.id, pinnedId: pinned?.message_id ?? null,
+                  })}
+                  onAction={onAction}
+                />
+              )
+            })
           )}
         </div>
         {unseen ? <button type="button" className="live-chat__latest" onClick={() => {
@@ -216,6 +345,8 @@ export function LiveChat({
           <p className="live-chat__note">Sign in to chat.</p>
         ) : amBanned ? (
           <p className="live-chat__note">You&apos;ve been removed from this stream.</p>
+        ) : amMuted && view.chatOpen ? (
+          <p className="live-chat__note">{MUTED_COPY}</p>
         ) : !view.chatOpen ? (
           <p className="live-chat__note">Chat opens when the stream is live.</p>
         ) : (
@@ -241,10 +372,19 @@ export function LiveChat({
         role={role}
         banned={chat.banned}
         moderators={chat.moderators}
+        muted={chat.muted}
+        pinned={pinned}
+        pinnedName={pinnedName}
+        words={sections.wordFilters ? wordFilters.data ?? (wordFilters.isError ? [] : undefined) : undefined}
+        wordError={wordError ?? (wordFilters.isError ? "We couldn't load your filtered words." : null)}
         nameOf={nameOf}
         onUnban={doUnban}
         onRemoveModerator={(id) => changeModerators(id, "remove")}
-        busy={unban.isPending || setMods.isPending}
+        onUnmute={doUnmute}
+        onUnpin={doUnpin}
+        onAddWord={doAddWord}
+        onRemoveWord={doRemoveWord}
+        busy={unban.isPending || setMods.isPending || unmute.isPending || unpin.isPending || addWord.isPending || removeWord.isPending}
       />
 
       <ConfirmDialog
