@@ -12,7 +12,9 @@ import {
     Moon,
     SlidersHorizontal,
     BookOpen,
+    MonitorSmartphone,
 } from "lucide-react"
+import { DEVICE_SWITCH_FAILURES, useWebPushDevice } from "@/features/webPush/useWebPushDevice"
 import {
     useNotificationPreferences,
     useUpdateNotificationPreferences,
@@ -345,6 +347,15 @@ export default function NotificationPreferencesPage() {
         }
     }
 
+    const webPush = useWebPushDevice()
+    const handleDevicePush = async (on: boolean) => {
+        const result = await webPush.setOn(on)
+        showResult(
+            result.ok ? { ok: true, data: null } : { ok: false, message: DEVICE_SWITCH_FAILURES[result.reason] },
+            on ? "Push is on for this device" : "Push is off for this device",
+        )
+    }
+
     const busy = pendingKey !== null
     const primaries = NOTIFICATION_CATEGORIES.filter((c) => c.primary)
     const secondaries = NOTIFICATION_CATEGORIES.filter((c) => !c.primary)
@@ -410,6 +421,34 @@ export default function NotificationPreferencesPage() {
                                     disabled={busy}
                                 />
                             </div>
+
+                            {/* Push on this device (web push) — hidden unless configured and supported */}
+                            {!webPush.view.hidden && (
+                                <div className="flex items-center justify-between py-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-text/5">
+                                            <MonitorSmartphone className="h-4 w-4 text-brand-text/50" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-brand-text">Push on this device</p>
+                                            <p
+                                                className={[
+                                                    "text-xs",
+                                                    webPush.view.blocked ? "text-danger" : "text-brand-highlight",
+                                                ].join(" ")}
+                                            >
+                                                {webPush.view.note}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <ToggleSwitch
+                                        label="Push on this device"
+                                        checked={webPush.view.checked}
+                                        onChange={(val) => void handleDevicePush(val)}
+                                        disabled={webPush.busy || webPush.view.blocked}
+                                    />
+                                </div>
+                            )}
 
                             {/* Email */}
                             <div className="flex items-center justify-between py-3">

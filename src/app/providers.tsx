@@ -11,6 +11,7 @@ import { ensureAccessToken, lastRefreshOutcome } from "@/lib/accessToken"
 import { getSession, logoutUser } from "@/services/authService"
 import CallOverlay from "@/components/CallOverlay"
 import { CurrentLocationProvider } from "@/features/maps/CurrentLocation"
+import WebPushRoot from "@/features/webPush/WebPushRoot"
 
 /**
  * SessionReconciler makes the httpOnly refresh cookie the single authority
@@ -107,6 +108,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     /messenger an incoming call_offer had no listener and no
                     overlay: it was dropped before anything could ring. */}
                 <CallOverlay />
+                {/* Web push: the sign-in sync and the soft prompt. Inert
+                    unless the NEXT_PUBLIC_FIREBASE_* values are all set. */}
+                <WebPushRoot />
                 <AppNotifications><CurrentLocationProvider>{children}</CurrentLocationProvider></AppNotifications>
             </ToastProvider>
         </QueryClientProvider>
