@@ -321,3 +321,16 @@ describe("R-5: payouts off", () => {
     expect(html).toContain("Request Payout</button>");
   });
 });
+
+describe("inbox heart field", () => {
+  test("post-service's hearted_by_author marks the row hearted", async () => {
+    const { normalizeInboxRow } = await import("@/features/posttube/hub/hubApi");
+    const row = normalizeInboxRow({
+      comment: { id: "c1", post_id: "p1", body: "hi", hearted_by_author: true },
+      post: { id: "p1", title: "t", content_type: "long_video" },
+    });
+    expect(row?.comment.hearted).toBe(true);
+    const plain = normalizeInboxRow({ comment: { id: "c2", post_id: "p1", body: "hi" }, post: { id: "p1" } });
+    expect(plain?.comment.hearted).toBe(false);
+  });
+});

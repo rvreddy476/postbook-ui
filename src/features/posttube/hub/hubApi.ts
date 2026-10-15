@@ -998,7 +998,7 @@ export type InboxContent = "videos" | "flicks" | "posts" | "all";
 export type InboxSort = "newest" | "relevant";
 
 export interface HubInboxComment extends CommentItem {
-  /** Creator heart; `creator_hearted` and `hearted` both read. */
+  /** Creator heart: post-service sends `hearted_by_author`; `creator_hearted` and `hearted` also read. */
   hearted: boolean;
   /** `pinned` and `is_pinned` both read. */
   pinned: boolean;
@@ -1033,7 +1033,7 @@ export function normalizeInboxRow(raw: unknown): HubInboxRow | null {
     reactions: Array.isArray(c.reactions) ? (c.reactions as CommentItem["reactions"]) : [],
     reaction_count: num(c.reaction_count) || num(c.like_count),
     viewer_reaction: strOrNull(c.viewer_reaction),
-    hearted: bool(c.creator_hearted) || bool(c.hearted),
+    hearted: bool(c.hearted_by_author) || bool(c.creator_hearted) || bool(c.hearted),
     pinned: bool(c.pinned) || bool(c.is_pinned),
   };
   return {
