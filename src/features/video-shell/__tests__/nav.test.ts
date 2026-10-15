@@ -136,18 +136,18 @@ describe("videoNav (reels, header chrome)", () => {
     const sections = videoNav("reels");
     expect(sections.map((s) => s.key)).toEqual(["top", "apps", "footer"]);
     const top = sections[0];
-    expect(top.items.map((i) => i.label)).toEqual(["For You", "Explore", "Following", "Friends", "LIVE", "Messages", "Activity", "Upload", "Profile"]);
+    expect(top.items.map((i) => i.label)).toEqual(["For You", "Explore", "Following", "Friends", "LIVE", "Shop", "Messages", "Activity", "Upload", "Profile"]);
     expect(top.items.map((i) => i.href ?? i.action)).toEqual([
-      "/reels", "explore", "/reels?feed=following", "/connections", "/reels/live", "/messenger", "/notifications", "/reels/create", "/profile",
+      "/reels", "explore", "/reels?feed=following", "/connections", "/reels/live", "/shop", "/messenger", "/notifications", "/reels/create", "/profile",
     ]);
     expect(sections[1].items.map((i) => [i.label, i.href])).toEqual([["Home", "/"], ["PostTube", "/posttube"], ["Liked reels", "/reels/liked"], ["Offline", "/posttube/offline"]]);
     expect(sections[2].items).toEqual([...VIDEO_NAV_FOOTER]);
   });
 
-  test("only the first nine are in the rail; nothing is app-highlighted", () => {
+  test("only the first ten are in the rail; nothing is app-highlighted", () => {
     const sections = videoNav("reels");
     expect(sections.filter((s) => s.rail).map((s) => s.key)).toEqual(["top"]);
-    expect(sections[0].items.length).toBe(9);
+    expect(sections[0].items.length).toBe(10);
     for (const s of sections) for (const i of s.items) expect(Boolean(i.active)).toBe(false);
   });
 });
@@ -161,10 +161,10 @@ describe("videoNav (reels, sidebar chrome)", () => {
     const top = sections[0];
     expect(top.rail).toBe(true);
     expect(top.items.map((i) => i.label)).toEqual([
-      "For You", "Explore", "Following", "Friends", "LIVE", "Messages", "Activity", "Upload", "Profile", "More",
+      "For You", "Explore", "Following", "Friends", "LIVE", "Shop", "Messages", "Activity", "Upload", "Profile", "More",
     ]);
     expect(top.items.map((i) => i.href ?? i.action)).toEqual([
-      "/reels", "explore", "/reels?feed=following", "/connections", "/reels/live", "/messenger", "/notifications", "/reels/create", "/profile", "more",
+      "/reels", "explore", "/reels?feed=following", "/connections", "/reels/live", "/shop", "/messenger", "/notifications", "/reels/create", "/profile", "more",
     ]);
   });
 
@@ -215,15 +215,15 @@ describe("videoNav (reels, sidebar chrome)", () => {
     // The pill sits 16px under the 28px logo row that starts at 20; the list 24px under the pill.
     expect(m.logoTop + m.logoHeight + 16).toBe(m.searchTop);
     expect(m.searchTop + m.searchHeight + 24).toBe(m.listTop);
-    // Ten rows (For You … Profile, More) on a 44px pitch from 128: TikTok's rows are not on one pitch
-    // (133, 177, 216, 265, 292, 336, 380, 443, 485, 512), so this is the agreed approximation — the
-    // first row is within 5px of For You and the last within 12px of More.
+    // Eleven rows (For You … LIVE, Shop, … Profile, More) on a 44px pitch from 128: TikTok's rows are
+    // not on one pitch, so this is the agreed approximation — the first row is within 5px of For You.
+    // Shop (audit T-33) adds one row, so More now starts at 568.
     const rowTop = (i: number) => m.listTop + i * (m.rowHeight + m.rowGap);
     expect(rowTop(0)).toBe(128);
     expect(rowTop(1) - rowTop(0)).toBe(44);
     expect(Math.abs(rowTop(0) - 133)).toBeLessThanOrEqual(5);
-    expect(rowTop(9)).toBe(524);
-    expect(Math.abs(rowTop(9) - 512)).toBeLessThanOrEqual(12);
+    expect(videoNav("reels", "sidebar")[0].items).toHaveLength(11);
+    expect(rowTop(10)).toBe(568);
     expect(m.railWidth + m.morePanelWidth).toBe(392);
 
     const css = readFileSync(resolve(import.meta.dir, "../video-shell.css"), "utf8");
@@ -256,7 +256,7 @@ describe("REELS_MORE_PANEL", () => {
     ]);
     const rows = Object.fromEntries(REELS_MORE_PANEL.map((s) => [s.key, s.items.map((i) => [i.label, i.href ?? i.action])]));
     expect(rows.settings).toEqual([["General", "/settings"], ["Dark mode", "theme"]]);
-    expect(rows.tools).toEqual([["Upload", "/reels/create"], ["Your channel", "/posttube/channel"], ["LIVE tools", "/live"]]);
+    expect(rows.tools).toEqual([["Upload", "/reels/create"], ["Your channel", "/posttube/channel"], ["Creator Hub", "/posttube/hub"], ["LIVE tools", "/live"]]);
     expect(rows.apps).toEqual([["Home", "/"], ["PostTube", "/posttube"], ["Liked reels", "/reels/liked"], ["Offline", "/posttube/offline"], ["Explore", "explore"]]);
     expect(rows.other).toEqual([["Log out", "logout"]]);
   });
@@ -331,5 +331,35 @@ describe("isNavItemCurrent", () => {
     expect(isNavItemCurrent(upload, "/reels/create", "")).toBe(true);
     expect(isNavItemCurrent(liked, "/reels/liked", "")).toBe(true);
     expect(isNavItemCurrent(upload, "/reels", "")).toBe(false);
+  });
+});
+
+describe("shell parity (audit T-33)", () => {
+  test("Shop (MStore) sits after LIVE in the reels menu under both chromes, and /shop is a real page", () => {
+    for (const chrome of ["header", "sidebar"] as const) {
+      const top = videoNav("reels", chrome)[0].items;
+      const keys = top.map((i) => i.key);
+      expect(keys.indexOf("shop")).toBe(keys.indexOf("live") + 1);
+      const shop = top.find((i) => i.key === "shop")!;
+      expect([shop.label, shop.href, Boolean(shop.comingSoon)]).toEqual(["Shop", "/shop", false]);
+    }
+    expect(routeExists("/shop")).toBe(true);
+  });
+
+  test("Creator Hub is in the More panel's Tools, linking to the PostTube hub page", () => {
+    const tools = REELS_MORE_PANEL.find((s) => s.key === "tools")!.items;
+    const hub = tools.find((i) => i.key === "hub")!;
+    expect([hub.label, hub.href]).toEqual(["Creator Hub", "/posttube/hub"]);
+    expect(routeExists("/posttube/hub")).toBe(true);
+    // The same destination the PostTube menu already uses.
+    expect(VIDEO_NAV_YOU.find((i) => i.key === "hub")!.href).toBe(hub.href);
+  });
+
+  test("Shop is current on /shop and pages under it, and nowhere in the reels app", () => {
+    const shop = REELS_NAV_TOP.find((i) => i.key === "shop")!;
+    expect(isNavItemCurrent(shop, "/shop", "")).toBe(true);
+    expect(isNavItemCurrent(shop, "/shop/bag", "")).toBe(true);
+    expect(isNavItemCurrent(shop, "/reels", "")).toBe(false);
+    expect(isNavItemCurrent(shop, "/shopping", "")).toBe(false);
   });
 });

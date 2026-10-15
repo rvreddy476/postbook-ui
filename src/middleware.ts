@@ -102,6 +102,12 @@ const PUBLIC_PREFIXES = [
     // ever changes, and lets a signed-out visitor open the channel the feed
     // links back to. The page draws only what the API gives a stranger.
     "/posttube/channel/",
+    // A sound's page (/reels/sound/<id>) is a link people share; it already
+    // renders with no session (a stranger gets what post-service gives the
+    // public, "Use this sound" asks them to sign in first). The reels stage
+    // its tiles open stays gated. /hashtag/ is NOT here: that page sits in
+    // AppShell, which sends a visitor with no session to /login (audit T-34).
+    "/reels/sound/",
     // The /tube alias only redirects to /posttube/* (app/tube/[[...path]]);
     // it must be reachable signed out so a push's /tube/watch/{id} reaches
     // the public watch page. The destination is gated on its own path.

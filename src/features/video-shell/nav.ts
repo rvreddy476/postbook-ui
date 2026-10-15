@@ -22,6 +22,7 @@ import {
   Settings,
   Shapes,
   ShieldCheck,
+  ShoppingBag,
   ThumbsUp,
   Tv,
   Upload,
@@ -43,8 +44,8 @@ import {
   the shape is settled once and only the flag changes. The way back to the
   app home is the header's product badge. Reels has its own list, shaped
   like TikTok's:
-  For You / Explore / Following / Friends / LIVE / Messages / Activity /
-  Upload / Profile. Under the "sidebar" chrome (search in the menu, no
+  For You / Explore / Following / Friends / LIVE / Shop / Messages /
+  Activity / Upload / Profile (Shop is MStore at /shop, audit T-33). Under the "sidebar" chrome (search in the menu, no
   header) the list ends with "More", which opens a panel beside the icon
   rail holding the way back to Home, PostTube and Liked reels, the theme
   switch and log out — under the "header" chrome those live in a divider
@@ -129,13 +130,17 @@ export const VIDEO_NAV_FOOTER: readonly VideoNavItem[] = [
   { key: "privacy", label: "Privacy", icon: ShieldCheck, href: "/privacy" },
 ];
 
-/** The reels menu: the nine the rail shows as icons, in TikTok's order. */
+/**
+ * The reels menu: the ten the rail shows as icons. Shop (MStore) sits after
+ * LIVE, as the shell plan reads (audit T-33).
+ */
 export const REELS_NAV_TOP: readonly VideoNavItem[] = [
   { key: "for-you", label: "For You", icon: Home, href: "/reels", exact: true, absentParams: ["feed"] },
   { key: "explore", label: "Explore", icon: Compass, action: "explore" },
   { key: "following", label: "Following", icon: UserRoundCheck, href: "/reels?feed=following", exact: true },
   { key: "friends", label: "Friends", icon: Users, href: "/connections" },
   { key: "live", label: "LIVE", icon: Radio, href: "/reels/live" },
+  { key: "shop", label: "Shop", icon: ShoppingBag, href: "/shop" },
   { key: "messages", label: "Messages", icon: MessageSquare, href: "/messenger" },
   { key: "activity", label: "Activity", icon: Bell, href: "/notifications" },
   { key: "upload", label: "Upload", icon: Upload, href: "/reels/create" },
@@ -252,6 +257,7 @@ export const REELS_MORE_PANEL: readonly MorePanelSection[] = [
     items: [
       { key: "upload", label: "Upload", icon: Upload, href: "/reels/create" },
       { key: "channel", label: "Your channel", icon: UserRound, href: "/posttube/channel" },
+      { key: "hub", label: "Creator Hub", icon: LayoutDashboard, href: "/posttube/hub" },
       { key: "live-tools", label: "LIVE tools", icon: Radio, href: "/live" },
     ],
   },

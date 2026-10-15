@@ -9,9 +9,15 @@ export interface Message {
   conversation_id: string;
   bucket: string;
   ts: string;
-  type: 'text' | 'media' | 'image' | 'video' | 'audio' | 'file' | 'system';
+  type: 'text' | 'media' | 'image' | 'video' | 'audio' | 'file' | 'system' | 'post';
   text?: string;
   media_id?: string;
+  /**
+   * A shared post ("Send in Messages", type "post"). The server stores only
+   * the id; the thread hydrates it through POST /v1/posts/batch as the
+   * viewer, so a post the reader may not see renders as not available.
+   */
+  post_id?: string;
   feeling?: string;
   reactions?: { emoji: string; user_ids: string[] }[];
   reply_to_id?: string;
@@ -80,6 +86,7 @@ const normalizeMessage = (raw: Record<string, any>): Message => ({
   type: raw.type || raw.message_type || 'text',
   text: raw.text as string | undefined,
   media_id: raw.media_id as string | undefined,
+  post_id: (raw.post_id as string | undefined) || undefined,
   feeling: raw.feeling as string | undefined,
   reactions: raw.reactions as { emoji: string; user_ids: string[] }[] | undefined,
   reply_to_id: raw.reply_to_id as string | undefined,
@@ -302,6 +309,34 @@ const getErrorMessage = (payload: unknown, fallback: string) => {
   return fallback;
 };
 
+/** The server's error code ({error: {code}}), or "" when the body has none. */
+const getErrorCode = (payload: unknown): string => {
+  if (!payload || typeof payload !== 'object') return '';
+  const error = (payload as Record<string, unknown>).error;
+  if (error && typeof error === 'object') {
+    const code = (error as Record<string, unknown>).code;
+    if (typeof code === 'string') return code;
+  }
+  return '';
+};
+
+/**
+ * What a failed chat call throws. Still an Error carrying the server's
+ * message (every existing caller reads `.message`), plus the HTTP status and
+ * the server's code so a caller can tell, say, a refused request
+ * (422 INVALID_REQUEST_MESSAGE) from a network failure without matching text.
+ */
+export class ChatApiError extends Error {
+  readonly status: number;
+  readonly code: string;
+  constructor(message: string, status: number, code: string) {
+    super(message);
+    this.name = 'ChatApiError';
+    this.status = status;
+    this.code = code;
+  }
+}
+
 const parseResponsePayload = async (res: Response): Promise<unknown> => {
   if (res.status === 204 || res.status === 205) return {};
 
@@ -346,7 +381,7 @@ const chatClient = {
       if (!background && (res.status === 401 || /invalid token/i.test(message))) {
         closeChatSocket(message);
       }
-      throw new Error(message);
+      throw new ChatApiError(message, res.status, getErrorCode(payload));
     }
     return payload as TResponse;
   }
@@ -405,6 +440,7 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
           type: data.payload.type || data.payload.message_type || 'text',
           text: data.payload.text,
           media_id: data.payload.media_id,
+          post_id: data.payload.post_id || undefined,
           reply_to_id: data.payload.reply_to_id,
           reply_to_preview: data.payload.reply_to_preview,
           reply_to_sender_id: data.payload.reply_to_sender_id,
@@ -600,6 +636,26 @@ export const sendMessage = async (conversationId: string, text: string, feeling?
     body: JSON.stringify(body)
   });
   return { ...json, data: normalizeMessage(json.data) };
+};
+
+/** The exact body of a post message: {type:"post", post_id, text?}. No caption → no text field. */
+export function postMessageBody(postId: string, caption?: string): { type: 'post'; post_id: string; text?: string } {
+  const text = caption?.trim();
+  return text ? { type: 'post', post_id: postId, text } : { type: 'post', post_id: postId };
+}
+
+/**
+ * Share a post into a conversation (message-service type "post"). Same gates
+ * as text on the server; a post can never be the first message of a message
+ * request (422 INVALID_REQUEST_MESSAGE), and waits for acceptance after it
+ * (409 AWAITING_REQUEST_ACCEPTANCE). Both arrive as a ChatApiError.
+ */
+export const sendPostMessage = async (conversationId: string, postId: string, caption?: string) => {
+  const json = await chatClient.request(`/conversations/${encodeURIComponent(conversationId)}/messages`, {
+    method: 'POST',
+    body: JSON.stringify(postMessageBody(postId, caption)),
+  });
+  return { ...json, data: json?.data ? normalizeMessage(json.data) : undefined };
 };
 
 export const toggleReaction = async (

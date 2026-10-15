@@ -8,11 +8,18 @@ import { searchUsers } from '@/services/userService';
 import { getOrCreateDirectConversation, sendMessage } from '@/services/messageService';
 import { getSession } from '@/services/authService';
 import type { User } from '@/types';
+import { conversationIdOf, sendPostErrorText, sendPostToUser } from './sendPost';
 
 interface NewMessageSheetProps {
   onClose: () => void;
   /** Called once the conversation exists, so the parent can open its window. */
   onOpened: (user: User) => void;
+  /**
+   * "Send in Messages" (audit T-25): the same picker, but committing shares
+   * this post into the chat ({type:"post", post_id, text?}) and the text
+   * becomes an optional caption. onOpened then means "sent".
+   */
+  sharePostId?: string;
 }
 
 /**
@@ -26,7 +33,8 @@ interface NewMessageSheetProps {
  * "Open chat" with no text — never while you are browsing search results,
  * so picking the wrong person does not leave an empty conversation behind.
  */
-export default function NewMessageSheet({ onClose, onOpened }: NewMessageSheetProps) {
+export default function NewMessageSheet({ onClose, onOpened, sharePostId }: NewMessageSheetProps) {
+  const sharing = Boolean(sharePostId);
   const myId = getSession()?.id ?? '';
 
   const [query, setQuery] = useState('');
@@ -77,13 +85,22 @@ export default function NewMessageSheet({ onClose, onOpened }: NewMessageSheetPr
     if (!recipient || sending) return;
     setSending(true);
     setError(null);
+    if (sharePostId) {
+      try {
+        await sendPostToUser(recipient.id, sharePostId, text);
+        onOpened(recipient);
+        onClose();
+      } catch (err) {
+        setError(sendPostErrorText(err, recipient.name));
+      } finally {
+        setSending(false);
+      }
+      return;
+    }
     try {
       const res: any = await getOrCreateDirectConversation(recipient.id);
-      // Take the first NON-EMPTY candidate. Go marshals missing fields as "",
-      // so a plain ?? chain would keep an empty string and drop the real id.
-      const conversationId = [
-        res?.data?.conversation_id, res?.data?.id, res?.conversation_id, res?.id,
-      ].find((v): v is string => typeof v === 'string' && v.length > 0);
+      // First NON-EMPTY candidate (Go marshals missing fields as "").
+      const conversationId = conversationIdOf(res);
       if (!conversationId) throw new Error('no conversation id');
       if (text.trim()) await sendMessage(conversationId, text.trim());
       onOpened(recipient);
@@ -132,10 +149,10 @@ export default function NewMessageSheet({ onClose, onOpened }: NewMessageSheetPr
       transition={{ type: 'spring', stiffness: 420, damping: 38, mass: 0.9 }}
       className="absolute inset-0 z-20 flex flex-col bg-brand-bg"
       role="dialog"
-      aria-label="New message"
+      aria-label={sharing ? "Send in Messages" : "New message"}
     >
       <div className="flex items-center justify-between px-4 pb-2 pt-4">
-        <h2 className="text-base font-semibold -tracking-[0.014em] text-brand-text">New message</h2>
+        <h2 className="text-base font-semibold -tracking-[0.014em] text-brand-text">{sharing ? "Send to" : "New message"}</h2>
         <button
           onClick={onClose}
           aria-label="Close"
@@ -206,7 +223,7 @@ export default function NewMessageSheet({ onClose, onOpened }: NewMessageSheetPr
             {avatar(recipient, 'h-14 w-14')}
             <p className="mt-3 text-sm font-semibold text-brand-text">{recipient.name}</p>
             {recipient.username && <p className="text-xs text-muted-foreground">@{recipient.username}</p>}
-            <p className="mt-3 text-xs text-muted-foreground">Write a first message, or open the chat without one.</p>
+            <p className="mt-3 text-xs text-muted-foreground">{sharing ? 'Add a message if you like, then send the post.' : 'Write a first message, or open the chat without one.'}</p>
           </div>
         )}
       </div>
@@ -224,10 +241,11 @@ export default function NewMessageSheet({ onClose, onOpened }: NewMessageSheetPr
             value={text}
             onChange={(e) => setText(e.target.value)}
             disabled={!recipient || sending}
-            placeholder={recipient ? 'Write a message' : 'Choose someone first'}
+            maxLength={sharing ? 2000 : undefined}
+            placeholder={recipient ? (sharing ? 'Add a message (optional)' : 'Write a message') : 'Choose someone first'}
             className="min-w-0 flex-1 bg-transparent py-2 text-[13px] text-brand-text outline-hidden placeholder:text-brand-text/40 disabled:cursor-not-allowed"
           />
-          {recipient && !text.trim() ? (
+          {recipient && !text.trim() && !sharing ? (
             <button
               type="submit"
               disabled={sending}
@@ -238,9 +256,9 @@ export default function NewMessageSheet({ onClose, onOpened }: NewMessageSheetPr
           ) : (
             <button
               type="submit"
-              disabled={!recipient || !text.trim() || sending}
-              aria-label="Send message"
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors duration-200 active:scale-90 ${recipient && text.trim()
+              disabled={!recipient || (!text.trim() && !sharing) || sending}
+              aria-label={sharing ? 'Send post' : 'Send message'}
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors duration-200 active:scale-90 ${recipient && (text.trim() || sharing)
                 ? 'bg-send text-white hover:bg-send-hover'
                 : 'text-brand-text/30'
                 }`}
