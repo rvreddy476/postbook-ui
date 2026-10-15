@@ -3,7 +3,6 @@
 import { useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { useQuery } from "@tanstack/react-query"
 import {
     ArrowLeft,
     Clock,
@@ -12,21 +11,17 @@ import {
     Eye,
     Focus,
 } from "lucide-react"
-import api from "@/lib/api"
-
-/* ------------------------------------------------------------------ */
-/*  Types                                                               */
-/* ------------------------------------------------------------------ */
-
-interface ScreenTimeDay {
-    date: string
-    minutes: number
-}
-
-interface ScreenTimeData {
-    days: ScreenTimeDay[]
-    total_minutes: number
-}
+import { useScreenTime, useUpdateWellbeing, useWellbeing } from "@/hooks/useWellbeing"
+import {
+    DAILY_LIMIT_MAX,
+    DAILY_LIMIT_MIN,
+    buildWellbeingRequest,
+    type ScreenTimeDay,
+    type Wellbeing,
+} from "../_lib/wellbeing"
+import { failedSave } from "../_lib/saveFeedback"
+import { useSaveToast } from "../_components/useSaveToast"
+import { SettingsLoadError, SettingsLoading } from "../_components/SettingsLoadState"
 
 /* ------------------------------------------------------------------ */
 /*  Toggle Switch                                                       */
@@ -36,16 +31,19 @@ function ToggleSwitch({
     checked,
     onChange,
     disabled,
+    label,
 }: {
     checked: boolean
     onChange: (checked: boolean) => void
     disabled?: boolean
+    label?: string
 }) {
     return (
         <button
             type="button"
             role="switch"
             aria-checked={checked}
+            aria-label={label}
             disabled={disabled}
             onClick={() => onChange(!checked)}
             className={[
@@ -88,7 +86,7 @@ function SectionCard({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay }}
-            className="bg-brand-card dark:bg-neutral-900 rounded-2xl p-6 shadow-xs border border-neutral-100 dark:border-neutral-800"
+            className="bg-brand-card rounded-2xl p-6 shadow-xs border border-brand-divider"
         >
             <div className="flex items-start gap-4">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-text/5">
@@ -104,30 +102,46 @@ function SectionCard({
     )
 }
 
-/* ------------------------------------------------------------------ */
-/*  Save Toast                                                          */
-/* ------------------------------------------------------------------ */
+const inputClasses =
+    "w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 disabled:opacity-50"
 
-function useSaveToast() {
-    const [message, setMessage] = useState<{ text: string; isError: boolean } | null>(null)
+function SaveButton({ onClick, pending }: { onClick: () => void; pending: boolean }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            disabled={pending}
+            className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-primary-ink transition-colors disabled:opacity-50"
+        >
+            {pending ? "Saving…" : "Save"}
+        </button>
+    )
+}
 
-    const show = (text: string, isError = false) => {
-        setMessage({ text, isError })
-        setTimeout(() => setMessage(null), 2000)
+/**
+ * Each card edits its own slice but saves the WHOLE document: the PUT is a
+ * full replace, so a card that sent only its fields would switch the others
+ * off. The base is the last document the server confirmed.
+ */
+function useCardSave(stored: Wellbeing) {
+    const update = useUpdateWellbeing()
+    const { showResult, Toast } = useSaveToast()
+
+    const save = async (slice: Partial<Wellbeing>) => {
+        const built = buildWellbeingRequest({ ...stored, ...slice })
+        if ("error" in built) {
+            showResult({ ok: false, message: built.error })
+            return
+        }
+        try {
+            const result = await update.mutateAsync(built.body)
+            showResult({ ok: true, data: result })
+        } catch (err) {
+            showResult(failedSave(err))
+        }
     }
 
-    const Toast = message ? (
-        <p
-            className={[
-                "mt-3 text-xs font-semibold",
-                message.isError ? "text-red-500" : "text-emerald-600",
-            ].join(" ")}
-        >
-            {message.text}
-        </p>
-    ) : null
-
-    return { show, Toast }
+    return { save, pending: update.isPending, Toast }
 }
 
 /* ------------------------------------------------------------------ */
@@ -142,7 +156,8 @@ function ScreenTimeChart({ days }: { days: ScreenTimeDay[] }) {
         <div className="flex items-end gap-2 h-24">
             {days.map((day, i) => {
                 const heightPct = Math.round((day.minutes / max) * 100)
-                const label = DAY_LABELS[new Date(day.date).getDay()] ?? DAY_LABELS[i % 7]
+                // Dates are UTC calendar days ("YYYY-MM-DD"); read them as such.
+                const label = DAY_LABELS[new Date(`${day.date}T00:00:00Z`).getUTCDay()] ?? DAY_LABELS[i % 7]
                 return (
                     <div key={day.date} className="flex flex-col items-center flex-1 gap-1">
                         <span className="text-[10px] text-brand-text/60">{day.minutes}m</span>
@@ -186,21 +201,14 @@ function ScreenTimeSkeleton() {
 /*  Daily Limit Card                                                    */
 /* ------------------------------------------------------------------ */
 
-function DailyLimitCard() {
-    const [enabled, setEnabled] = useState(false)
-    const [minutes, setMinutes] = useState(60)
-    const { show, Toast } = useSaveToast()
+function DailyLimitCard({ stored }: { stored: Wellbeing }) {
+    const [enabled, setEnabled] = useState(stored.daily_limit_mins !== null)
+    const [minutes, setMinutes] = useState(String(stored.daily_limit_mins ?? 60))
+    const { save, pending, Toast } = useCardSave(stored)
 
-    const handleSave = async () => {
-        try {
-            await api.put("/v1/users/me/wellbeing", {
-                daily_limit_enabled: enabled,
-                daily_limit_minutes: enabled ? minutes : 0,
-            })
-            show("Saved!")
-        } catch {
-            show("Could not save", true)
-        }
+    const handleSave = () => {
+        const parsed = Number.parseInt(minutes, 10)
+        void save({ daily_limit_mins: enabled ? (Number.isFinite(parsed) ? parsed : NaN) : null })
     }
 
     return (
@@ -216,7 +224,7 @@ function DailyLimitCard() {
                         <p className="text-sm font-semibold text-brand-text">Enable daily limit</p>
                         <p className="text-xs text-brand-highlight">You will be reminded when you reach your limit</p>
                     </div>
-                    <ToggleSwitch checked={enabled} onChange={setEnabled} />
+                    <ToggleSwitch label="Enable daily limit" checked={enabled} onChange={setEnabled} />
                 </div>
                 {enabled && (
                     <div className="space-y-1.5">
@@ -226,21 +234,19 @@ function DailyLimitCard() {
                         <input
                             id="daily-limit-minutes"
                             type="number"
-                            min={1}
-                            max={1440}
+                            inputMode="numeric"
+                            min={DAILY_LIMIT_MIN}
+                            max={DAILY_LIMIT_MAX}
                             value={minutes}
-                            onChange={(e) => setMinutes(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                            className="w-32 rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
+                            onChange={(e) => setMinutes(e.target.value)}
+                            className={`${inputClasses} max-w-32`}
                         />
-                        <p className="text-xs text-brand-text/60">Set 0 to disable the limit.</p>
+                        <p className="text-xs text-brand-text/60">
+                            Between {DAILY_LIMIT_MIN} and {DAILY_LIMIT_MAX} minutes.
+                        </p>
                     </div>
                 )}
-                <button
-                    onClick={handleSave}
-                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-primary-ink transition-colors"
-                >
-                    Save
-                </button>
+                <SaveButton onClick={handleSave} pending={pending} />
                 {Toast}
             </div>
         </SectionCard>
@@ -251,74 +257,25 @@ function DailyLimitCard() {
 /*  Focus Mode Card                                                     */
 /* ------------------------------------------------------------------ */
 
-function FocusModeCard() {
-    const [enabled, setEnabled] = useState(false)
-    const [start, setStart] = useState("09:00")
-    const [end, setEnd] = useState("17:00")
-    const { show, Toast } = useSaveToast()
-
-    const handleSave = async () => {
-        try {
-            await api.put("/v1/users/me/wellbeing", {
-                focus_mode_enabled: enabled,
-                focus_mode_start: start,
-                focus_mode_end: end,
-            })
-            show("Saved!")
-        } catch {
-            show("Could not save", true)
-        }
-    }
+// The server stores focus mode as a switch (plus an optional end time), not a
+// daily window; the old start/end inputs had no field to land in.
+function FocusModeCard({ stored }: { stored: Wellbeing }) {
+    const [enabled, setEnabled] = useState(stored.focus_mode_enabled)
+    const { save, pending, Toast } = useCardSave(stored)
 
     return (
         <SectionCard
             icon={<Focus className="h-6 w-6 text-brand-text/50" />}
             title="Focus Mode"
-            description="Limit distractions during your focus hours."
+            description="Limit distractions while you focus."
             delay={0.15}
         >
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <div>
-                        <p className="text-sm font-semibold text-brand-text">Enable focus mode</p>
-                        <p className="text-xs text-brand-highlight">Notifications will be paused during this window</p>
-                    </div>
-                    <ToggleSwitch checked={enabled} onChange={setEnabled} />
+                    <p className="text-sm font-semibold text-brand-text">Enable focus mode</p>
+                    <ToggleSwitch label="Enable focus mode" checked={enabled} onChange={setEnabled} />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                        <label htmlFor="focus-start" className="block text-xs font-semibold text-brand-highlight">
-                            Start time
-                        </label>
-                        <input
-                            id="focus-start"
-                            type="text"
-                            placeholder="09:00"
-                            value={start}
-                            onChange={(e) => setStart(e.target.value)}
-                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
-                        />
-                    </div>
-                    <div className="space-y-1.5">
-                        <label htmlFor="focus-end" className="block text-xs font-semibold text-brand-highlight">
-                            End time
-                        </label>
-                        <input
-                            id="focus-end"
-                            type="text"
-                            placeholder="17:00"
-                            value={end}
-                            onChange={(e) => setEnd(e.target.value)}
-                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
-                        />
-                    </div>
-                </div>
-                <button
-                    onClick={handleSave}
-                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-primary-ink transition-colors"
-                >
-                    Save
-                </button>
+                <SaveButton onClick={() => void save({ focus_mode_enabled: enabled })} pending={pending} />
                 {Toast}
             </div>
         </SectionCard>
@@ -326,42 +283,29 @@ function FocusModeCard() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Bedtime Mode Card                                                   */
+/*  Bedtime Card                                                        */
 /* ------------------------------------------------------------------ */
 
-function BedtimeModeCard() {
-    const [enabled, setEnabled] = useState(false)
-    const [start, setStart] = useState("22:00")
-    const [end, setEnd] = useState("07:00")
-    const { show, Toast } = useSaveToast()
+function BedtimeModeCard({ stored }: { stored: Wellbeing }) {
+    const [enabled, setEnabled] = useState(stored.bedtime_start !== null && stored.bedtime_end !== null)
+    const [start, setStart] = useState(stored.bedtime_start ?? "22:00")
+    const [end, setEnd] = useState(stored.bedtime_end ?? "07:00")
+    const { save, pending, Toast } = useCardSave(stored)
 
-    const handleSave = async () => {
-        try {
-            await api.put("/v1/users/me/wellbeing", {
-                bedtime_mode_enabled: enabled,
-                bedtime_mode_start: start,
-                bedtime_mode_end: end,
-            })
-            show("Saved!")
-        } catch {
-            show("Could not save", true)
-        }
-    }
+    const handleSave = () =>
+        void save(enabled ? { bedtime_start: start, bedtime_end: end } : { bedtime_start: null, bedtime_end: null })
 
     return (
         <SectionCard
             icon={<Moon className="h-6 w-6 text-brand-text/50" />}
-            title="Bedtime Mode"
-            description="Silence VChat during your sleep hours."
+            title="Sleep Hours"
+            description="Set the hours you want to be away from the app."
             delay={0.2}
         >
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <div>
-                        <p className="text-sm font-semibold text-brand-text">Enable bedtime mode</p>
-                        <p className="text-xs text-brand-highlight">Notifications will be silenced during bedtime</p>
-                    </div>
-                    <ToggleSwitch checked={enabled} onChange={setEnabled} />
+                    <p className="text-sm font-semibold text-brand-text">Enable sleep hours</p>
+                    <ToggleSwitch label="Enable sleep hours" checked={enabled} onChange={setEnabled} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
@@ -370,11 +314,11 @@ function BedtimeModeCard() {
                         </label>
                         <input
                             id="bed-start"
-                            type="text"
-                            placeholder="22:00"
+                            type="time"
                             value={start}
+                            disabled={!enabled}
                             onChange={(e) => setStart(e.target.value)}
-                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
+                            className={inputClasses}
                         />
                     </div>
                     <div className="space-y-1.5">
@@ -383,20 +327,15 @@ function BedtimeModeCard() {
                         </label>
                         <input
                             id="bed-end"
-                            type="text"
-                            placeholder="07:00"
+                            type="time"
                             value={end}
+                            disabled={!enabled}
                             onChange={(e) => setEnd(e.target.value)}
-                            className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
+                            className={inputClasses}
                         />
                     </div>
                 </div>
-                <button
-                    onClick={handleSave}
-                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-primary-ink transition-colors"
-                >
-                    Save
-                </button>
+                <SaveButton onClick={handleSave} pending={pending} />
                 {Toast}
             </div>
         </SectionCard>
@@ -407,22 +346,14 @@ function BedtimeModeCard() {
 /*  Break Reminders Card                                                */
 /* ------------------------------------------------------------------ */
 
-function BreakRemindersCard() {
-    const [enabled, setEnabled] = useState(false)
-    const [interval, setInterval] = useState(60)
-    const { show, Toast } = useSaveToast()
+// nudge_interval_mins is always set (5..240, default 30); there is no
+// separate on/off field, so the old enable switch is gone.
+const NUDGE_CHOICES = [15, 30, 60, 90, 120]
 
-    const handleSave = async () => {
-        try {
-            await api.put("/v1/users/me/wellbeing", {
-                break_reminders_enabled: enabled,
-                break_interval_minutes: interval,
-            })
-            show("Saved!")
-        } catch {
-            show("Could not save", true)
-        }
-    }
+function BreakRemindersCard({ stored }: { stored: Wellbeing }) {
+    const [interval, setIntervalMins] = useState(stored.nudge_interval_mins)
+    const { save, pending, Toast } = useCardSave(stored)
+    const choices = NUDGE_CHOICES.includes(interval) ? NUDGE_CHOICES : [...NUDGE_CHOICES, interval].sort((a, b) => a - b)
 
     return (
         <SectionCard
@@ -432,35 +363,22 @@ function BreakRemindersCard() {
             delay={0.25}
         >
             <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <p className="text-sm font-semibold text-brand-text">Enable break reminders</p>
-                        <p className="text-xs text-brand-highlight">You will be nudged to step away at the set interval</p>
-                    </div>
-                    <ToggleSwitch checked={enabled} onChange={setEnabled} />
-                </div>
                 <div className="space-y-1.5">
                     <label htmlFor="break-interval" className="block text-xs font-semibold text-brand-highlight">
-                        Remind every
+                        Remind me every
                     </label>
                     <select
                         id="break-interval"
                         value={interval}
-                        onChange={(e) => setInterval(parseInt(e.target.value, 10))}
-                        className="w-48 rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
+                        onChange={(e) => setIntervalMins(Number.parseInt(e.target.value, 10))}
+                        className={`${inputClasses} max-w-48`}
                     >
-                        <option value={30}>30 minutes</option>
-                        <option value={60}>60 minutes</option>
-                        <option value={90}>90 minutes</option>
-                        <option value={120}>120 minutes</option>
+                        {choices.map((m) => (
+                            <option key={m} value={m}>{m} minutes</option>
+                        ))}
                     </select>
                 </div>
-                <button
-                    onClick={handleSave}
-                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-primary-ink transition-colors"
-                >
-                    Save
-                </button>
+                <SaveButton onClick={() => void save({ nudge_interval_mins: interval })} pending={pending} />
                 {Toast}
             </div>
         </SectionCard>
@@ -471,22 +389,10 @@ function BreakRemindersCard() {
 /*  Content Preferences Card                                            */
 /* ------------------------------------------------------------------ */
 
-function ContentPreferencesCard() {
-    const [hideLikes, setHideLikes] = useState(false)
-    const [hideViews, setHideViews] = useState(false)
-    const { show, Toast } = useSaveToast()
-
-    const handleSave = async () => {
-        try {
-            await api.put("/v1/users/me/wellbeing", {
-                hide_like_counts: hideLikes,
-                hide_view_counts: hideViews,
-            })
-            show("Saved!")
-        } catch {
-            show("Could not save", true)
-        }
-    }
+// hide_view_counts has no field upstream, so only like counts remain.
+function ContentPreferencesCard({ stored }: { stored: Wellbeing }) {
+    const [hideLikes, setHideLikes] = useState(stored.hide_like_counts)
+    const { save, pending, Toast } = useCardSave(stored)
 
     return (
         <SectionCard
@@ -496,28 +402,14 @@ function ContentPreferencesCard() {
             delay={0.3}
         >
             <div className="space-y-4">
-                <div className="divide-y divide-brand-secondary">
-                    <div className="flex items-center justify-between py-3">
-                        <div>
-                            <p className="text-sm font-semibold text-brand-text">Hide like counts</p>
-                            <p className="text-xs text-brand-highlight">Like numbers will not be shown on posts</p>
-                        </div>
-                        <ToggleSwitch checked={hideLikes} onChange={setHideLikes} />
+                <div className="flex items-center justify-between py-3">
+                    <div>
+                        <p className="text-sm font-semibold text-brand-text">Hide like counts</p>
+                        <p className="text-xs text-brand-highlight">Like numbers will not be shown on posts</p>
                     </div>
-                    <div className="flex items-center justify-between py-3">
-                        <div>
-                            <p className="text-sm font-semibold text-brand-text">Hide view counts</p>
-                            <p className="text-xs text-brand-highlight">View numbers will not be shown on posts</p>
-                        </div>
-                        <ToggleSwitch checked={hideViews} onChange={setHideViews} />
-                    </div>
+                    <ToggleSwitch label="Hide like counts" checked={hideLikes} onChange={setHideLikes} />
                 </div>
-                <button
-                    onClick={handleSave}
-                    className="rounded-xl px-4 py-2 text-sm font-semibold text-white bg-primary-ink transition-colors"
-                >
-                    Save
-                </button>
+                <SaveButton onClick={() => void save({ hide_like_counts: hideLikes })} pending={pending} />
                 {Toast}
             </div>
         </SectionCard>
@@ -529,28 +421,24 @@ function ContentPreferencesCard() {
 /* ------------------------------------------------------------------ */
 
 function ScreenTimeCard() {
-    const { data, isLoading, isError } = useQuery<ScreenTimeData>({
-        queryKey: ["screen-time"],
-        queryFn: () =>
-            api.get("/v1/users/me/screen-time").then((r) => r.data?.data ?? r.data),
-    })
+    const { data, isLoading, isError } = useScreenTime()
 
     return (
         <SectionCard
             icon={<Clock className="h-6 w-6 text-brand-text/50" />}
             title="Screen Time"
-            description="Your VChat usage over the last 7 days."
+            description="Your usage over the last 7 days."
             delay={0.05}
         >
             {isLoading ? (
                 <ScreenTimeSkeleton />
             ) : isError || !data ? (
-                <p className="text-sm text-brand-highlight">Could not load settings.</p>
+                <p className="text-sm text-brand-highlight">Could not load screen time.</p>
             ) : (
                 <div className="space-y-3">
-                    <ScreenTimeChart days={data.days ?? []} />
+                    <ScreenTimeChart days={data.days} />
                     <p className="text-sm text-brand-text">
-                        <span className="font-bold text-brand-text">{data.total_minutes ?? 0} min</span>{" "}
+                        <span className="font-bold text-brand-text">{data.total_minutes} min</span>{" "}
                         total this week
                     </p>
                 </div>
@@ -564,6 +452,8 @@ function ScreenTimeCard() {
 /* ------------------------------------------------------------------ */
 
 export default function WellbeingPage() {
+    const wellbeing = useWellbeing()
+
     return (
         <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
             {/* Back link */}
@@ -583,17 +473,26 @@ export default function WellbeingPage() {
                 <div>
                     <h1 className="text-2xl font-bold text-brand-text">Digital Wellbeing</h1>
                     <p className="text-sm text-brand-highlight">
-                        Manage your time and mental health on VChat
+                        Manage your time and wellbeing
                     </p>
                 </div>
             </div>
 
             <ScreenTimeCard />
-            <DailyLimitCard />
-            <FocusModeCard />
-            <BedtimeModeCard />
-            <BreakRemindersCard />
-            <ContentPreferencesCard />
+
+            {wellbeing.isError ? (
+                <SettingsLoadError onRetry={() => void wellbeing.refetch()} />
+            ) : !wellbeing.data ? (
+                <SettingsLoading />
+            ) : (
+                <>
+                    <DailyLimitCard stored={wellbeing.data} />
+                    <FocusModeCard stored={wellbeing.data} />
+                    <BedtimeModeCard stored={wellbeing.data} />
+                    <BreakRemindersCard stored={wellbeing.data} />
+                    <ContentPreferencesCard stored={wellbeing.data} />
+                </>
+            )}
         </div>
     )
 }

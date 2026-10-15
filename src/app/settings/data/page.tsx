@@ -3,16 +3,19 @@
 import { useState } from "react"
 import AppShell from '@/components/AppShell'
 import Link from "next/link"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import {
     ArrowLeft,
     Download,
     Database,
     Trash2,
     Loader2,
-    AlertTriangle,
 } from "lucide-react"
 import api from "@/lib/api"
+// The one account-deletion flow (DELETE /v1/auth/account with the password),
+// shared with Security. This page used to call DELETE /v1/users/me, which no
+// service implements.
+import { DeleteAccountDialog } from "../_components/DeleteAccountDialog"
 
 /* ------------------------------------------------------------------ */
 /*  Section Card                                                        */
@@ -55,118 +58,12 @@ function SectionCard({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Delete Confirmation Modal                                           */
-/* ------------------------------------------------------------------ */
-
-function DeleteModal({
-    open,
-    onClose,
-}: {
-    open: boolean
-    onClose: () => void
-}) {
-    const [confirmation, setConfirmation] = useState("")
-    const [isDeleting, setIsDeleting] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-
-    const canDelete = confirmation === "DELETE"
-
-    const handleDelete = async () => {
-        if (!canDelete) return
-        setIsDeleting(true)
-        setError(null)
-        try {
-            await api.delete("/v1/users/me")
-            window.location.href = "/"
-        } catch {
-            setError("Could not delete account. Please try again.")
-            setIsDeleting(false)
-        }
-    }
-
-    return (
-        <AnimatePresence>
-            {open && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-brand-text/40 backdrop-blur-xs p-4"
-                    onClick={onClose}
-                >
-                    <motion.div
-                        initial={{ scale: 0.95, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.95, opacity: 0 }}
-                        onClick={(e) => e.stopPropagation()}
-                        className="w-full max-w-md rounded-2xl bg-brand-card border border-brand-divider p-6 shadow-xl"
-                    >
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100">
-                                <AlertTriangle className="h-5 w-5 text-rose-600" />
-                            </div>
-                            <h3 className="text-lg font-bold text-brand-text">Delete Account</h3>
-                        </div>
-
-                        <p className="text-sm text-brand-highlight mb-4">
-                            This action is permanent and cannot be undone. All your posts, messages,
-                            and data will be permanently deleted.
-                        </p>
-
-                        <div className="space-y-1.5 mb-4">
-                            <label htmlFor="delete-confirm" className="block text-xs font-semibold text-brand-highlight">
-                                Type <span className="font-bold text-brand-text">DELETE</span> to confirm
-                            </label>
-                            <input
-                                id="delete-confirm"
-                                type="text"
-                                value={confirmation}
-                                onChange={(e) => setConfirmation(e.target.value)}
-                                placeholder="DELETE"
-                                className="w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-rose-400 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-rose-200"
-                            />
-                        </div>
-
-                        {error && (
-                            <p className="text-xs font-semibold text-red-500 mb-3">{error}</p>
-                        )}
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={onClose}
-                                className="flex-1 rounded-xl border border-brand-divider px-4 py-2 text-sm font-semibold text-brand-text transition-colors hover:bg-brand-secondary"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleDelete}
-                                disabled={!canDelete || isDeleting}
-                                className="flex-1 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isDeleting ? (
-                                    <span className="inline-flex items-center gap-2">
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                        Deleting...
-                                    </span>
-                                ) : (
-                                    "Delete My Account"
-                                )}
-                            </button>
-                        </div>
-                    </motion.div>
-                </motion.div>
-            )}
-        </AnimatePresence>
-    )
-}
-
-/* ------------------------------------------------------------------ */
 /*  Main Page                                                           */
 /* ------------------------------------------------------------------ */
 
 export default function DataPage() {
     const [isDownloading, setIsDownloading] = useState(false)
-    const [downloadMsg, setDownloadMsg] = useState<string | null>(null)
+    const [downloadMsg, setDownloadMsg] = useState<{ text: string; isError: boolean } | null>(null)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
 
     const handleDownload = async () => {
@@ -181,9 +78,9 @@ export default function DataPage() {
             a.download = "my-data.json"
             a.click()
             URL.revokeObjectURL(url)
-            setDownloadMsg("Your data has been downloaded.")
+            setDownloadMsg({ text: "Your data has been downloaded.", isError: false })
         } catch {
-            setDownloadMsg("Export failed. Please try again.")
+            setDownloadMsg({ text: "Export failed. Please try again.", isError: true })
         } finally {
             setIsDownloading(false)
         }
@@ -244,7 +141,7 @@ export default function DataPage() {
                         )}
                     </button>
                     {downloadMsg && (
-                        <p className="text-xs font-semibold text-emerald-600">{downloadMsg}</p>
+                        <p className={`text-xs font-semibold ${downloadMsg.isError ? "text-danger" : "text-success"}`}>{downloadMsg.text}</p>
                     )}
                 </div>
             </SectionCard>
@@ -290,26 +187,27 @@ export default function DataPage() {
 
             {/* Card 3 — Delete Account */}
             <SectionCard
-                icon={<Trash2 className="h-6 w-6 text-rose-500/50" />}
+                icon={<Trash2 className="h-6 w-6 text-danger/60" />}
                 title="Delete Account"
                 description="Permanently remove your account and all associated data."
                 delay={0.15}
             >
                 <div className="space-y-3">
                     <p className="text-sm text-brand-highlight">
-                        Once deleted, your account cannot be recovered. All posts, messages,
-                        and personal data will be permanently erased.
+                        Your account is deleted 30 days after you confirm with your password. Signing in
+                        before then cancels the deletion; after that, posts, messages and personal data
+                        are permanently erased.
                     </p>
                     <button
                         onClick={() => setShowDeleteModal(true)}
-                        className="rounded-xl border border-rose-300 px-5 py-2.5 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-50"
+                        className="rounded-xl border border-danger/40 px-5 py-2.5 text-sm font-semibold text-danger transition-colors hover:bg-danger/5"
                     >
                         Delete My Account
                     </button>
                 </div>
             </SectionCard>
 
-            <DeleteModal open={showDeleteModal} onClose={() => setShowDeleteModal(false)} />
+            <DeleteAccountDialog open={showDeleteModal} onClose={() => setShowDeleteModal(false)} />
         </div>
         </AppShell>
     )
