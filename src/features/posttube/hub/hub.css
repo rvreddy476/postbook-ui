@@ -504,8 +504,15 @@
   .hub-nav li a, .hub-summary-card, .hub-summary-arrow, .hub-poster-play { transition: none; }
 }
 
-/* Sounds (library browse + preview) */
+/* Sounds (library: preview, use in a reel, see reels) */
 .hub-sound-list li { gap: 10px; }
+.hub-sound-actions { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.hub-sound-actions .hub-btn-primary:disabled { opacity: 0.6; cursor: default; }
+@media (max-width: 600px) {
+  .hub-sound-list li { flex-wrap: wrap; }
+  .hub-sound-list .grow { flex-basis: calc(100% - 50px); }
+  .hub-sound-actions { width: 100%; justify-content: flex-end; flex-wrap: wrap; }
+}
 .hub-sound-cover { width: 40px; height: 40px; display: grid; place-items: center; color: rgb(var(--text-muted)); }
 .hub-sound-cover svg { width: 18px; height: 18px; }
 .hub-sound-list .grow { display: flex; flex-direction: column; gap: 2px; }

@@ -13,6 +13,8 @@ import {
   getDraft,
   listDrafts,
   listSoundLibrary,
+  requestLibrarySoundUse,
+  type HubLibrarySoundUse,
   type HubDraft,
   type HubDraftPage,
   type HubLibrarySound,
@@ -176,7 +178,7 @@ export function useDeleteDraft() {
   });
 }
 
-/* ── Sound library (browse only) ────────────────────────── */
+/* ── Sound library ──────────────────────────────────────── */
 
 export function useSoundLibrary(genre: string) {
   const g = genre.trim();
@@ -199,6 +201,27 @@ export function useSoundLibrary(genre: string) {
     return out;
   }, [query.data]);
   return { ...query, rows };
+}
+
+/**
+  "Use this sound": POST /v1/audio-library/:id/use. On success the cached
+  library rows learn their audio_track_id, so "See reels" shows on return.
+*/
+export function useLibrarySoundUse() {
+  const qc = useQueryClient();
+  return useMutation<HubLibrarySoundUse, unknown, string>({
+    mutationFn: (libraryId) => requestLibrarySoundUse(libraryId),
+    onSuccess: (use, libraryId) => {
+      qc.setQueriesData<InfiniteData<HubSoundPage, number>>({ queryKey: ["hub", "sounds"] }, (old) =>
+        old
+          ? {
+              ...old,
+              pages: old.pages.map((p) => ({ ...p, items: p.items.map((s) => (s.id === libraryId ? { ...s, audio_track_id: use.audio_track_id } : s)) })),
+            }
+          : old,
+      );
+    },
+  });
 }
 
 export function useHubSummary() {

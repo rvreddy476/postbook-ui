@@ -47,7 +47,8 @@ import type { CommentItem } from "@/types/profile";
     GET    /v1/analytics/creator/me?period       (likes/comments/shares, daily_stats → views_by_day)
     GET    /v1/analytics/content/:id?period
     GET    /v1/reels/drafts?limit&cursor + GET|DELETE /v1/reels/drafts/:id   (the Drafts tab)
-    GET    /v1/audio-library?genre&limit&offset + GET /v1/audio-library/:id  (Sounds, browse only)
+    GET    /v1/audio-library?genre&limit&offset + GET /v1/audio-library/:id  (Sounds)
+    POST   /v1/audio-library/:id/use             (Sounds, "Use this sound" → {audio_track_id, sound})
     GET    /v1/media/:mediaId/serve[/720p|/480p] (coverFrame.captureCoverFrame: the frame is drawn in the browser, then uploaded as an image)
     POST   /v1/media/init + PUT upload + POST /v1/media/confirm (lib/mediaUpload.uploadMedia)
     GET    /v1/media/:id/download                (the owner's original file; the server refuses anyone else)
@@ -1393,17 +1394,22 @@ export async function deleteDraft(draftId: string): Promise<void> {
   await api.delete(`/v1/reels/drafts/${encodeURIComponent(draftId)}`);
 }
 
-/* ── Sound library (media-service audio_library, browse only) ── */
+/* ── Sound library (media-service audio_library) ───────── */
 
 /**
   `GET /v1/audio-library?genre&limit&offset` → `{data: {tracks: [...], total}}`
   and `GET /v1/audio-library/:audioId` → `{data: track}` (public; the
   gateway routes the prefix to media-service). Tracks come from the
-  `audio_library` table, ordered by use.
+  `audio_library` table, ordered by use. A row's `audio_url` is playable
+  (a storage key comes back as `/v1/audio-library/:id/serve`).
 
-  Browse only: attaching a sound to a post (`audio_track_id`) takes an
-  `audio_tracks` id (post-service service/audio.go), a different table, so
-  a library id cannot be used on a video from here.
+  A post never takes a library id. "Use this sound" first calls
+  `POST /v1/audio-library/:id/use` (signed in), which answers the
+  `audio_tracks` id the library row is played as (made on its first use);
+  that `audio_track_id` then goes wherever an extracted sound's does — the
+  studio's `?sound=`, post create, draft save. Each row also carries that
+  `audio_track_id` once someone has used it (null before), and its reels
+  are listed under it (`/reels/sound/:audio_track_id`).
 */
 export interface HubLibrarySound {
   id: string;
@@ -1418,6 +1424,8 @@ export interface HubLibrarySound {
   language: string;
   usage_count: number;
   is_trending: boolean;
+  /** The `audio_tracks` id this sound is played as, once anyone has used it; null before. Never the library id. */
+  audio_track_id: string | null;
 }
 
 /** Only http(s) URLs and gateway paths play; anything else (javascript:, data:, a bare storage key) is dropped. */
@@ -1448,6 +1456,7 @@ export function normalizeLibrarySound(raw: unknown): HubLibrarySound | null {
     language: str(raw.language),
     usage_count: Math.max(0, num(raw.usage_count)),
     is_trending: bool(raw.is_trending),
+    audio_track_id: str(raw.audio_track_id).trim() || null,
   };
 }
 
@@ -1483,6 +1492,66 @@ export async function listSoundLibrary(params?: { genre?: string; limit?: number
 export async function getLibrarySound(audioId: string): Promise<HubLibrarySound | null> {
   const res = await api.get<ApiResponse<unknown>>(`/v1/audio-library/${encodeURIComponent(audioId)}`);
   return normalizeLibrarySound(res.data?.data ?? res.data);
+}
+
+/** What "Use this sound" answers: the sound to put on a post. */
+export interface HubLibrarySoundUse {
+  /** The `audio_tracks` id: what the studio and post create take. */
+  audio_track_id: string;
+  title: string;
+}
+
+/** `{audio_track_id, sound}` → the use; null when the answer names no track. */
+export function normalizeLibrarySoundUse(raw: unknown): HubLibrarySoundUse | null {
+  if (!isRecord(raw)) return null;
+  const sound = isRecord(raw.sound) ? raw.sound : {};
+  const id = str(raw.audio_track_id).trim() || str(sound.id).trim();
+  if (!id) return null;
+  return { audio_track_id: id, title: str(sound.title).trim() };
+}
+
+/**
+  `POST /v1/audio-library/:audioId/use` (signed in) → 200
+  `{data: {audio_track_id, sound}}`. Refusals (401 UNAUTHORIZED, 400
+  BAD_REQUEST, 404 NOT_FOUND = withdrawn, 422 NOT_STORED, 503
+  SOUND_UNAVAILABLE = retry) reach the caller as the thrown error; read
+  them with librarySoundUseFailure. Named request…, not use…, so it is
+  never mistaken for a hook.
+*/
+export async function requestLibrarySoundUse(libraryId: string): Promise<HubLibrarySoundUse> {
+  const res = await api.post<ApiResponse<unknown>>(`/v1/audio-library/${encodeURIComponent(libraryId)}/use`);
+  const use = normalizeLibrarySoundUse(res.data?.data ?? res.data);
+  if (!use) throw new Error("The sound answer named no track");
+  return use;
+}
+
+/** The envelope's `error.message`, trimmed; null when there is none. */
+export function hubErrorMessage(err: unknown): string | null {
+  const data = (err as { response?: { data?: unknown } })?.response?.data;
+  if (!isRecord(data) || !isRecord(data.error)) return null;
+  return str(data.error.message).trim() || null;
+}
+
+/** "signed-out": go and sign in. "message": the line to show for a refused or failed use. */
+export type LibrarySoundUseFailure = { kind: "signed-out" } | { kind: "message"; message: string };
+
+/** media-service's words for each refusal, used when a body carries none. */
+const LIBRARY_USE_COPY: Record<string, string> = {
+  NOT_FOUND: "Sound not found",
+  NOT_STORED: "This library sound has no audio to play",
+  SOUND_UNAVAILABLE: "The sound could not be prepared; retry",
+};
+
+const LIBRARY_USE_STATUS: Record<number, string> = { 404: "NOT_FOUND", 422: "NOT_STORED", 503: "SOUND_UNAVAILABLE" };
+
+/** 401 → sign in. 404 / 422 / 503 → the server's own copy. Anything else → a plain retry line. */
+export function librarySoundUseFailure(err: unknown): LibrarySoundUseFailure {
+  const status = (err as { response?: { status?: unknown } })?.response?.status;
+  const code = hubErrorCode(err);
+  if (status === 401 || code === "UNAUTHORIZED") return { kind: "signed-out" };
+  const known = code && code in LIBRARY_USE_COPY ? code : typeof status === "number" ? LIBRARY_USE_STATUS[status] : undefined;
+  if (known) return { kind: "message", message: hubErrorMessage(err) ?? LIBRARY_USE_COPY[known] };
+  return { kind: "message", message: "That sound could not be used. Please try again." };
 }
 
 /* ── Private sharing (contract F) ───────────────────────── */

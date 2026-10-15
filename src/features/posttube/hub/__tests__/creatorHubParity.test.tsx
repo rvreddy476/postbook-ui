@@ -253,7 +253,7 @@ describe("Drafts tab", () => {
   });
 });
 
-describe("T-28: sound library (browse only)", () => {
+describe("T-28: sound library browse and preview", () => {
   test("GET /v1/audio-library maps genre, limit and offset, and reads {tracks}", async () => {
     const tracks = Array.from({ length: 20 }, (_, i) => ({ id: `s${i}`, title: `Track ${i}`, audio_url: "https://cdn.example.test/a.mp3", duration_ms: 30_000 }));
     const calls = spyApi("get", { data: { tracks, total: 20 } });
