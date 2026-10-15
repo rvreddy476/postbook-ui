@@ -5,6 +5,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import api from "@/lib/api"
 import { getSharedNotificationSocket } from "@/lib/notificationSocket"
 import type { Relationship, RelationshipBatchResponse, UserProfile } from "@/types/profile"
+import { GRAPH_ROUTES, UUID_RE, idsFromGraphList } from "@/lib/graphApi"
 
 export interface ConnectionUser {
     user_id: string
@@ -47,15 +48,13 @@ export interface FriendRequestEntry {
     source?: string
 }
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
 /**
  * graph-service mutations require a UUID. Callers historically pass either a
  * UUID or a username; this resolves a username to its user_id via
  * profile-service's by-username lookup. A value that already looks like a
  * UUID is returned untouched.
  */
-async function resolveUserId(usernameOrId: string): Promise<string> {
+export async function resolveUserId(usernameOrId: string): Promise<string> {
     if (!usernameOrId) throw new Error("User identifier is required")
     if (UUID_RE.test(usernameOrId)) return usernameOrId
     const res = await api.get<{ data: { user_id?: string; id?: string } }>(
@@ -157,16 +156,47 @@ interface GraphConnectionRequest {
     expires_at?: string
 }
 
+/**
+ * graph-service answers follower/following lists with ids only; hydrate them
+ * into ConnectionUser rows the same way useFriends does.
+ */
+async function connectionUsers(ids: string[]): Promise<ConnectionUser[]> {
+    const profiles = await hydrateProfiles(ids)
+    return ids.map((id) => {
+        const p = profiles.get(id)
+        return {
+            user_id: id,
+            display_name: p?.display_name || p?.username || "User",
+            username: p?.username || "",
+            avatar_media_id: p?.avatar_media_id,
+        }
+    })
+}
+
+/**
+ * One offset page of followers or following from graph-service
+ * (GET /v1/graph/{followers|following}/:id). The route returns no total, so
+ * one extra row is asked for to know whether there is a next page; the total
+ * shown in the tabs comes from the graph counts, not from here.
+ */
+async function graphConnectionPage(
+    path: string,
+    limit: number,
+): Promise<PaginatedResponse<ConnectionUser>> {
+    const res = await api.get<{ data: unknown }>(path, { params: { limit: limit + 1, offset: 0 } })
+    const { ids: all } = idsFromGraphList(res.data?.data)
+    const ids = all.slice(0, limit)
+    const items = await connectionUsers(ids)
+    return {
+        items,
+        meta: { limit, offset: 0, total: ids.length, has_next: all.length > limit },
+    }
+}
+
 export function useFollowers(userId: string | undefined, limit = 20) {
     return useQuery({
         queryKey: ["connections", "followers", userId, limit],
-        queryFn: async () => {
-            const res = await api.get<{ data: PaginatedResponse<ConnectionUser> }>(
-                `/v1/profiles/${userId}/followers`,
-                { params: { limit, offset: 0 } }
-            )
-            return res.data.data
-        },
+        queryFn: () => graphConnectionPage(GRAPH_ROUTES.followers(userId as string), limit),
         enabled: !!userId,
     })
 }
@@ -174,13 +204,7 @@ export function useFollowers(userId: string | undefined, limit = 20) {
 export function useFollowing(userId: string | undefined, limit = 20) {
     return useQuery({
         queryKey: ["connections", "following", userId, limit],
-        queryFn: async () => {
-            const res = await api.get<{ data: PaginatedResponse<ConnectionUser> }>(
-                `/v1/profiles/${userId}/following`,
-                { params: { limit, offset: 0 } }
-            )
-            return res.data.data
-        },
+        queryFn: () => graphConnectionPage(GRAPH_ROUTES.following(userId as string), limit),
         enabled: !!userId,
     })
 }
@@ -196,29 +220,24 @@ export interface FollowerCursorPage {
     limit: number
 }
 
+async function graphCursorPage(path: string, limit: number, pageParam: unknown): Promise<FollowerCursorPage> {
+    const params: Record<string, string | number> = { limit }
+    if (typeof pageParam === "string" && pageParam !== "") {
+        params.cursor = pageParam
+    } else {
+        params.paginate = "cursor"
+    }
+    const res = await api.get<{ data: unknown }>(path, { params })
+    const { ids, nextCursor } = idsFromGraphList(res.data?.data)
+    return { items: await connectionUsers(ids), next_cursor: nextCursor, limit }
+}
+
 export function useInfiniteFollowers(userId: string | undefined, limit = 20) {
     return useInfiniteQuery<FollowerCursorPage>({
         queryKey: ["connections", "followers", "cursor", userId, limit],
         initialPageParam: "",
         enabled: !!userId,
-        queryFn: async ({ pageParam }) => {
-            const params: Record<string, string | number> = { limit }
-            if (typeof pageParam === "string" && pageParam !== "") {
-                params.cursor = pageParam
-            } else {
-                params.paginate = "cursor"
-            }
-            const res = await api.get<{ data: FollowerCursorPage }>(
-                `/v1/profiles/${userId}/followers`,
-                { params },
-            )
-            const d = res.data.data
-            return {
-                items: d?.items ?? [],
-                next_cursor: d?.next_cursor ?? "",
-                limit: d?.limit ?? limit,
-            }
-        },
+        queryFn: ({ pageParam }) => graphCursorPage(GRAPH_ROUTES.followers(userId as string), limit, pageParam),
         getNextPageParam: (last) => (last.next_cursor ? last.next_cursor : undefined),
     })
 }
@@ -228,24 +247,7 @@ export function useInfiniteFollowing(userId: string | undefined, limit = 20) {
         queryKey: ["connections", "following", "cursor", userId, limit],
         initialPageParam: "",
         enabled: !!userId,
-        queryFn: async ({ pageParam }) => {
-            const params: Record<string, string | number> = { limit }
-            if (typeof pageParam === "string" && pageParam !== "") {
-                params.cursor = pageParam
-            } else {
-                params.paginate = "cursor"
-            }
-            const res = await api.get<{ data: FollowerCursorPage }>(
-                `/v1/profiles/${userId}/following`,
-                { params },
-            )
-            const d = res.data.data
-            return {
-                items: d?.items ?? [],
-                next_cursor: d?.next_cursor ?? "",
-                limit: d?.limit ?? limit,
-            }
-        },
+        queryFn: ({ pageParam }) => graphCursorPage(GRAPH_ROUTES.following(userId as string), limit, pageParam),
         getNextPageParam: (last) => (last.next_cursor ? last.next_cursor : undefined),
     })
 }

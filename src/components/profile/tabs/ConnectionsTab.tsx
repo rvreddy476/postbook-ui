@@ -270,9 +270,11 @@ function BlockedUsersList() {
                         <p className="text-sm font-medium text-brand-text truncate">
                             {block.blocked_id}
                         </p>
-                        <p className="text-xs text-brand-text/40">
-                            Blocked {new Date(block.created_at).toLocaleDateString()}
-                        </p>
+                        {block.created_at ? (
+                            <p className="text-xs text-brand-text/40">
+                                Blocked {new Date(block.created_at).toLocaleDateString()}
+                            </p>
+                        ) : null}
                     </div>
                 </div>
             ))}

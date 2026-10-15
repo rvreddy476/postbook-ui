@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
+import { relationshipFromGraph } from "@/lib/graphApi"
+import type { Relationship } from "@/types/profile"
 
 const PROFILE_SERVICE_URL = process.env.PROFILE_SERVICE_URL || "http://localhost:8098"
 const GRAPH_SERVICE_URL = process.env.GRAPH_SERVICE_URL || "http://localhost:8083"
@@ -16,23 +18,41 @@ interface AggregatedProfile {
         video: number
         total: number
     }
-    relationship: Record<string, unknown> | null
+    relationship: Relationship | null
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 async function fetchJSON<T>(url: string, headers?: Record<string, string>): Promise<T | null> {
+    return (await fetchWithStatus<T>(url, headers)).data
+}
+
+async function fetchWithStatus<T>(
+    url: string,
+    headers?: Record<string, string>,
+): Promise<{ data: T | null; status: number }> {
     try {
         const res = await fetch(url, {
             headers: { "Content-Type": "application/json", ...headers },
             next: { revalidate: 0 },
         })
-        if (!res.ok) return null
+        if (!res.ok) return { data: null, status: res.status }
         const body = await res.json()
-        return body.data ?? body
+        return { data: body.data ?? body, status: res.status }
     } catch {
-        return null
+        return { data: null, status: 0 }
     }
+}
+
+/**
+ * The viewer's relationship to the profile, from graph-service.
+ * profile-service's /v1/profiles/:id/relationship is retired (410).
+ */
+async function fetchRelationship(viewerId: string, userId: string) {
+    const raw = await fetchJSON<Record<string, unknown>>(
+        `${GRAPH_SERVICE_URL}/v1/graph/relationship?user_id=${encodeURIComponent(viewerId)}&other_id=${encodeURIComponent(userId)}`
+    )
+    return relationshipFromGraph(raw)
 }
 
 export async function GET(
@@ -42,14 +62,33 @@ export async function GET(
     const { username } = await params
     const viewerId = request.headers.get("X-User-Id")
 
+    // The viewer goes to every service call, so profile-service's block gate
+    // (either direction → 404, indistinguishable from a missing account)
+    // applies to this page as it does to the API.
+    const fwdHeaders: Record<string, string> = {}
+    if (viewerId) fwdHeaders["X-User-Id"] = viewerId
+
     // Step 1: Resolve username or user ID → profile
     const isUUID = UUID_RE.test(username)
-    const profile = await fetchJSON<Record<string, unknown>>(
-        isUUID
-            ? `${PROFILE_SERVICE_URL}/v1/profiles/${encodeURIComponent(username)}`
-            : `${PROFILE_SERVICE_URL}/v1/profiles/by-username/${encodeURIComponent(username)}`
+    const profileUrl = isUUID
+        ? `${PROFILE_SERVICE_URL}/v1/profiles/${encodeURIComponent(username)}`
+        : `${PROFILE_SERVICE_URL}/v1/profiles/by-username/${encodeURIComponent(username)}`
+    const { data: profile, status: profileStatus } = await fetchWithStatus<Record<string, unknown>>(
+        profileUrl,
+        fwdHeaders,
     )
     if (!profile) {
+        // One exception to the gate's silence: the viewer blocked THIS
+        // account. They already know, and the page must offer Unblock. A
+        // block the other way stays a plain not-found.
+        if (profileStatus === 404 && viewerId) {
+            const blockedByViewer = await viewerBlockedProfile(profileUrl, viewerId)
+            if (blockedByViewer) {
+                return NextResponse.json({ data: blockedByViewer }, {
+                    headers: { "Cache-Control": "private, no-store", "Vary": "X-User-Id, Authorization" },
+                })
+            }
+        }
         return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
@@ -60,12 +99,10 @@ export async function GET(
     }
 
     // Step 2: Fan out all remaining calls in parallel
-    const fwdHeaders: Record<string, string> = {}
-    if (viewerId) fwdHeaders["X-User-Id"] = viewerId
-
     const [links, graphCounts, contentCounts, relationship] = await Promise.all([
         fetchJSON<Record<string, unknown>[]>(
-            `${PROFILE_SERVICE_URL}/v1/profiles/${userId}/links`
+            `${PROFILE_SERVICE_URL}/v1/profiles/${userId}/links`,
+            fwdHeaders
         ),
         // Use profile's denormalized counts as primary source; fall back to graph service
         fetchJSON<{ follower_count: number; following_count: number; friend_count: number }>(
@@ -74,12 +111,8 @@ export async function GET(
         fetchJSON<Record<string, number>>(
             `${POST_SERVICE_URL}/v1/posts/by-author/${userId}/counts`
         ),
-        // Relationship: use profile-service's new relationship endpoint
         viewerId && viewerId !== userId
-            ? fetchJSON<Record<string, unknown>>(
-                  `${PROFILE_SERVICE_URL}/v1/profiles/${userId}/relationship`,
-                  fwdHeaders
-              )
+            ? fetchRelationship(viewerId, userId)
             : Promise.resolve(null),
     ])
 
@@ -115,4 +148,32 @@ export async function GET(
             "Vary": "X-User-Id, Authorization",
         },
     })
+}
+
+/**
+ * When the viewer-scoped profile read is refused, decide whether it was the
+ * viewer's own block. Returns the minimal payload the blocked-by-you view
+ * needs (id, username, display name, relationship.blocked), or null.
+ */
+async function viewerBlockedProfile(
+    profileUrl: string,
+    viewerId: string,
+): Promise<AggregatedProfile | null> {
+    const anon = await fetchJSON<Record<string, unknown>>(profileUrl)
+    if (!anon) return null
+    const userId = (anon.user_id ?? anon.id) as string | undefined
+    if (!userId || userId === viewerId) return null
+    const relationship = await fetchRelationship(viewerId, userId)
+    if (!relationship?.blocked) return null
+    return {
+        profile: {
+            id: userId,
+            user_id: userId,
+            username: anon.username,
+            display_name: anon.display_name,
+        },
+        links: [],
+        stats: { follower_count: 0, following_count: 0, friend_count: 0, post: 0, reel: 0, video: 0, total: 0 },
+        relationship,
+    }
 }
