@@ -30,8 +30,9 @@ import { type FollowUpFailure, type StudioFormState, INITIAL_FORM_STATE } from "
 import { validateSelectedFile, validateMediaDuration } from "./fileRules";
 import { freshStudioForm, mergePublishDefaults, takesPublishDefaults } from "./studioDefaults";
 import { applySeriesChoice, saveUploadChapters, studioCreateFields } from "./studioApi";
-import { soundToAudioTrack, studioDraftSoundFields, studioSoundNotice, studioSoundStatus } from "./studioSound";
+import { chosenSoundPatch, soundToAudioTrack, studioDraftSoundFields, studioSoundNotice, studioSoundStatus } from "./studioSound";
 import { useSoundInfo } from "@/features/reels/hooks/useSounds";
+import type { SoundInfo } from "@/features/reels/sounds";
 
 /* ── Constants ─────────────────────────────────────────── */
 
@@ -169,6 +170,15 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
   const removeSound = useCallback(() => {
     patch({ audioTrack: null, audioStartMs: 0, overlayAudioVolume: INITIAL_FORM_STATE.overlayAudioVolume });
   }, [patch]);
+
+  /* A sound chosen in the Audio section's picker: the same form fields the
+   * ?sound= lookup writes, from the sound's start. A library sound arrives
+   * here already turned into its audio_tracks id. */
+  const chooseSound = useCallback((sound: SoundInfo) => {
+    // A choice made here wins over an address sound still being looked up.
+    appliedSoundRef.current = soundId;
+    patch(chosenSoundPatch(sound));
+  }, [patch, soundId]);
 
   /* ── File selection ──────────────────────────────── */
 
@@ -751,6 +761,7 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
     clearFile,
     sound: { status: soundStatus, notice: studioSoundNotice(soundStatus) },
     removeSound,
+    chooseSound,
     uploadMutation,
     extractCoverPreview,
     selectCustomCover,
