@@ -47,10 +47,23 @@ const copy: Record<string, [string, string]> = {
   'doorstep.booking.extras_payment_due': ['Payment requested', 'Review the approved additional work and payment in your booking.'],
   'doorstep.message.new': ['New service message', 'Open your booking to read and reply.'],
   'follow': ['New follower', 'Someone started following you.'],
+  'user.followed': ['New follower', 'Someone started following you.'],
   'reaction': ['New reaction', 'Someone reacted to your post.'],
+  'post.liked': ['New like', 'Someone liked your post.'],
+  'post.super_liked': ['New super like', 'Someone gave your post a super like.'],
+  'comment_reaction': ['New reaction', 'Someone reacted to your comment.'],
   'comment': ['New comment', 'Someone commented on your post.'],
+  'post.commented': ['New comment', 'Someone commented on your post.'],
+  'comment.replied': ['New reply', 'Someone replied to your comment.'],
+  'mention': ['You were mentioned', 'Open the post to see where.'],
+  'mention.created': ['You were mentioned', 'Open the post to see where.'],
+  'comment_mention': ['You were mentioned', 'Someone mentioned you in a comment.'],
+  'group.mention': ['You were mentioned', 'Someone mentioned you in a group.'],
+  'community.mention': ['You were mentioned', 'Someone mentioned you in a community.'],
   'friend_request': ['New friend request', 'Open the request to respond.'],
+  'user.friend_request': ['New friend request', 'Open the request to respond.'],
   'friend_accepted': ['Friend request accepted', 'Your friend request was accepted.'],
+  'user.friend_accepted': ['Friend request accepted', 'Your friend request was accepted.'],
 }
 
 /** Stored mobile links must never launch an arbitrary scheme or external URL. */
