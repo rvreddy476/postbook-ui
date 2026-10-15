@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import { useMemo } from "react";
 
 import { formatCount } from "@/features/posttube/model";
@@ -13,6 +13,7 @@ import { DayChart, HourChart, RetentionCurve } from "./Charts";
 import { HubHead } from "./HubFrame";
 import { HubError, HubSkeleton, InsightsEmpty } from "./HubEmpty";
 import { PillGroup } from "./Pills";
+import { downloadCsv, insightsCsvFilename, insightsCsvRows, toCsv } from "../insightsCsv";
 
 function readPeriod(v: string | null): InsightsPeriod {
   return (INSIGHTS_PERIODS as readonly string[]).includes(v ?? "") ? (v as InsightsPeriod) : "28d";
@@ -44,10 +45,26 @@ export function InsightsPage() {
 
   const d = insights.data;
   const hasDays = (d?.views_by_day.length ?? 0) > 0;
+  const exportCsv = () => {
+    if (!d) return;
+    const names = new Map(library.rows.map((r) => [r.id, r.title]));
+    downloadCsv(insightsCsvFilename(d.period), toCsv(insightsCsvRows(d, names)));
+  };
 
   return (
     <>
-      <HubHead title="Insights" sub="How your channel is doing." actions={<PillGroup label="Period" value={period} options={PERIOD_OPTIONS} onChange={setPeriod} />} />
+      <HubHead
+        title="Insights"
+        sub="How your channel is doing."
+        actions={
+          <>
+            <PillGroup label="Period" value={period} options={PERIOD_OPTIONS} onChange={setPeriod} />
+            <button type="button" className="hub-btn" onClick={exportCsv} disabled={!d}>
+              <Download aria-hidden="true" /> Download CSV
+            </button>
+          </>
+        }
+      />
 
       {insights.isPending ? (
         <HubSkeleton rows={4} height={64} />
@@ -61,6 +78,18 @@ export function InsightsPage() {
               <div className="hub-tile-value">{formatCount(d.views)}</div>
             </div>
             <div className="hub-tile">
+              <div className="hub-tile-label">Likes</div>
+              <div className="hub-tile-value">{formatCount(d.likes)}</div>
+            </div>
+            <div className="hub-tile">
+              <div className="hub-tile-label">Comments</div>
+              <div className="hub-tile-value">{formatCount(d.comments)}</div>
+            </div>
+            <div className="hub-tile">
+              <div className="hub-tile-label">Shares</div>
+              <div className="hub-tile-value">{formatCount(d.shares)}</div>
+            </div>
+            <div className="hub-tile">
               <div className="hub-tile-label">Watch time</div>
               <div className="hub-tile-value">{formatWatchTime(d.watch_time_ms)}</div>
             </div>
@@ -71,7 +100,7 @@ export function InsightsPage() {
             <div className="hub-tile">
               <div className="hub-tile-label">Followers</div>
               <div className={`hub-tile-value ${(d.followers_delta ?? 0) > 0 ? "hub-tile-up" : (d.followers_delta ?? 0) < 0 ? "hub-tile-down" : ""}`}>{formatDelta(d.followers_delta)}</div>
-              <div className="hub-tile-sub">{d.followers_delta === null ? "not tracked yet" : PERIOD_LABEL[period].toLowerCase()}</div>
+              <div className="hub-tile-sub">{d.followers_delta === null ? (d.follows_from_content > 0 ? `not tracked yet · ${formatCount(d.follows_from_content)} followed from a video` : "not tracked yet") : PERIOD_LABEL[period].toLowerCase()}</div>
             </div>
           </div>
 
