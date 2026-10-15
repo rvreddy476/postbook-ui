@@ -7,6 +7,7 @@ import { X, Loader2 } from 'lucide-react';
 import { usePostDetail } from '@/hooks/useFeedPosts';
 import PostCard from '@/components/PostCard';
 import CommentSection from '@/components/CommentSection';
+import { commentCreatorTools } from '@/components/comments/creatorTools';
 
 interface NotificationPostPopupProps {
   postId: string;
@@ -87,6 +88,7 @@ const NotificationPostPopup: React.FC<NotificationPostPopupProps> = ({ postId, f
                   commentsCount={post.counts?.comments ?? 0}
                   alwaysExpanded={true}
                   focusCommentId={focusCommentId}
+                  creatorTools={commentCreatorTools}
                 />
               </div>
             </div>

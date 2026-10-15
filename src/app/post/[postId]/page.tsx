@@ -6,6 +6,7 @@ import { usePostDetail } from '@/hooks/useFeedPosts';
 import { usePostRoom } from '@/hooks/usePostRoom';
 import PostCard from '@/components/PostCard';
 import CommentSection from '@/components/CommentSection';
+import { commentCreatorTools } from '@/components/comments/creatorTools';
 import { ArrowLeft } from 'lucide-react';
 
 function PostDetailContent() {
@@ -65,9 +66,11 @@ function PostDetailContent() {
         <div className="glass-panel rounded-b-[3rem] border border-t-0 border-white/80 overflow-hidden -mt-1">
           <CommentSection
             postId={post.id}
+            postAuthorId={post.author_id}
             commentsCount={post.counts?.comments ?? 0}
             alwaysExpanded
             focusCommentId={focusCommentId}
+            creatorTools={commentCreatorTools}
           />
         </div>
       </div>
