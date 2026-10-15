@@ -3,8 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthUser } from "@/store/auth"
-import { useAggregatedProfile } from "@/hooks/useAggregatedProfile"
+import { profileErrorStatus, useAggregatedProfile } from "@/hooks/useAggregatedProfile"
 import { ProfileHeader } from "./ProfileHeader"
+import { LikedTab } from "./tabs/LikedTab"
+import { PrivateProfileView } from "./states/PrivateProfileView"
+import { ProfileTabError } from "./states/ProfileTabError"
+import { ReportProfileDialog } from "./ReportProfileDialog"
+import { ShareSheet } from "@/features/reels/components/ShareSheet"
+import { followButtonState, profileShareUrl, profileViewState } from "./profileParity"
 import { ProfileTabs } from "./ProfileTabs"
 import ProfileQASection from "./ProfileQASection"
 import { CreationsTab } from "./tabs/CreationsTab"
@@ -391,10 +397,12 @@ export function ProfilePage({ username }: ProfilePageProps) {
     const [isMuted, setIsMuted] = useState(false)
     const [isTabsSticky, setIsTabsSticky] = useState(false)
     const [qrModalOpen, setQrModalOpen] = useState(false)
+    const [shareOpen, setShareOpen] = useState(false)
+    const [reportOpen, setReportOpen] = useState(false)
     const tabsSentinelRef = useRef<HTMLDivElement>(null)
 
     const { toast, ToastContainer } = useToast()
-    const { data, isLoading } = useAggregatedProfile(username)
+    const { data, isLoading, error: profileError, refetch: refetchProfile, isRefetching } = useAggregatedProfile(username)
     const profile_ = data?.profile ?? null
     const { data: userChannels } = useUserChannels(profile_?.id)
     const primaryChannel = userChannels?.[0] ?? null
@@ -500,9 +508,26 @@ export function ProfilePage({ username }: ProfilePageProps) {
     const handleFollow = useCallback(() => {
         if (!profile) return
         followMutation.mutate(profile.id || profile.username, {
+            onSuccess: (result) => {
+                // A private account turns a follow into a request.
+                if (result?.status === "requested") {
+                    toast({ type: "info", title: "Follow request sent" })
+                }
+            },
             onError: (e) => toast({ type: "error", title: authErrMsg(e) }),
         })
     }, [profile, followMutation, toast])
+
+    const shareUrl =
+        profile && typeof window !== "undefined" ? profileShareUrl(window.location.origin, profile) : ""
+
+    const handleCopyLink = useCallback(() => {
+        if (!shareUrl) return
+        navigator.clipboard
+            .writeText(shareUrl)
+            .then(() => toast({ type: "success", title: "Profile link copied" }))
+            .catch(() => toast({ type: "error", title: "Could not copy the link" }))
+    }, [shareUrl, toast])
 
     const handleUnfollow = useCallback(() => {
         if (!profile) return
@@ -568,31 +593,60 @@ export function ProfilePage({ username }: ProfilePageProps) {
 
     // --- Render states ---
 
-    if (isLoading) return <ProfileSkeleton />
+    const viewState = profileViewState({
+        isLoading,
+        errorStatus: data ? undefined : profileErrorStatus(profileError),
+        profile,
+        relationship,
+        isOwn,
+    })
+    const signedIn = !!localUser
+    const followBusy = followMutation.isPending || unfollowMutation.isPending
+    const signInHref = `/login?next=${encodeURIComponent(`/u/${username}`)}`
 
-    if (relationship?.blocked_by) {
-        return (
-            <BlockedProfileView
-                variant="blocked_by_them"
-                onGoHome={() => router.push("/")}
-            />
-        )
-    }
+    if (viewState === "loading") return <ProfileSkeleton />
 
-    if (!profile) {
+    // Missing, or blocked either way round from their side: one neutral page.
+    if (viewState === "not_found" || !profile) {
         return <UnavailableProfileView />
     }
 
-    if (relationship?.blocked) {
+    if (viewState === "error") {
         return (
-            <BlockedProfileView
-                variant="blocked_by_viewer"
-                username={profile.username}
-                onUnblock={handleUnblock}
-                onGoHome={() => router.push("/")}
-            />
+            <div className="mx-auto max-w-md px-4 py-20">
+                <ProfileTabError
+                    subject="this profile"
+                    onRetry={() => {
+                        if (!isRefetching) void refetchProfile()
+                    }}
+                />
+            </div>
         )
     }
+
+    if (viewState === "blocked_by_viewer") {
+        return (
+            <>
+                <BlockedProfileView
+                    variant="blocked_by_viewer"
+                    username={profile.username}
+                    onUnblock={handleUnblock}
+                    onGoHome={() => router.push("/")}
+                />
+                <ConfirmDialog
+                    open={unblockDialogOpen}
+                    onClose={() => setUnblockDialogOpen(false)}
+                    onConfirm={handleConfirmUnblock}
+                    title={`Unblock @${profile.username}?`}
+                    description={`They will be able to see your profile and interact with you again.`}
+                    confirmLabel="Unblock"
+                    loading={unblockMutation.isPending}
+                />
+            </>
+        )
+    }
+
+    const isPrivateView = viewState === "private"
 
     return (
         <div className="w-full pb-28 md:pb-12">
@@ -617,6 +671,13 @@ export function ProfilePage({ username }: ProfilePageProps) {
                 onMute={handleMute}
                 onUnmute={handleUnmute}
                 onUploadError={(msg) => toast({ type: "error", title: msg })}
+                signedIn={signedIn}
+                followBusy={followBusy}
+                onShare={() => setShareOpen(true)}
+                onCopyLink={handleCopyLink}
+                onReport={() => setReportOpen(true)}
+                onOpenConnections={isPrivateView ? undefined : () => setActiveTab("connections")}
+                signInHref={signInHref}
             />
 
             {/* QR Code button (own profile only) */}
@@ -632,6 +693,21 @@ export function ProfilePage({ username }: ProfilePageProps) {
                 </div>
             )}
 
+            {isPrivateView ? (
+                // Private and not followed: the header above, this notice
+                // and Follow — no tabs, no grids, nothing to leak.
+                <div className="max-w-[1200px] mx-auto px-4 sm:px-8">
+                    <PrivateProfileView
+                        username={profile.username || profile.id}
+                        signedIn={signedIn}
+                        followState={followButtonState(profile, relationship)}
+                        followBusy={followBusy}
+                        onFollow={handleFollow}
+                        signInHref={signInHref}
+                    />
+                </div>
+            ) : (
+            <>
             {/* Sentinel for sticky tabs */}
             <div ref={tabsSentinelRef} className="h-0" />
 
@@ -713,7 +789,8 @@ export function ProfilePage({ username }: ProfilePageProps) {
                                         accent="from-blue-50 to-blue-100/40"
                                     />
                                 )}
-                                {activeTab === "stashed" && <StashedTab userId={profile.id} />}
+                                {activeTab === "stashed" && isOwn && <StashedTab userId={profile.id} />}
+                                {activeTab === "liked" && isOwn && <LikedTab />}
                                 {activeTab === "portfolio" && (
                                     <PortfolioTabContent userId={profile.id} isOwn={isOwn} />
                                 )}
@@ -762,9 +839,30 @@ export function ProfilePage({ username }: ProfilePageProps) {
                     )}
                 </div>
             </div>
+            </>
+            )}
 
             {/* QR Code modal */}
             {qrModalOpen && <QRCodeModal onClose={() => setQrModalOpen(false)} />}
+
+            {/* Share: the public /u/<username> address (resolves signed out). */}
+            <ShareSheet
+                open={shareOpen}
+                onClose={() => setShareOpen(false)}
+                url={shareUrl}
+                title={`${profile.display_name || profile.username} (@${profile.username})`}
+                heading="Share profile"
+            />
+
+            {/* Report: POST /v1/reports { entity_type: "user" }. Never on your own profile. */}
+            {!isOwn && signedIn && (
+                <ReportProfileDialog
+                    open={reportOpen}
+                    onClose={() => setReportOpen(false)}
+                    userId={profile.id}
+                    username={profile.username || profile.id}
+                />
+            )}
 
             {/* Confirmation Dialogs */}
             <ConfirmDialog

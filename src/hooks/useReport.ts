@@ -1,7 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
 import api from "@/lib/api";
 
-export type ReportTargetType = "post" | "comment" | "reel" | "video";
+/** "user" reports an account (a profile); the id is the account's user id. */
+export type ReportTargetType = "post" | "comment" | "reel" | "video" | "user";
 
 export type ReportReason =
   | "spam"
@@ -26,7 +27,8 @@ export const REPORTS_PATH = "/v1/reports";
  * The body `POST /v1/reports` (trust-safety-service) takes: entity_type /
  * entity_id / details (NOT target_type / description), and entity_type is
  * one of user, post, comment. Reels and videos are posts, so they normalize
- * to "post". Pure, so the wire shape is pinned by a test.
+ * to "post"; a profile report is entity_type "user". Pure, so the wire
+ * shape is pinned by a test.
  */
 export function reportRequestBody(params: SubmitReportParams) {
   const entityType =

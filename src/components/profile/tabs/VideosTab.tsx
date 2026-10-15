@@ -1,11 +1,14 @@
 "use client"
 
-import { useRef, useCallback, useMemo } from "react"
+import { useRef, useCallback, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useProfilePosts } from "@/hooks/useProfilePosts"
 import { motion } from "framer-motion"
 import { Video, Play, Sparkles, Clock, Upload } from "lucide-react"
 import type { PostDetail } from "@/types/profile"
+import type { ProfilePostSort } from "@/lib/profilePostSort"
+import { ProfileSortControl } from "../ProfileSortControl"
+import { ProfileTabError } from "../states/ProfileTabError"
 
 interface VideosTabProps {
     userId: string
@@ -132,8 +135,11 @@ function VideosSkeleton() {
 
 export function VideosTab({ userId, isOwn }: VideosTabProps) {
     const router = useRouter()
-    const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
-        useProfilePosts(userId, "video")
+    // The sort is part of the query key, so changing it restarts paging from
+    // the first page (the cursor is tied to the sort that issued it).
+    const [sort, setSort] = useState<ProfilePostSort>("latest")
+    const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, refetch } =
+        useProfilePosts(userId, "video", sort)
 
     const videos = useMemo(
         () => data?.pages.flatMap((page) => page.data) ?? [],
@@ -157,7 +163,38 @@ export function VideosTab({ userId, isOwn }: VideosTabProps) {
         [hasNextPage, isFetchingNextPage, fetchNextPage]
     )
 
-    if (isLoading) return <VideosSkeleton />
+    const sortBar = (
+        <div className="flex justify-end">
+            <ProfileSortControl value={sort} onChange={setSort} subject="videos" />
+        </div>
+    )
+
+    if (isLoading) {
+        return (
+            <div className="space-y-4">
+                {sortBar}
+                <VideosSkeleton />
+            </div>
+        )
+    }
+
+    if (isError && videos.length === 0) {
+        return (
+            <div className="space-y-4">
+                {sortBar}
+                <ProfileTabError subject="videos" onRetry={() => void refetch()} />
+            </div>
+        )
+    }
+
+    if (videos.length === 0 && sort !== "latest") {
+        return (
+            <div className="space-y-4">
+                {sortBar}
+                <p className="py-16 text-center text-sm text-muted-foreground">No videos yet</p>
+            </div>
+        )
+    }
 
     if (videos.length === 0) {
         return (
@@ -188,6 +225,7 @@ export function VideosTab({ userId, isOwn }: VideosTabProps) {
 
     return (
         <div className="space-y-4">
+            {sortBar}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {videos.map((post, i) => (
                     <VideoCard key={post.id} post={post} index={i} />

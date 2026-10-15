@@ -36,12 +36,35 @@ export function useAggregatedProfile(username: string) {
                 }
             } catch { /* ignore */ }
 
-            const res = await fetch(`/api/profile/${encodeURIComponent(username)}`, { headers })
-            if (!res.ok) throw new Error(`Profile fetch failed: ${res.status}`)
+            let res: Response
+            try {
+                res = await fetch(`/api/profile/${encodeURIComponent(username)}`, { headers })
+            } catch {
+                throw new ProfileFetchError(0)
+            }
+            if (!res.ok) throw new ProfileFetchError(res.status)
             const body = await res.json()
             return body.data as AggregatedProfileData
         },
         staleTime: 10 * 1000,
         enabled: !!username,
+        // A 404 is an answer (missing, or blocked either way — the same page),
+        // not a blip; retrying it only delays the not-found view.
+        retry: (failureCount, error) =>
+            !(error instanceof ProfileFetchError && error.status === 404) && failureCount < 2,
     })
+}
+
+/** A failed profile read; `status` is the HTTP status, 0 for a network failure. */
+export class ProfileFetchError extends Error {
+    constructor(public readonly status: number) {
+        super(`Profile fetch failed: ${status}`)
+        this.name = "ProfileFetchError"
+    }
+}
+
+/** The HTTP status of a failed profile read (0 = network), or undefined when it did not fail. */
+export function profileErrorStatus(error: unknown): number | undefined {
+    if (!error) return undefined
+    return error instanceof ProfileFetchError ? error.status : 0
 }
