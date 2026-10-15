@@ -9,10 +9,8 @@ import {
   FileText,
   Flame,
   Heart,
-  HelpCircle,
   History,
   Home,
-  Info,
   LayoutDashboard,
   LayoutGrid,
   ListPlus,
@@ -119,9 +117,14 @@ export const VIDEO_NAV_YOU: readonly VideoNavItem[] = [
   { key: "hub", label: "Creator Hub", icon: LayoutDashboard, href: "/posttube/hub" },
 ];
 
+/*
+  Help and About are left out on purpose (audit T-24): there is no /help or
+  /about page, and a footer link to a 404 is worse than no link. Add them
+  back with the page. The nav test checks every footer and More link
+  against src/app, so a dead link cannot come back unnoticed.
+*/
 export const VIDEO_NAV_FOOTER: readonly VideoNavItem[] = [
   { key: "settings", label: "Settings", icon: Settings, href: "/settings" },
-  { key: "help", label: "Help", icon: HelpCircle, href: "/help" },
   { key: "terms", label: "Terms", icon: FileText, href: "/terms" },
   { key: "privacy", label: "Privacy", icon: ShieldCheck, href: "/privacy" },
 ];
@@ -151,13 +154,11 @@ export const REELS_NAV_APPS: readonly VideoNavItem[] = [
 export const REELS_NAV_MORE: VideoNavItem = { key: "more", label: "More", icon: Ellipsis, action: "more" };
 
 /**
- * The footer under the sidebar chrome, as TikTok's reads: two rows of
- * links in a two-column grid ("About  Help" / "Terms & Policies  Privacy"),
- * then the copyright line. Every link is a real route.
+ * The footer under the sidebar chrome: links in a two-column grid
+ * ("Terms & Policies  Privacy"), then the copyright line. Every link is a
+ * real route; About and Help return when their pages exist (see above).
  */
 export const REELS_SIDEBAR_FOOTER: readonly VideoNavItem[] = [
-  { key: "about", label: "About", icon: Info, href: "/about" },
-  { key: "help", label: "Help", icon: HelpCircle, href: "/help" },
   { key: "terms", label: "Terms & Policies", icon: FileText, href: "/terms" },
   { key: "privacy", label: "Privacy", icon: ShieldCheck, href: "/privacy" },
 ];
@@ -269,7 +270,6 @@ export const REELS_MORE_PANEL: readonly MorePanelSection[] = [
     key: "other",
     title: "Other",
     items: [
-      { key: "help-center", label: "Help Center", icon: HelpCircle, href: "/help" },
       { key: "logout", label: "Log out", icon: LogOut, action: "logout" },
     ],
   },
