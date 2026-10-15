@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Tag } from "lucide-react";
 import { overrideVideoCategory } from "../data/posttubeApi";
+import { FLICK_MAX_DURATION_SECONDS } from "@/features/upload/tokens";
 
 interface CategoryOverrideProps {
   videoId?: string;
@@ -25,8 +26,8 @@ export function CategoryOverride({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Flick is only valid if <=180s AND not landscape
-  const canBeFlick = durationSeconds <= 180 && orientation !== "landscape";
+  // Flick is only valid if <=300s (5 minutes) AND not landscape, as on the server
+  const canBeFlick = durationSeconds <= FLICK_MAX_DURATION_SECONDS && orientation !== "landscape";
 
   const handleChange = useCallback(
     async (value: "flick" | "long_video") => {
@@ -95,7 +96,7 @@ export function CategoryOverride({
 
       {!canBeFlick && (
         <p className="mt-2 text-[11px] text-brand-text/60">
-          Reel requires ≤180s duration and portrait/square orientation.
+          Reels must be 5 minutes or shorter and portrait or square.
         </p>
       )}
 

@@ -30,8 +30,8 @@ describe("upload file requirements", () => {
   });
   test("duration must be finite, positive and within the exact content limit", () => {
     for (const duration of [0, -1, NaN, Infinity]) expect(validateMediaDuration(duration, "long")).not.toBeNull();
-    expect(validateMediaDuration(180, "reel")).toBeNull();
-    expect(validateMediaDuration(180.1, "reel")).toContain("3 minutes");
+    expect(validateMediaDuration(300, "reel")).toBeNull();
+    expect(validateMediaDuration(300.1, "reel")).toContain("5 minutes");
     expect(validateMediaDuration(43200, "long")).toBeNull();
     expect(validateMediaDuration(43201, "long")).toContain("12 hours");
   });
