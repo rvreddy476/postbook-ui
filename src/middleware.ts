@@ -75,6 +75,10 @@ const PUBLIC_EXACT = new Set([
     // they have an account, which is the only time it matters.
     "/terms",
     "/privacy",
+    // Search works signed out: search-service and the
+    // sound search answer anonymous callers; the page hides recents, which
+    // need an account. Exact on purpose — nothing under /search/ is opened.
+    "/search",
 ])
 
 const PUBLIC_PREFIXES = [

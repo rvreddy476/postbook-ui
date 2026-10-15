@@ -48,3 +48,16 @@ describe("middleware: channel feed", () => {
     expect(passes(visit("/posttube/channel/raghu.builds/feed.xml", "pb_auth=1"))).toBe(true);
   });
 });
+
+describe("middleware: search", () => {
+  test("search passes signed out, with or without a query", () => {
+    expect(passes(visit("/search"))).toBe(true);
+    expect(passes(visit("/search?q=cats&tab=sounds"))).toBe(true);
+  });
+
+  test("only the search page itself is opened", () => {
+    const res = visit("/search/anything");
+    expect(passes(res)).toBe(false);
+    expect(new URL(res.headers.get("location") as string).pathname).toBe("/login");
+  });
+});
