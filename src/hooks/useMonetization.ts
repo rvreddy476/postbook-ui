@@ -341,6 +341,41 @@ export function useRequestPayout() {
   });
 }
 
+/**
+  Whether withdrawals are open (MONETIZATION_PAYOUTS_ENABLED). The earnings
+  summary stamps `withdrawable` from that flag on every reply, so it is the
+  client's one signal. Fails closed: an error, maintenance or a reply
+  without the flag all read as "not available".
+*/
+export function payoutsAvailableFrom(raw: unknown): boolean {
+  const d = raw && typeof raw === "object" && "data" in raw ? (raw as { data: unknown }).data : raw;
+  return !!d && typeof d === "object" && (d as { withdrawable?: unknown }).withdrawable === true;
+}
+
+export function usePayoutsAvailable() {
+  return useQuery({
+    queryKey: ["monetization-payouts-available"],
+    queryFn: async () => {
+      try {
+        const res = await api.get<unknown>("/v1/monetization/creator-fund/earnings", { params: { days: "1" } });
+        return payoutsAvailableFrom(res.data);
+      } catch {
+        return false;
+      }
+    },
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+}
+
+/** The server's refusal while withdrawals are off (503 PAYOUTS_NOT_ENABLED). */
+export function isPayoutsNotEnabledError(err: unknown): boolean {
+  const data = (err as { response?: { data?: unknown } })?.response?.data as { error?: unknown } | undefined;
+  const e = data?.error;
+  const code = e && typeof e === "object" ? (e as { code?: unknown }).code : e;
+  return code === "PAYOUTS_NOT_ENABLED";
+}
+
 export function usePayoutHistory() {
   return useInfiniteQuery({
     queryKey: ["monetization-payout-history"],

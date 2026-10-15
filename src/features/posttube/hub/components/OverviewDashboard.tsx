@@ -1,16 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, BarChart3, Clapperboard, Clock3, Eye, Heart, Layers3, MessageCircle, Pencil, Radio, Upload, Users, Video } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BarChart3, Clapperboard, Clock3, Eye, Heart, Layers3, MessageCircle, Pencil, Radio, Share2, Upload, UserPlus, Users, Video } from "lucide-react";
 import type { ReactNode } from "react";
 import { formatCount, timeAgo } from "@/features/posttube/model";
-import { watchHref, type HubCreatorInsights, type HubLibraryRow, type HubSummary } from "../hubApi";
-import { VISIBILITY_LABEL, formatDelta, formatWatchTime, rowDate } from "../hubModel";
+import { watchHref, type HubCreatorInsights, type HubInboxRow, type HubLibraryRow, type HubSummary } from "../hubApi";
+import { PERIOD_LABEL, VISIBILITY_LABEL, formatDelta, formatWatchTime, rowDate } from "../hubModel";
 import { DayChart, LiveBars } from "./Charts";
 import { HubHead } from "./HubFrame";
 import { HubSkeleton, LibraryEmpty, OverviewEmpty } from "./HubEmpty";
 import { HubThumbnail } from "./HubThumbnail";
-import { FlagPills, VisibilityIcon } from "./Pills";
+import { FlagPills, PillGroup, VisibilityIcon } from "./Pills";
 
 export interface OverviewResource<T> {
   data?: T;
@@ -19,14 +19,28 @@ export interface OverviewResource<T> {
   onRetry?: () => void;
 }
 
+/** The overview's periods (Insights adds the year). */
+export type OverviewPeriod = "7d" | "28d" | "90d";
+export const OVERVIEW_PERIODS: readonly OverviewPeriod[] = ["7d", "28d", "90d"];
+const PERIOD_OPTIONS = OVERVIEW_PERIODS.map((p) => ({ id: p, label: PERIOD_LABEL[p] }));
+
+/** How many of the newest comments the overview lists. */
+export const OVERVIEW_COMMENTS = 5;
+
 /** Presentation is separate from queries so loading/error/empty states are testable. */
-export function OverviewDashboard({ summary, library, insights }: {
+export function OverviewDashboard({ summary, library, insights, comments, period = "28d", onPeriodChange, authorName }: {
   summary: OverviewResource<HubSummary>;
   library: OverviewResource<HubLibraryRow[]>;
   insights: OverviewResource<HubCreatorInsights>;
+  /** The newest comments across the channel; the section is left out when not passed. */
+  comments?: OverviewResource<HubInboxRow[]>;
+  period?: OverviewPeriod;
+  onPeriodChange?: (p: OverviewPeriod) => void;
+  authorName?: (authorId: string) => string | undefined;
 }) {
   const latest = library.data?.[0];
   const data = insights.data;
+  const since = `Last ${PERIOD_LABEL[period].toLowerCase()}`;
   const nothingYet = !summary.pending && !summary.error && summary.data &&
     summary.data.videos + summary.data.shorts + summary.data.live === 0 &&
     !library.pending && !library.error && library.data?.length === 0;
@@ -73,8 +87,8 @@ export function OverviewDashboard({ summary, library, insights }: {
             {latest.flags.length ? <FlagPills flags={latest.flags} /> : null}
             <dl className="hub-overview-video-stats">
               <MiniStat icon={<Eye aria-hidden="true" />} label="views" value={latest.view_count} />
+              <MiniStat icon={<Heart aria-hidden="true" />} label="likes" value={latest.like_count} />
               <MiniStat icon={<MessageCircle aria-hidden="true" />} label="comments" value={latest.comment_count} />
-              <MiniStat icon={<Heart aria-hidden="true" />} label="loves" value={latest.like_count} />
             </dl>
             <div className="hub-overview-video-actions">
               <Link href={`/posttube/hub/library?edit=${latest.id}`} className="hub-btn"><Pencil aria-hidden="true" /> Edit video</Link>
@@ -98,18 +112,43 @@ export function OverviewDashboard({ summary, library, insights }: {
     </div>
 
     <section className="hub-card hub-overview-card hub-performance" aria-labelledby="hub-performance-title">
-      <SectionHeading id="hub-performance-title" title="Channel performance" href="/posttube/hub/insights" action="View insights" trailing={<span className="hub-period">Last 28 days</span>} />
+      <SectionHeading id="hub-performance-title" title="Channel performance" href={`/posttube/hub/insights${period === "28d" ? "" : `?period=${period}`}`} action="View insights"
+        trailing={onPeriodChange ? <PillGroup label="Period" value={period} options={PERIOD_OPTIONS} onChange={onPeriodChange} /> : <span className="hub-period">{since}</span>} />
       {insights.pending ? <HubSkeleton rows={1} height={110} /> : insights.error || !data ? <OverviewError message="Channel performance couldn't load." onRetry={insights.onRetry} /> : <>
         <div className="hub-performance-grid">
-          <PerformanceMetric icon={<Eye aria-hidden="true" />} label="Views" value={formatCount(data.views)} note="Across your content" />
+          <PerformanceMetric icon={<Eye aria-hidden="true" />} label="Views" value={formatCount(data.views)} note={since} />
+          <PerformanceMetric icon={<Heart aria-hidden="true" />} label="Likes" value={formatCount(data.likes)} note={since} />
+          <PerformanceMetric icon={<MessageCircle aria-hidden="true" />} label="Comments" value={formatCount(data.comments)} note={since} />
+          <PerformanceMetric icon={<Share2 aria-hidden="true" />} label="Shares" value={formatCount(data.shares)} note={since} />
+          <PerformanceMetric icon={<UserPlus aria-hidden="true" />} label="Followers" value={formatDelta(data.followers_delta)} note={followersNote(data)} />
           <PerformanceMetric icon={<Clock3 aria-hidden="true" />} label="Watch time" value={formatWatchTime(data.watch_time_ms)} note="Time spent watching" />
-          <PerformanceMetric icon={<Users aria-hidden="true" />} label="Unique viewers" value={formatCount(data.unique_viewers)} note="Individual viewers" />
-          <PerformanceMetric icon={<Users aria-hidden="true" />} label="Followers" value={formatDelta(data.followers_delta)} note={data.followers_delta === null ? "Not tracked yet" : "Net change in this period"} />
         </div>
-        {data.views_by_day.length > 0 ? <div className="hub-performance-chart"><DayChart points={data.views_by_day} ariaLabel="Channel views by day, last 28 days" /></div> : null}
+        {data.views_by_day.length > 0 ? <div className="hub-performance-chart"><DayChart points={data.views_by_day} ariaLabel={`Channel views by day, ${since.toLowerCase()}`} /></div> : null}
       </>}
     </section>
+
+    {comments ? <section className="hub-card hub-overview-card" aria-labelledby="hub-comments-title">
+      <SectionHeading id="hub-comments-title" title="Latest comments" href="/posttube/hub/conversations?status=all" action="View conversations" />
+      {comments.pending ? <HubSkeleton rows={3} height={40} /> : comments.error ? <OverviewError message="Latest comments couldn't load." onRetry={comments.onRetry} /> : (comments.data ?? []).length === 0 ? <p className="hub-overview-caption">No comments yet. New comments on your videos show up here.</p> : <ul className="hub-list hub-overview-comments">
+        {(comments.data ?? []).slice(0, OVERVIEW_COMMENTS).map((r) => <li key={r.comment.id}>
+          <span className="grow">
+            <span className="hub-overview-comment-body">{r.comment.body || "—"}</span>
+            <span className="hub-overview-caption">
+              {authorName?.(r.comment.author_id) ? `${authorName(r.comment.author_id)} · ` : ""}
+              <Link href={`/posttube/hub/conversations?status=all&post=${r.post.id}`} className="hub-link">{r.post.title}</Link>
+              {r.comment.created_at ? ` · ${timeAgo(r.comment.created_at)}` : ""}
+            </span>
+          </span>
+        </li>)}
+      </ul>}
+    </section> : null}
   </div>;
+}
+
+/** The net change is not tracked yet; follows straight from a video are, and are named as such. */
+function followersNote(d: HubCreatorInsights): string {
+  if (d.followers_delta !== null) return "Net change in this period";
+  return d.follows_from_content > 0 ? `Not tracked yet · ${formatCount(d.follows_from_content)} followed from a video` : "Not tracked yet";
 }
 
 function SectionHeading({ id, title, href, action, trailing }: { id: string; title: string; href?: string; action?: string; trailing?: ReactNode }) {

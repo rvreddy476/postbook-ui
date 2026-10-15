@@ -44,8 +44,10 @@ import type { CommentItem } from "@/types/profile";
     POST   /v1/subtitles/:mediaId                (posttubeApi.createSubtitleTrack)
     POST   /v1/subtitles/:mediaId/auto           { language }
     GET    /v1/subtitles/:mediaId                (posttubeApi.getSubtitleTracks)
-    GET    /v1/analytics/creator/me?period
+    GET    /v1/analytics/creator/me?period       (likes/comments/shares, daily_stats → views_by_day)
     GET    /v1/analytics/content/:id?period
+    GET    /v1/reels/drafts?limit&cursor + GET|DELETE /v1/reels/drafts/:id   (the Drafts tab)
+    GET    /v1/audio-library?genre&limit&offset + GET /v1/audio-library/:id  (Sounds, browse only)
     GET    /v1/media/:mediaId/serve[/720p|/480p] (coverFrame.captureCoverFrame: the frame is drawn in the browser, then uploaded as an image)
     POST   /v1/media/init + PUT upload + POST /v1/media/confirm (lib/mediaUpload.uploadMedia)
     GET    /v1/media/:id/download                (the owner's original file; the server refuses anyone else)
@@ -1179,13 +1181,27 @@ export interface HubDayPoint {
 export interface HubCreatorInsights {
   period: InsightsPeriod;
   views: number;
+  /** Period totals (analytics-service `likes`/`comments`/`shares`; `total_*` on older writers). */
+  likes: number;
+  comments: number;
+  shares: number;
+  /**
+    Follows made straight from a video in the period (`followers_gained` /
+    `follower_growth`). NOT the channel's net follower change: that is
+    `followers_delta`, still null on the wire.
+  */
+  follows_from_content: number;
   watch_time_ms: number;
   unique_viewers: number;
   /** null = not tracked yet (the wire sends null). */
   followers_delta: number | null;
   top_content: { content_id: string; views: number; watch_time_ms: number }[];
   realtime: { views_48h: number; series_48h: number[] };
-  /** Optional on the wire; the overview chart falls back to the 48 h series when absent. */
+  /**
+    Views per day, oldest first, "YYYY-MM-DD". The wire's `daily_stats`
+    (`[{date: RFC 3339, views}]`); `views_by_day` still reads. Empty when
+    the period has no recorded day: the charts fall back to the 48 h series.
+  */
   views_by_day: HubDayPoint[];
 }
 
@@ -1195,11 +1211,50 @@ function numArray(v: unknown, length?: number): number[] {
   return arr;
 }
 
+/** A Go `time.Time` ("2026-10-01T00:00:00Z") keeps its calendar day; anything else passes through. */
+function dayKey(v: string): string {
+  const m = /^(\d{4}-\d{2}-\d{2})(?:$|[T ])/.exec(v);
+  return m ? m[1] : v;
+}
+
 function dayPoints(v: unknown): HubDayPoint[] {
   return (Array.isArray(v) ? v : [])
     .filter(isRecord)
-    .map((p) => ({ day: str(p.day) || str(p.date), views: num(p.views) }))
+    .map((p) => ({ day: dayKey(str(p.day) || str(p.date)), views: Math.max(0, num(p.views)) }))
     .filter((p) => p.day);
+}
+
+const DAY_MS = 86_400_000;
+
+/**
+  Merges duplicate days (summed), sorts oldest first and fills a day the
+  server skipped (no views recorded) with 0 between the first and last
+  day, so the chart's evenly spaced x axis and the CSV both show every day.
+*/
+function sortedDays(points: HubDayPoint[]): HubDayPoint[] {
+  const byDay = new Map<string, number>();
+  for (const p of points) byDay.set(p.day, (byDay.get(p.day) ?? 0) + p.views);
+  const sorted = [...byDay.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([day, views]) => ({ day, views }));
+  const iso = /^\d{4}-\d{2}-\d{2}$/;
+  if (sorted.length < 2 || !sorted.every((p) => iso.test(p.day))) return sorted;
+  const first = Date.parse(`${sorted[0].day}T00:00:00Z`);
+  const last = Date.parse(`${sorted[sorted.length - 1].day}T00:00:00Z`);
+  if (!Number.isFinite(first) || !Number.isFinite(last) || (last - first) / DAY_MS > 400) return sorted;
+  const out: HubDayPoint[] = [];
+  for (let t = first; t <= last; t += DAY_MS) {
+    const day = new Date(t).toISOString().slice(0, 10);
+    out.push({ day, views: byDay.get(day) ?? 0 });
+  }
+  return out;
+}
+
+/** The first number among the keys (Go zero values fall through to the older name). */
+function firstNum(d: Record<string, unknown>, ...keys: string[]): number {
+  for (const k of keys) {
+    const n = num(d[k]);
+    if (n) return n;
+  }
+  return 0;
 }
 
 export function normalizeCreatorInsights(raw: unknown, period: InsightsPeriod): HubCreatorInsights {
@@ -1210,15 +1265,20 @@ export function normalizeCreatorInsights(raw: unknown, period: InsightsPeriod): 
     .map((t) => ({ content_id: str(t.content_id) || str(t.post_id) || str(t.id), views: num(t.views), watch_time_ms: num(t.watch_time_ms) }))
     .filter((t) => t.content_id);
   const p = str(d.period) as InsightsPeriod;
+  const daily = dayPoints(d.daily_stats);
   return {
     period: INSIGHTS_PERIODS.includes(p) ? p : period,
     views: num(d.views),
+    likes: firstNum(d, "likes", "total_likes"),
+    comments: firstNum(d, "comments", "total_comments"),
+    shares: firstNum(d, "shares", "total_shares"),
+    follows_from_content: firstNum(d, "followers_gained", "follower_growth"),
     watch_time_ms: num(d.watch_time_ms),
     unique_viewers: num(d.unique_viewers),
     followers_delta: typeof d.followers_delta === "number" ? d.followers_delta : typeof d.subscribers_delta === "number" ? d.subscribers_delta : null,
     top_content: top,
     realtime: { views_48h: num(rt.views_48h), series_48h: numArray(rt.series_48h, 48).slice(-48) },
-    views_by_day: dayPoints(d.views_by_day),
+    views_by_day: sortedDays(daily.length > 0 ? daily : dayPoints(d.views_by_day)),
   };
 }
 
@@ -1259,6 +1319,170 @@ export function normalizeContentInsights(raw: unknown): HubContentInsights {
 export async function getContentInsights(contentId: string, period: InsightsPeriod): Promise<HubContentInsights> {
   const res = await api.get<ApiResponse<unknown>>(`/v1/analytics/content/${contentId}`, { params: { period } });
   return normalizeContentInsights(res.data.data ?? res.data);
+}
+
+/* ── Drafts (post-service drafts.go, the reel/video draft rows) ── */
+
+/**
+  A row of `GET /v1/reels/drafts` (post-service `postgres.ReelDraft`).
+  The list holds every status except `deleted`: `draft`, `scheduled`,
+  `blocked` (the schedule worker parked it, see `blocked_reason`) and
+  `published` (then `published_post_id` is the post it became).
+*/
+export interface HubDraft {
+  id: string;
+  title: string;
+  caption: string;
+  media_id: string | null;
+  cover_media_id: string | null;
+  visibility: string;
+  status: string;
+  schedule_at: string | null;
+  published_post_id: string | null;
+  blocked_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export function normalizeDraft(raw: unknown): HubDraft | null {
+  if (!isRecord(raw) || typeof raw.id !== "string" || raw.id === "") return null;
+  return {
+    id: raw.id,
+    title: str(raw.title).trim() || firstLine(str(raw.caption)) || "Untitled draft",
+    caption: str(raw.caption),
+    media_id: strOrNull(raw.media_id),
+    cover_media_id: strOrNull(raw.cover_media_id),
+    visibility: str(raw.visibility).toLowerCase(),
+    status: str(raw.status).toLowerCase() || "draft",
+    schedule_at: strOrNull(raw.schedule_at),
+    published_post_id: strOrNull(raw.published_post_id),
+    blocked_reason: strOrNull(raw.blocked_reason),
+    created_at: str(raw.created_at),
+    updated_at: str(raw.updated_at) || str(raw.created_at),
+  };
+}
+
+export interface HubDraftPage {
+  items: HubDraft[];
+  next_cursor?: string;
+}
+
+/** The server caps `limit` at 50 (anything else is its default, 20). */
+export const HUB_DRAFTS_PAGE = 20;
+
+/** `{limit, cursor?}`: the cursor is the server's RFC 3339 `next_cursor`, passed back untouched. */
+export function draftsParams(params?: { cursor?: string; limit?: number }): Record<string, string> {
+  const limit = Math.min(50, Math.max(1, Math.floor(params?.limit ?? HUB_DRAFTS_PAGE)));
+  return { limit: String(limit), ...(params?.cursor ? { cursor: params.cursor } : {}) };
+}
+
+export async function listDrafts(params?: { cursor?: string; limit?: number }): Promise<HubDraftPage> {
+  const res = await api.get<ApiResponse<unknown[]>>("/v1/reels/drafts", { params: draftsParams(params) });
+  const rows = Array.isArray(res.data?.data) ? res.data.data : [];
+  return { items: rows.map(normalizeDraft).filter((d): d is HubDraft => d !== null), next_cursor: nextCursor(res.data?.meta) };
+}
+
+/** `GET /v1/reels/drafts/:id` (the author's own). */
+export async function getDraft(draftId: string): Promise<HubDraft | null> {
+  const res = await api.get<ApiResponse<unknown>>(`/v1/reels/drafts/${encodeURIComponent(draftId)}`);
+  return normalizeDraft(res.data?.data);
+}
+
+/** `DELETE /v1/reels/drafts/:id` — a soft delete; 204. */
+export async function deleteDraft(draftId: string): Promise<void> {
+  await api.delete(`/v1/reels/drafts/${encodeURIComponent(draftId)}`);
+}
+
+/* ── Sound library (media-service audio_library, browse only) ── */
+
+/**
+  `GET /v1/audio-library?genre&limit&offset` → `{data: {tracks: [...], total}}`
+  and `GET /v1/audio-library/:audioId` → `{data: track}` (public; the
+  gateway routes the prefix to media-service). Tracks come from the
+  `audio_library` table, ordered by use.
+
+  Browse only: attaching a sound to a post (`audio_track_id`) takes an
+  `audio_tracks` id (post-service service/audio.go), a different table, so
+  a library id cannot be used on a video from here.
+*/
+export interface HubLibrarySound {
+  id: string;
+  title: string;
+  artist: string;
+  duration_ms: number;
+  cover_url: string;
+  /** Playable URL for the preview, or "" when the row's URL is not one the browser should load. */
+  audio_url: string;
+  genre: string;
+  mood: string;
+  language: string;
+  usage_count: number;
+  is_trending: boolean;
+}
+
+/** Only http(s) URLs and gateway paths play; anything else (javascript:, data:, a bare storage key) is dropped. */
+export function safeMediaUrl(raw: unknown): string {
+  const s = str(raw).trim();
+  if (!s) return "";
+  if (s.startsWith("/v1/")) return mediaHref(s);
+  try {
+    const u = new URL(s);
+    return u.protocol === "https:" || u.protocol === "http:" ? u.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
+export function normalizeLibrarySound(raw: unknown): HubLibrarySound | null {
+  if (!isRecord(raw) || typeof raw.id !== "string" || raw.id === "") return null;
+  if (raw.is_active === false) return null;
+  return {
+    id: raw.id,
+    title: str(raw.title).trim() || "Untitled sound",
+    artist: str(raw.artist).trim(),
+    duration_ms: Math.max(0, num(raw.duration_ms)),
+    cover_url: safeMediaUrl(raw.cover_url),
+    audio_url: safeMediaUrl(raw.audio_url),
+    genre: str(raw.genre).trim(),
+    mood: str(raw.mood).trim(),
+    language: str(raw.language),
+    usage_count: Math.max(0, num(raw.usage_count)),
+    is_trending: bool(raw.is_trending),
+  };
+}
+
+export const HUB_SOUNDS_PAGE = 20;
+
+/** The query: `genre` only when chosen, `limit` 1..50, `offset` ≥ 0. */
+export function soundLibraryParams(params?: { genre?: string; limit?: number; offset?: number }): Record<string, string> {
+  const limit = Math.min(50, Math.max(1, Math.floor(params?.limit ?? HUB_SOUNDS_PAGE)));
+  const offset = Math.max(0, Math.floor(params?.offset ?? 0));
+  const genre = params?.genre?.trim();
+  return { ...(genre ? { genre } : {}), limit: String(limit), offset: String(offset) };
+}
+
+export interface HubSoundPage {
+  items: HubLibrarySound[];
+  /** The offset of the next page, or undefined when this page was short. */
+  next_offset?: number;
+}
+
+/** `{tracks, total}` (total is the page's row count); a bare array still reads. */
+export function normalizeSoundPage(raw: unknown, request: { limit: number; offset: number }): HubSoundPage {
+  const list: unknown[] = Array.isArray(raw) ? raw : isRecord(raw) && Array.isArray(raw.tracks) ? raw.tracks : [];
+  const items = list.map(normalizeLibrarySound).filter((s): s is HubLibrarySound => s !== null);
+  return { items, next_offset: list.length >= request.limit ? request.offset + list.length : undefined };
+}
+
+export async function listSoundLibrary(params?: { genre?: string; limit?: number; offset?: number }): Promise<HubSoundPage> {
+  const query = soundLibraryParams(params);
+  const res = await api.get<ApiResponse<unknown>>("/v1/audio-library", { params: query });
+  return normalizeSoundPage(res.data?.data ?? res.data, { limit: Number(query.limit), offset: Number(query.offset) });
+}
+
+export async function getLibrarySound(audioId: string): Promise<HubLibrarySound | null> {
+  const res = await api.get<ApiResponse<unknown>>(`/v1/audio-library/${encodeURIComponent(audioId)}`);
+  return normalizeLibrarySound(res.data?.data ?? res.data);
 }
 
 /* ── Private sharing (contract F) ───────────────────────── */

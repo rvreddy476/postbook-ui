@@ -25,6 +25,7 @@ import {
   type SortDir,
 } from "../hubModel";
 import { useAddToCollection, useBulkDelete, useBulkEdit, useDeleteHubUpload, useHubCategories, useHubCounts, useHubLibrary } from "../hooks/useHub";
+import { DraftsTab } from "./DraftsTab";
 import { EditSheet, type SheetTab } from "./EditSheet";
 import { HubHead } from "./HubFrame";
 import { HubError, HubSkeleton, LibraryEmpty } from "./HubEmpty";
@@ -51,21 +52,22 @@ function startDownloads(urls: string[]) {
   });
 }
 
-type LibraryTab = "videos" | "shorts" | "live" | "collections";
+type LibraryTab = "videos" | "shorts" | "live" | "collections" | "drafts";
 
 const TABS: { id: LibraryTab; label: string }[] = [
   { id: "videos", label: "Videos" },
   { id: "shorts", label: "Shorts" },
   { id: "live", label: "Live" },
   { id: "collections", label: "Collections" },
+  { id: "drafts", label: "Drafts" },
 ];
 
 function readTab(v: string | null): LibraryTab {
-  return v === "shorts" || v === "live" || v === "collections" ? v : "videos";
+  return v === "shorts" || v === "live" || v === "collections" || v === "drafts" ? v : "videos";
 }
 
 /**
-  /posttube/hub/library?tab=videos|shorts|live|collections&edit=<postId>&sheet=details|elements|captions
+  /posttube/hub/library?tab=videos|shorts|live|collections|drafts&edit=<postId>&sheet=details|elements|captions
   The sheet is a URL state so a reload keeps it and the row menu links to it.
 */
 export function LibraryPage() {
@@ -115,6 +117,8 @@ export function LibraryPage() {
 
       {tab === "collections" ? (
         <CollectionsTab />
+      ) : tab === "drafts" ? (
+        <DraftsTab />
       ) : (
         <RowsTab tab={tab} library={library} onEdit={openEdit} />
       )}
@@ -131,7 +135,7 @@ function RowsTab({
   library,
   onEdit,
 }: {
-  tab: Exclude<LibraryTab, "collections">;
+  tab: Exclude<LibraryTab, "collections" | "drafts">;
   library: ReturnType<typeof useHubLibrary>;
   onEdit: (row: HubLibraryRow) => void;
 }) {
