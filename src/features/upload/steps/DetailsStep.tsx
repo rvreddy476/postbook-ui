@@ -8,6 +8,7 @@ import type { ContentType } from "../tokens";
 import { TrimControls } from "@/features/posttube/components/TrimControls";
 import { CategoryOverride } from "@/features/posttube/components/CategoryOverride";
 import { StudioSoundSection } from "../components/StudioSoundSection";
+import type { SoundInfo } from "@/features/reels/sounds";
 
 interface DetailsStepProps {
   form: StudioFormState;
@@ -20,6 +21,13 @@ interface DetailsStepProps {
   soundNotice?: string | null;
   /** Takes the chosen sound off the reel. */
   onRemoveSound?: () => void;
+  /** Puts a sound picked in the Audio section on the reel. */
+  onChooseSound?: (sound: SoundInfo) => void;
+}
+
+/** Only short-form videos carry an added sound; long videos keep their own audio. */
+export function takesAddedSound(contentType: ContentType): boolean {
+  return contentType === "reel" || contentType === "short";
 }
 
 function fmtMs(ms: number) {
@@ -27,7 +35,7 @@ function fmtMs(ms: number) {
   return `${Math.floor(totalSec / 60)}:${String(totalSec % 60).padStart(2, "0")}`;
 }
 
-export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCover, contentType, showErrors, soundNotice = null, onRemoveSound }: DetailsStepProps) {
+export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCover, contentType, showErrors, soundNotice = null, onRemoveSound, onChooseSound }: DetailsStepProps) {
   const coverFileRef = useRef<HTMLInputElement>(null);
   // The Audio section opens by itself once there is a sound (or a word about one) to show,
   // and stays as the creator left it afterwards: removing the sound does not fold it away.
@@ -382,6 +390,7 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
           patch={patch}
           notice={soundNotice}
           onRemove={onRemoveSound ?? (() => patch({ audioTrack: null, audioStartMs: 0 }))}
+          onChoose={takesAddedSound(contentType) ? onChooseSound : undefined}
         />
       </Collapsible>
 

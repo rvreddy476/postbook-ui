@@ -6,6 +6,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChevronRight, PanelLeft, Search } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import { REELS_SIDEBAR_COPYRIGHT, isNavItemCurrent, videoNav, type VideoApp, type VideoChrome, type VideoNavItem } from "./nav";
+import { useUnreadCount } from "@/hooks/useActivityNotifications";
+import { unreadBadgeText } from "@/lib/activityInbox";
 import { useChannelSubscriptionsList } from "./useChannelSubscriptionsList";
 import { useVideoShell } from "./useVideoShell";
 import { VideoMorePanel } from "./VideoMorePanel";
@@ -66,6 +68,8 @@ function SidebarBody({ app, chrome = "header", expanded, drawer = false, id, onN
   // Beside the icon rail in a column; in place of the list in the drawer.
   const moreBeside = showMore && !drawer;
   const listExpanded = expanded && !moreBeside;
+  // The Activity row's unread badge (same source as the main Header's bell).
+  const activityBadge = unreadBadgeText(useUnreadCount().data?.count);
 
   const renderItem = (item: VideoNavItem) => {
     const Icon = item.icon;
@@ -75,6 +79,12 @@ function SidebarBody({ app, chrome = "header", expanded, drawer = false, id, onN
       <>
         <Icon className="video-nav__icon" size={tiktok ? 24 : listExpanded ? 20 : 22} strokeWidth={current ? 2.25 : 1.75} aria-hidden />
         <span className="video-nav__label">{item.label}</span>
+        {item.key === "activity" && activityBadge ? (
+          <span className="video-nav__badge" data-nav-badge>
+            {activityBadge}
+            <span className="sr-only"> unread</span>
+          </span>
+        ) : null}
       </>
     );
     if (item.action === "explore") {
@@ -186,6 +196,7 @@ function SidebarBody({ app, chrome = "header", expanded, drawer = false, id, onN
         <>
           <div className="video-nav__column">
             <SidebarTop />
+            <SidebarSearch expanded={false} onNavigate={onNavigate} />
             {list}
           </div>
           <VideoMorePanel onClose={closeMore} onNavigate={onNavigate} />
@@ -197,7 +208,13 @@ function SidebarBody({ app, chrome = "header", expanded, drawer = false, id, onN
         </>
       ) : (
         <>
-          {tiktok ? <SidebarTop /> : null}
+          {tiktok ? (
+            <>
+              <SidebarTop />
+              {/* Search at the top of the menu (audit T-33); the corner pill steps aside while it shows (VideoShell). */}
+              <SidebarSearch expanded={listExpanded} onNavigate={onNavigate} />
+            </>
+          ) : null}
           {list}
         </>
       )}

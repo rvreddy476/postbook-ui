@@ -137,6 +137,7 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
             contentType={contentType}
             soundNotice={studio.sound.notice}
             onRemoveSound={studio.removeSound}
+            onChooseSound={studio.chooseSound}
           />
         );
       case "audience":

@@ -10,33 +10,19 @@ import {
     useRequestPayout,
     usePayoutHistory,
     useSaveTaxInfo,
+    usePayoutsAvailable,
+    isPayoutsNotEnabledError,
+    type TaxInfoPayload,
 } from "@/hooks/useMonetization"
 import type { PayoutMethod } from "@/types/monetization"
 import TransactionTable from "@/components/monetization/TransactionTable"
 import PayoutMethodForm from "@/components/monetization/PayoutMethodForm"
+import TaxInfoForm from "@/components/monetization/TaxInfoForm"
+import RequestPayoutForm, { PayoutsOffNotice, currencySymbol, methodSummary, methodTypeLabel } from "@/components/monetization/RequestPayoutForm"
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function currencySymbol(currency: string): string {
-    switch (currency?.toUpperCase()) {
-        case "INR": return "\u20B9"
-        case "USD": return "$"
-        case "EUR": return "\u20AC"
-        case "GBP": return "\u00A3"
-        default: return currency || "$"
-    }
-}
-
-function methodTypeLabel(type: string): string {
-    switch (type) {
-        case "upi": return "UPI"
-        case "bank_transfer": return "Bank Transfer"
-        case "paypal": return "PayPal"
-        default: return type
-    }
-}
 
 function methodIcon(type: string): string {
     switch (type) {
@@ -48,16 +34,6 @@ function methodIcon(type: string): string {
             return "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
         default:
             return "M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-    }
-}
-
-function methodSummary(method: PayoutMethod): string {
-    const d = method.details
-    switch (method.method_type) {
-        case "upi": return d.upi_id || "UPI ID"
-        case "bank_transfer": return `${d.bank_name || "Bank"} ****${(d.account_number || "").slice(-4)}`
-        case "paypal": return d.email || "PayPal"
-        default: return JSON.stringify(d)
     }
 }
 
@@ -109,242 +85,6 @@ function PayoutMethodCard({ method, onRemove, isRemoving }: PayoutMethodCardProp
 }
 
 // ---------------------------------------------------------------------------
-// Request Payout Modal
-// ---------------------------------------------------------------------------
-
-interface RequestPayoutFormProps {
-    balance: number
-    currency: string
-    methods: PayoutMethod[]
-    onSubmit: (payload: { amount: number; payout_method_id: string }) => void
-    onCancel: () => void
-    isPending: boolean
-}
-
-function RequestPayoutForm({ balance, currency, methods, onSubmit, onCancel, isPending }: RequestPayoutFormProps) {
-    const [amount, setAmount] = useState("")
-    const [methodId, setMethodId] = useState(methods[0]?.id ?? "")
-    const sym = currencySymbol(currency)
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        const parsed = parseFloat(amount)
-        if (isNaN(parsed) || parsed <= 0 || parsed > balance || !methodId) return
-        onSubmit({ amount: parsed, payout_method_id: methodId })
-    }
-
-    const inputClass =
-        "w-full px-4 py-3 rounded-xl border border-border bg-background text-sm font-bold text-foreground placeholder:text-primary-ink/60 focus:outline-hidden focus:ring-2 focus:ring-primary/30 focus:border-primary-outline transition-all duration-200"
-
-    return (
-        <div className="bg-brand-card rounded-2xl border border-primary-outline p-6 shadow-md shadow-[#D4A574]/10">
-            <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-primary to-primary-ink flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                </div>
-                <div>
-                    <h3 className="text-sm font-black text-foreground">Request Payout</h3>
-                    <p className="text-[9px] font-bold text-muted-foreground">
-                        Available: {sym}{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </p>
-                </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Amount */}
-                <div>
-                    <label className="block text-[9px] font-black tracking-widest text-muted-foreground mb-1.5">
-                        Amount ({currency})
-                    </label>
-                    <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-primary-ink">{sym}</span>
-                        <input
-                            type="number"
-                            step="0.01"
-                            min="0.01"
-                            max={balance}
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            placeholder="0.00"
-                            className={`${inputClass} pl-8`}
-                            required
-                        />
-                    </div>
-                    {/* Quick amount buttons */}
-                    <div className="flex items-center gap-2 mt-2">
-                        {[25, 50, 75, 100].map((pct) => {
-                            const val = (balance * pct / 100).toFixed(2)
-                            return (
-                                <button
-                                    key={pct}
-                                    type="button"
-                                    onClick={() => setAmount(val)}
-                                    className="px-2.5 py-1 rounded-lg text-[8px] font-black tracking-widest bg-background border border-border text-muted-foreground hover:border-primary-outline hover:text-foreground transition-colors"
-                                >
-                                    {pct}%
-                                </button>
-                            )
-                        })}
-                    </div>
-                </div>
-
-                {/* Payout method select */}
-                <div>
-                    <label className="block text-[9px] font-black tracking-widest text-muted-foreground mb-1.5">
-                        Payout Method
-                    </label>
-                    {methods.length === 0 ? (
-                        <p className="text-[10px] font-bold text-red-500">No payout methods added. Please add one first.</p>
-                    ) : (
-                        <select
-                            value={methodId}
-                            onChange={(e) => setMethodId(e.target.value)}
-                            className={`${inputClass} appearance-none cursor-pointer`}
-                            required
-                        >
-                            {methods.map((m) => (
-                                <option key={m.id} value={m.id}>
-                                    {methodTypeLabel(m.method_type)} - {methodSummary(m)}
-                                </option>
-                            ))}
-                        </select>
-                    )}
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-3 pt-2">
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        className="flex-1 px-4 py-3 rounded-xl text-[10px] font-black tracking-widest bg-background border border-border text-muted-foreground hover:bg-brand-card transition-all"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isPending || methods.length === 0}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[10px] font-black tracking-widest bg-linear-to-r from-primary to-primary-ink text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {isPending ? (
-                            <>
-                                <div className="w-3.5 h-3.5 border-2 border-white/50 border-t-white rounded-full animate-spin" />
-                                Processing...
-                            </>
-                        ) : (
-                            "Request Payout"
-                        )}
-                    </button>
-                </div>
-            </form>
-        </div>
-    )
-}
-
-// ---------------------------------------------------------------------------
-// Tax Info Form
-// ---------------------------------------------------------------------------
-
-interface TaxInfoFormProps {
-    onSubmit: (payload: { country: string; pan_number: string; gst_number: string }) => void
-    isPending: boolean
-}
-
-function TaxInfoForm({ onSubmit, isPending }: TaxInfoFormProps) {
-    const [country, setCountry] = useState("IN")
-    const [pan, setPan] = useState("")
-    const [gst, setGst] = useState("")
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!country.trim()) return
-        onSubmit({ country: country.trim(), pan_number: pan.trim(), gst_number: gst.trim() })
-    }
-
-    const inputClass =
-        "w-full px-4 py-3 rounded-xl border border-border bg-background text-sm font-bold text-foreground placeholder:text-primary-ink/60 focus:outline-hidden focus:ring-2 focus:ring-primary/30 focus:border-primary-outline transition-all duration-200"
-
-    return (
-        <form onSubmit={handleSubmit} className="bg-brand-card rounded-2xl border border-border p-6 shadow-xs">
-            <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-primary-ink to-primary-hover flex items-center justify-center shadow-lg shadow-[#7B5B3A]/20">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                </div>
-                <div>
-                    <h3 className="text-sm font-black text-foreground">Tax Information</h3>
-                    <p className="text-[9px] font-bold text-muted-foreground tracking-widest">Required for payouts in some regions</p>
-                </div>
-            </div>
-
-            <div className="space-y-4">
-                <div>
-                    <label className="block text-[9px] font-black tracking-widest text-muted-foreground mb-1.5">Country</label>
-                    <select
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value)}
-                        className={`${inputClass} appearance-none cursor-pointer`}
-                        required
-                    >
-                        <option value="IN">India</option>
-                        <option value="US">United States</option>
-                        <option value="GB">United Kingdom</option>
-                        <option value="DE">Germany</option>
-                        <option value="FR">France</option>
-                        <option value="AU">Australia</option>
-                        <option value="CA">Canada</option>
-                    </select>
-                </div>
-                <div>
-                    <label className="block text-[9px] font-black tracking-widest text-muted-foreground mb-1.5">PAN Number</label>
-                    <input
-                        type="text"
-                        value={pan}
-                        onChange={(e) => setPan(e.target.value)}
-                        placeholder="ABCDE1234F"
-                        className={inputClass}
-                    />
-                </div>
-                <div>
-                    <label className="block text-[9px] font-black tracking-widest text-muted-foreground mb-1.5">GST Number (optional)</label>
-                    <input
-                        type="text"
-                        value={gst}
-                        onChange={(e) => setGst(e.target.value)}
-                        placeholder="22AAAAA0000A1Z5"
-                        className={inputClass}
-                    />
-                </div>
-            </div>
-
-            <div className="mt-6">
-                <button
-                    type="submit"
-                    disabled={isPending}
-                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black tracking-widest bg-linear-to-r from-primary-ink to-primary-hover text-white hover:shadow-lg hover:shadow-[#7B5B3A]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    {isPending ? (
-                        <>
-                            <div className="w-3.5 h-3.5 border-2 border-white/50 border-t-white rounded-full animate-spin" />
-                            Saving...
-                        </>
-                    ) : (
-                        <>
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                            Save Tax Info
-                        </>
-                    )}
-                </button>
-            </div>
-        </form>
-    )
-}
-
-// ---------------------------------------------------------------------------
 // Main Page
 // ---------------------------------------------------------------------------
 
@@ -355,6 +95,11 @@ export default function PayoutsPage() {
     const removeMethod = useRemovePayoutMethod()
     const requestPayout = useRequestPayout()
     const saveTaxInfo = useSaveTaxInfo()
+    // Fails closed: until the server says withdrawals are open, the payout areas are read-only.
+    const availability = usePayoutsAvailable()
+    const [serverSaidOff, setServerSaidOff] = useState(false)
+    const payoutsOff = serverSaidOff || availability.data !== true
+    const showPayoutsOff = serverSaidOff || (!availability.isPending && availability.data !== true)
 
     const {
         data: payoutData,
@@ -395,18 +140,23 @@ export default function PayoutsPage() {
         (payload: { amount: number; payout_method_id: string }) => {
             requestPayout.mutate(payload, {
                 onSuccess: () => setShowPayoutForm(false),
+                onError: (err) => {
+                    if (isPayoutsNotEnabledError(err)) setServerSaidOff(true)
+                },
             })
         },
         [requestPayout]
     )
 
     const handleSaveTax = useCallback(
-        (payload: { country: string; pan_number: string; gst_number: string }) => {
+        (payload: TaxInfoPayload) => {
+            // Tax details are not collected while payouts are off.
+            if (payoutsOff) return
             saveTaxInfo.mutate(payload, {
                 onSuccess: () => setTaxSaved(true),
             })
         },
-        [saveTaxInfo]
+        [saveTaxInfo, payoutsOff]
     )
 
     return (
@@ -423,7 +173,7 @@ export default function PayoutsPage() {
                         <h1 className="text-2xl font-black tracking-tight text-foreground">Payouts</h1>
                     </div>
                     <p className="text-[11px] font-bold text-muted-foreground tracking-widest ml-[52px]">
-                        Manage payout methods, tax info & withdraw earnings
+                        {showPayoutsOff ? "Payout methods, tax info & payout history" : "Manage payout methods, tax info & withdraw earnings"}
                     </p>
                 </div>
 
@@ -461,12 +211,11 @@ export default function PayoutsPage() {
 {/* Divider */}
 <div className="h-px bg-secondary mb-6" />
 
-<div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
-    <p className="text-[10px] font-black tracking-widest text-amber-700">Demo payouts</p>
-    <p className="mt-1 text-[11px] font-bold text-amber-900">
-        Razorpay live credentials are not configured in this environment, so payout requests and payment movement here should be treated as demo-mode behavior.
-    </p>
-</div>
+{showPayoutsOff ? (
+    <div className="mb-6">
+        <PayoutsOffNotice />
+    </div>
+) : null}
 
 {/* Balance summary + request payout button */}
                 <div className="bg-brand-card rounded-2xl border border-border p-5 shadow-xs mb-6">
@@ -474,7 +223,7 @@ export default function PayoutsPage() {
                         <div>
                             {/* Phase 2 §D4: this is creator earnings (a pending payout),
                                 not a consumer wallet. Labelled accordingly. */}
-                            <p className="text-[9px] font-black tracking-widest text-muted-foreground mb-1">Pending payout</p>
+                            <p className="text-[9px] font-black tracking-widest text-muted-foreground mb-1">{showPayoutsOff ? "Estimated earnings" : "Pending payout"}</p>
                             {walletLoading ? (
                                 <div className="h-7 w-28 bg-secondary rounded-full animate-pulse" />
                             ) : (
@@ -487,13 +236,14 @@ export default function PayoutsPage() {
                         {!showPayoutForm && (
                             <button
                                 onClick={() => setShowPayoutForm(true)}
-                                disabled={walletLoading || (wallet?.balance ?? 0) <= 0 || wallet?.is_frozen}
+                                disabled={payoutsOff || walletLoading || (wallet?.balance ?? 0) <= 0 || wallet?.is_frozen}
+                                title={showPayoutsOff ? "Payouts are not available yet" : undefined}
                                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black tracking-widest bg-linear-to-r from-primary to-primary-ink text-white hover:shadow-lg hover:shadow-[#D4A574]/25 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
-                                Request Payout
+                                {showPayoutsOff ? "Not available yet" : "Request Payout"}
                             </button>
                         )}
                     </div>
@@ -519,6 +269,7 @@ export default function PayoutsPage() {
                             onSubmit={handleRequestPayout}
                             onCancel={() => setShowPayoutForm(false)}
                             isPending={requestPayout.isPending}
+                            payoutsOff={payoutsOff}
                         />
                     </div>
                 )}
@@ -530,7 +281,9 @@ export default function PayoutsPage() {
                         {!showAddMethod && (
                             <button
                                 onClick={() => setShowAddMethod(true)}
-                                className="flex items-center gap-1.5 text-[9px] font-black tracking-widest text-primary-ink hover:text-muted-foreground transition-colors"
+                                disabled={payoutsOff}
+                                title={showPayoutsOff ? "Payout methods can be added once payouts open" : undefined}
+                                className="flex items-center gap-1.5 text-[9px] font-black tracking-widest text-primary-ink hover:text-muted-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -541,7 +294,7 @@ export default function PayoutsPage() {
                     </div>
 
                     {/* Add payout method form */}
-                    {showAddMethod && (
+                    {showAddMethod && !payoutsOff && (
                         <div className="mb-4">
                             <PayoutMethodForm
                                 onSubmit={handleAddMethod}
@@ -578,7 +331,7 @@ export default function PayoutsPage() {
                                 </svg>
                             </div>
                             <p className="text-[10px] font-black tracking-widest text-muted-foreground">No payout methods</p>
-                            <p className="text-[9px] font-bold text-primary-ink">Add a method to start receiving payouts.</p>
+                            <p className="text-[9px] font-bold text-primary-ink">{showPayoutsOff ? "You can add one once payouts open." : "Add a method to start receiving payouts."}</p>
                         </div>
                     ) : (
                         <div className="space-y-2">
@@ -596,7 +349,7 @@ export default function PayoutsPage() {
 
                 {/* Tax Info */}
                 <div className="mb-6">
-                    {taxSaved && (
+                    {taxSaved && !payoutsOff && (
                         <div className="mb-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-100">
                             <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -604,7 +357,7 @@ export default function PayoutsPage() {
                             <span className="text-[10px] font-black tracking-widest text-emerald-600">Tax information saved successfully</span>
                         </div>
                     )}
-                    <TaxInfoForm onSubmit={handleSaveTax} isPending={saveTaxInfo.isPending} />
+                    <TaxInfoForm onSubmit={handleSaveTax} isPending={saveTaxInfo.isPending} payoutsOff={payoutsOff} />
                 </div>
 
                 {/* Payout History */}

@@ -44,8 +44,11 @@ import type { CommentItem } from "@/types/profile";
     POST   /v1/subtitles/:mediaId                (posttubeApi.createSubtitleTrack)
     POST   /v1/subtitles/:mediaId/auto           { language }
     GET    /v1/subtitles/:mediaId                (posttubeApi.getSubtitleTracks)
-    GET    /v1/analytics/creator/me?period
+    GET    /v1/analytics/creator/me?period       (likes/comments/shares, daily_stats → views_by_day)
     GET    /v1/analytics/content/:id?period
+    GET    /v1/reels/drafts?limit&cursor + GET|DELETE /v1/reels/drafts/:id   (the Drafts tab)
+    GET    /v1/audio-library?genre&limit&offset + GET /v1/audio-library/:id  (Sounds)
+    POST   /v1/audio-library/:id/use             (Sounds, "Use this sound" → {audio_track_id, sound})
     GET    /v1/media/:mediaId/serve[/720p|/480p] (coverFrame.captureCoverFrame: the frame is drawn in the browser, then uploaded as an image)
     POST   /v1/media/init + PUT upload + POST /v1/media/confirm (lib/mediaUpload.uploadMedia)
     GET    /v1/media/:id/download                (the owner's original file; the server refuses anyone else)
@@ -996,7 +999,7 @@ export type InboxContent = "videos" | "flicks" | "posts" | "all";
 export type InboxSort = "newest" | "relevant";
 
 export interface HubInboxComment extends CommentItem {
-  /** Creator heart; `creator_hearted` and `hearted` both read. */
+  /** Creator heart: post-service sends `hearted_by_author`; `creator_hearted` and `hearted` also read. */
   hearted: boolean;
   /** `pinned` and `is_pinned` both read. */
   pinned: boolean;
@@ -1031,7 +1034,7 @@ export function normalizeInboxRow(raw: unknown): HubInboxRow | null {
     reactions: Array.isArray(c.reactions) ? (c.reactions as CommentItem["reactions"]) : [],
     reaction_count: num(c.reaction_count) || num(c.like_count),
     viewer_reaction: strOrNull(c.viewer_reaction),
-    hearted: bool(c.creator_hearted) || bool(c.hearted),
+    hearted: bool(c.hearted_by_author) || bool(c.creator_hearted) || bool(c.hearted),
     pinned: bool(c.pinned) || bool(c.is_pinned),
   };
   return {
@@ -1179,13 +1182,27 @@ export interface HubDayPoint {
 export interface HubCreatorInsights {
   period: InsightsPeriod;
   views: number;
+  /** Period totals (analytics-service `likes`/`comments`/`shares`; `total_*` on older writers). */
+  likes: number;
+  comments: number;
+  shares: number;
+  /**
+    Follows made straight from a video in the period (`followers_gained` /
+    `follower_growth`). NOT the channel's net follower change: that is
+    `followers_delta`, still null on the wire.
+  */
+  follows_from_content: number;
   watch_time_ms: number;
   unique_viewers: number;
   /** null = not tracked yet (the wire sends null). */
   followers_delta: number | null;
   top_content: { content_id: string; views: number; watch_time_ms: number }[];
   realtime: { views_48h: number; series_48h: number[] };
-  /** Optional on the wire; the overview chart falls back to the 48 h series when absent. */
+  /**
+    Views per day, oldest first, "YYYY-MM-DD". The wire's `daily_stats`
+    (`[{date: RFC 3339, views}]`); `views_by_day` still reads. Empty when
+    the period has no recorded day: the charts fall back to the 48 h series.
+  */
   views_by_day: HubDayPoint[];
 }
 
@@ -1195,11 +1212,50 @@ function numArray(v: unknown, length?: number): number[] {
   return arr;
 }
 
+/** A Go `time.Time` ("2026-10-01T00:00:00Z") keeps its calendar day; anything else passes through. */
+function dayKey(v: string): string {
+  const m = /^(\d{4}-\d{2}-\d{2})(?:$|[T ])/.exec(v);
+  return m ? m[1] : v;
+}
+
 function dayPoints(v: unknown): HubDayPoint[] {
   return (Array.isArray(v) ? v : [])
     .filter(isRecord)
-    .map((p) => ({ day: str(p.day) || str(p.date), views: num(p.views) }))
+    .map((p) => ({ day: dayKey(str(p.day) || str(p.date)), views: Math.max(0, num(p.views)) }))
     .filter((p) => p.day);
+}
+
+const DAY_MS = 86_400_000;
+
+/**
+  Merges duplicate days (summed), sorts oldest first and fills a day the
+  server skipped (no views recorded) with 0 between the first and last
+  day, so the chart's evenly spaced x axis and the CSV both show every day.
+*/
+function sortedDays(points: HubDayPoint[]): HubDayPoint[] {
+  const byDay = new Map<string, number>();
+  for (const p of points) byDay.set(p.day, (byDay.get(p.day) ?? 0) + p.views);
+  const sorted = [...byDay.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([day, views]) => ({ day, views }));
+  const iso = /^\d{4}-\d{2}-\d{2}$/;
+  if (sorted.length < 2 || !sorted.every((p) => iso.test(p.day))) return sorted;
+  const first = Date.parse(`${sorted[0].day}T00:00:00Z`);
+  const last = Date.parse(`${sorted[sorted.length - 1].day}T00:00:00Z`);
+  if (!Number.isFinite(first) || !Number.isFinite(last) || (last - first) / DAY_MS > 400) return sorted;
+  const out: HubDayPoint[] = [];
+  for (let t = first; t <= last; t += DAY_MS) {
+    const day = new Date(t).toISOString().slice(0, 10);
+    out.push({ day, views: byDay.get(day) ?? 0 });
+  }
+  return out;
+}
+
+/** The first number among the keys (Go zero values fall through to the older name). */
+function firstNum(d: Record<string, unknown>, ...keys: string[]): number {
+  for (const k of keys) {
+    const n = num(d[k]);
+    if (n) return n;
+  }
+  return 0;
 }
 
 export function normalizeCreatorInsights(raw: unknown, period: InsightsPeriod): HubCreatorInsights {
@@ -1210,15 +1266,20 @@ export function normalizeCreatorInsights(raw: unknown, period: InsightsPeriod): 
     .map((t) => ({ content_id: str(t.content_id) || str(t.post_id) || str(t.id), views: num(t.views), watch_time_ms: num(t.watch_time_ms) }))
     .filter((t) => t.content_id);
   const p = str(d.period) as InsightsPeriod;
+  const daily = dayPoints(d.daily_stats);
   return {
     period: INSIGHTS_PERIODS.includes(p) ? p : period,
     views: num(d.views),
+    likes: firstNum(d, "likes", "total_likes"),
+    comments: firstNum(d, "comments", "total_comments"),
+    shares: firstNum(d, "shares", "total_shares"),
+    follows_from_content: firstNum(d, "followers_gained", "follower_growth"),
     watch_time_ms: num(d.watch_time_ms),
     unique_viewers: num(d.unique_viewers),
     followers_delta: typeof d.followers_delta === "number" ? d.followers_delta : typeof d.subscribers_delta === "number" ? d.subscribers_delta : null,
     top_content: top,
     realtime: { views_48h: num(rt.views_48h), series_48h: numArray(rt.series_48h, 48).slice(-48) },
-    views_by_day: dayPoints(d.views_by_day),
+    views_by_day: sortedDays(daily.length > 0 ? daily : dayPoints(d.views_by_day)),
   };
 }
 
@@ -1259,6 +1320,238 @@ export function normalizeContentInsights(raw: unknown): HubContentInsights {
 export async function getContentInsights(contentId: string, period: InsightsPeriod): Promise<HubContentInsights> {
   const res = await api.get<ApiResponse<unknown>>(`/v1/analytics/content/${contentId}`, { params: { period } });
   return normalizeContentInsights(res.data.data ?? res.data);
+}
+
+/* ── Drafts (post-service drafts.go, the reel/video draft rows) ── */
+
+/**
+  A row of `GET /v1/reels/drafts` (post-service `postgres.ReelDraft`).
+  The list holds every status except `deleted`: `draft`, `scheduled`,
+  `blocked` (the schedule worker parked it, see `blocked_reason`) and
+  `published` (then `published_post_id` is the post it became).
+*/
+export interface HubDraft {
+  id: string;
+  title: string;
+  caption: string;
+  media_id: string | null;
+  cover_media_id: string | null;
+  visibility: string;
+  status: string;
+  schedule_at: string | null;
+  published_post_id: string | null;
+  blocked_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export function normalizeDraft(raw: unknown): HubDraft | null {
+  if (!isRecord(raw) || typeof raw.id !== "string" || raw.id === "") return null;
+  return {
+    id: raw.id,
+    title: str(raw.title).trim() || firstLine(str(raw.caption)) || "Untitled draft",
+    caption: str(raw.caption),
+    media_id: strOrNull(raw.media_id),
+    cover_media_id: strOrNull(raw.cover_media_id),
+    visibility: str(raw.visibility).toLowerCase(),
+    status: str(raw.status).toLowerCase() || "draft",
+    schedule_at: strOrNull(raw.schedule_at),
+    published_post_id: strOrNull(raw.published_post_id),
+    blocked_reason: strOrNull(raw.blocked_reason),
+    created_at: str(raw.created_at),
+    updated_at: str(raw.updated_at) || str(raw.created_at),
+  };
+}
+
+export interface HubDraftPage {
+  items: HubDraft[];
+  next_cursor?: string;
+}
+
+/** The server caps `limit` at 50 (anything else is its default, 20). */
+export const HUB_DRAFTS_PAGE = 20;
+
+/** `{limit, cursor?}`: the cursor is the server's RFC 3339 `next_cursor`, passed back untouched. */
+export function draftsParams(params?: { cursor?: string; limit?: number }): Record<string, string> {
+  const limit = Math.min(50, Math.max(1, Math.floor(params?.limit ?? HUB_DRAFTS_PAGE)));
+  return { limit: String(limit), ...(params?.cursor ? { cursor: params.cursor } : {}) };
+}
+
+export async function listDrafts(params?: { cursor?: string; limit?: number }): Promise<HubDraftPage> {
+  const res = await api.get<ApiResponse<unknown[]>>("/v1/reels/drafts", { params: draftsParams(params) });
+  const rows = Array.isArray(res.data?.data) ? res.data.data : [];
+  return { items: rows.map(normalizeDraft).filter((d): d is HubDraft => d !== null), next_cursor: nextCursor(res.data?.meta) };
+}
+
+/** `GET /v1/reels/drafts/:id` (the author's own). */
+export async function getDraft(draftId: string): Promise<HubDraft | null> {
+  const res = await api.get<ApiResponse<unknown>>(`/v1/reels/drafts/${encodeURIComponent(draftId)}`);
+  return normalizeDraft(res.data?.data);
+}
+
+/** `DELETE /v1/reels/drafts/:id` — a soft delete; 204. */
+export async function deleteDraft(draftId: string): Promise<void> {
+  await api.delete(`/v1/reels/drafts/${encodeURIComponent(draftId)}`);
+}
+
+/* ── Sound library (media-service audio_library) ───────── */
+
+/**
+  `GET /v1/audio-library?genre&limit&offset` → `{data: {tracks: [...], total}}`
+  and `GET /v1/audio-library/:audioId` → `{data: track}` (public; the
+  gateway routes the prefix to media-service). Tracks come from the
+  `audio_library` table, ordered by use. A row's `audio_url` is playable
+  (a storage key comes back as `/v1/audio-library/:id/serve`).
+
+  A post never takes a library id. "Use this sound" first calls
+  `POST /v1/audio-library/:id/use` (signed in), which answers the
+  `audio_tracks` id the library row is played as (made on its first use);
+  that `audio_track_id` then goes wherever an extracted sound's does — the
+  studio's `?sound=`, post create, draft save. Each row also carries that
+  `audio_track_id` once someone has used it (null before), and its reels
+  are listed under it (`/reels/sound/:audio_track_id`).
+*/
+export interface HubLibrarySound {
+  id: string;
+  title: string;
+  artist: string;
+  duration_ms: number;
+  cover_url: string;
+  /** Playable URL for the preview, or "" when the row's URL is not one the browser should load. */
+  audio_url: string;
+  genre: string;
+  mood: string;
+  language: string;
+  usage_count: number;
+  is_trending: boolean;
+  /** The `audio_tracks` id this sound is played as, once anyone has used it; null before. Never the library id. */
+  audio_track_id: string | null;
+}
+
+/** Only http(s) URLs and gateway paths play; anything else (javascript:, data:, a bare storage key) is dropped. */
+export function safeMediaUrl(raw: unknown): string {
+  const s = str(raw).trim();
+  if (!s) return "";
+  if (s.startsWith("/v1/")) return mediaHref(s);
+  try {
+    const u = new URL(s);
+    return u.protocol === "https:" || u.protocol === "http:" ? u.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
+export function normalizeLibrarySound(raw: unknown): HubLibrarySound | null {
+  if (!isRecord(raw) || typeof raw.id !== "string" || raw.id === "") return null;
+  if (raw.is_active === false) return null;
+  return {
+    id: raw.id,
+    title: str(raw.title).trim() || "Untitled sound",
+    artist: str(raw.artist).trim(),
+    duration_ms: Math.max(0, num(raw.duration_ms)),
+    cover_url: safeMediaUrl(raw.cover_url),
+    audio_url: safeMediaUrl(raw.audio_url),
+    genre: str(raw.genre).trim(),
+    mood: str(raw.mood).trim(),
+    language: str(raw.language),
+    usage_count: Math.max(0, num(raw.usage_count)),
+    is_trending: bool(raw.is_trending),
+    audio_track_id: str(raw.audio_track_id).trim() || null,
+  };
+}
+
+export const HUB_SOUNDS_PAGE = 20;
+
+/** The query: `genre` only when chosen, `limit` 1..50, `offset` ≥ 0. */
+export function soundLibraryParams(params?: { genre?: string; limit?: number; offset?: number }): Record<string, string> {
+  const limit = Math.min(50, Math.max(1, Math.floor(params?.limit ?? HUB_SOUNDS_PAGE)));
+  const offset = Math.max(0, Math.floor(params?.offset ?? 0));
+  const genre = params?.genre?.trim();
+  return { ...(genre ? { genre } : {}), limit: String(limit), offset: String(offset) };
+}
+
+export interface HubSoundPage {
+  items: HubLibrarySound[];
+  /** The offset of the next page, or undefined when this page was short. */
+  next_offset?: number;
+}
+
+/** `{tracks, total}` (total is the page's row count); a bare array still reads. */
+export function normalizeSoundPage(raw: unknown, request: { limit: number; offset: number }): HubSoundPage {
+  const list: unknown[] = Array.isArray(raw) ? raw : isRecord(raw) && Array.isArray(raw.tracks) ? raw.tracks : [];
+  const items = list.map(normalizeLibrarySound).filter((s): s is HubLibrarySound => s !== null);
+  return { items, next_offset: list.length >= request.limit ? request.offset + list.length : undefined };
+}
+
+export async function listSoundLibrary(params?: { genre?: string; limit?: number; offset?: number }): Promise<HubSoundPage> {
+  const query = soundLibraryParams(params);
+  const res = await api.get<ApiResponse<unknown>>("/v1/audio-library", { params: query });
+  return normalizeSoundPage(res.data?.data ?? res.data, { limit: Number(query.limit), offset: Number(query.offset) });
+}
+
+export async function getLibrarySound(audioId: string): Promise<HubLibrarySound | null> {
+  const res = await api.get<ApiResponse<unknown>>(`/v1/audio-library/${encodeURIComponent(audioId)}`);
+  return normalizeLibrarySound(res.data?.data ?? res.data);
+}
+
+/** What "Use this sound" answers: the sound to put on a post. */
+export interface HubLibrarySoundUse {
+  /** The `audio_tracks` id: what the studio and post create take. */
+  audio_track_id: string;
+  title: string;
+}
+
+/** `{audio_track_id, sound}` → the use; null when the answer names no track. */
+export function normalizeLibrarySoundUse(raw: unknown): HubLibrarySoundUse | null {
+  if (!isRecord(raw)) return null;
+  const sound = isRecord(raw.sound) ? raw.sound : {};
+  const id = str(raw.audio_track_id).trim() || str(sound.id).trim();
+  if (!id) return null;
+  return { audio_track_id: id, title: str(sound.title).trim() };
+}
+
+/**
+  `POST /v1/audio-library/:audioId/use` (signed in) → 200
+  `{data: {audio_track_id, sound}}`. Refusals (401 UNAUTHORIZED, 400
+  BAD_REQUEST, 404 NOT_FOUND = withdrawn, 422 NOT_STORED, 503
+  SOUND_UNAVAILABLE = retry) reach the caller as the thrown error; read
+  them with librarySoundUseFailure. Named request…, not use…, so it is
+  never mistaken for a hook.
+*/
+export async function requestLibrarySoundUse(libraryId: string): Promise<HubLibrarySoundUse> {
+  const res = await api.post<ApiResponse<unknown>>(`/v1/audio-library/${encodeURIComponent(libraryId)}/use`);
+  const use = normalizeLibrarySoundUse(res.data?.data ?? res.data);
+  if (!use) throw new Error("The sound answer named no track");
+  return use;
+}
+
+/** The envelope's `error.message`, trimmed; null when there is none. */
+export function hubErrorMessage(err: unknown): string | null {
+  const data = (err as { response?: { data?: unknown } })?.response?.data;
+  if (!isRecord(data) || !isRecord(data.error)) return null;
+  return str(data.error.message).trim() || null;
+}
+
+/** "signed-out": go and sign in. "message": the line to show for a refused or failed use. */
+export type LibrarySoundUseFailure = { kind: "signed-out" } | { kind: "message"; message: string };
+
+/** media-service's words for each refusal, used when a body carries none. */
+const LIBRARY_USE_COPY: Record<string, string> = {
+  NOT_FOUND: "Sound not found",
+  NOT_STORED: "This library sound has no audio to play",
+  SOUND_UNAVAILABLE: "The sound could not be prepared; retry",
+};
+
+const LIBRARY_USE_STATUS: Record<number, string> = { 404: "NOT_FOUND", 422: "NOT_STORED", 503: "SOUND_UNAVAILABLE" };
+
+/** 401 → sign in. 404 / 422 / 503 → the server's own copy. Anything else → a plain retry line. */
+export function librarySoundUseFailure(err: unknown): LibrarySoundUseFailure {
+  const status = (err as { response?: { status?: unknown } })?.response?.status;
+  const code = hubErrorCode(err);
+  if (status === 401 || code === "UNAUTHORIZED") return { kind: "signed-out" };
+  const known = code && code in LIBRARY_USE_COPY ? code : typeof status === "number" ? LIBRARY_USE_STATUS[status] : undefined;
+  if (known) return { kind: "message", message: hubErrorMessage(err) ?? LIBRARY_USE_COPY[known] };
+  return { kind: "message", message: "That sound could not be used. Please try again." };
 }
 
 /* ── Private sharing (contract F) ───────────────────────── */

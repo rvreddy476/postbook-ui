@@ -34,6 +34,17 @@ export interface UserProfile {
     following_count: number
     friend_count: number
     post_count: number
+    /**
+     * Private account (profile-service mirrors identity account_visibility).
+     * Display only: post-service gates the posts themselves.
+     */
+    is_private?: boolean
+    /**
+     * The signed-in viewer's edge toward this profile, from profile-service:
+     * none | requested (a pending follow request) | following. Absent for the
+     * owner, signed-out viewers and older services.
+     */
+    follow_status?: "none" | "requested" | "following"
     created_at: string
     updated_at: string
 }
@@ -96,6 +107,9 @@ export interface Relationship {
     // `connection_status` is one of: none, pending_sent, pending_received, accepted.
     is_connection?: boolean
     connection_status?: "none" | "pending_sent" | "pending_received" | "accepted"
+    // Private-account follow requests (graph-service): pending_sent means the
+    // viewer asked to follow and is waiting; pending_received the reverse.
+    follow_request_status?: "none" | "pending_sent" | "pending_received"
     // Block
     blocked: boolean
     blocked_by: boolean
@@ -142,6 +156,7 @@ export type ProfileTab =
     | "videos"
     | "flicks"
     | "stashed"
+    | "liked"
     | "portfolio"
     | "qa"
     | "orders"
@@ -251,6 +266,8 @@ export interface PostDetail {
     // preview instead.
     tier_required_id?: string | null
     body_redacted?: boolean
+    /** Age-restricted (post-service age_gate.go): never embeddable. */
+    age_restricted?: boolean
 }
 
 // --- Stories ---

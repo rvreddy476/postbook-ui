@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 
 import CommentSection from "@/components/CommentSection";
+import { commentCreatorTools } from "@/components/comments/creatorTools";
 import { ReelAuthorCard, type ReelAuthorCardProps } from "@/features/reels/components/ReelAuthorCard";
 import { formatCount, type ReelItem } from "@/features/reels/model";
 
@@ -66,7 +67,7 @@ export function ReelCommentsDrawer({ open, reel, focusCommentId, onClose, varian
               </button>
             </div>
             <div className="min-h-0 flex-1 overflow-hidden">
-              <CommentSection key={reel.id} postId={reel.id} postAuthorId={reel.authorId} commentsCount={reel.commentCount} alwaysExpanded focusCommentId={focusCommentId} />
+              <CommentSection key={reel.id} postId={reel.id} postAuthorId={reel.authorId} commentsCount={reel.commentCount} alwaysExpanded focusCommentId={focusCommentId} creatorTools={commentCreatorTools} />
             </div>
           </motion.aside>
         </>

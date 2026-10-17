@@ -314,7 +314,16 @@ export function formatClock(ms: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export function reelPermalink(id: string): string {
-  if (typeof window === "undefined") return `/reels/${id}`;
-  return `${window.location.origin}/reels/${id}`;
+/**
+ * The link Share and Copy link hand out for a reel: the public post
+ * permalink, `/post/<id>` (a reel is a post). /post/ is a public prefix in
+ * middleware and post-service's direct read gates visibility, so a
+ * signed-out recipient can open a public reel while a private one reads
+ * "Post not found". `/reels/<id>` stays as the in-app route to the stage,
+ * which needs a session, so it is not what goes out.
+ */
+export function reelPermalink(id: string, origin?: string): string {
+  const path = `/post/${encodeURIComponent(id)}`;
+  const base = origin ?? (typeof window === "undefined" ? "" : window.location?.origin ?? "");
+  return `${base}${path}`;
 }

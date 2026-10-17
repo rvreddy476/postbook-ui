@@ -13,7 +13,9 @@ import {
     Clock,
     Loader2,
 } from "lucide-react"
+import { postTaxProfile, usePayoutsAvailable } from "@/hooks/useMonetization"
 import api from "@/lib/api"
+import { TaxLockedLine } from "@/components/monetization/TaxInfoForm"
 
 function SectionCard({
     icon,
@@ -119,6 +121,11 @@ export default function TaxProfilePage() {
     const [isLoadingProfile, setIsLoadingProfile] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
     const { show, Toast } = useSaveToast()
+    // Tax details are collected only once payouts open (founder, 15 Oct). Same
+    // signal as the payouts page; fails closed while loading or on error. A
+    // saved profile is still shown, read-only, as the server returns it.
+    const availability = usePayoutsAvailable()
+    const payoutsOff = availability.data !== true
 
     const applyTaxProfile = useCallback((profile: TaxProfile | null) => {
         const nextPan = profile?.pan_encrypted?.toUpperCase() ?? ""
@@ -182,6 +189,7 @@ export default function TaxProfilePage() {
     }
 
     const handleSave = async () => {
+        if (payoutsOff) return
         const normalizedPan = pan.trim().toUpperCase()
         const normalizedGstin = hasGst ? gstin.trim().toUpperCase() : ""
         const taxResidency = residency === "india" ? "IN" : "OUTSIDE"
@@ -193,11 +201,14 @@ export default function TaxProfilePage() {
 
         setIsSaving(true)
         try {
-            await api.post("/v1/monetization/tax-profile", {
-                pan_encrypted: normalizedPan || null,
-                gstin: normalizedGstin || null,
-                tax_residency: taxResidency,
-            })
+            await postTaxProfile(
+                {
+                    pan_encrypted: normalizedPan || null,
+                    gstin: normalizedGstin || null,
+                    tax_residency: taxResidency,
+                },
+                !payoutsOff,
+            )
 
             try {
                 const refreshedProfile = await fetchTaxProfile()
@@ -220,7 +231,7 @@ export default function TaxProfilePage() {
     }
 
     const inputClasses =
-        "w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
+        "w-full rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20 disabled:cursor-not-allowed disabled:opacity-60"
 
     return (
         <AppShell>
@@ -254,7 +265,7 @@ export default function TaxProfilePage() {
                     </div>
                 ) : (
                     <>
-                        {verificationStatus === "unverified" && (
+                        {verificationStatus === "unverified" && !payoutsOff && (
                             <motion.div
                                 initial={{ opacity: 0, y: 8 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -267,6 +278,11 @@ export default function TaxProfilePage() {
                             </motion.div>
                         )}
 
+                        <fieldset
+                            disabled={payoutsOff}
+                            aria-describedby={payoutsOff ? "tax-locked-line" : undefined}
+                            className="m-0 min-w-0 space-y-6 border-0 p-0"
+                        >
                         <SectionCard
                             icon={<Receipt className="h-6 w-6 text-brand-text/50" />}
                             title="PAN Details"
@@ -374,6 +390,7 @@ export default function TaxProfilePage() {
                                 </label>
                             </div>
                         </SectionCard>
+                        </fieldset>
 
                         <SectionCard
                             icon={<CheckCircle className="h-6 w-6 text-brand-text/50" />}
@@ -417,7 +434,7 @@ export default function TaxProfilePage() {
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
                             <button
                                 onClick={handleSave}
-                                disabled={isSaving}
+                                disabled={isSaving || payoutsOff}
                                 className="inline-flex items-center gap-2 rounded-xl bg-primary-ink px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:bg-primary-hover disabled:opacity-50"
                             >
                                 {isSaving ? (
@@ -429,6 +446,7 @@ export default function TaxProfilePage() {
                                     "Save Tax Profile"
                                 )}
                             </button>
+                            {payoutsOff ? <TaxLockedLine className="mt-2" id="tax-locked-line" /> : null}
                             {Toast}
                         </motion.div>
                     </>

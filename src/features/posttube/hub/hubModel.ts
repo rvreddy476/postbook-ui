@@ -91,7 +91,7 @@ export function axisTicks(length: number, count = 4): number[] {
 
 /* ── Library table: filter and sort ─────────────────────── */
 
-export type LibrarySortKey = "published" | "views" | "comments" | "title";
+export type LibrarySortKey = "published" | "views" | "likes" | "comments" | "title";
 export type SortDir = "asc" | "desc";
 
 export type TriState = "any" | "yes" | "no";
@@ -248,6 +248,8 @@ export function sortLibraryRows(rows: HubLibraryRow[], key: LibrarySortKey, dir:
     switch (key) {
       case "views":
         return a.view_count - b.view_count;
+      case "likes":
+        return a.like_count - b.like_count;
       case "comments":
         return a.comment_count - b.comment_count;
       case "title":
@@ -388,7 +390,9 @@ export function formatDelta(n: number | null | undefined): string {
 export function formatDay(iso: string): string {
   const d = new Date(iso);
   if (!Number.isFinite(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  // A bare calendar day parses as UTC midnight; reading it in UTC keeps the same day west of Greenwich.
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(iso);
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", ...(dateOnly ? { timeZone: "UTC" } : {}) });
 }
 
 export function formatDateTime(iso: string | null | undefined): string {

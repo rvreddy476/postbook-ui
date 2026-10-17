@@ -18,12 +18,14 @@ import { useBlockUser } from '@/hooks/useBlocking';
 import { usePoll, useCastVote } from '@/hooks/usePollVote';
 import { useMyProfile, useUserProfile } from '@/hooks/useEditProfile';
 import CommentSection from '@/components/CommentSection';
+import { commentCreatorTools } from '@/components/comments/creatorTools';
 import CommentPreview from '@/components/CommentPreview';
 import ShareDialog from '@/components/ShareDialog';
 import VideoPlayer from '@/components/VideoPlayer';
 import EmbedCard from '@/components/EmbedCard';
 import { useDataSaver } from '@/hooks/useDataSaver';
-import api from '@/lib/api';
+import { ReelReportDialog } from '@/features/reels/components/ReelReportDialog';
+import { embedCode, isEmbeddablePost } from '@/lib/postEmbed';
 import { resolveImageUrl } from '@/lib/imageUrl';
 import PaywallPreview from '@/components/monetization/PaywallPreview';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -73,6 +75,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [showComments, setShowComments] = useState(false);
   const [bookmarked, setBookmarked] = useState(!!post.is_bookmarked);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
 
   const { data: profile } = useMyProfile();
@@ -123,14 +126,12 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     setIsMoreOpen(false);
   };
 
+  // The shared report dialog files to trust-safety (POST /v1/reports,
+  // entity_type "post") through useSubmitReport. There is no
+  // /v1/posts/:id/report route; the old free-text prompt posted there and was lost.
   const handleReport = () => {
     closeMenu();
-    const reason = prompt('Why are you reporting this post? (spam, abuse, hate, other)');
-    if (!reason) return;
-    void api
-      .post(`/v1/posts/${post.id}/report`, { reason })
-      .then(() => toast({ type: 'success', title: 'Report sent', description: 'Thanks — our team will review this post.' }))
-      .catch(() => toast({ type: 'error', title: "Couldn't send your report", description: 'Try again in a moment.' }));
+    setShowReportDialog(true);
   };
 
   /*
@@ -189,9 +190,11 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     });
   };
 
+  // The menu offers this only for a public video post (isEmbeddablePost);
+  // the /post/<id>/embed page refuses anything else on its own as well.
   const handleEmbed = () => {
     closeMenu();
-    const iframe = `<iframe src="${window.location.origin}/post/${post.id}/embed" width="550" height="420" frameborder="0" allowfullscreen></iframe>`;
+    const iframe = embedCode(window.location.origin, post.id);
     navigator.clipboard
       .writeText(iframe)
       .then(() => toast({ type: 'success', title: 'Embed code copied' }))
@@ -348,6 +351,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 className="absolute right-0 mt-2 z-100"
               >
                 <PostControls anchorRef={moreMenuRef} own={isOwnPost} pinned={!!post.is_pinned} deleting={deleteMutation.isPending}
+                  canEmbed={isEmbeddablePost(post)}
                   onRecommend={handleInterested} onHide={handleNotInterested} onMute={handleMuteAuthor}
                   onEmbed={handleEmbed} onReport={handleReport} onBlock={handleBlockAuthor}
                   onPin={handlePin} onDelete={handleDelete}
@@ -780,12 +784,20 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       {/* Comment Section */}
       <AnimatePresence>
         {showComments && !post.no_comments && (
-          <CommentSection postId={post.id} postAuthorId={post.author_id} commentsCount={commentsCount} alwaysExpanded />
+          <CommentSection postId={post.id} postAuthorId={post.author_id} commentsCount={commentsCount} alwaysExpanded creatorTools={commentCreatorTools} />
         )}
       </AnimatePresence>
 
       {/* Share Dialog */}
       <ShareDialog postId={post.id} isOpen={showShareDialog} onClose={() => setShowShareDialog(false)} />
+
+      {/* Report Dialog — the same one the reels stage uses */}
+      <ReelReportDialog
+        open={showReportDialog}
+        targetId={post.id}
+        targetType={isReel ? 'reel' : 'post'}
+        onClose={() => setShowReportDialog(false)}
+      />
     </article>
   );
 };

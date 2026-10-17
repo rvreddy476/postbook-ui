@@ -23,7 +23,7 @@ import PeopleYouMayKnowStrip from "./PeopleYouMayKnowStrip";
 import { useHomeFeed } from "@/hooks/useFeedPosts";
 import { subscribeToPostUpdates } from "@/services/messageService";
 import { useFeedDelta } from "@/hooks/useFeedDelta";
-import { uniqueFeedPosts, type FeedPage } from "./feed/feedPresentation";
+import { newestCreatedAtOf, uniqueFeedPosts, type FeedPage } from "./feed/feedPresentation";
 import "./feed/home-feed.css";
 import { installFeedReturnRefresh } from './feed/feedReturnRefresh';
 import { editorialFormat } from './feed/editorialFormat';
@@ -126,11 +126,16 @@ export default function Feed({
     [queryClient],
   );
 
-  const newestId = posts[0]?.id;
-  const newestCreatedAt = posts[0]?.created_at;
+  /*
+    Anchor the "N new posts" check on the NEWEST post shown, not on the
+    first one. This feed is ranked, so posts[0] is the best-scoring post —
+    often older than others on the page — and anchoring there counted posts
+    the reader had already scrolled past as new.
+  */
+  const newestCreatedAt = newestCreatedAtOf(posts);
   useEffect(() => {
     if (newestCreatedAt) setAnchor(newestCreatedAt);
-  }, [newestId, newestCreatedAt, setAnchor]);
+  }, [newestCreatedAt, setAnchor]);
   useEffect(() => {
     if (newCount > 0) setNewPostsDismissed(false);
   }, [newCount]);

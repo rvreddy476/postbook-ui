@@ -1,302 +1,150 @@
 "use client"
 
-import React from "react"
+import React, { Suspense, useCallback, useEffect, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Hash, Sparkles, TrendingUp, Loader2, AlertCircle } from "lucide-react"
-import { useTrending, useSuggested, TrendingHashtag } from "@/hooks/useSearch"
-import type { PostDetail } from "@/types/profile"
-import PostCard from "@/components/PostCard"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { Compass, Hash, Search, Users } from "lucide-react"
 
-// ─── Trending hashtag pill ────────────────────────────────────────────────────
+import { useTrending, type TrendingHashtag } from "@/hooks/useSearch"
+import { readSessionUserId } from "@/features/reels/session"
+import { ExploreReels } from "@/features/reels/explore/ExploreReels"
+import { SuggestedCreators } from "@/features/reels/explore/SuggestedCreators"
+import { EXPLORE_CATEGORY_PARAM } from "@/features/reels/explore/exploreApi"
 
-interface HashtagPillProps {
-    item: TrendingHashtag
-    rank: number
-}
+/*
+  /discover — Explore (TikTok parity T-18). Short-video category chips over
+  a tile grid (GET /v1/feed/reels?category=), a "People to follow" row
+  with a working Follow (graph-service), and trending hashtags. The chip
+  lives in the URL (?category=) so a filtered page can be shared or
+  reloaded. Nothing here plays: tiles are covers, and a tap opens the reels
+  stage on that reel, muted as every reel starts.
 
-function HashtagPill({ item, rank }: HashtagPillProps) {
-    const router = useRouter()
+  The route is gated by middleware; the signed-out branches below cover a
+  session that lapsed while the page was open.
+*/
 
-    const rankColors: Record<number, string> = {
-        1: "from-amber-400 to-orange-500",
-        2: "from-slate-400 to-slate-500",
-        3: "from-amber-600 to-amber-700",
-    }
-    const gradientClass = rankColors[rank] ?? "from-brand-text/50 to-fuchsia-500"
-
+function SectionTitle({ id, icon, title, action }: { id: string; icon: React.ReactNode; title: string; action?: React.ReactNode }) {
     return (
-        <button
-            onClick={() => router.push(`/hashtag/${item.hashtag}`)}
-            className="group flex items-center gap-3 p-4 bg-brand-card rounded-2xl border border-brand-divider shadow-xs hover:shadow-md hover:border-brand-text/10 transition-all duration-200 text-left w-full"
-        >
-            {/* Rank badge */}
-            <div
-                className={`w-9 h-9 rounded-xl bg-linear-to-br ${gradientClass} flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform duration-200`}
-            >
-                <span className="text-white text-xs font-black">#{rank}</span>
-            </div>
-
-            {/* Tag info */}
-            <div className="flex-1 min-w-0">
-                <p className="text-[15px] font-bold text-brand-text group-hover:text-brand-text transition-colors truncate">
-                    #{item.hashtag}
-                </p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                    <TrendingUp className="w-3 h-3 text-emerald-500" />
-                    <p className="text-xs text-brand-text/40 font-medium">
-                        {Math.round(item.score).toLocaleString()} post{item.score !== 1 ? "s" : ""}
-                    </p>
-                </div>
-            </div>
-
-            {/* Arrow */}
-            <div className="shrink-0 text-brand-text/30 group-hover:text-brand-text/50 group-hover:translate-x-0.5 transition-all duration-200">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-            </div>
-        </button>
-    )
-}
-
-// ─── Trending hashtag card grid (for larger display) ─────────────────────────
-
-interface HashtagCardProps {
-    item: TrendingHashtag
-}
-
-function HashtagCard({ item }: HashtagCardProps) {
-    const router = useRouter()
-
-    return (
-        <button
-            onClick={() => router.push(`/hashtag/${item.hashtag}`)}
-            className="group flex flex-col items-center justify-center gap-2 p-5 bg-brand-card rounded-2xl border border-brand-divider shadow-xs hover:shadow-md hover:border-brand-text/10 hover:bg-brand-text/30 transition-all duration-200 aspect-square"
-        >
-            <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-brand-text/50 to-fuchsia-500 flex items-center justify-center shadow-md shadow-brand-text/20 group-hover:scale-105 transition-transform duration-200">
-                <Hash className="w-6 h-6 text-white" />
-            </div>
-            <p className="text-sm font-bold text-brand-text group-hover:text-brand-text transition-colors truncate max-w-full px-1">
-                {item.hashtag}
-            </p>
-            <p className="text-xs text-brand-text/40 font-medium">
-                {item.score >= 1000
-                    ? `${(item.score / 1000).toFixed(1)}K`
-                    : Math.round(item.score)} posts
-            </p>
-        </button>
-    )
-}
-
-// ─── Section header ───────────────────────────────────────────────────────────
-
-function SectionHeader({
-    icon,
-    title,
-    subtitle,
-    action,
-}: {
-    icon: React.ReactNode
-    title: string
-    subtitle?: string
-    action?: React.ReactNode
-}) {
-    return (
-        <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-brand-text/50 to-fuchsia-500 flex items-center justify-center shadow-md shadow-brand-text/20">
-                    {icon}
-                </div>
-                <div>
-                    <h2 className="text-base font-black text-brand-text">{title}</h2>
-                    {subtitle && <p className="text-xs text-brand-text/40 mt-0.5">{subtitle}</p>}
-                </div>
-            </div>
-            {action && <div>{action}</div>}
+        <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 id={id} className="flex items-center gap-2 text-base font-bold text-brand-text">
+                <span className="text-brand-text/60" aria-hidden>{icon}</span>
+                {title}
+            </h2>
+            {action}
         </div>
     )
 }
 
-// ─── Error card ───────────────────────────────────────────────────────────────
-
-function ErrorCard({ message }: { message: string }) {
+function TrendingHashtags({ items }: { items: readonly TrendingHashtag[] }) {
     return (
-        <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-2xl">
-            <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
-            <p className="text-sm text-red-600 font-medium">{message}</p>
-        </div>
-    )
-}
-
-// ─── Skeleton loaders ─────────────────────────────────────────────────────────
-
-function TrendingSkeletons() {
-    return (
-        <div className="space-y-3 animate-pulse">
-            {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3 p-4 bg-brand-card rounded-2xl border border-brand-divider">
-                    <div className="w-9 h-9 rounded-xl bg-brand-divider shrink-0" />
-                    <div className="flex-1 space-y-1.5">
-                        <div className="h-4 bg-brand-divider rounded-lg w-1/3" />
-                        <div className="h-3 bg-brand-divider rounded-lg w-1/4" />
-                    </div>
-                </div>
+        <ul className="flex flex-wrap gap-2">
+            {items.map((item) => (
+                <li key={item.hashtag}>
+                    <Link
+                        href={`/hashtag/${encodeURIComponent(item.hashtag)}`}
+                        className="inline-flex h-9 items-center gap-1.5 rounded-full border border-brand-divider bg-brand-card px-3.5 text-[13px] font-semibold text-brand-text transition-colors hover:bg-brand-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent"
+                    >
+                        <Hash className="h-3.5 w-3.5 text-brand-text/50" aria-hidden />
+                        {item.hashtag}
+                    </Link>
+                </li>
             ))}
-        </div>
+        </ul>
     )
 }
 
-function SuggestedSkeletons() {
-    return (
-        <div className="space-y-4 animate-pulse">
-            {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="bg-brand-card rounded-xl border border-brand-divider p-4 space-y-3">
-                    <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-full bg-brand-divider" />
-                        <div className="flex-1 space-y-1.5">
-                            <div className="h-4 bg-brand-divider rounded-lg w-1/4" />
-                            <div className="h-3 bg-brand-divider rounded-lg w-1/6" />
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                        <div className="h-3 bg-brand-divider rounded-lg w-full" />
-                        <div className="h-3 bg-brand-divider rounded-lg w-3/4" />
-                    </div>
-                </div>
-            ))}
-        </div>
-    )
-}
+function DiscoverContent() {
+    const router = useRouter()
+    const pathname = usePathname() || "/discover"
+    const searchParams = useSearchParams()
+    const category = searchParams.get(EXPLORE_CATEGORY_PARAM) ?? ""
 
-// ─── Main discover page ───────────────────────────────────────────────────────
+    // The session is read on the client; the server render is neutral.
+    const [viewerId, setViewerId] = useState("")
+    const [session, setSession] = useState<"unknown" | "in" | "out">("unknown")
+    useEffect(() => {
+        const id = readSessionUserId()
+        setViewerId(id)
+        setSession(id ? "in" : "out")
+    }, [])
 
-export default function DiscoverPage() {
     const { data: trendingData, isLoading: trendingLoading } = useTrending()
-    const { data: suggestedData, isLoading: suggestedLoading } = useSuggested()
-
     const hashtags = trendingData?.trending ?? []
-    const suggestedPosts = suggestedData?.posts ?? []
 
-    // Split hashtags: top 3 as list with rank, rest as grid pills
-    const topHashtags = hashtags.slice(0, 5)
-    const moreHashtags = hashtags.slice(5)
+    const onCategoryChange = useCallback(
+        (slug: string) => {
+            const next = new URLSearchParams(searchParams.toString())
+            if (slug) next.set(EXPLORE_CATEGORY_PARAM, slug)
+            else next.delete(EXPLORE_CATEGORY_PARAM)
+            const qs = next.toString()
+            router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+        },
+        [router, pathname, searchParams],
+    )
+
+    const returnTo = category ? `/discover?${EXPLORE_CATEGORY_PARAM}=${encodeURIComponent(category)}` : "/discover"
 
     return (
         <div className="min-h-screen bg-brand-bg">
-            {/* Page header */}
-            <div className="sticky top-0 z-10 bg-brand-card/90 backdrop-blur-xl border-b border-brand-divider shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
-                <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-linear-to-br from-brand-text/50 to-fuchsia-500 flex items-center justify-center shadow-md shadow-brand-text/20">
-                        <Sparkles className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-black text-brand-text tracking-tight">Discover</h1>
-                        <p className="text-xs text-brand-text/40 font-medium">Trending topics and suggested content</p>
-                    </div>
+            <div className="sticky top-0 z-10 border-b border-brand-divider bg-brand-card/90 backdrop-blur-xl">
+                <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
+                    <Compass className="h-6 w-6 text-brand-text" aria-hidden />
+                    <h1 className="text-xl font-black tracking-tight text-brand-text">Explore</h1>
                     <Link
                         href="/search"
-                        className="ml-auto flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-secondary border border-brand-divider text-sm font-bold text-brand-text/80 hover:bg-brand-text/5 hover:border-brand-text/20 hover:text-brand-text transition-all"
+                        className="ml-auto inline-flex h-9 items-center gap-2 rounded-full border border-brand-divider bg-brand-secondary px-4 text-sm font-semibold text-brand-text transition-colors hover:bg-brand-text/5"
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <circle cx="11" cy="11" r="8" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35" />
-                        </svg>
+                        <Search className="h-4 w-4" aria-hidden />
                         Search
                     </Link>
                 </div>
             </div>
 
-            {/* Main content */}
-            <main className="max-w-2xl mx-auto px-4 py-6 space-y-10">
+            <main className="mx-auto max-w-6xl space-y-8 px-4 py-5">
+                {session === "in" ? (
+                    <section aria-labelledby="explore-people">
+                        <SectionTitle
+                            id="explore-people"
+                            icon={<Users className="h-4 w-4" />}
+                            title="People to follow"
+                            action={
+                                <Link href="/connections" className="text-xs font-semibold text-brand-highlight hover:text-brand-text">
+                                    See all
+                                </Link>
+                            }
+                        />
+                        <SuggestedCreators viewerId={viewerId} variant="row" limit={12} label="People to follow" />
+                    </section>
+                ) : null}
 
-                {/* ── Trending Hashtags ── */}
-                <section>
-                    <SectionHeader
-                        icon={<TrendingUp className="w-5 h-5 text-white" />}
-                        title="Trending Now"
-                        subtitle="What people are talking about"
-                    />
-
-                    {trendingLoading && <TrendingSkeletons />}
-
-                    {!trendingLoading && hashtags.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-12 gap-3">
-                            <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
-                                <Hash className="w-7 h-7 text-brand-text/30" />
-                            </div>
-                            <p className="text-sm font-semibold text-brand-text/60">No recommendations at the moment</p>
-                        </div>
-                    )}
-
-                    {!trendingLoading && topHashtags.length > 0 && (
-                        <div className="space-y-3">
-                            {topHashtags.map((item, index) => (
-                                <HashtagPill key={item.hashtag} item={item} rank={index + 1} />
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Additional hashtags in pill grid */}
-                    {!trendingLoading && moreHashtags.length > 0 && (
-                        <div className="mt-4 grid grid-cols-3 gap-3">
-                            {moreHashtags.map((item) => (
-                                <HashtagCard key={item.hashtag} item={item} />
-                            ))}
-                        </div>
-                    )}
-
-                    {/* View all hashtags link */}
-                    {!trendingLoading && hashtags.length > 0 && (
-                        <div className="mt-4 text-center">
-                            <Link
-                                href="/search?type=all"
-                                className="inline-flex items-center gap-2 text-sm font-bold text-brand-text hover:text-brand-text/80 transition-colors"
-                            >
-                                <Hash className="w-4 h-4" />
-                                Explore all hashtags
-                            </Link>
-                        </div>
-                    )}
+                <section aria-label="Reels by category">
+                    <ExploreReels category={category} onCategoryChange={onCategoryChange} session={session} returnTo={returnTo} />
                 </section>
 
-                {/* Divider */}
-                <div className="h-px bg-linear-to-r from-transparent via-brand-divider to-transparent" />
-
-                {/* ── Suggested Posts ── */}
-                <section>
-                    <SectionHeader
-                        icon={<Sparkles className="w-5 h-5 text-white" />}
-                        title="Suggested for You"
-                        subtitle="Posts you might enjoy"
-                    />
-
-                    {suggestedLoading && <SuggestedSkeletons />}
-
-                    {!suggestedLoading && suggestedPosts.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-12 gap-3">
-                            <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
-                                <Sparkles className="w-7 h-7 text-brand-text/30" />
+                {trendingLoading || hashtags.length > 0 ? (
+                    <section aria-labelledby="explore-trending">
+                        <SectionTitle id="explore-trending" icon={<Hash className="h-4 w-4" />} title="Trending hashtags" />
+                        {trendingLoading ? (
+                            <div className="flex flex-wrap gap-2" aria-busy="true" aria-label="Loading hashtags">
+                                {Array.from({ length: 6 }).map((_, i) => (
+                                    <span key={i} className="h-9 w-24 animate-pulse rounded-full bg-brand-secondary" />
+                                ))}
                             </div>
-                            <p className="text-sm font-semibold text-brand-text/60">No recommendations at the moment</p>
-                        </div>
-                    )}
-
-                    {!suggestedLoading && suggestedPosts.length > 0 && (
-                        <div className="space-y-4">
-                            {suggestedPosts.map((post: PostDetail) => (
-                                <PostCard key={post.id} post={post} />
-                            ))}
-                        </div>
-                    )}
-
-                    {suggestedLoading && (
-                        <div className="flex justify-center py-4">
-                            <Loader2 className="w-6 h-6 text-brand-text/50 animate-spin" />
-                        </div>
-                    )}
-                </section>
+                        ) : (
+                            <TrendingHashtags items={hashtags.slice(0, 20)} />
+                        )}
+                    </section>
+                ) : null}
             </main>
         </div>
+    )
+}
+
+export default function DiscoverPage() {
+    // useSearchParams needs a Suspense boundary for the static render.
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-brand-bg" />}>
+            <DiscoverContent />
+        </Suspense>
     )
 }

@@ -13,7 +13,7 @@ interface PostsResponse {
 
 interface CreatePostPayload {
     text: string
-    visibility: "public" | "followers" | "trusted" | "private"
+    visibility: "public" | "followers" | "private"
     content_type: string
     media_ids?: string[]
     feeling?: string | null

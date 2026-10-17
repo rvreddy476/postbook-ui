@@ -241,7 +241,7 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
 
     if (isPage) {
       const handleToggleFollow = () => {
-        const target = m.username || m.user_id
+        const target = m.user_id
         if (following) {
           setOverride(m.user_id, false)
           unfollowUser.mutate(target, { onError: () => setOverride(m.user_id, true) })

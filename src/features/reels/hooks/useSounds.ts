@@ -2,7 +2,15 @@
 
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 
-import { fetchSound, fetchSoundReels, SOUND_REELS_PAGE_SIZE, resolveReelSound } from "@/features/reels/data/soundsApi";
+import {
+  fetchSound,
+  fetchSoundList,
+  fetchSoundReels,
+  resolveReelSound,
+  soundSearchTerm,
+  SOUND_REELS_PAGE_SIZE,
+  type SoundListKind,
+} from "@/features/reels/data/soundsApi";
 
 export const SOUND_KEY = ["reels", "sound"] as const;
 
@@ -40,4 +48,22 @@ export function useSoundInfo(soundId: string | null | undefined) {
 /** "Use this sound" on a reel: the sound it plays, made from its own audio on first use. */
 export function useUseSound() {
   return useMutation({ mutationFn: (postId: string) => resolveReelSound(postId) });
+}
+
+/**
+ * Trending sounds, or the sounds matching a search term, a page at a time
+ * (the studio's sound picker). A search under two characters asks nothing.
+ */
+export function useSoundList(kind: SoundListKind, query: string | null = null) {
+  const q = kind === "search" ? soundSearchTerm(query) : null;
+  return useInfiniteQuery({
+    queryKey: [...SOUND_KEY, "list", kind, q ?? ""],
+    queryFn: ({ pageParam, signal }) => fetchSoundList(kind, { q, offset: pageParam, signal }),
+    initialPageParam: 0,
+    getNextPageParam: (last) => last.nextOffset,
+    enabled: kind === "trending" || q !== null,
+    refetchOnWindowFocus: false,
+    staleTime: 60_000,
+    retry: false,
+  });
 }

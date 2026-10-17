@@ -229,3 +229,30 @@ export function soundReelTiles(pages: readonly SoundReelsPage[] | null | undefin
   }
   return out;
 }
+
+/**
+  GET /v1/audio/trending and GET /v1/audio/search → `{tracks: [...]}` (a
+  bare array still reads). Only the sounds this viewer may hear are listed
+  by the server; a row that is no sound, or not ready to play, is dropped
+  here, and a sound listed twice is shown once.
+*/
+export function toSoundList(data: unknown): SoundInfo[] {
+  const o = record(data);
+  const rows: unknown[] = Array.isArray(data) ? data : Array.isArray(o?.tracks) ? (o.tracks as unknown[]) : [];
+  const seen = new Set<string>();
+  const out: SoundInfo[] = [];
+  for (const row of rows) {
+    const sound = toSoundInfo(row);
+    if (!sound || seen.has(sound.id)) continue;
+    seen.add(sound.id);
+    out.push(sound);
+  }
+  return out;
+}
+
+/** The raw row count of a sound list, before anything was dropped: what paging counts. */
+export function soundListLength(data: unknown): number {
+  if (Array.isArray(data)) return data.length;
+  const tracks = record(data)?.tracks;
+  return Array.isArray(tracks) ? tracks.length : 0;
+}

@@ -5,15 +5,24 @@ import { useParams, useRouter } from 'next/navigation'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import type { PostDetail } from '@/types/profile'
-import PostCard from '@/components/PostCard'
 import AppShell from '@/components/AppShell'
-import { ArrowLeft, ArrowUp, Clock, Clapperboard, Hash, Loader2, TrendingUp, Video } from 'lucide-react'
+import { ArrowLeft, ArrowUp, Clock, Clapperboard, Hash, Loader2, RefreshCw, Share2, TrendingUp, Video } from 'lucide-react'
 import { useHashtagLiveStream } from '@/hooks/useHashtagLiveStream'
+import { ShareSheet } from '@/features/reels/components/ShareSheet'
+import { HashtagGrid, HashtagGridSkeleton } from '@/features/hashtag/HashtagGrid'
+import {
+    hashtagCountLabel,
+    hashtagShareUrl,
+    hashtagTile,
+    hashtagTotal,
+    type HashtagPageMeta,
+    type HashtagTab,
+} from '@/features/hashtag/hashtagPage'
+import '@/features/reels/components/reels-screen.css'
 
 type SortMode = 'recent' | 'top'
-type ContentTab = 'all' | 'posts' | 'reels' | 'videos'
 
-const CONTENT_TABS: { id: ContentTab; label: string; icon: React.ReactNode; contentTypes: string[] }[] = [
+const CONTENT_TABS: { id: HashtagTab; label: string; icon: React.ReactNode; contentTypes: string[] }[] = [
     { id: 'all',    label: 'All',    icon: <Hash className="w-3.5 h-3.5" />,        contentTypes: [] },
     { id: 'posts',  label: 'Posts',  icon: <Hash className="w-3.5 h-3.5" />,        contentTypes: ['post', 'poll'] },
     { id: 'reels',  label: 'Reels',  icon: <Clapperboard className="w-3.5 h-3.5" />, contentTypes: ['flick'] },
@@ -22,7 +31,17 @@ const CONTENT_TABS: { id: ContentTab; label: string; icon: React.ReactNode; cont
 
 interface HashtagPostsResponse {
     data: PostDetail[]
-    meta?: { next_cursor: string }
+    /** `total` arrives with post-service 2-B2; the page tolerates its absence. */
+    meta?: HashtagPageMeta
+}
+
+/** The route segment as text; a malformed escape is kept as typed rather than throwing. */
+function safeDecode(segment: string): string {
+    try {
+        return decodeURIComponent(segment)
+    } catch {
+        return segment
+    }
 }
 
 function useHashtagPosts(tag: string, sort: SortMode, contentTypes: string[]) {
@@ -32,7 +51,7 @@ function useHashtagPosts(tag: string, sort: SortMode, contentTypes: string[]) {
             const params = new URLSearchParams({ limit: '20', sort })
             if (pageParam) params.set('cursor', pageParam as string)
             for (const ct of contentTypes) params.append('content_type', ct)
-            const res = await api.get<HashtagPostsResponse>(`/v1/hashtags/${tag}/posts?${params.toString()}`)
+            const res = await api.get<HashtagPostsResponse>(`/v1/hashtags/${encodeURIComponent(tag)}/posts?${params.toString()}`)
             return res.data
         },
         initialPageParam: '' as string,
@@ -41,13 +60,26 @@ function useHashtagPosts(tag: string, sort: SortMode, contentTypes: string[]) {
     })
 }
 
+/*
+  /hashtag/<tag> (audit T-34): the tag's title, its count (the server's
+  total when it sends one, else what is loaded), Share, and the posts as a
+  poster grid — the same tiles as the sound and liked-reels pages.
+
+  Not here yet, on purpose:
+  - Report: trust-safety does not accept entity_type "hashtag" yet
+    (validEntityTypes), so a Report item would only fail. Add it with that.
+  - Signed-out visitors: the page sits in AppShell, which sends a visitor
+    with no session to /login, so /hashtag/ stays off the middleware's
+    public list until the page renders without one.
+*/
 export default function HashtagPage() {
     const params = useParams()
     const router = useRouter()
-    const tag = params.tag as string
+    const tag = safeDecode(String(params.tag ?? '')).replace(/^#/, '')
     const queryClient = useQueryClient()
     const [sort, setSort] = useState<SortMode>('recent')
-    const [contentTab, setContentTab] = useState<ContentTab>('all')
+    const [contentTab, setContentTab] = useState<HashtagTab>('all')
+    const [shareOpen, setShareOpen] = useState(false)
 
     const activeTab = CONTENT_TABS.find((t) => t.id === contentTab)!
 
@@ -58,11 +90,13 @@ export default function HashtagPage() {
         isFetchingNextPage,
         isLoading,
         isError,
-        error,
+        refetch,
     } = useHashtagPosts(tag, sort, activeTab.contentTypes)
 
-    const allPosts = data?.pages.flatMap((page) => page.data) ?? []
-    const totalCount = allPosts.length
+    const allPosts = data?.pages.flatMap((page) => page.data ?? []) ?? []
+    const tiles = allPosts.map(hashtagTile)
+    const total = hashtagTotal(data?.pages[0]?.meta)
+    const countLabel = hashtagCountLabel(total, allPosts.length, Boolean(hasNextPage), contentTab)
 
     const { newPostCount, acknowledge } = useHashtagLiveStream(tag)
     const handleRefresh = () => {
@@ -76,18 +110,20 @@ export default function HashtagPage() {
         queryClient.removeQueries({ queryKey: ['hashtag-posts', tag] })
     }
 
-    const handleTabChange = (next: ContentTab) => {
+    const handleTabChange = (next: HashtagTab) => {
         if (next === contentTab) return
         setContentTab(next)
         queryClient.removeQueries({ queryKey: ['hashtag-posts', tag] })
     }
 
+    const shareUrl = hashtagShareUrl(tag, typeof window === 'undefined' ? '' : window.location.origin)
+
     return (
         <AppShell>
             <div className="min-h-screen bg-brand-bg">
                 {/* Page Header */}
-                <div className="sticky top-0 z-10 bg-brand-card/80 backdrop-blur-xl border-b border-brand-divider shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
-                    <div className="max-w-2xl mx-auto px-4 pt-4 pb-0">
+                <div className="sticky top-0 z-10 bg-brand-card/80 backdrop-blur-xl border-b border-brand-divider">
+                    <div className="max-w-5xl mx-auto px-4 pt-4 pb-0">
                         {/* Title row */}
                         <div className="flex items-center gap-3 pb-3">
                             <button
@@ -98,33 +134,38 @@ export default function HashtagPage() {
                             >
                                 <ArrowLeft className="w-5 h-5" />
                             </button>
-                            <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/20 shrink-0">
-                                <Hash className="w-5 h-5 text-white" />
+                            <div className="w-12 h-12 rounded-2xl bg-primary-tint text-primary-ink flex items-center justify-center shrink-0" aria-hidden>
+                                <Hash className="w-6 h-6" />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <h1 className="text-xl font-black text-brand-text tracking-tight truncate">
                                     #{tag}
                                 </h1>
-                                {!isLoading && (
-                                    <div className="flex items-center gap-1.5 mt-0.5">
-                                        <TrendingUp className="w-3 h-3 text-brand-text/50" />
-                                        <span className="text-xs font-semibold text-brand-text/40">
-                                            {totalCount > 0
-                                                ? `${totalCount}${hasNextPage ? '+' : ''} post${totalCount !== 1 ? 's' : ''} loaded`
-                                                : 'No posts yet'}
-                                        </span>
-                                    </div>
+                                {!isLoading && !isError && (
+                                    <p className="mt-0.5 text-xs font-semibold text-brand-text/60" data-hashtag-count>
+                                        {countLabel}
+                                    </p>
                                 )}
                             </div>
+                            <button
+                                type="button"
+                                onClick={() => setShareOpen(true)}
+                                className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-brand-divider text-xs font-bold text-brand-text hover:bg-brand-secondary transition-colors"
+                                aria-haspopup="dialog"
+                            >
+                                <Share2 className="w-4 h-4" aria-hidden />
+                                Share
+                            </button>
                             {/* Sort toggle */}
-                            <div className="shrink-0 flex items-center gap-1 rounded-xl bg-brand-divider/60 p-1">
+                            <div className="shrink-0 flex items-center gap-1 rounded-xl bg-brand-divider/60 p-1" role="group" aria-label="Sort">
                                 <button
                                     type="button"
                                     onClick={() => handleSortChange('recent')}
+                                    aria-pressed={sort === 'recent'}
                                     className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
                                         sort === 'recent'
                                             ? 'bg-brand-card text-brand-text shadow-xs'
-                                            : 'text-brand-text/40 hover:text-brand-text/70'
+                                            : 'text-brand-text/60 hover:text-brand-text'
                                     }`}
                                 >
                                     <Clock className="w-3 h-3" />
@@ -133,10 +174,11 @@ export default function HashtagPage() {
                                 <button
                                     type="button"
                                     onClick={() => handleSortChange('top')}
+                                    aria-pressed={sort === 'top'}
                                     className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
                                         sort === 'top'
                                             ? 'bg-brand-card text-brand-text shadow-xs'
-                                            : 'text-brand-text/40 hover:text-brand-text/70'
+                                            : 'text-brand-text/60 hover:text-brand-text'
                                     }`}
                                 >
                                     <TrendingUp className="w-3 h-3" />
@@ -146,16 +188,18 @@ export default function HashtagPage() {
                         </div>
 
                         {/* Content-type tabs */}
-                        <div className="flex items-center gap-0 border-t border-brand-divider/50">
+                        <div className="flex items-center gap-0 border-t border-brand-divider/50 overflow-x-auto" role="tablist" aria-label="Content type">
                             {CONTENT_TABS.map((tab) => (
                                 <button
                                     key={tab.id}
                                     type="button"
+                                    role="tab"
+                                    aria-selected={contentTab === tab.id}
                                     onClick={() => handleTabChange(tab.id)}
                                     className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold border-b-2 transition-colors ${
                                         contentTab === tab.id
-                                            ? 'border-violet-500 text-violet-600'
-                                            : 'border-transparent text-brand-text/40 hover:text-brand-text/70'
+                                            ? 'border-primary-ink text-primary-ink'
+                                            : 'border-transparent text-brand-text/60 hover:text-brand-text'
                                     }`}
                                 >
                                     {tab.icon}
@@ -167,120 +211,69 @@ export default function HashtagPage() {
                 </div>
 
                 {/* Content */}
-                <main className="max-w-2xl mx-auto px-4 py-6">
-                    {/* Loading */}
-                    {isLoading && (
-                        <div className="flex flex-col items-center justify-center py-24 gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/20 animate-pulse">
-                                <Hash className="w-6 h-6 text-white" />
-                            </div>
-                            <div className="flex flex-col items-center gap-1">
-                                <p className="text-sm font-bold text-brand-text">Loading #{tag}</p>
-                                <p className="text-xs text-brand-text/40">Fetching tagged content...</p>
-                            </div>
-                            <Loader2 className="w-5 h-5 text-brand-text/50 animate-spin" />
-                        </div>
-                    )}
-
-                    {/* Error */}
-                    {isError && (
-                        <div className="flex flex-col items-center justify-center py-24 gap-4">
-                            <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center">
-                                <span className="text-2xl">!</span>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-sm font-bold text-brand-text">Something went wrong</p>
-                                <p className="text-xs text-brand-text/40 mt-1">
-                                    {(error as Error)?.message ?? 'Could not load posts for this hashtag.'}
-                                </p>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Empty */}
-                    {!isLoading && !isError && allPosts.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-24 gap-4">
-                            <div className="w-20 h-20 rounded-3xl bg-linear-to-br from-brand-text/5 to-fuchsia-50 border border-brand-text/10 flex items-center justify-center">
-                                <Hash className="w-9 h-9 text-brand-text/30" />
-                            </div>
-                            <div className="text-center max-w-xs">
-                                <p className="text-base font-bold text-brand-text">
-                                    No {contentTab === 'all' ? 'posts' : contentTab} yet
-                                </p>
-                                <p className="text-sm text-brand-text/40 mt-1.5 leading-relaxed">
-                                    {contentTab === 'all' ? (
-                                        <>Be the first to use <span className="font-semibold text-brand-text/60">#{tag}</span> and start the conversation.</>
-                                    ) : (
-                                        <>No {contentTab} with <span className="font-semibold text-brand-text/60">#{tag}</span> yet.</>
-                                    )}
-                                </p>
-                            </div>
-                            {contentTab !== 'videos' && (
-                                <a
-                                    href="/create/post"
-                                    className="mt-2 inline-flex items-center gap-2 rounded-2xl bg-linear-to-r from-violet-500 to-fuchsia-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-shadow"
-                                >
-                                    Create first {contentTab === 'reels' ? 'reel' : 'post'}
-                                </a>
-                            )}
-                        </div>
-                    )}
-
+                <main className="max-w-5xl mx-auto px-4 py-6">
                     {/* Live pill */}
                     {newPostCount > 0 && (
                         <button
                             type="button"
                             onClick={handleRefresh}
-                            className="mx-auto mb-4 flex items-center gap-2 rounded-full bg-linear-to-r from-violet-500 to-fuchsia-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-violet-500/30 transition-transform hover:scale-105 active:scale-95"
+                            className="mx-auto mb-4 flex items-center gap-2 rounded-full bg-primary-ink px-4 py-2 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95"
                         >
                             <ArrowUp className="h-4 w-4" />
                             {newPostCount === 1 ? '1 new post' : `${newPostCount} new posts`}
                         </button>
                     )}
 
-                    {/* Posts */}
-                    {allPosts.length > 0 && (
-                        <div className="space-y-4">
-                            {allPosts.map((post) => (
-                                <PostCard key={post.id} post={post} />
-                            ))}
+                    {isLoading ? (
+                        <HashtagGridSkeleton />
+                    ) : isError ? (
+                        <div className="liked-reels__empty" role="alert">
+                            <h2>Couldn&apos;t load #{tag}</h2>
+                            <p>Check your connection and try again.</p>
+                            <button type="button" onClick={() => void refetch()} className="liked-reels__cta">
+                                <RefreshCw size={15} /> Retry
+                            </button>
                         </div>
-                    )}
-
-                    {/* Load more / end */}
-                    {!isLoading && !isError && allPosts.length > 0 && (
-                        <div className="mt-8 flex justify-center">
-                            {hasNextPage ? (
-                                <button
-                                    onClick={() => fetchNextPage()}
-                                    disabled={isFetchingNextPage}
-                                    className="flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-brand-card border border-brand-divider text-sm font-bold text-brand-text shadow-xs hover:shadow-md hover:border-brand-text/20 active:scale-95 disabled:opacity-60 disabled:pointer-events-none transition-all duration-200"
-                                >
-                                    {isFetchingNextPage ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin text-brand-text/50" />
-                                            <span>Loading more...</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Hash className="w-4 h-4 text-brand-text/50" />
-                                            <span>Load more</span>
-                                        </>
-                                    )}
-                                </button>
-                            ) : (
-                                <div className="flex flex-col items-center gap-2 py-4">
-                                    <div className="h-px w-32 bg-linear-to-r from-transparent via-brand-divider to-transparent" />
-                                    <p className="text-xs font-semibold text-brand-text/40 tracking-widest">
-                                        All caught up
-                                    </p>
-                                    <div className="h-px w-32 bg-linear-to-r from-transparent via-brand-divider to-transparent" />
-                                </div>
+                    ) : tiles.length === 0 ? (
+                        <div className="liked-reels__empty">
+                            <Hash size={28} className="opacity-60" aria-hidden />
+                            <h2>No {contentTab === 'all' ? 'posts' : contentTab} with #{tag} yet</h2>
+                            <p>Be the first to use it.</p>
+                            {contentTab !== 'videos' && (
+                                <a href={contentTab === 'reels' ? '/reels/create' : '/create/post'} className="liked-reels__cta">
+                                    Create {contentTab === 'reels' ? 'a reel' : 'a post'}
+                                </a>
                             )}
                         </div>
+                    ) : (
+                        <>
+                            <HashtagGrid tiles={tiles} />
+                            <div className="mt-8 flex justify-center">
+                                {hasNextPage ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => fetchNextPage()}
+                                        disabled={isFetchingNextPage}
+                                        className="liked-reels__link"
+                                    >
+                                        {isFetchingNextPage ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+                                                Loading…
+                                            </>
+                                        ) : (
+                                            'Show more'
+                                        )}
+                                    </button>
+                                ) : (
+                                    <p className="text-xs font-semibold text-brand-text/60">All caught up</p>
+                                )}
+                            </div>
+                        </>
                     )}
                 </main>
             </div>
+            <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} url={shareUrl} title={`#${tag} on VChat`} heading={`Share #${tag}`} />
         </AppShell>
     )
 }

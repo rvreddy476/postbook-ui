@@ -11,7 +11,7 @@ const props: PostControlsProps = {
 
 describe('post controls', () => {
   test('one flat menu exposes every non-owner action with an explicit name', () => {
-    const html = renderToStaticMarkup(<PostControls {...props} />);
+    const html = renderToStaticMarkup(<PostControls {...props} canEmbed />);
     expect(html.match(/role="menu"/g)).toHaveLength(1);
     expect(html.match(/role="menuitem"/g)).toHaveLength(6);
     for (const name of ['Recommend similar', 'Hide this update', 'Mute this author', 'Copy embed code', 'Report a concern', 'Block this account']) {

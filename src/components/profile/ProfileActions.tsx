@@ -1,351 +1,292 @@
 "use client"
 
-import { useState, useRef, useEffect, useCallback } from "react"
-import { Button } from "@/components/ui/button"
-import type { Relationship } from "@/types/profile"
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react"
+import Link from "next/link"
 import {
-    UserCheck,
-    UserPlus,
-    MessageSquare,
+    Flag,
+    Link2,
+    MoreHorizontal,
+    Pencil,
     Settings,
     Share2,
-    Users,
-    MoreHorizontal,
     Shield,
     ShieldOff,
-    UserMinus,
-    Lock,
-    VolumeX,
+    UserCheck,
+    UserPlus,
+    Clock,
     Volume2,
-    Link2,
-    Flag,
-    SlidersHorizontal,
-    EyeOff,
-    MinusCircle,
+    VolumeX,
 } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
-import { FriendRequestButton } from "@/components/connections/FriendRequestButton"
+import {
+    FOLLOW_BUTTON_LABELS,
+    profileMenuRows,
+    type FollowButtonState,
+    type ProfileMenuRowKey,
+} from "./profileParity"
+
+/*
+  The profile's action row (parity 3-W1).
+
+  Owner:   Edit profile · Share · Settings. No ⋮, so never a Report on
+           your own profile.
+  Visitor: Follow · Message · Share · ⋮ (Copy link, Mute, Block/Unblock,
+           Report). Message is the existing request-only MessageButton,
+           passed in untouched as `messageSlot`; the circle (connection)
+           control is passed in as `connectionSlot`.
+
+  The menu is a WAI-ARIA menu button: Enter/Space/ArrowDown opens it on the
+  first item, arrows and Home/End move, Escape closes it and returns focus
+  to the button, Tab or a click outside closes it.
+*/
 
 interface ProfileActionsProps {
     isOwn: boolean
-    relationship: Relationship | null
-    username?: string
-    displayName?: string
+    signedIn: boolean
+    username: string
+    followState: FollowButtonState
+    followBusy?: boolean
+    blocked: boolean
     isMuted?: boolean
     onFollow: () => void
     onUnfollow: () => void
-    onSendConnectionRequest: () => void
-    onAcceptConnectionRequest: () => void
-    onDeclineConnectionRequest: () => void
-    onCancelConnectionRequest: () => void
-    onRemoveConnection: () => void
     onEditProfile: () => void
-    onMessage?: () => void
+    onShare: () => void
+    onCopyLink: () => void
     onBlock?: () => void
     onUnblock?: () => void
     onMute?: () => void
     onUnmute?: () => void
+    onReport?: () => void
+    settingsHref?: string
+    signInHref?: string
+    messageSlot?: ReactNode
+    connectionSlot?: ReactNode
+    /** Start with the menu open (static renders in tests). */
+    defaultMenuOpen?: boolean
 }
 
-interface MenuItem {
-    label: string
-    icon: React.ReactNode
-    onClick: () => void
-    destructive?: boolean
-    divider?: boolean
+const BTN =
+    "inline-flex h-10 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold tracking-wider transition-all shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-outline disabled:opacity-60"
+const BTN_PRIMARY = `${BTN} bg-primary-ink text-primary-foreground hover:bg-primary-hover`
+const BTN_QUIET = `${BTN} border border-brand-divider bg-brand-card text-brand-text hover:bg-brand-secondary`
+const BTN_ICON =
+    "inline-flex h-10 w-10 items-center justify-center rounded-xl border border-brand-divider bg-brand-card text-brand-text shadow-xs transition-all hover:bg-brand-secondary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-outline"
+
+const ROW_ICONS: Record<ProfileMenuRowKey, ReactNode> = {
+    copy_link: <Link2 className="h-4 w-4" aria-hidden />,
+    mute: <VolumeX className="h-4 w-4" aria-hidden />,
+    unmute: <Volume2 className="h-4 w-4" aria-hidden />,
+    block: <Shield className="h-4 w-4" aria-hidden />,
+    unblock: <ShieldOff className="h-4 w-4" aria-hidden />,
+    report: <Flag className="h-4 w-4" aria-hidden />,
 }
 
 export function ProfileActions({
     isOwn,
-    relationship,
+    signedIn,
     username,
-    displayName,
+    followState,
+    followBusy = false,
+    blocked,
     isMuted = false,
     onFollow,
     onUnfollow,
-    onSendConnectionRequest,
-    onAcceptConnectionRequest,
-    onDeclineConnectionRequest,
-    onCancelConnectionRequest,
-    onRemoveConnection,
     onEditProfile,
-    onMessage,
+    onShare,
+    onCopyLink,
     onBlock,
     onUnblock,
     onMute,
     onUnmute,
+    onReport,
+    settingsHref = "/settings",
+    signInHref = "/login",
+    messageSlot,
+    connectionSlot,
+    defaultMenuOpen = false,
 }: ProfileActionsProps) {
-    const [menuOpen, setMenuOpen] = useState(false)
+    const [menuOpen, setMenuOpen] = useState(defaultMenuOpen)
     const menuRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLButtonElement>(null)
+    const rows = profileMenuRows({ isOwn, signedIn, blocked, isMuted })
 
-    const handleClickOutside = useCallback(
-        (e: MouseEvent) => {
-            if (
-                menuRef.current &&
-                !menuRef.current.contains(e.target as Node) &&
-                buttonRef.current &&
-                !buttonRef.current.contains(e.target as Node)
-            ) {
-                setMenuOpen(false)
-            }
-        },
-        []
-    )
+    const items = () =>
+        Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [])
+
+    const closeMenu = useCallback((refocus: boolean) => {
+        setMenuOpen(false)
+        if (refocus) buttonRef.current?.focus()
+    }, [])
 
     useEffect(() => {
-        if (menuOpen) {
-            document.addEventListener("mousedown", handleClickOutside)
+        if (!menuOpen) return
+        const onDown = (e: MouseEvent) => {
+            const t = e.target as Node
+            if (menuRef.current?.contains(t) || buttonRef.current?.contains(t)) return
+            setMenuOpen(false)
         }
-        return () => document.removeEventListener("mousedown", handleClickOutside)
-    }, [menuOpen, handleClickOutside])
+        document.addEventListener("mousedown", onDown)
+        return () => document.removeEventListener("mousedown", onDown)
+    }, [menuOpen])
 
-    const handleCopyLink = useCallback(() => {
-        const url = `${window.location.origin}/u/${username}`
-        navigator.clipboard.writeText(url).catch(() => {})
-        setMenuOpen(false)
-    }, [username])
+    // Opening moves focus to the first item.
+    useEffect(() => {
+        if (menuOpen) items()[0]?.focus()
+    }, [menuOpen])
 
-    // Self view
+    const onTriggerKey = (e: KeyboardEvent<HTMLButtonElement>) => {
+        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+            e.preventDefault()
+            setMenuOpen(true)
+        }
+    }
+
+    const onMenuKey = (e: KeyboardEvent<HTMLDivElement>) => {
+        const list = items()
+        const at = list.indexOf(document.activeElement as HTMLButtonElement)
+        if (e.key === "Escape") {
+            e.preventDefault()
+            closeMenu(true)
+        } else if (e.key === "ArrowDown") {
+            e.preventDefault()
+            list[(at + 1) % list.length]?.focus()
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault()
+            list[(at - 1 + list.length) % list.length]?.focus()
+        } else if (e.key === "Home") {
+            e.preventDefault()
+            list[0]?.focus()
+        } else if (e.key === "End") {
+            e.preventDefault()
+            list[list.length - 1]?.focus()
+        } else if (e.key === "Tab") {
+            closeMenu(false)
+        }
+    }
+
+    const handlers: Record<ProfileMenuRowKey, (() => void) | undefined> = {
+        copy_link: onCopyLink,
+        mute: onMute,
+        unmute: onUnmute,
+        block: onBlock,
+        unblock: onUnblock,
+        report: onReport,
+    }
+
+    const shareButton = (
+        <button type="button" onClick={onShare} className={BTN_QUIET} aria-label="Share profile">
+            <Share2 className="h-4 w-4" aria-hidden />
+            <span>Share</span>
+        </button>
+    )
+
     if (isOwn) {
         return (
-            <div className="flex gap-2">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onEditProfile}
-                    className="rounded-xl border-brand-divider hover:border-brand-text/20 hover:bg-brand-text/5 text-sm font-semibold"
-                >
-                    <Settings className="mr-2 h-4 w-4" />
-                    Edit Profile
-                </Button>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleCopyLink}
-                    className="rounded-xl"
-                >
-                    <Share2 className="h-4 w-4" />
-                </Button>
+            <div className="flex flex-wrap items-center justify-center gap-2 md:justify-end" data-testid="profile-actions-owner">
+                <button type="button" onClick={onEditProfile} className={BTN_PRIMARY}>
+                    <Pencil className="h-4 w-4" aria-hidden />
+                    Edit profile
+                </button>
+                {shareButton}
+                <Link href={settingsHref} className={BTN_ICON} aria-label="Settings" title="Settings">
+                    <Settings className="h-4 w-4" aria-hidden />
+                </Link>
             </div>
         )
     }
 
-    const isFollowing = relationship?.following ?? false
-    const status = relationship?.connection_status
-    const isConnected = relationship?.is_connection || status === "accepted"
-    const requestSent = status === "pending_sent"
-    const requestReceived = status === "pending_received"
-    const isBlocked = relationship?.blocked ?? false
-    const canDM = relationship?.can_dm ?? false
-
-    // Blocked state
-    if (isBlocked) {
-        return (
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={onUnblock}
-                className="rounded-xl border-red-200 text-red-600 hover:bg-red-50"
-            >
-                <ShieldOff className="mr-2 h-4 w-4" />
-                Unblock
-            </Button>
-        )
+    const followLabel = FOLLOW_BUTTON_LABELS[followState]
+    let followButton: ReactNode = null
+    if (!blocked) {
+        if (!signedIn) {
+            followButton = (
+                <Link href={signInHref} className={BTN_PRIMARY}>
+                    <UserPlus className="h-4 w-4" aria-hidden />
+                    Follow
+                </Link>
+            )
+        } else if (followState === "following") {
+            followButton = (
+                <button
+                    type="button"
+                    onClick={onUnfollow}
+                    disabled={followBusy}
+                    aria-pressed="true"
+                    aria-label={`Following @${username}. Unfollow`}
+                    className={BTN_QUIET}
+                >
+                    <UserCheck className="h-4 w-4" aria-hidden />
+                    {followLabel}
+                </button>
+            )
+        } else if (followState === "requested") {
+            followButton = (
+                <button type="button" disabled aria-disabled="true" title="Follow request sent" className={BTN_QUIET}>
+                    <Clock className="h-4 w-4" aria-hidden />
+                    {followLabel}
+                </button>
+            )
+        } else {
+            followButton = (
+                <button type="button" onClick={onFollow} disabled={followBusy} aria-pressed="false" className={BTN_PRIMARY}>
+                    <UserPlus className="h-4 w-4" aria-hidden />
+                    {followLabel}
+                </button>
+            )
+        }
     }
-
-    // Build overflow menu
-    const menuItems: MenuItem[] = []
-
-    if (isFollowing) {
-        menuItems.push({
-            label: `Unfollow @${username}`,
-            icon: <UserMinus className="h-4 w-4" />,
-            onClick: () => { setMenuOpen(false); onUnfollow() },
-        })
-    }
-
-    if (!isConnected && !requestSent) {
-        menuItems.push({
-            label: "Connect",
-            icon: <Users className="h-4 w-4" />,
-            onClick: () => { setMenuOpen(false); onSendConnectionRequest() },
-        })
-    }
-
-    if (isConnected) {
-        menuItems.push({
-            label: "Remove connection",
-            icon: <Users className="h-4 w-4" />,
-            onClick: () => { setMenuOpen(false); onRemoveConnection() },
-            destructive: true,
-        })
-    }
-
-    // Divider before Tune
-    menuItems.push({ label: "divider", icon: null, onClick: () => {}, divider: true })
-
-    // Tune section
-    menuItems.push({
-        label: `Not interested in this creator`,
-        icon: <EyeOff className="h-4 w-4" />,
-        onClick: () => setMenuOpen(false),
-    })
-    menuItems.push({
-        label: `Show less from ${displayName || username}`,
-        icon: <MinusCircle className="h-4 w-4" />,
-        onClick: () => setMenuOpen(false),
-    })
-
-    if (isMuted) {
-        menuItems.push({
-            label: `Unmute @${username}`,
-            icon: <Volume2 className="h-4 w-4" />,
-            onClick: () => { setMenuOpen(false); onUnmute?.() },
-        })
-    } else {
-        menuItems.push({
-            label: `Mute @${username}`,
-            icon: <VolumeX className="h-4 w-4" />,
-            onClick: () => { setMenuOpen(false); onMute?.() },
-        })
-    }
-
-    // Divider before destructive actions
-    menuItems.push({ label: "divider", icon: null, onClick: () => {}, divider: true })
-
-    menuItems.push({
-        label: `Block @${username}`,
-        icon: <Shield className="h-4 w-4" />,
-        onClick: () => { setMenuOpen(false); onBlock?.() },
-        destructive: true,
-    })
-    menuItems.push({
-        label: "Report",
-        icon: <Flag className="h-4 w-4" />,
-        onClick: () => setMenuOpen(false),
-        destructive: true,
-    })
-    menuItems.push({
-        label: "Copy profile link",
-        icon: <Link2 className="h-4 w-4" />,
-        onClick: handleCopyLink,
-    })
 
     return (
-        <div className="space-y-2">
-            <div className="flex gap-2 flex-wrap">
-                {/* Follow */}
-                <Button
-                    onClick={isFollowing ? onUnfollow : onFollow}
-                    variant={isFollowing ? "outline" : "default"}
-                    size="sm"
-                    className={`rounded-xl text-sm font-semibold ${
-                        isFollowing
-                            ? "border-brand-text/30 text-brand-text hover:bg-brand-text/5"
-                            : "bg-brand-text hover:bg-brand-text text-white"
-                    }`}
+        <div className="flex flex-wrap items-center justify-center gap-2 md:justify-end" data-testid="profile-actions-visitor">
+            {followButton}
+            {!blocked ? connectionSlot : null}
+            {!blocked ? messageSlot : null}
+            {shareButton}
+            <div className="relative">
+                <button
+                    ref={buttonRef}
+                    type="button"
+                    aria-label="More actions"
+                    aria-haspopup="menu"
+                    aria-expanded={menuOpen}
+                    aria-controls="profile-actions-menu"
+                    onClick={() => setMenuOpen((v) => !v)}
+                    onKeyDown={onTriggerKey}
+                    className={BTN_ICON}
                 >
-                    {isFollowing ? (
-                        <>
-                            <UserCheck className="mr-1.5 h-4 w-4" />
-                            Following
-                        </>
-                    ) : (
-                        <>
-                            <UserPlus className="mr-1.5 h-4 w-4" />
-                            Follow
-                        </>
-                    )}
-                </Button>
-
-                <FriendRequestButton
-                allowSend={false}
-                    targetUserId={username ?? ""}
-                    targetUsername={username}
-                    relationship={relationship}
-                    className="inline-flex h-8 items-center justify-center gap-1 rounded-xl border border-brand-divider px-3 text-sm font-semibold text-brand-text transition-all hover:border-brand-text/20 hover:bg-brand-text/5 disabled:opacity-50"
-                    sentClassName="border-amber-200 text-amber-600 hover:bg-amber-50"
-                    friendClassName="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                    acceptClassName="inline-flex h-8 items-center justify-center rounded-xl bg-emerald-600 px-3 text-sm font-semibold text-white transition-all hover:bg-emerald-700 disabled:opacity-50"
-                    declineClassName="inline-flex h-8 items-center justify-center rounded-xl border border-brand-divider px-3 text-sm font-semibold transition-all hover:bg-brand-text/5 disabled:opacity-50"
-                    onFriendsClick={() => setMenuOpen(true)}
-                />
-
-                {/* Message */}
-                <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={!canDM}
-                    onClick={canDM ? onMessage : undefined}
-                    className={`rounded-xl text-sm font-semibold ${
-                        canDM
-                            ? "border-brand-divider text-brand-text hover:border-brand-text/20 hover:bg-brand-text/5"
-                            : "opacity-40 cursor-not-allowed"
-                    }`}
-                    title={canDM ? "Send message" : "Connect first"}
-                >
-                    {!canDM && <Lock className="mr-1 h-3 w-3" />}
-                    <MessageSquare className="h-4 w-4" />
-                </Button>
-
-                {/* More */}
-                <div className="relative">
-                    <Button
-                        ref={buttonRef}
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setMenuOpen((p) => !p)}
-                        className="rounded-xl"
+                    <MoreHorizontal className="h-4 w-4" aria-hidden />
+                </button>
+                {menuOpen ? (
+                    <div
+                        ref={menuRef}
+                        id="profile-actions-menu"
+                        role="menu"
+                        aria-label={`Actions for @${username}`}
+                        onKeyDown={onMenuKey}
+                        className="absolute right-0 top-full z-50 mt-1 w-56 overflow-hidden rounded-xl border border-brand-divider bg-brand-card py-1 shadow-lg"
                     >
-                        <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-
-                    <AnimatePresence>
-                        {menuOpen && (
-                            <motion.div
-                                ref={menuRef}
-                                initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                                transition={{ duration: 0.12 }}
-                                className="absolute right-0 top-full mt-1 z-50 w-64 rounded-xl bg-brand-card border border-brand-divider shadow-lg py-1 overflow-hidden"
+                        {rows.map((row) => (
+                            <button
+                                key={row.key}
+                                type="button"
+                                role="menuitem"
+                                tabIndex={-1}
+                                data-row={row.key}
+                                onClick={() => {
+                                    closeMenu(false)
+                                    handlers[row.key]?.()
+                                }}
+                                className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors focus-visible:outline-hidden focus-visible:bg-brand-secondary ${
+                                    row.destructive ? "text-danger hover:bg-brand-secondary" : "text-brand-text hover:bg-brand-secondary"
+                                }`}
                             >
-                                {/* Tune header */}
-                                <div className="px-4 py-2 flex items-center gap-2 text-[10px] font-bold tracking-wider text-brand-text/60">
-                                    <SlidersHorizontal className="w-3 h-3" />
-                                    More Actions
-                                </div>
-                                {menuItems.map((item, i) => {
-                                    if (item.divider) {
-                                        return <div key={i} className="my-1 border-t border-brand-divider" />
-                                    }
-                                    return (
-                                        <button
-                                            key={i}
-                                            onClick={item.onClick}
-                                            className={`flex items-center gap-3 w-full px-4 py-2.5 text-sm transition-colors ${
-                                                item.destructive
-                                                    ? "text-red-600 hover:bg-red-50"
-                                                    : "text-brand-text hover:bg-brand-secondary"
-                                            }`}
-                                        >
-                                            {item.icon}
-                                            {item.label}
-                                        </button>
-                                    )
-                                })}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
+                                {ROW_ICONS[row.key]}
+                                {row.label}
+                            </button>
+                        ))}
+                    </div>
+                ) : null}
             </div>
-
-            {!canDM && (
-                <p className="text-xs text-brand-text/60">
-                    Connect with {displayName || username} to unlock messaging
-                </p>
-            )}
         </div>
     )
 }

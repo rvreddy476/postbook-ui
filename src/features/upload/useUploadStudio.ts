@@ -22,7 +22,7 @@ import {
   updateVideoTrim,
 } from "@/features/posttube/data/posttubeApi";
 
-import { STEP_SCHEMAS, CONTENT_TYPE_META, type ContentType, type StepId } from "./tokens";
+import { STEP_SCHEMAS, CONTENT_TYPE_META, FLICK_MAX_DURATION_SECONDS, type ContentType, type StepId } from "./tokens";
 import { getPublishDefaults } from "@/features/posttube/hub";
 import { chapterRowsToWire } from "@/features/posttube/hub/chaptersModel";
 
@@ -30,8 +30,9 @@ import { type FollowUpFailure, type StudioFormState, INITIAL_FORM_STATE } from "
 import { validateSelectedFile, validateMediaDuration } from "./fileRules";
 import { freshStudioForm, mergePublishDefaults, takesPublishDefaults } from "./studioDefaults";
 import { applySeriesChoice, saveUploadChapters, studioCreateFields } from "./studioApi";
-import { soundToAudioTrack, studioDraftSoundFields, studioSoundNotice, studioSoundStatus } from "./studioSound";
+import { chosenSoundPatch, soundToAudioTrack, studioDraftSoundFields, studioSoundNotice, studioSoundStatus } from "./studioSound";
 import { useSoundInfo } from "@/features/reels/hooks/useSounds";
+import type { SoundInfo } from "@/features/reels/sounds";
 
 /* ── Constants ─────────────────────────────────────────── */
 
@@ -67,19 +68,22 @@ function mergeHashtags(chips: string[], caption: string): string[] {
 }
 
 /**
- * Classify video per spec v2.1:
- * - Flick: duration ≤ 180s AND (portrait OR square)
- * - LongVideo: duration > 180s (any orientation) OR landscape (any duration)
+ * Classify video per spec v2.1, mirroring postclassify.Classify on the server:
+ * - Flick: 0 < duration ≤ 300s (exactly 300s is a flick) AND portrait or
+ *   square (height ≥ width)
+ * - LongVideo: duration > 300s (any orientation), landscape (any duration),
+ *   or an unknown/zero duration or dimension (the server's safe default)
  */
 export function classifyVideo(
   durationSec: number | null,
   width: number | null,
   height: number | null,
 ): "flick" | "long_video" {
-  if (durationSec == null) return "long_video";
-  const isLandscape = (width ?? 0) > (height ?? 0);
-  if (durationSec <= 180 && !isLandscape) return "flick";
-  return "long_video";
+  if (durationSec == null || !(durationSec > 0)) return "long_video";
+  if (width == null || height == null || !(width > 0) || !(height > 0)) return "long_video";
+  if (durationSec > FLICK_MAX_DURATION_SECONDS) return "long_video";
+  if (height < width) return "long_video";
+  return "flick";
 }
 
 /** Extract a single frame from a local video as a JPEG data URL. Client-side only. */
@@ -166,6 +170,15 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
   const removeSound = useCallback(() => {
     patch({ audioTrack: null, audioStartMs: 0, overlayAudioVolume: INITIAL_FORM_STATE.overlayAudioVolume });
   }, [patch]);
+
+  /* A sound chosen in the Audio section's picker: the same form fields the
+   * ?sound= lookup writes, from the sound's start. A library sound arrives
+   * here already turned into its audio_tracks id. */
+  const chooseSound = useCallback((sound: SoundInfo) => {
+    // A choice made here wins over an address sound still being looked up.
+    appliedSoundRef.current = soundId;
+    patch(chosenSoundPatch(sound));
+  }, [patch, soundId]);
 
   /* ── File selection ──────────────────────────────── */
 
@@ -748,6 +761,7 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
     clearFile,
     sound: { status: soundStatus, notice: studioSoundNotice(soundStatus) },
     removeSound,
+    chooseSound,
     uploadMutation,
     extractCoverPreview,
     selectCustomCover,
