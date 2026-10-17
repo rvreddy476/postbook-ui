@@ -5,7 +5,9 @@ import { resolve } from "node:path";
 import {
   isNavItemCurrent,
   videoNav,
+  REELS_MORE_LOGOUT,
   REELS_MORE_PANEL,
+  REELS_MORE_THEME,
   REELS_NAV_APPS,
   REELS_NAV_MORE,
   REELS_NAV_TOP,
@@ -180,8 +182,8 @@ describe("videoNav (reels, sidebar chrome)", () => {
     expect(hrefs).not.toContain("/");
     expect(hrefs).not.toContain("/posttube");
     expect(hrefs).not.toContain("/reels/liked");
-    const apps = REELS_MORE_PANEL.find((s) => s.key === "apps")!;
-    expect(apps.items.map((i) => i.href ?? i.action)).toEqual(["/", "/posttube", "/reels/liked", "/posttube/offline", "explore"]);
+    const panel = REELS_MORE_PANEL.flatMap((s) => s.items.map((i) => i.href ?? i.action));
+    for (const href of ["/", "/posttube", "/reels/liked", "/posttube/offline", "explore"]) expect(panel).toContain(href);
   });
 
   test("the footer reads Terms & Policies · Privacy, then © 2026 VChat, and stays out of the rail", () => {
@@ -205,10 +207,7 @@ describe("videoNav (reels, sidebar chrome)", () => {
       listTop: 128,
       rowHeight: 40,
       rowGap: 4,
-      moreRowHeight: 48,
-      themeRowHeight: 60,
-      segmentWidth: 32,
-      segmentHeight: 25,
+      moreRowHeight: 44,
       footerPadding: 24,
     });
     const m = REELS_SIDEBAR_METRICS;
@@ -241,24 +240,32 @@ describe("videoNav (reels, sidebar chrome)", () => {
     expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__footer-links a { font-size: 12px; font-weight: 600; color: rgb(var(--brand-text) / .5); }');
     expect(css).toContain(".video-nav__column { display: flex; flex: 0 0 72px; width: 72px;");
     expect(css).toContain(".video-nav.is-more .video-more { flex: 0 0 320px; width: 320px;");
-    expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-more .video-nav__item { height: 48px; padding: 0 16px; gap: 12px; border-radius: 0; font-size: 15px; font-weight: 500;');
-    expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-more .video-nav__heading { margin: 0; padding: 8px 16px 4px; font-size: 14px; font-weight: 400;');
-    expect(css).toContain("height: 60px; padding: 0 16px; }");
-    expect(css).toContain("grid-template-columns: repeat(3, 32px)");
-    expect(css).toContain("width: 32px; height: 25px;");
+    expect(css).toContain(".video-more__row { display: flex; width: 100%; height: 44px;");
+    expect(css).toContain(".video-more__tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));");
+    expect(css).toContain(".video-more__segmented { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));");
   });
 });
 
 describe("REELS_MORE_PANEL", () => {
-  test("Settings / Tools / Apps / Other, in that order, with the rows the screenshot shows", () => {
-    expect(REELS_MORE_PANEL.map((s) => [s.key, s.title])).toEqual([
-      ["settings", "Settings"], ["tools", "Tools"], ["apps", "Apps"], ["other", "Other"],
+  test("Apps as tiles, then Create / Your activity / Settings & privacy as lists", () => {
+    expect(REELS_MORE_PANEL.map((s) => [s.key, s.title, s.layout])).toEqual([
+      ["apps", "Apps", "tiles"], ["create", "Create", "list"], ["activity", "Your activity", "list"], ["settings", "Settings & privacy", "list"],
     ]);
     const rows = Object.fromEntries(REELS_MORE_PANEL.map((s) => [s.key, s.items.map((i) => [i.label, i.href ?? i.action])]));
-    expect(rows.settings).toEqual([["General", "/settings"], ["Dark mode", "theme"]]);
-    expect(rows.tools).toEqual([["Upload", "/reels/create"], ["Your channel", "/posttube/channel"], ["Creator Hub", "/posttube/hub"], ["LIVE tools", "/live"]]);
-    expect(rows.apps).toEqual([["Home", "/"], ["PostTube", "/posttube"], ["Liked reels", "/reels/liked"], ["Offline", "/posttube/offline"], ["Explore", "explore"]]);
-    expect(rows.other).toEqual([["Log out", "logout"]]);
+    expect(rows.apps).toEqual([["Home", "/"], ["PostTube", "/posttube"], ["Explore", "explore"], ["Groups", "/groups"]]);
+    expect(rows.create).toEqual([["Upload", "/reels/create"], ["LIVE tools", "/live"], ["Creator Hub", "/posttube/hub"], ["Your channel", "/posttube/channel"]]);
+    expect(rows.activity).toEqual([["Liked reels", "/reels/liked"], ["Saved", "/saved"], ["Watch history", "/posttube/history"], ["Offline", "/posttube/offline"]]);
+    expect(rows.settings).toEqual([["Settings", "/settings"], ["Notifications", "/settings/notifications"], ["Privacy", "/settings/privacy"], ["Time & wellbeing", "/settings/wellbeing"]]);
+    expect([REELS_MORE_THEME.action, REELS_MORE_LOGOUT.action]).toEqual(["theme", "logout"]);
+  });
+
+  test("the panel draws only its own classes, so the rail's hidden-label rule cannot reach it (founder screenshot, 17 Oct)", () => {
+    const src = readFileSync(resolve(import.meta.dir, "../VideoMorePanel.tsx"), "utf8");
+    // Beside the 72px rail, ".is-rail .video-nav__label { display: none }" hid every label.
+    expect(src).not.toMatch(/["'`\s]video-nav__(label|item|list|section|heading)/);
+    const css = readFileSync(resolve(import.meta.dir, "../video-shell.css"), "utf8");
+    expect(css).not.toMatch(/is-rail[^{]*\.video-more/);
+    expect(css).toContain(".video-more__label { flex: 1 1 auto;");
   });
 
   test("every footer and More-panel link resolves to a page under src/app — no dead Help or About", () => {
@@ -346,8 +353,8 @@ describe("shell parity (audit T-33)", () => {
     expect(routeExists("/shop")).toBe(true);
   });
 
-  test("Creator Hub is in the More panel's Tools, linking to the PostTube hub page", () => {
-    const tools = REELS_MORE_PANEL.find((s) => s.key === "tools")!.items;
+  test("Creator Hub is in the More panel's Create list, linking to the PostTube hub page", () => {
+    const tools = REELS_MORE_PANEL.find((s) => s.key === "create")!.items;
     const hub = tools.find((i) => i.key === "hub")!;
     expect([hub.label, hub.href]).toEqual(["Creator Hub", "/posttube/hub"]);
     expect(routeExists("/posttube/hub")).toBe(true);

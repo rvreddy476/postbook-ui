@@ -1,6 +1,7 @@
 import {
   ArrowDownToLine,
   Bell,
+  Bookmark,
   CalendarClock,
   CircleUserRound,
   Clapperboard,
@@ -11,10 +12,12 @@ import {
   Heart,
   History,
   Home,
+  Hourglass,
   LayoutDashboard,
   LayoutGrid,
   ListPlus,
   ListVideo,
+  Lock,
   LogOut,
   MessageSquare,
   Moon,
@@ -175,8 +178,8 @@ export const REELS_SIDEBAR_COPYRIGHT = "© 2026 VChat";
  * is 240 wide; the rail 72 (icons only); the More panel opens as a 320px
  * panel beside the rail (392 in all). Nav rows are 40px tall with a 4px gap
  * (44 pitch), starting 24px under the 40px search pill at y 64, which puts
- * every row within 5px of TikTok's. More-panel rows are 48px; its Dark
- * mode row is 60px with three 32×25 segments.
+ * every row within 5px of TikTok's. The More panel's own rows (44px, in
+ * grouped cards) are drawn by video-shell.css; see VideoMorePanel.
  */
 export const REELS_SIDEBAR_METRICS = {
   expandedWidth: 240,
@@ -189,10 +192,7 @@ export const REELS_SIDEBAR_METRICS = {
   listTop: 128,
   rowHeight: 40,
   rowGap: 4,
-  moreRowHeight: 48,
-  themeRowHeight: 60,
-  segmentWidth: 32,
-  segmentHeight: 25,
+  moreRowHeight: 44,
   footerPadding: 24,
 } as const;
 
@@ -236,50 +236,71 @@ export interface MorePanelItem {
 }
 
 export interface MorePanelSection {
-  key: "settings" | "tools" | "apps" | "other";
+  key: "apps" | "create" | "activity" | "settings";
   title: string;
+  /** "tiles": a grid of app tiles; "list": rows with a chevron. */
+  layout: "tiles" | "list";
   items: MorePanelItem[];
 }
 
-/** The More panel, section by section, as TikTok's reads. Pure data. */
+/*
+  The More panel (rebuilt 2026-10-17 from the founder's screenshot: beside
+  the icon rail it showed icons only, the rail's label rule reaching into
+  it). Our own layout: a profile row, the apps as tiles, grouped lists,
+  then the appearance switch and Log out at the foot (drawn by
+  VideoMorePanel from REELS_MORE_THEME / REELS_MORE_LOGOUT). Every link is
+  a page that exists (nav.test.ts checks it). Pure data.
+*/
 export const REELS_MORE_PANEL: readonly MorePanelSection[] = [
-  {
-    key: "settings",
-    title: "Settings",
-    items: [
-      { key: "general", label: "General", icon: Settings, href: "/settings" },
-      { key: "theme", label: "Dark mode", icon: Moon, action: "theme" },
-    ],
-  },
-  {
-    key: "tools",
-    title: "Tools",
-    items: [
-      { key: "upload", label: "Upload", icon: Upload, href: "/reels/create" },
-      { key: "channel", label: "Your channel", icon: UserRound, href: "/posttube/channel" },
-      { key: "hub", label: "Creator Hub", icon: LayoutDashboard, href: "/posttube/hub" },
-      { key: "live-tools", label: "LIVE tools", icon: Radio, href: "/live" },
-    ],
-  },
   {
     key: "apps",
     title: "Apps",
+    layout: "tiles",
     items: [
       { key: "home", label: "Home", icon: LayoutGrid, href: "/" },
       { key: "tube", label: "PostTube", icon: Tv, href: "/posttube" },
-      { key: "liked", label: "Liked reels", icon: ThumbsUp, href: "/reels/liked" },
-      { key: "offline", label: "Offline", icon: ArrowDownToLine, href: "/posttube/offline" },
       { key: "explore", label: "Explore", icon: Compass, action: "explore" },
+      { key: "groups", label: "Groups", icon: Users, href: "/groups" },
     ],
   },
   {
-    key: "other",
-    title: "Other",
+    key: "create",
+    title: "Create",
+    layout: "list",
     items: [
-      { key: "logout", label: "Log out", icon: LogOut, action: "logout" },
+      { key: "upload", label: "Upload", icon: Upload, href: "/reels/create" },
+      { key: "live-tools", label: "LIVE tools", icon: Radio, href: "/live" },
+      { key: "hub", label: "Creator Hub", icon: LayoutDashboard, href: "/posttube/hub" },
+      { key: "channel", label: "Your channel", icon: UserRound, href: "/posttube/channel" },
+    ],
+  },
+  {
+    key: "activity",
+    title: "Your activity",
+    layout: "list",
+    items: [
+      { key: "liked", label: "Liked reels", icon: ThumbsUp, href: "/reels/liked" },
+      { key: "saved", label: "Saved", icon: Bookmark, href: "/saved" },
+      { key: "history", label: "Watch history", icon: History, href: "/posttube/history" },
+      { key: "offline", label: "Offline", icon: ArrowDownToLine, href: "/posttube/offline" },
+    ],
+  },
+  {
+    key: "settings",
+    title: "Settings & privacy",
+    layout: "list",
+    items: [
+      { key: "general", label: "Settings", icon: Settings, href: "/settings" },
+      { key: "notifications", label: "Notifications", icon: Bell, href: "/settings/notifications" },
+      { key: "privacy", label: "Privacy", icon: Lock, href: "/settings/privacy" },
+      { key: "wellbeing", label: "Time & wellbeing", icon: Hourglass, href: "/settings/wellbeing" },
     ],
   },
 ];
+
+/** The appearance switch and Log out, drawn at the panel's foot. */
+export const REELS_MORE_THEME: MorePanelItem = { key: "theme", label: "Appearance", icon: Moon, action: "theme" };
+export const REELS_MORE_LOGOUT: MorePanelItem = { key: "logout", label: "Log out", icon: LogOut, action: "logout" };
 
 /**
  * Whether a link is the current page. Exact match, or the pathname sits
