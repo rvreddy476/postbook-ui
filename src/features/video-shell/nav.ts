@@ -50,9 +50,10 @@ import {
   For You / Explore / Following / Friends / LIVE / Shop / Messages /
   Activity / Upload / Profile (Shop is MStore at /shop, audit T-33). Under the "sidebar" chrome (search in the menu, no
   header) the list ends with "More", which opens a panel beside the icon
-  rail holding the way back to Home, PostTube and Liked reels, the theme
-  switch and log out — under the "header" chrome those live in a divider
-  group instead. Keeping it pure — no hooks, no pathname — is what lets
+  rail holding the way back to Home, PostTube and Liked reels and one
+  "Settings & privacy" row (the theme switch and Log out are on /settings)
+  — under the "header" chrome the app links live in a divider group
+  instead. Keeping it pure — no hooks, no pathname — is what lets
   the tests pin the lists down.
 */
 
@@ -220,12 +221,8 @@ export function videoNav(app: VideoApp, chrome: VideoChrome = "header"): VideoNa
 
 /* ---- the More panel --------------------------------------------------- */
 
-/**
- * What a More-panel row does when it is not a link: open the Explore
- * launcher, show the theme switch (a row with its own control, no click),
- * or log out.
- */
-export type MorePanelAction = "explore" | "theme" | "logout";
+/** What a More-panel row does when it is not a link: open the Explore launcher. */
+export type MorePanelAction = "explore";
 
 export interface MorePanelItem {
   key: string;
@@ -236,7 +233,7 @@ export interface MorePanelItem {
 }
 
 export interface MorePanelSection {
-  key: "apps" | "create" | "activity" | "settings";
+  key: "apps" | "activity" | "creator";
   title: string;
   /** "tiles": a grid of app tiles; "list": rows with a chevron. */
   layout: "tiles" | "list";
@@ -244,12 +241,14 @@ export interface MorePanelSection {
 }
 
 /*
-  The More panel (rebuilt 2026-10-17 from the founder's screenshot: beside
-  the icon rail it showed icons only, the rail's label rule reaching into
-  it). Our own layout: a profile row, the apps as tiles, grouped lists,
-  then the appearance switch and Log out at the foot (drawn by
-  VideoMorePanel from REELS_MORE_THEME / REELS_MORE_LOGOUT). Every link is
-  a page that exists (nav.test.ts checks it). Pure data.
+  The More panel is the short first level (founder's walk of TikTok's
+  Profile menu, 17 Oct; rebuilt the same day after the rail's label rule
+  reached into it): a profile row, the apps as tiles, two short lists
+  (Your activity, Creator tools), then ONE "Settings & privacy" row
+  (REELS_MORE_SETTINGS) to the /settings page. The settings themselves —
+  notifications, privacy, appearance, Log out — live on that page
+  (src/app/settings/_lib/settingsHub.ts), not here. Every link is a page
+  that exists (nav.test.ts checks it). Pure data.
 */
 export const REELS_MORE_PANEL: readonly MorePanelSection[] = [
   {
@@ -264,17 +263,6 @@ export const REELS_MORE_PANEL: readonly MorePanelSection[] = [
     ],
   },
   {
-    key: "create",
-    title: "Create",
-    layout: "list",
-    items: [
-      { key: "upload", label: "Upload", icon: Upload, href: "/reels/create" },
-      { key: "live-tools", label: "LIVE tools", icon: Radio, href: "/live" },
-      { key: "hub", label: "Creator Hub", icon: LayoutDashboard, href: "/posttube/hub" },
-      { key: "channel", label: "Your channel", icon: UserRound, href: "/posttube/channel" },
-    ],
-  },
-  {
     key: "activity",
     title: "Your activity",
     layout: "list",
@@ -286,21 +274,20 @@ export const REELS_MORE_PANEL: readonly MorePanelSection[] = [
     ],
   },
   {
-    key: "settings",
-    title: "Settings & privacy",
+    key: "creator",
+    title: "Creator tools",
     layout: "list",
     items: [
-      { key: "general", label: "Settings", icon: Settings, href: "/settings" },
-      { key: "notifications", label: "Notifications", icon: Bell, href: "/settings/notifications" },
-      { key: "privacy", label: "Privacy", icon: Lock, href: "/settings/privacy" },
-      { key: "wellbeing", label: "Time & wellbeing", icon: Hourglass, href: "/settings/wellbeing" },
+      { key: "hub", label: "Creator Hub", icon: LayoutDashboard, href: "/posttube/hub" },
+      { key: "upload", label: "Upload", icon: Upload, href: "/reels/create" },
+      { key: "live-tools", label: "LIVE tools", icon: Radio, href: "/live" },
+      { key: "channel", label: "Your channel", icon: UserRound, href: "/posttube/channel" },
     ],
   },
 ];
 
-/** The appearance switch and Log out, drawn at the panel's foot. */
-export const REELS_MORE_THEME: MorePanelItem = { key: "theme", label: "Appearance", icon: Moon, action: "theme" };
-export const REELS_MORE_LOGOUT: MorePanelItem = { key: "logout", label: "Log out", icon: LogOut, action: "logout" };
+/** The one row under the lists: the way to the full settings page. */
+export const REELS_MORE_SETTINGS: MorePanelItem = { key: "settings", label: "Settings & privacy", icon: Settings, href: "/settings" };
 
 /**
  * Whether a link is the current page. Exact match, or the pathname sits

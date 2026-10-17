@@ -2,12 +2,13 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
+import { SETTINGS_GROUPS } from "@/app/settings/_lib/settingsHub";
+
 import {
   isNavItemCurrent,
   videoNav,
-  REELS_MORE_LOGOUT,
   REELS_MORE_PANEL,
-  REELS_MORE_THEME,
+  REELS_MORE_SETTINGS,
   REELS_NAV_APPS,
   REELS_NAV_MORE,
   REELS_NAV_TOP,
@@ -242,21 +243,34 @@ describe("videoNav (reels, sidebar chrome)", () => {
     expect(css).toContain(".video-nav.is-more .video-more { flex: 0 0 320px; width: 320px;");
     expect(css).toContain(".video-more__row { display: flex; width: 100%; height: 44px;");
     expect(css).toContain(".video-more__tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));");
-    expect(css).toContain(".video-more__segmented { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));");
+    // The appearance switch and Log out moved to /settings (17 Oct): their rules went with them.
+    expect(css).not.toContain(".video-more__segment");
+    expect(css).not.toContain(".video-more__logout");
   });
 });
 
 describe("REELS_MORE_PANEL", () => {
-  test("Apps as tiles, then Create / Your activity / Settings & privacy as lists", () => {
+  test("the short first level: Apps as tiles, then Your activity and Creator tools as lists", () => {
     expect(REELS_MORE_PANEL.map((s) => [s.key, s.title, s.layout])).toEqual([
-      ["apps", "Apps", "tiles"], ["create", "Create", "list"], ["activity", "Your activity", "list"], ["settings", "Settings & privacy", "list"],
+      ["apps", "Apps", "tiles"], ["activity", "Your activity", "list"], ["creator", "Creator tools", "list"],
     ]);
     const rows = Object.fromEntries(REELS_MORE_PANEL.map((s) => [s.key, s.items.map((i) => [i.label, i.href ?? i.action])]));
     expect(rows.apps).toEqual([["Home", "/"], ["PostTube", "/posttube"], ["Explore", "explore"], ["Groups", "/groups"]]);
-    expect(rows.create).toEqual([["Upload", "/reels/create"], ["LIVE tools", "/live"], ["Creator Hub", "/posttube/hub"], ["Your channel", "/posttube/channel"]]);
     expect(rows.activity).toEqual([["Liked reels", "/reels/liked"], ["Saved", "/saved"], ["Watch history", "/posttube/history"], ["Offline", "/posttube/offline"]]);
-    expect(rows.settings).toEqual([["Settings", "/settings"], ["Notifications", "/settings/notifications"], ["Privacy", "/settings/privacy"], ["Time & wellbeing", "/settings/wellbeing"]]);
-    expect([REELS_MORE_THEME.action, REELS_MORE_LOGOUT.action]).toEqual(["theme", "logout"]);
+    expect(rows.creator).toEqual([["Creator Hub", "/posttube/hub"], ["Upload", "/reels/create"], ["LIVE tools", "/live"], ["Your channel", "/posttube/channel"]]);
+  });
+
+  test("then ONE Settings & privacy row to the settings page; no settings list, theme switch or Log out in the panel", () => {
+    expect([REELS_MORE_SETTINGS.label, REELS_MORE_SETTINGS.href, REELS_MORE_SETTINGS.action]).toEqual(["Settings & privacy", "/settings", undefined]);
+    const hrefs = REELS_MORE_PANEL.flatMap((s) => s.items.map((i) => i.href)).filter(Boolean) as string[];
+    expect(hrefs.filter((h) => h.startsWith("/settings"))).toEqual([]);
+    const src = readFileSync(resolve(import.meta.dir, "../VideoMorePanel.tsx"), "utf8");
+    expect(src).toContain("REELS_MORE_SETTINGS");
+    for (const gone of ["logoutUser", "chooseTheme", "radiogroup", "/api/auth/logout"]) expect(src).not.toContain(gone);
+    // Order in the drawing: profile, the sections, the settings row, the legal line.
+    const order = ["<ProfileRow", "REELS_MORE_PANEL.map", "row(REELS_MORE_SETTINGS)", "video-more__legal"].map((needle) => src.indexOf(needle));
+    for (const i of order) expect(i).toBeGreaterThan(-1);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
   });
 
   test("the panel draws only its own classes, so the rail's hidden-label rule cannot reach it (founder screenshot, 17 Oct)", () => {
@@ -268,12 +282,15 @@ describe("REELS_MORE_PANEL", () => {
     expect(css).toContain(".video-more__label { flex: 1 1 auto;");
   });
 
-  test("every footer and More-panel link resolves to a page under src/app — no dead Help or About", () => {
+  test("every footer, More-panel and settings-page link resolves to a page under src/app — no dead Help or About", () => {
     const pathOf = (href: string) => href.split("?")[0];
     const links = [
       ...VIDEO_NAV_FOOTER,
       ...REELS_SIDEBAR_FOOTER,
       ...REELS_MORE_PANEL.flatMap((s) => s.items),
+      REELS_MORE_SETTINGS,
+      // The /settings page's rows (src/app/settings/_lib/settingsHub.ts).
+      ...SETTINGS_GROUPS.flatMap((g) => g.rows),
       // And every other menu row, under every app and chrome.
       ...videoNav("tube").flatMap((s) => s.items),
       ...videoNav("reels").flatMap((s) => s.items),
@@ -286,12 +303,12 @@ describe("REELS_MORE_PANEL", () => {
   });
 
   test("every row has an icon, a unique key, and exactly one of href or action", () => {
-    const all = REELS_MORE_PANEL.flatMap((s) => s.items);
+    const all = [...REELS_MORE_PANEL.flatMap((s) => s.items), REELS_MORE_SETTINGS];
     expect(new Set(all.map((i) => i.key)).size).toBe(all.length);
     for (const item of all) {
       expect(typeof item.icon).not.toBe("undefined");
       const hasHref = typeof item.href === "string" && item.href.startsWith("/");
-      const hasAction = item.action === "explore" || item.action === "theme" || item.action === "logout";
+      const hasAction = item.action === "explore";
       expect(hasHref !== hasAction).toBe(true);
     }
   });
@@ -353,8 +370,8 @@ describe("shell parity (audit T-33)", () => {
     expect(routeExists("/shop")).toBe(true);
   });
 
-  test("Creator Hub is in the More panel's Create list, linking to the PostTube hub page", () => {
-    const tools = REELS_MORE_PANEL.find((s) => s.key === "create")!.items;
+  test("Creator Hub is in the More panel's Creator tools list, linking to the PostTube hub page", () => {
+    const tools = REELS_MORE_PANEL.find((s) => s.key === "creator")!.items;
     const hub = tools.find((i) => i.key === "hub")!;
     expect([hub.label, hub.href]).toEqual(["Creator Hub", "/posttube/hub"]);
     expect(routeExists("/posttube/hub")).toBe(true);
