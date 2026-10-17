@@ -9,6 +9,11 @@ import { playNotificationSound } from "@/hooks/useNotificationSound"
 import { notificationSseDecoder } from '@/lib/notificationSse'
 import { customerQueryPrefix } from '@/lib/customerTracking'
 import {
+    notificationPresentationFields,
+    type NotificationActorSummary,
+    type NotificationIcon,
+} from '@/lib/notificationPresentation'
+import {
     decodeNotificationSettings,
     type NotificationPatch,
     type NotificationSettings,
@@ -26,6 +31,17 @@ export interface ActivityNotification {
     created_at: string
     bucket?: number        // partition key used for targeted read/delete operations
     ts?: string            // timestamp key used for targeted read/delete operations
+    /** The server's complete sentence for the row; undefined from older servers. */
+    title?: string
+    /** The server's glyph category; undefined from older servers or an unknown key. */
+    icon?: NotificationIcon
+    /** The actor hydrated at read time, when the server sent a usable one. */
+    actor?: NotificationActorSummary
+}
+
+/** One stored row with its presentation fields decoded (absent → undefined). */
+export function normaliseActivityNotification(row: ActivityNotification): ActivityNotification {
+    return { ...row, ...notificationPresentationFields(row) }
 }
 
 interface NotificationsResponse {
@@ -55,10 +71,10 @@ export function useActivityNotifications(limit = 20) {
             } | null
             const payload = body?.data
             if (Array.isArray(payload)) {
-                return { items: payload, next_cursor: null }
+                return { items: payload.map(normaliseActivityNotification), next_cursor: null }
             }
             return {
-                items: payload?.items ?? [],
+                items: (payload?.items ?? []).map(normaliseActivityNotification),
                 next_cursor: payload?.next_cursor ?? null,
             }
         },

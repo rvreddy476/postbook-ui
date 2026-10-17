@@ -24,6 +24,7 @@ import {
 import { useMyGroups } from '@/hooks/useGroups'
 import { useMyBroadcastChannels } from '@/hooks/useBroadcastChannels'
 import { useNotifications } from '@/contexts/NotificationContext'
+import { messengerConversations } from '@/lib/messengerConversations'
 import { useBatchProfiles } from '@/hooks/useProfile'
 import type { User } from '@/types'
 import {
@@ -129,7 +130,7 @@ export default function PostbookMessenger() {
   const loadConversations = useCallback(async () => {
     try {
       const result = await fetchConversations(50)
-      setConversations((result.data ?? []) as Conversation[])
+      setConversations(messengerConversations((result.data ?? []) as Conversation[]))
     } catch (err) {
       console.error('Failed to fetch conversations:', err)
     }
@@ -141,7 +142,7 @@ export default function PostbookMessenger() {
       try {
         const result = await fetchConversations(50)
         if (cancelled) return
-        setConversations((result.data ?? []) as Conversation[])
+        setConversations(messengerConversations((result.data ?? []) as Conversation[]))
       } catch (err) {
         console.error('Failed to fetch conversations:', err)
       }

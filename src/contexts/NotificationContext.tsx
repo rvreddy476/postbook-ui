@@ -9,7 +9,14 @@ import React, {
     useRef,
     useState,
 } from "react"
-import { subscribeToMessages, fetchConversations, fetchMessages, Message } from "@/services/messageService"
+import { subscribeToMessages, fetchConversations, fetchMessages, getConversation, Message } from "@/services/messageService"
+import {
+    datingConversationIds,
+    messengerConversations,
+    messengerUnreadForUser,
+    messengerUnreadTotal,
+    withoutDatingUnread,
+} from "@/lib/messengerConversations"
 import { playNotificationSound } from "@/hooks/useNotificationSound"
 
 /* ------------------------------------------------------------------ */
@@ -92,6 +99,48 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
     // Deduplicate messages — track last 200 message IDs
     const seenIdsRef = useRef<Set<string>>(new Set())
 
+    /*
+      Dating chats (source_app "dating") belong to the dating product, not
+      Messages: they never count toward any messenger unread number. A chat
+      is known to be one from the conversation list, or — for a live message
+      in a conversation the list has not shown — from one lookup by id.
+    */
+    const [datingIds, setDatingIds] = useState<Set<string>>(() => new Set())
+    const datingIdsRef = useRef(datingIds)
+    datingIdsRef.current = datingIds
+    /** conversation id → whether it is a dating chat; "pending" while a lookup runs. */
+    const convKindRef = useRef<Map<string, boolean | "pending">>(new Map())
+
+    const rememberConversations = useCallback((list: readonly { id?: unknown; conversation_id?: unknown; source_app?: unknown }[]) => {
+        const dating = new Set(datingConversationIds(list))
+        for (const c of list) {
+            const id = typeof c.conversation_id === "string" && c.conversation_id ? c.conversation_id : typeof c.id === "string" ? c.id : ""
+            if (id) convKindRef.current.set(id, dating.has(id))
+        }
+        const fresh = [...dating].filter((id) => !datingIdsRef.current.has(id))
+        if (fresh.length === 0) return
+        const next = new Set([...datingIdsRef.current, ...fresh])
+        datingIdsRef.current = next
+        setDatingIds(next)
+        setState((prev) => {
+            const pruned = withoutDatingUnread(prev, next)
+            if (pruned !== prev) persistState(pruned)
+            return pruned
+        })
+    }, [persistState])
+
+    /** A conversation the list never showed: look it up once to learn whether it is a dating chat. */
+    const classifyConversation = useCallback((convId: string) => {
+        if (!convId || convKindRef.current.has(convId)) return
+        convKindRef.current.set(convId, "pending")
+        void getConversation(convId)
+            .then((res) => {
+                const conv = (res?.data ?? res ?? {}) as { id?: unknown; source_app?: unknown }
+                rememberConversations([{ ...conv, id: convId }])
+            })
+            .catch(() => { convKindRef.current.delete(convId) })
+    }, [rememberConversations])
+
     /* ---- Message subscription ---- */
     useEffect(() => {
         const unsub = subscribeToMessages((msg: Message) => {
@@ -107,6 +156,10 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
             }
 
             const convId = msg.conversation_id
+
+            // A dating chat is not Messages: it never counts or maps here.
+            if (datingIdsRef.current.has(convId)) return
+            classifyConversation(convId)
 
             // If conversation is currently viewed (open ChatWindow), auto-mark read
             if (viewedRef.current.has(convId)) {
@@ -141,7 +194,7 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
         })
 
         return unsub
-    }, [currentUserId, soundEnabled, persistState])
+    }, [currentUserId, soundEnabled, persistState, classifyConversation])
 
     /* ---- Offline recovery on mount ---- */
     useEffect(() => {
@@ -152,7 +205,9 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
             try {
                 // background=true: a stale/expired token must NOT force-logout here
                 const convResult = await fetchConversations(50, undefined, true)
-                const conversations = convResult.data ?? []
+                const listed: { id?: string; conversation_id?: string; source_app?: unknown }[] = convResult.data ?? []
+                rememberConversations(listed)
+                const conversations = messengerConversations(listed)
 
                 for (const conv of conversations) {
                     const convId = conv.conversation_id || conv.id
@@ -240,6 +295,9 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
     }, [persistState])
 
     const registerConversationMapping = useCallback((userId: string, convId: string) => {
+        // A dating chat opened through the messenger must not become the
+        // person's Messages thread.
+        if (datingIdsRef.current.has(convId)) return
         setState((prev) => {
             if (prev.userConvMap[userId] === convId) return prev
             const next = {
@@ -252,17 +310,13 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
     }, [persistState])
 
     const getUnreadCountForUser = useCallback(
-        (userId: string): number => {
-            const convId = state.userConvMap[userId]
-            if (!convId) return 0
-            return state.counts[convId] || 0
-        },
-        [state.userConvMap, state.counts]
+        (userId: string): number => messengerUnreadForUser(userId, state.userConvMap, state.counts, datingIds),
+        [state.userConvMap, state.counts, datingIds]
     )
 
     const totalUnread = useMemo(
-        () => Object.values(state.counts).reduce((sum, n) => sum + n, 0),
-        [state.counts]
+        () => messengerUnreadTotal(state.counts, datingIds),
+        [state.counts, datingIds]
     )
 
     const clearAllUnread = useCallback(() => {

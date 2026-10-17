@@ -5,11 +5,16 @@ import Link from 'next/link'
 import { AtSign, CheckCircle2, HelpCircle, MessageCircle, Pin, ThumbsUp } from 'lucide-react'
 import type { InboxNotification } from '@/lib/notificationInbox'
 import { groupInboxByTime, type InboxTab } from '@/lib/activityInbox'
+import { notificationHasActor } from '@/lib/notificationPresentation'
+import { NotificationGlyph } from '@/components/notifications/NotificationGlyph'
 
 const ICON = 'h-4 w-4 text-primary'
 
-/** Q&A rows still show under All; they keep their own wording and icon. */
-function describeQA(type: string): { icon: ReactNode; message: string } | null {
+/**
+ * Q&A rows still show under All; the ones the web knows keep their own
+ * wording and icon. Any other qa.* row takes the server's sentence, if sent.
+ */
+function describeQA(type: string, serverTitle?: string): { icon: ReactNode; message: string } | null {
   switch (type) {
     case 'qa.answer.created': return { icon: <MessageCircle className={ICON} aria-hidden />, message: 'New answer to your question' }
     case 'qa.answer.best_selected': return { icon: <CheckCircle2 className={ICON} aria-hidden />, message: 'Your answer was marked as best' }
@@ -18,7 +23,7 @@ function describeQA(type: string): { icon: ReactNode; message: string } | null {
     case 'qa.question.voted': return { icon: <ThumbsUp className={ICON} aria-hidden />, message: 'Your question received a vote' }
     case 'qa.answer.voted': return { icon: <ThumbsUp className={ICON} aria-hidden />, message: 'Your answer received a vote' }
     case 'qa.question.pinned': return { icon: <Pin className={ICON} aria-hidden />, message: 'Your question was pinned' }
-    default: return type.startsWith('qa.') ? { icon: <HelpCircle className={ICON} aria-hidden />, message: 'Q&A update' } : null
+    default: return type.startsWith('qa.') ? { icon: <HelpCircle className={ICON} aria-hidden />, message: serverTitle ?? 'Q&A update' } : null
   }
 }
 
@@ -31,7 +36,9 @@ export const EMPTY_COPY: Record<Exclude<InboxTab, 'requests'>, string> = {
 }
 
 function Row({ n, onOpen }: { n: InboxNotification; onOpen: (n: InboxNotification) => void }) {
-  const qa = describeQA(n.type)
+  const qa = describeQA(n.type, n.server_title)
+  // No one to show (no actor, or no name for it): the row's category glyph.
+  const glyph = !qa && n.icon && !notificationHasActor(n.actor_id, n.actor_name) ? n.icon : undefined
   const body = (
     <div
       className={`flex items-start gap-3 rounded-xl border border-border p-4 transition-colors hover:bg-muted ${n.is_read ? 'bg-brand-card' : 'bg-primary-tint'}`}
@@ -46,6 +53,8 @@ function Row({ n, onOpen }: { n: InboxNotification; onOpen: (n: InboxNotificatio
       )}
       {qa ? (
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">{qa.icon}</span>
+      ) : glyph ? (
+        <NotificationGlyph icon={glyph} className="h-8 w-8" surface="bg-muted" />
       ) : null}
       <span className="min-w-0 flex-1">
         <span className={`block text-sm text-foreground ${n.is_read ? '' : 'font-semibold'}`}>{qa ? qa.message : n.title}</span>

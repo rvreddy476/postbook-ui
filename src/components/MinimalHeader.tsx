@@ -21,6 +21,21 @@ import {
 import { useAcceptFriendRequest, useRejectFriendRequest } from '@/hooks/useConnections';
 import NotificationPostPopup from '@/components/NotificationPostPopup';
 import { useGlobalToast } from '@/contexts/ToastContext';
+import { bellRow, notificationActorId } from '@/lib/notificationPresentation';
+import { NotificationGlyph } from '@/components/notifications/NotificationGlyph';
+
+/** This header's own sentence beside the actor's name; null lets the server's title speak. */
+function describeNotification(type: string): string | null {
+    switch (type) {
+        case 'friend_request': return 'sent you a friend request';
+        case 'friend_accepted': return 'accepted your friend request';
+        case 'follow': return 'started following you';
+        case 'reaction': return 'reacted to your post';
+        case 'comment_reaction': return 'liked your comment';
+        case 'comment': return 'commented on your post';
+        default: return null;
+    }
+}
 
 interface MinimalHeaderProps {
     currentUser: User | null;
@@ -66,13 +81,8 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
     const [popupFocusCommentId, setPopupFocusCommentId] = useState<string | undefined>();
 
     // Actor profiles
-    const actorIds = activityNotifs.map(n => n.actor_user_id);
+    const actorIds = activityNotifs.map(n => n.actor_user_id).filter(id => !!notificationActorId(id));
     const actorProfiles = useActorProfiles(actorIds);
-
-    const getActorName = (id: string) => {
-        const p = actorProfiles.get(id);
-        return p?.display_name || id.slice(0, 8);
-    };
     const getActorAvatar = (id: string) => {
         const p = actorProfiles.get(id);
         return p?.avatar_media_id
@@ -349,9 +359,10 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                 {activityNotifs.filter(n => !dismissingIds.has(n.notification_id)).map(notif => {
                                                     const isHandled = handledIds.has(notif.notification_id);
                                                     const isFriendReq = notif.type === 'friend_request' && !isHandled;
-                                                    const actorName = getActorName(notif.actor_user_id);
+                                                    const row = bellRow(notif, describeNotification(notif.type), actorProfiles.get(notif.actor_user_id)?.display_name);
+                                                    const actorName = row.name;
                                                     const actorAvatar = getActorAvatar(notif.actor_user_id);
-                                                    const actorUsername = actorProfiles.get(notif.actor_user_id)?.username;
+                                                    const actorUsername = actorProfiles.get(notif.actor_user_id)?.username || notif.actor?.username;
 
                                                     return (
                                                         <motion.div
@@ -361,6 +372,9 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                             transition={{ duration: 0.3 }}
                                                             className={`group/notif flex items-start gap-3 px-4 py-3 hover:bg-brand-secondary/60 transition-colors ${!notif.is_read ? 'bg-brand-text/30' : ''}`}
                                                         >
+                                                            {row.glyph ? (
+                                                                <NotificationGlyph icon={row.glyph} className="w-10 h-10 mt-0.5" />
+                                                            ) : (
                                                             <button
                                                                 onClick={() => {
                                                                     router.push(`/u/${actorUsername || notif.actor_user_id}`);
@@ -370,6 +384,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                             >
                                                                 <img src={actorAvatar} alt={actorName} className="w-full h-full object-cover" />
                                                             </button>
+                                                            )}
 
                                                             <div className="flex-1 min-w-0">
                                                                 <button
@@ -377,14 +392,15 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                                     className="text-left w-full"
                                                                 >
                                                                     <p className="text-[11px] font-bold text-brand-text/80 leading-snug">
-                                                                        <span className="font-black text-brand-text">{actorName}</span>
-                                                                        {' '}
-                                                                        {notif.type === 'friend_request' && 'sent you a friend request'}
-                                                                        {notif.type === 'friend_accepted' && 'accepted your friend request'}
-                                                                        {notif.type === 'follow' && 'started following you'}
-                                                                        {notif.type === 'reaction' && 'reacted to your post'}
-                                                                        {notif.type === 'comment_reaction' && 'liked your comment'}
-                                                                        {notif.type === 'comment' && 'commented on your post'}
+                                                                        {row.line.kind === 'title' ? (
+                                                                            row.line.title
+                                                                        ) : (
+                                                                            <>
+                                                                                <span className="font-black text-brand-text">{actorName}</span>
+                                                                                {' '}
+                                                                                {row.line.sentence}
+                                                                            </>
+                                                                        )}
                                                                     </p>
                                                                     <p className="text-[9px] text-brand-text/60 font-bold tracking-widest mt-0.5">
                                                                         {formatTimeAgo(notif.created_at)}
