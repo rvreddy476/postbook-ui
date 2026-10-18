@@ -194,7 +194,7 @@ export function NoteEditor({ current, onClose, onSaved }: { current: ChatNote | 
 
   return (
     <Sheet title="Your note" onClose={onClose}>
-      <p className="mb-2 text-[12px] text-brand-text/60">Share a thought. It disappears after 24 hours.</p>
+      <p className="mb-2 text-[12px] text-brand-text/60">Write a short note. It disappears after 24 hours.</p>
       <textarea
         ref={ref}
         value={text}
