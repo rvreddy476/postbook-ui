@@ -104,6 +104,18 @@
   --theme-brand-deep: 40 90 138;
   --theme-canvas-tint: 233 240 249;
 
+  /*
+    Chat bubble colours (chat_bubble_style, CONTRACT §7): the colour of MY
+    outgoing bubbles, chosen once in Settings and used in every chat.
+    "default" is the brand ink. Every value carries white text at >= 4.5:1.
+  */
+  --theme-bubble-ocean: 14 116 144;
+  --theme-bubble-ember: 194 65 12;
+  --theme-bubble-forest: 22 101 52;
+  --theme-bubble-violet: 109 40 217;
+  --theme-bubble-mono: 15 20 25;
+  --theme-on-bubble: 255 255 255;
+
   --theme-glass-bg: 255, 255, 255;
   --theme-glass-border: 15, 20, 25;
 }
@@ -171,6 +183,13 @@
   --theme-brand-lift: 122 186 238;
   --theme-brand-deep: 58 116 172;
   --theme-canvas-tint: 12 18 26;
+
+  --theme-bubble-ocean: 14 116 144;
+  --theme-bubble-ember: 194 65 12;
+  --theme-bubble-forest: 22 101 52;
+  --theme-bubble-violet: 109 40 217;
+  --theme-bubble-mono: 64 72 82;
+  --theme-on-bubble: 255 255 255;
 
   --theme-glass-bg: 0, 0, 0;
   --theme-glass-border: 247, 249, 249;

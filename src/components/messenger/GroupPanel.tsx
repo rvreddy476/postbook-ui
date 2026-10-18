@@ -25,7 +25,7 @@ import { getSession } from '@/services/authService'
 import { uploadMedia } from '@/lib/mediaUpload'
 import { useMediaKinds } from '@/hooks/useMediaKinds'
 import { useChat, type ChatMessage, type ContextMenuState } from '@/hooks/useChat'
-import { MessageSquare, FileText, Users, ArrowLeft, Send, Phone, Video, Search, MoreVertical, Plus, ImagePlus, RefreshCw, Pencil, LogOut, UserPlus, MessageCircle, Repeat2, Eye, Pin, Megaphone, Trash2 } from 'lucide-react'
+import { MessageSquare, FileText, Users, ArrowLeft, Send, MoreVertical, Plus, ImagePlus, RefreshCw, Pencil, LogOut, UserPlus, MessageCircle, Repeat2, Eye, Pin, Megaphone, Trash2 } from 'lucide-react'
 import type { GroupMember, GroupPostV2 } from '@/types/groups'
 import GroupReactionControl, { GroupReactionSummary } from '@/components/groups/GroupReactionControl'
 import type { Message } from '@/services/messageService'
@@ -1359,15 +1359,8 @@ export default function GroupPanel(props: GroupPanelProps) {
             >
               <Plus className="w-[18px] h-[18px]" />
             </button>
-            <button className="w-9 h-9 flex items-center justify-center hover:bg-brand-secondary text-brand-text/60 hover:text-brand-highlight rounded-lg transition-colors">
-              <Phone className="w-[18px] h-[18px]" />
-            </button>
-            <button className="w-9 h-9 flex items-center justify-center hover:bg-brand-secondary text-brand-text/60 hover:text-brand-highlight rounded-lg transition-colors">
-              <Video className="w-[18px] h-[18px]" />
-            </button>
-            <button className="w-9 h-9 flex items-center justify-center hover:bg-brand-secondary text-brand-text/60 hover:text-brand-highlight rounded-lg transition-colors">
-              <Search className="w-[18px] h-[18px]" />
-            </button>
+            {/* Call and search buttons used to sit here with no handler at all (there is
+                no group call or group-post search on the web); removed rather than dead. */}
             <div className="relative">
               <button
                 onClick={() => setShowMoreMenu(!showMoreMenu)}

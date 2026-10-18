@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Avatar, GRADS, getGroupColor, getInitials, hashId } from './shared'
+import Link from 'next/link'
+import { getGroupColor } from './shared'
 import DmChat from './DmChat'
 import ThreadDetails from './ThreadDetails'
 import MessengerTopBar from './MessengerTopBar'
@@ -10,26 +11,28 @@ import NewChannelSheet from './NewChannelSheet'
 import GroupPanel from './GroupPanel'
 import ChannelPanel from './ChannelPanel'
 import CreateGroupPanel from './CreateGroupPanel'
-import { fetchUsers } from '@/services/userService'
 import { getSession } from '@/services/authService'
 import api from '@/lib/api'
 import {
-  fetchConversations,
   getConversation,
-  subscribeToPresenceUpdates,
   acceptMessageRequest,
   declineMessageRequest,
-  type Conversation,
 } from '@/services/messageService'
 import { useMyGroups } from '@/hooks/useGroups'
 import { useMyBroadcastChannels } from '@/hooks/useBroadcastChannels'
-import { useNotifications } from '@/contexts/NotificationContext'
-import { messengerConversations } from '@/lib/messengerConversations'
-import { useBatchProfiles } from '@/hooks/useProfile'
+import { useMyProfile } from '@/hooks/useEditProfile'
 import type { User } from '@/types'
+import type { ChatPeer, InboxRow } from '@/lib/chat/contract'
+import { inboxUnreadTotal, rowName, rowPreview, unreadPillText } from '@/lib/chat/inbox'
+import { useInbox } from './inbox/useInbox'
+import { InboxRowItem, type RowAction } from './inbox/InboxRowItem'
+import { InboxAvatar } from './inbox/InboxAvatar'
+import { NotesRow } from './inbox/NotesRow'
+import { ActivityStatusButton } from './inbox/ActivityStatus'
+import { InboxSearch } from './inbox/InboxSearch'
 import {
-  Users, MessageCircle, Plus, Hash, Search,
-  Globe, Lock, Shield, ChevronRight, Send, MailQuestion, Check, X
+  Users, MessageCircle, Plus, Hash, Search, Bell, UserPlus,
+  Lock, Shield, ChevronRight, Send, MailQuestion, Check, X, Loader2,
 } from 'lucide-react'
 
 /* ------------------------------------------------------------------ */
@@ -40,7 +43,7 @@ function SidebarSkeleton() {
     <div className="space-y-1 px-3 py-2">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 px-3 py-2.5 animate-pulse">
-          <div className="w-10 h-10 rounded-xl bg-brand-secondary shrink-0" />
+          <div className="h-12 w-12 rounded-full bg-brand-secondary shrink-0" />
           <div className="flex-1 space-y-2">
             <div className="h-3 w-24 bg-brand-secondary rounded-sm" />
             <div className="h-2.5 w-16 bg-brand-secondary rounded-sm" />
@@ -68,104 +71,84 @@ function EmptyState() {
   )
 }
 
+/** A confirm step for the destructive row actions. */
+function ConfirmDialog({ title, body, confirm, onCancel, onConfirm, busy }: {
+  title: string; body: string; confirm: string; onCancel: () => void; onConfirm: () => void; busy?: boolean
+}) {
+  return (
+    <div className="fixed inset-0 z-1100 flex items-center justify-center bg-brand-text/30 p-4" onClick={onCancel}>
+      <div role="alertdialog" aria-label={title} onClick={(e) => e.stopPropagation()} className="w-full max-w-xs rounded-2xl border border-brand-divider bg-brand-card p-4 shadow-2xl">
+        <h2 className="text-[15px] font-semibold text-brand-text">{title}</h2>
+        <p className="mt-1 text-[13px] text-brand-text/70">{body}</p>
+        <div className="mt-4 flex justify-end gap-2">
+          <button type="button" onClick={onCancel} className="rounded-lg px-3 py-2 text-[13px] font-semibold text-brand-text hover:bg-brand-secondary">Cancel</button>
+          <button type="button" onClick={onConfirm} disabled={busy} className="flex items-center gap-1.5 rounded-lg bg-danger px-3 py-2 text-[13px] font-semibold text-white disabled:opacity-50">
+            {busy && <Loader2 className="h-4 w-4 animate-spin" />}{confirm}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** A chat-service group conversation open in the middle column. */
+interface OpenGroupChat {
+  conversationId: string
+  title: string
+  avatarUrl: string | null
+  members: InboxRow['members']
+}
+
 /* ------------------------------------------------------------------ */
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 export default function PostbookMessenger() {
-  // No useRouter here any more: every surface this page can open — direct,
-  // group, channel — opens in the column beside the list rather than
-  // navigating somewhere else.
   // The scopes the chip row shows, in that order. Requests only appears
   // when someone is actually waiting.
   const [contactTab, setContactTab] = useState<'channels' | 'groups' | 'friends' | 'requests'>('friends')
-  // Unread cuts ACROSS the Direct list rather than being a scope of its
-  // own, so it lives beside the title instead of in the tab row.
   const [unreadOnly, setUnreadOnly] = useState(false)
   const [search, setSearch] = useState('')
-  const [activeDm, setActiveDm] = useState<User | null>(null)
+  const [activeDm, setActiveDm] = useState<(User & { lastActiveAt?: string | null }) | null>(null)
   /**
-   * A conversation opened by id from the address (?conversation=<id>), and
-   * the person it is with. The DM with that person opens this conversation
-   * rather than their direct thread; picking anyone from the list clears it.
+   * The conversation the open DM belongs to, when it is known (opened from a
+   * row, a request or ?conversation=<id>). The DM then opens exactly this
+   * conversation rather than resolving one by person.
    */
   const [urlConversation, setUrlConversation] = useState<{ peerId: string; conversationId: string } | null>(null)
+  /** A message to scroll to once the thread opens (from message search). */
+  const [focusMessageId, setFocusMessageId] = useState<string | null>(null)
+  const [activeGroupChat, setActiveGroupChat] = useState<OpenGroupChat | null>(null)
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null)
   const [activeChannelId, setActiveChannelId] = useState<string | null>(null)
-  // Thread details: open by default on wide screens. The conversation id is
-  // reported up by DmChat, which is what resolves or creates it.
   const [showDetails, setShowDetails] = useState(true)
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [showCreateGroup, setShowCreateGroup] = useState(false)
   const [showNewMessage, setShowNewMessage] = useState(false)
   const [showNewChannel, setShowNewChannel] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
-  const [friends, setFriends] = useState<User[]>([])
-  const [conversations, setConversations] = useState<Conversation[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [pendingRequestId, setPendingRequestId] = useState<string | null>(null)
+  const [requestFilter, setRequestFilter] = useState<'all' | 'filtered'>('all')
+  const [confirmDelete, setConfirmDelete] = useState<InboxRow | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [showArchived, setShowArchived] = useState(false)
 
   const currentUser = getSession()
+  const myId = currentUser?.id ?? ''
+  const { data: myProfile } = useMyProfile()
   const { data: myGroups } = useMyGroups()
-  const { getUnreadCountForUser } = useNotifications()
 
-  useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      try {
-        const users = await fetchUsers(50, 0)
-        if (cancelled) return
-        const filtered = currentUser ? users.filter((u) => u.id !== currentUser.id) : users
-        setFriends(filtered)
-      } catch (err) {
-        console.error('Failed to fetch users:', err)
-      } finally {
-        if (!cancelled) setIsLoading(false)
-      }
-    }
-    load()
-    return () => { cancelled = true }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const openConversationId = activeGroupChat?.conversationId ?? activeConversationId
+  const inbox = useInbox(myId, openConversationId)
+  const { rows, requests, filteredRequests, loading: isLoading } = inbox.state
 
-  const loadConversations = useCallback(async () => {
-    try {
-      const result = await fetchConversations(50)
-      setConversations(messengerConversations((result.data ?? []) as Conversation[]))
-    } catch (err) {
-      console.error('Failed to fetch conversations:', err)
-    }
-  }, [])
-
-  useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      try {
-        const result = await fetchConversations(50)
-        if (cancelled) return
-        setConversations(messengerConversations((result.data ?? []) as Conversation[]))
-      } catch (err) {
-        console.error('Failed to fetch conversations:', err)
-      }
-    }
-    load()
-    return () => { cancelled = true }
-  }, [])
-
-  // Real-time presence updates
-  useEffect(() => {
-    return subscribeToPresenceUpdates((evt) => {
-      setFriends(prev =>
-        prev.map(f => f.id === evt.user_id ? { ...f, isOnline: evt.online } : f)
-      )
-    })
+  const showToast = useCallback((msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 2800)
   }, [])
 
   /*
-    The server's reason, when it gave one.
-
-    A flat 'Could not accept request' hid "only the recipient can accept this
-    request" for days - the message that says exactly what is wrong. Anything
-    the server bothered to word is better than a generic failure.
+    The server's reason, when it gave one. A flat 'Could not accept request'
+    hid "only the recipient can accept this request" for days.
   */
   const serverMessage = (err: unknown, fallback: string): string => {
     const body = (err as { body?: { error?: { message?: string } } })?.body
@@ -175,64 +158,77 @@ export default function PostbookMessenger() {
     return msg && msg !== 'Request failed' ? msg : fallback
   }
 
-  const showToast = useCallback((msg: string) => {
-    setToast(msg)
-    setTimeout(() => setToast(null), 2800)
-  }, [])
+  const clearOpen = () => {
+    setActiveDm(null)
+    setActiveGroupChat(null)
+    setActiveGroupId(null)
+    setActiveChannelId(null)
+    setShowCreateGroup(false)
+  }
 
-  const getLastMessage = useCallback(
-    (userId: string): { text: string; time: string; unread: number } | null => {
-      // Main inbox only — request conversations are surfaced in the
-      // dedicated "Requests" folder (spec §3.3) and excluded here.
-      const conv = conversations.find(
-        (c) =>
-          // A request this user SENT stays visible to them; only an
-          // incoming one is held back for the Requests folder.
-          (!c.is_request || c.created_by === currentUser?.id) &&
-          (c.members?.some((m) => m.user_id === userId) ||
-            (c as { participants?: string[] }).participants?.includes(userId) ||
-            (c as { other_user_id?: string }).other_user_id === userId)
-      )
-      if (!conv) return null
-      const lastMsg =
-        conv.last_message ?? (conv as { lastMessage?: typeof conv.last_message }).lastMessage
-      if (!lastMsg) return null
-      const msgTime = lastMsg.created_at || lastMsg.ts || ''
-      let timeDisplay = ''
-      if (msgTime) {
-        try {
-          const d = new Date(msgTime)
-          const now = new Date()
-          const diffMin = Math.floor((now.getTime() - d.getTime()) / 60000)
-          if (diffMin < 1) timeDisplay = 'now'
-          else if (diffMin < 60) timeDisplay = `${diffMin}m`
-          else if (diffMin < 1440) timeDisplay = `${Math.floor(diffMin / 60)}h`
-          else timeDisplay = `${Math.floor(diffMin / 1440)}d`
-        } catch { timeDisplay = '' }
-      }
-      return { text: lastMsg.text || '(media)', time: timeDisplay, unread: getUnreadCountForUser(userId) }
-    },
-    [conversations, getUnreadCountForUser, currentUser?.id]
-  )
+  /** Open a person's DM. With a conversation id, exactly that conversation. */
+  const openPerson = useCallback((person: { id: string; name: string; avatar: string; isOnline?: boolean; lastActiveAt?: string | null }, conversationId?: string) => {
+    clearOpen()
+    setUrlConversation(conversationId ? { peerId: person.id, conversationId } : null)
+    setActiveDm({ id: person.id, name: person.name, avatar: person.avatar, isOnline: person.isOnline ?? false, lastActiveAt: person.lastActiveAt ?? null })
+    if (conversationId) inbox.markOpened(conversationId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inbox.markOpened])
 
-  const filteredFriends = useMemo(() => {
-    let list = friends
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      // Match the handle too — it is the unique one, so it is what you
-      // type when two people share a display name.
-      list = list.filter(
-        (f) =>
-          f.name.toLowerCase().includes(q) ||
-          (f.username ?? '').toLowerCase().includes(q),
-      )
+  const openRow = useCallback((row: InboxRow, messageId?: string) => {
+    setFocusMessageId(messageId ?? null)
+    if (row.isGroup) {
+      clearOpen()
+      setUrlConversation(null)
+      setActiveGroupChat({ conversationId: row.id, title: rowName(row, myId), avatarUrl: row.avatarUrl, members: row.members })
+      inbox.markOpened(row.id)
+      return
     }
-    return [...list].sort((a, b) => {
-      const aU = getUnreadCountForUser(a.id), bU = getUnreadCountForUser(b.id)
-      if (aU !== bU) return bU - aU
-      return (b.isOnline ? 1 : 0) - (a.isOnline ? 1 : 0)
-    })
-  }, [friends, search, getUnreadCountForUser])
+    if (!row.peer) return
+    openPerson(
+      { id: row.peer.userId, name: row.peer.displayName, avatar: row.peer.avatarUrl ?? '', isOnline: row.peer.isOnline === true, lastActiveAt: row.peer.lastActiveAt },
+      row.id,
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myId, openPerson, inbox.markOpened])
+
+  const openPeer = useCallback((p: ChatPeer) => {
+    const row = rows.find((r) => !r.isGroup && r.peer?.userId === p.userId)
+    if (row) return openRow(row)
+    openPerson({ id: p.userId, name: p.displayName, avatar: p.avatarUrl ?? '', isOnline: p.isOnline === true, lastActiveAt: p.lastActiveAt })
+  }, [rows, openRow, openPerson])
+
+  const onRowAction = useCallback(async (row: InboxRow, action: RowAction) => {
+    try {
+      if (action === 'pin') { await inbox.pin(row); showToast(row.isPinned ? 'Unpinned' : 'Pinned to top') }
+      else if (action === 'mute') { await inbox.mute(row); showToast(row.isMuted ? 'Unmuted' : 'Muted') }
+      else if (action === 'archive' && showArchived) { await inbox.unarchive(row); showToast('Moved back to your chats') }
+      else if (action === 'archive') { await inbox.archive(row); showToast('Chat archived') }
+      else if (action === 'read') { await inbox.markRead(row) }
+      else if (action === 'delete') setConfirmDelete(row)
+    } catch (err) {
+      showToast(serverMessage(err, "Couldn't update that chat"))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inbox, showToast, showArchived])
+
+  const doDelete = async () => {
+    if (!confirmDelete) return
+    setDeleting(true)
+    try {
+      const ok = await inbox.removeForMe(confirmDelete)
+      if (!ok) showToast("Deleting chats isn't available yet")
+      else {
+        showToast('Chat deleted')
+        if (openConversationId === confirmDelete.id) clearOpen()
+      }
+    } catch (err) {
+      showToast(serverMessage(err, "Couldn't delete that chat"))
+    } finally {
+      setDeleting(false)
+      setConfirmDelete(null)
+    }
+  }
 
   const filteredGroups = useMemo(() => {
     let list = myGroups ?? []
@@ -243,23 +239,11 @@ export default function PostbookMessenger() {
     return [...list]
   }, [myGroups, search])
 
-  /**
-   * The Direct list, narrowed to conversations with something waiting when
-   * the Unread button is on. One list and one code path, so the filtered
-   * and unfiltered views cannot drift apart.
-   */
-  const visibleFriends = useMemo(() => {
-    if (!unreadOnly) return filteredFriends
-    return filteredFriends.filter((f) => getUnreadCountForUser(f.id) > 0)
-  }, [filteredFriends, unreadOnly, getUnreadCountForUser])
+  const visibleRows = useMemo(() => (unreadOnly ? rows.filter((r) => r.unreadCount > 0) : rows), [rows, unreadOnly])
+  const unreadConversationCount = useMemo(() => rows.filter((r) => r.unreadCount > 0).length, [rows])
+  const unreadTotal = useMemo(() => inboxUnreadTotal(rows, myId), [rows, myId])
 
-  const unreadConversationCount = useMemo(
-    () => friends.filter((f) => getUnreadCountForUser(f.id) > 0).length,
-    [friends, getUnreadCountForUser]
-  )
-
-  // Channels the signed-in user belongs to. Rows leave for the channel page:
-  // a broadcast channel is not a conversation this messenger can render.
+  // Channels the signed-in user belongs to.
   const { data: myChannels } = useMyBroadcastChannels()
   const filteredChannels = useMemo(() => {
     const list = myChannels ?? []
@@ -276,106 +260,24 @@ export default function PostbookMessenger() {
   )
 
   /*
-    Message Requests folder (spec §3.3).
-
-    DIRECTION MATTERS. Both sides of a pending request carry
-    is_request = true, so filtering on that alone put the SENDER's own
-    outgoing request in their Requests lane, labelled "Wants to send you a
-    message" and offering Accept — which the server refused with "only the
-    recipient can accept this request", surfaced as a bare "Could not accept
-    request". The request being accepted was the user's own.
-
-    `created_by` is the requester, so a request is INCOMING only when
-    somebody else created it.
+    Requests (spec §3.3, CONTRACT §7). Direction matters: `created_by` is the
+    requester, so a request is INCOMING only when somebody else created it.
+    A request I SENT stays in Direct, marked as waiting.
   */
-  const requestConversations = useMemo(
-    () => conversations.filter((c) => c.is_request === true && c.created_by !== currentUser?.id),
-    [conversations, currentUser?.id]
+  const sentRequestIds = useMemo(
+    () => new Set(rows.filter((r) => r.isRequest && r.createdBy === myId).map((r) => r.id)),
+    [rows, myId]
   )
-
-  /*
-    The other half: a request this user SENT, still waiting on the other
-    person. It is not something to accept, but it is a real thread with a
-    real message in it, so it belongs in Direct, marked as waiting - not
-    vanished, which is what excluding every is_request conversation from the
-    inbox used to do to it.
-  */
-  const sentRequestPeerIds = useMemo(
-    () =>
-      new Set(
-        conversations
-          .filter((c) => c.is_request === true && c.created_by === currentUser?.id)
-          .flatMap((c) => (c.members ?? []).map((m) => m.user_id))
-          .filter((id) => id && id !== currentUser?.id)
-      ),
-    [conversations, currentUser?.id]
-  )
-
-  // Resolves the counterparty of a 1:1 request conversation into a
-  // User-shaped object for display and for opening the DM on accept.
-  const requestPeer = useCallback(
-    (conv: Conversation): User => {
-      const other = conv.members?.find((m) => m.user_id !== currentUser?.id)
-      const member = other ?? conv.members?.[0]
-      return {
-        id: member?.user_id ?? '',
-        name: member?.display_name || conv.title || 'Message request',
-        avatar: member?.avatar_media_id
-          ? `/v1/media/${member.avatar_media_id}/serve`
-          : '',
-      }
-    },
-    [currentUser?.id]
-  )
-
-  // chat.user_profiles caches only display_name and avatar, so a request
-  // row has no handle of its own. Resolve it from profile-service instead
-  // of widening the chat-side cache for one label.
-  const requestPeerIds = useMemo(
-    () => requestConversations.map((c) => requestPeer(c).id).filter(Boolean),
-    [requestConversations, requestPeer]
-  )
-  const { data: requestProfiles } = useBatchProfiles(requestPeerIds)
-
-  const filteredRequests = useMemo(() => {
-    if (!search.trim()) return requestConversations
+  const requestList = requestFilter === 'filtered' && filteredRequests ? filteredRequests : requests
+  const filteredRequestList = useMemo(() => {
+    if (!search.trim()) return requestList
     const q = search.toLowerCase()
-    return requestConversations.filter((c) => {
-      const peer = requestPeer(c)
-      // Searching by handle works too — it is the unique one.
-      const handle = requestProfiles?.get(peer.id)?.username ?? ''
-      return (
-        peer.name.toLowerCase().includes(q) || handle.toLowerCase().includes(q)
-      )
-    })
-  }, [requestConversations, search, requestPeer, requestProfiles])
-
-  const handleFriendClick = useCallback((friend: User) => {
-    setUrlConversation(null)
-    setActiveDm(friend)
-    setActiveGroupId(null)
-    setActiveChannelId(null)
-    setShowCreateGroup(false)
-  }, [])
+    return requestList.filter((r) => [rowName(r, myId), r.peer?.username ?? ''].join(' ').toLowerCase().includes(q))
+  }, [requestList, search, myId])
 
   /**
-   * Open a conversation named in the address: /messenger?user=<id>.
-   *
-   * That is how the feed's contact list and right rail hand someone over now
-   * that the floating window is gone, so landing on an empty list would make
-   * every one of those clicks feel broken.
-   *
-   * Read from window.location rather than useSearchParams, which would force
-   * this page into a Suspense boundary. It runs once per id: the person comes
-   * from the already-loaded list when possible, and is fetched only when the
-   * list does not contain them.
-   */
-  /**
-   * Open a lane named in the address: /messenger?lane=requests.
-   *
-   * This is where the message-request notification lands. Without it the
-   * tap would arrive on Direct and the request the notification was about
-   * would not be on screen.
+   * Open a lane named in the address: /messenger?lane=requests — where the
+   * message-request notification lands.
    */
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -384,22 +286,11 @@ export default function PostbookMessenger() {
     else if (lane === 'groups' || lane === 'channels') setContactTab(lane)
   }, [])
 
-  /**
-   * Open a channel named in the address: /messenger?lane=channels&channel=<id>.
-   *
-   * The web has no /channels/<id> page any more — this panel is the only
-   * channel surface here — so search results, community spaces and channel
-   * notifications all point at this instead. ChannelPanel fetches the channel
-   * by id itself, so this also opens a channel that is not in the list yet:
-   * one found in search and not subscribed to.
-   */
+  /** /messenger?lane=channels&channel=<id>: this panel is the only channel surface. */
   useEffect(() => {
     if (typeof window === 'undefined') return
     const wanted = new URLSearchParams(window.location.search).get('channel')
     if (!wanted) return
-    // Also select the lane, so a bare ?channel=<id> works without the caller
-    // having to remember &lane=channels: going back from the panel on mobile
-    // should land on the channel list, not on Direct.
     setContactTab('channels')
     setActiveChannelId(wanted)
     setActiveDm(null)
@@ -407,11 +298,8 @@ export default function PostbookMessenger() {
   }, [])
 
   /**
-   * Open one existing conversation named in the address:
-   * /messenger?conversation=<id>. This is how a dating match opens its chat —
-   * the match's conversation is its own, so it is fetched by id and never
-   * resolved through the person (that would open their direct thread). The
-   * server answers only a member, so a stranger's id opens nothing.
+   * /messenger?conversation=<id>: one existing conversation, fetched by id and
+   * never resolved through the person (a dating match's chat is its own).
    */
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -423,11 +311,22 @@ export default function PostbookMessenger() {
         const res = await getConversation(wanted)
         const conv = (res?.data ?? res ?? {}) as {
           id?: string
+          type?: string
+          title?: string
           members?: Array<{ user_id?: string; display_name?: string; avatar_media_id?: string }>
         }
-        const me = currentUser?.id
-        const peer = (conv.members ?? []).find((m) => m.user_id && m.user_id !== me)
-        if (cancelled || !conv.id || !peer?.user_id) return
+        if (cancelled || !conv.id) return
+        if (conv.type === 'group') {
+          setActiveGroupChat({
+            conversationId: conv.id,
+            title: conv.title || 'Group',
+            avatarUrl: null,
+            members: (conv.members ?? []).filter((m) => m.user_id).map((m) => ({ userId: m.user_id!, role: null, displayName: m.display_name || null, avatarMediaId: m.avatar_media_id || null, lastReadAt: null })),
+          })
+          return
+        }
+        const peer = (conv.members ?? []).find((m) => m.user_id && m.user_id !== myId)
+        if (!peer?.user_id) return
         setUrlConversation({ peerId: peer.user_id, conversationId: conv.id })
         setActiveDm({
           id: peer.user_id,
@@ -445,21 +344,23 @@ export default function PostbookMessenger() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  /**
+   * /messenger?user=<id>: how the feed's contact list hands someone over.
+   * Their existing conversation opens when it is in the inbox; otherwise the
+   * profile is fetched and the DM resolves the direct thread.
+   */
   const openedFromUrlRef = useRef<string | null>(null)
   useEffect(() => {
     if (typeof window === 'undefined') return
     const wanted = new URLSearchParams(window.location.search).get('user')
     if (!wanted || openedFromUrlRef.current === wanted) return
-
-    const known = friends.find((f) => f.id === wanted)
+    const known = rows.find((r) => !r.isGroup && r.peer?.userId === wanted)
     if (known) {
       openedFromUrlRef.current = wanted
-      setActiveDm(known)
-      setActiveGroupId(null)
+      openRow(known)
       return
     }
-    if (isLoading) return // the list may still arrive with this person in it
-
+    if (isLoading) return
     let cancelled = false
     openedFromUrlRef.current = wanted
     void (async () => {
@@ -467,59 +368,43 @@ export default function PostbookMessenger() {
         const res = await api.get<{ data: Record<string, any> }>(`/v1/profiles/${wanted}`)
         if (cancelled) return
         const p = (res.data?.data?.profile ?? res.data?.data ?? {}) as Record<string, any>
-        setActiveDm({
+        openPerson({
           id: wanted,
           name: p.display_name || p.username || 'Conversation',
           avatar: p.avatar_media_id ? `/v1/media/${p.avatar_media_id}/serve` : '',
-          isOnline: false,
         })
-        setActiveGroupId(null)
       } catch {
         // A bad or unreachable id should leave the list usable, not blank.
       }
     })()
     return () => { cancelled = true }
-  }, [friends, isLoading])
+  }, [rows, isLoading, openRow, openPerson])
 
   const handleGroupClick = useCallback((groupId: string) => {
+    clearOpen()
     setActiveGroupId(groupId)
-    setActiveDm(null)
-    setActiveChannelId(null)
-    setShowCreateGroup(false)
   }, [])
 
-  // A channel opens in the middle column like everything else here, rather
-  // than navigating to /channels/<id> and leaving the messenger behind.
   const handleChannelClick = useCallback((channelId: string) => {
+    clearOpen()
     setActiveChannelId(channelId)
-    setActiveDm(null)
-    setActiveGroupId(null)
-    setShowCreateGroup(false)
   }, [])
 
   const handleNewGroup = useCallback(() => {
+    clearOpen()
     setShowCreateGroup(true)
-    setActiveDm(null)
-    setActiveGroupId(null)
-    setActiveChannelId(null)
   }, [])
 
   const handleAcceptRequest = useCallback(
-    async (conv: Conversation) => {
+    async (row: InboxRow) => {
       if (pendingRequestId) return
-      setPendingRequestId(conv.id)
+      setPendingRequestId(row.id)
       try {
-        await acceptMessageRequest(conv.id)
-        await loadConversations()
+        await acceptMessageRequest(row.id)
+        await inbox.reload()
         showToast('Request accepted')
-        // Promote into the main inbox by opening the conversation.
-        const peer = requestPeer(conv)
-        if (peer.id) {
-          setContactTab('friends')
-          setActiveDm(peer)
-          setActiveGroupId(null)
-          setShowCreateGroup(false)
-        }
+        setContactTab('friends')
+        openRow({ ...row, isRequest: false })
       } catch (err) {
         console.error('Failed to accept message request:', err)
         showToast(serverMessage(err, 'Could not accept request'))
@@ -527,16 +412,17 @@ export default function PostbookMessenger() {
         setPendingRequestId(null)
       }
     },
-    [pendingRequestId, loadConversations, showToast, requestPeer]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pendingRequestId, inbox.reload, showToast, openRow]
   )
 
   const handleDeclineRequest = useCallback(
-    async (conv: Conversation) => {
+    async (row: InboxRow) => {
       if (pendingRequestId) return
-      setPendingRequestId(conv.id)
+      setPendingRequestId(row.id)
       try {
-        await declineMessageRequest(conv.id)
-        await loadConversations()
+        await declineMessageRequest(row.id)
+        await inbox.reload()
         showToast('Request declined')
       } catch (err) {
         console.error('Failed to decline message request:', err)
@@ -545,87 +431,93 @@ export default function PostbookMessenger() {
         setPendingRequestId(null)
       }
     },
-    [pendingRequestId, loadConversations, showToast]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pendingRequestId, inbox.reload, showToast]
   )
 
-  const friendsUnreadTotal = useMemo(
-    () => friends.reduce((sum, f) => sum + getUnreadCountForUser(f.id), 0),
-    [friends, getUnreadCountForUser]
-  )
+  // Infinite scroll: the sentinel at the end of the list loads the next page.
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el || !inbox.state.hasMore) return
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) void inbox.loadMore()
+    }, { rootMargin: '200px' })
+    io.observe(el)
+    return () => io.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inbox.loadMore, inbox.state.hasMore])
+
+  const anyOpen = Boolean(activeDm || activeGroupChat || activeGroupId || activeChannelId)
+  const myName = myProfile?.display_name || currentUser?.name || 'You'
+  const myAvatar = myProfile?.avatar_media_id ? `/v1/media/${myProfile.avatar_media_id}/serve` : null
+  const searching = search.trim().length > 0
 
   return (
     <div className="flex h-screen w-screen flex-col font-sans text-brand-text overflow-hidden">
-      {/* The page sits outside the app shell, so it carries its own bar:
-          a way home, global search, notifications, settings and compose. */}
       <MessengerTopBar
         onCompose={() => setShowNewMessage(true)}
-        unread={friendsUnreadTotal}
+        unread={unreadTotal}
       />
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
       {/* ============================================================ */}
       {/*  LEFT SIDEBAR                                                 */}
       {/* ============================================================ */}
-      <div className={`w-full md:w-[340px] shrink-0 flex flex-col border-r border-brand-divider ${activeDm || activeGroupId || activeChannelId ? 'hidden md:flex' : 'flex'}`}>
-        {/* Column header: what this list is, how much is unread, and the
-            one filter. Who you are signed in as is no longer repeated here —
-            the top bar carries the avatar, home and settings. */}
-        <div className="flex items-center justify-between gap-2 px-5 pt-5">
-          <h1 className="text-[13px] font-bold uppercase tracking-[0.08em] text-brand-text">
-            Messages
-          </h1>
-          <div className="flex items-center gap-1.5">
-            {/* Unread is a filter, not a tab: it cuts across Direct rather
-                than sitting beside it, and reads as a count you can act
-                on. Turning it on lands you on Direct, the only list that
-                has unread counts. */}
-            {unreadConversationCount > 0 && (
-              <button
-                onClick={() => {
-                  setUnreadOnly((v) => !v)
-                  setContactTab('friends')
-                }}
-                aria-pressed={unreadOnly}
-                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] transition-colors active:scale-95 ${
-                  unreadOnly
-                    ? 'bg-primary-ink text-white'
-                    : 'bg-primary-tint text-primary-ink hover:bg-primary-outline/50'
-                }`}
-              >
-                <span className="tabular-nums">{unreadConversationCount}</span>
-                Unread
-              </button>
-            )}
+      <div className={`w-full md:w-[360px] shrink-0 flex flex-col border-r border-brand-divider ${anyOpen ? 'hidden md:flex' : 'flex'}`}>
+        {/* Header: add people · "Messages" + activity status · unread filter */}
+        <div className="flex items-center justify-between gap-2 px-4 pt-4">
+          <button
+            type="button"
+            onClick={() => setShowNewMessage(true)}
+            aria-label="New message"
+            title="New message"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-brand-text/70 hover:bg-brand-secondary hover:text-brand-text"
+          >
+            <UserPlus className="h-[18px] w-[18px]" strokeWidth={1.75} />
+          </button>
+          <div className="flex items-center gap-1">
+            <h1 className="text-[15px] font-bold text-brand-text">Messages</h1>
+            <ActivityStatusButton />
           </div>
+          {unreadConversationCount > 0 ? (
+            <button
+              onClick={() => {
+                setUnreadOnly((v) => !v)
+                setContactTab('friends')
+              }}
+              aria-pressed={unreadOnly}
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-colors active:scale-95 ${
+                unreadOnly
+                  ? 'bg-primary-ink text-white'
+                  : 'bg-primary-tint text-primary-ink hover:bg-primary-outline/50'
+              }`}
+            >
+              <span className="tabular-nums">{unreadConversationCount}</span>
+              Unread
+            </button>
+          ) : <span className="w-9" />}
         </div>
 
-        <div className="px-5 pt-3 pb-3">
-          {/* Filters the list beside it. The bar's search is the global one
-              (people, posts, everything) and goes to /search, so the two
-              fields do different jobs rather than repeating each other. */}
+        <div className="px-4 pt-3 pb-3">
           <div className="relative mb-3">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-text/30" />
             <input
-              type="text"
-              placeholder="Search conversations..."
+              type="search"
+              placeholder="Search people, chats and messages"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl border border-transparent bg-brand-secondary py-2.5 pl-9 pr-4 text-sm text-brand-text outline-hidden transition-colors placeholder:text-brand-text/40 focus:border-primary-outline focus:bg-brand-bg"
+              className="w-full rounded-xl border border-transparent bg-brand-secondary py-2.5 pl-9 pr-4 text-[13px] text-brand-text outline-hidden transition-colors placeholder:text-brand-text/40 focus:border-primary-outline focus:bg-brand-bg"
             />
           </div>
 
-          {/* One row, fixed order, no wrapping: Direct, Groups, Channels,
-              Requests. Unread moved up beside the title — it is a filter
-              across Direct, not a scope of its own. Requests appears only
-              when somebody is waiting; a chip that is always empty is
-              noise. */}
           <div className="flex items-center gap-1.5" role="tablist" aria-label="Conversations">
             {([
               { id: 'friends' as const, label: 'Direct', badge: 0 },
               { id: 'groups' as const, label: 'Groups', badge: 0 },
               { id: 'channels' as const, label: 'Channels', badge: 0 },
-              ...(requestConversations.length > 0
-                ? [{ id: 'requests' as const, label: 'Requests', badge: requestConversations.length }]
+              ...(requests.length > 0
+                ? [{ id: 'requests' as const, label: 'Requests', badge: requests.length }]
                 : []),
             ]).map((chip) => {
               const active = contactTab === chip.id
@@ -636,7 +528,6 @@ export default function PostbookMessenger() {
                   aria-selected={active}
                   onClick={() => {
                     setContactTab(chip.id)
-                    // Unread only means anything on Direct.
                     if (chip.id !== 'friends') setUnreadOnly(false)
                   }}
                   className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors ${
@@ -647,11 +538,7 @@ export default function PostbookMessenger() {
                 >
                   {chip.label}
                   {chip.badge > 0 && (
-                    <span
-                      className={`tabular-nums text-[11px] font-bold ${
-                        active ? 'text-white/70' : 'text-primary-ink'
-                      }`}
-                    >
+                    <span className={`tabular-nums text-[11px] font-bold ${active ? 'text-white/70' : 'text-primary-ink'}`}>
                       {chip.badge}
                     </span>
                   )}
@@ -661,16 +548,11 @@ export default function PostbookMessenger() {
           </div>
         </div>
 
-        {/* A hairline between the controls and the list, so the filters
-            read as chrome and the conversations as content. */}
         <div className="h-px shrink-0 bg-brand-divider" />
 
         {/* Contact list */}
-        <div className="flex-1 overflow-y-auto px-3 pt-2 pb-3">
-          {isLoading ? (
-            <SidebarSkeleton />
-          ) : contactTab === 'channels' ? (
-            /* Channels you belong to, opened in the column beside this list */
+        <div className="flex-1 overflow-y-auto px-2 pt-2 pb-3">
+          {contactTab === 'channels' ? (
             <>
             {filteredChannels.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16">
@@ -709,167 +591,183 @@ export default function PostbookMessenger() {
                 ))}
               </div>
             )}
-
-            {/* There was no way to start a channel from here at all. */}
             <button
               onClick={() => setShowNewChannel(true)}
-              className="w-full mt-2 py-4 text-[10px] font-black tracking-widest rounded-2xl bg-primary-ink text-brand-bg flex items-center justify-center gap-2 transition-all"
+              className="w-full mt-2 py-4 text-[11px] font-bold tracking-wide rounded-2xl bg-primary-ink text-brand-bg flex items-center justify-center gap-2 transition-all"
             >
               <Plus className="w-4 h-4" />
               New Channel
             </button>
             </>
           ) : contactTab === 'friends' ? (
-            /* Direct, narrowed to unread when that button is on */
-            visibleFriends.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16">
-                <MessageCircle className="w-10 h-10 text-brand-secondary mb-2" />
-                <p className="text-[13px] font-medium text-brand-text/60">
-                  {search
-                    ? 'No friends match your search'
-                    : unreadOnly
-                      ? 'Nothing unread'
-                      : 'No conversations yet'}
-                </p>
-              </div>
+            searching ? (
+              <InboxSearch query={search} rows={rows} myId={myId} onOpenPerson={openPeer} onOpenRow={openRow} />
+            ) : isLoading ? (
+              <SidebarSkeleton />
+            ) : showArchived ? (
+              <>
+                <div className="flex items-center justify-between px-3 pb-2 pt-1">
+                  <h2 className="text-[13px] font-semibold text-brand-text">Archived chats</h2>
+                  <button type="button" onClick={() => setShowArchived(false)} className="text-[12px] font-semibold text-primary-ink hover:underline">Back to chats</button>
+                </div>
+                {inbox.archived === null ? (
+                  <SidebarSkeleton />
+                ) : inbox.archived.length === 0 ? (
+                  <p className="px-3 py-10 text-center text-[13px] text-brand-text/60">No archived chats. Archive a chat from its menu to tuck it away here.</p>
+                ) : (
+                  <div className="space-y-0.5">
+                    {inbox.archived.map((row) => (
+                      <InboxRowItem key={row.id} row={row} myId={myId} archived active={openConversationId === row.id} onOpen={(r) => openRow(r)} onAction={(r, a) => void onRowAction(r, a)} />
+                    ))}
+                  </div>
+                )}
+              </>
             ) : (
-              <div className="space-y-0.5">
-                {visibleFriends.map((friend) => {
-                  const isActive = activeDm?.id === friend.id
-                  const avatarUrl = friend.avatar && (friend.avatar.startsWith('http') || friend.avatar.startsWith('/'))
-                    ? friend.avatar : undefined
-                  const lastMsg = getLastMessage(friend.id)
-                  const unread = getUnreadCountForUser(friend.id)
-                  // A request this user sent that the other person has not
-                  // answered yet. Worth saying: otherwise a thread with one
-                  // message in it looks like an ordinary conversation that
-                  // is being ignored.
-                  const awaitingTheirAccept = sentRequestPeerIds.has(friend.id)
-
-                  return (
+              <>
+                {!unreadOnly && (
+                  <>
+                    <NotesRow myName={myName} myAvatar={myAvatar} onOpenPerson={(u) => openPeer({ userId: u.id, displayName: u.name, username: null, avatarUrl: u.avatar || null, isOnline: null, lastActiveAt: null })} />
+                    {/* Pinned rows: Activity, then Requests with their count. */}
+                    <Link href="/notifications" className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-brand-secondary">
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-tint text-primary-ink">
+                        <Bell className="h-5 w-5" strokeWidth={1.75} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[14px] font-semibold text-brand-text">Activity</span>
+                        <span className="block truncate text-[12px] text-brand-text/60">Likes, comments, follows and mentions</span>
+                      </span>
+                      <ChevronRight className="h-4 w-4 text-brand-text/30" />
+                    </Link>
                     <button
-                      key={friend.id}
-                      onClick={() => handleFriendClick(friend)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all group ${
-                        isActive
-                          ? 'bg-primary-ink/5 border border-brand-divider'
-                          : 'hover:bg-primary-ink/5 border border-transparent hover:border-brand-divider'
-                      }`}
+                      type="button"
+                      onClick={() => { setContactTab('requests'); setRequestFilter('all') }}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-brand-secondary"
                     >
-                      <Avatar user={friend} size={42} showStatus avatarUrl={avatarUrl} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className={`text-sm font-bold truncate ${isActive ? 'text-primary-ink' : 'text-brand-text'} group-hover:text-primary-ink transition-colors`}>
-                            {friend.name}
-                          </span>
-                          {lastMsg?.time && (
-                            <span className="text-[10px] text-brand-text/40 font-bold shrink-0 ml-2">{lastMsg.time}</span>
-                          )}
-                        </div>
-                        {/* Handle under the name. Two accounts can carry the
-                            same display name — "Rq s" appeared twice in this
-                            very list — and then the handle is the only thing
-                            that tells the rows apart, being unique by
-                            construction. */}
-                        {friend.username && (
-                          <span className="block truncate text-[11px] leading-tight text-brand-text/40">
-                            @{friend.username}
-                          </span>
-                        )}
-                        <div className="flex items-center justify-between mt-0.5">
-                          <span className="text-xs text-brand-text/60 truncate flex-1 tracking-wide leading-tight">
-                            {/* `||`, not `??`: an empty preview is a string,
-                                not null, so `??` kept the blank line. */}
-                            {awaitingTheirAccept
-                              ? 'Request sent · waiting for them to accept'
-                              : lastMsg?.text || (friend.isOnline ? 'Online' : 'Offline')}
-                          </span>
-                          {unread > 0 && (
-                            <span className="bg-primary-ink text-white rounded-full min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold px-1 shrink-0 ml-2">
-                              {unread}
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-secondary text-brand-text/70">
+                        <MailQuestion className="h-5 w-5" strokeWidth={1.75} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[14px] font-semibold text-brand-text">Message requests</span>
+                        <span className="block truncate text-[12px] text-brand-text/60">
+                          {requests.length > 0
+                            ? (requests.length > 1 ? `${rowName(requests[0], myId)} and ${requests.length - 1} more want to message you` : `${rowName(requests[0], myId)} wants to message you`)
+                            : 'No pending requests'}
+                        </span>
+                      </span>
+                      {requests.length > 0 && (
+                        <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary-ink px-1.5 text-[10px] font-bold tabular-nums text-white">
+                          {unreadPillText(requests.length)}
+                        </span>
+                      )}
                     </button>
-                  )
-                })}
-              </div>
+                  </>
+                )}
+
+                {inbox.state.error && rows.length === 0 ? (
+                  <div className="flex flex-col items-center py-10 text-center">
+                    <p className="text-[13px] text-brand-text/60">Couldn&apos;t load your chats.</p>
+                    <button type="button" onClick={() => void inbox.reload()} className="mt-2 text-[13px] font-semibold text-primary-ink hover:underline">Try again</button>
+                  </div>
+                ) : visibleRows.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <MessageCircle className="w-10 h-10 text-brand-secondary mb-2" />
+                    <p className="text-[13px] font-medium text-brand-text/60">
+                      {unreadOnly ? 'Nothing unread' : 'No conversations yet'}
+                    </p>
+                    {!unreadOnly && (
+                      <button type="button" onClick={() => setShowNewMessage(true)} className="mt-2 text-[13px] font-semibold text-primary-ink hover:underline">Start a chat</button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-0.5">
+                    {visibleRows.map((row) => (
+                      <InboxRowItem
+                        key={row.id}
+                        row={row}
+                        myId={myId}
+                        active={openConversationId === row.id}
+                        sentRequestWaiting={sentRequestIds.has(row.id)}
+                        onOpen={(r) => openRow(r)}
+                        onAction={(r, a) => void onRowAction(r, a)}
+                      />
+                    ))}
+                    <div ref={sentinelRef} />
+                    {!inbox.state.hasMore && !unreadOnly && (
+                      <button type="button" onClick={() => { setShowArchived(true); void inbox.loadArchived() }} className="mx-auto mt-2 flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-brand-text/60 hover:bg-brand-secondary hover:text-brand-text">
+                        Archived chats
+                      </button>
+                    )}
+                    {inbox.state.loadingMore && (
+                      <div className="flex justify-center py-3 text-brand-text/40"><Loader2 className="h-4 w-4 animate-spin" /></div>
+                    )}
+                  </div>
+                )}
+              </>
             )
           ) : contactTab === 'requests' ? (
-            /* Message Requests list (spec §3.3) */
-            filteredRequests.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16">
-                <MailQuestion className="w-10 h-10 text-brand-secondary mb-2" />
-                <p className="text-[13px] font-medium text-brand-text/60">
-                  {search ? 'No requests match your search' : 'No message requests'}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-0.5">
-                {filteredRequests.map((conv) => {
-                  const peer = requestPeer(conv)
-                  const avatarUrl =
-                    peer.avatar && (peer.avatar.startsWith('http') || peer.avatar.startsWith('/'))
-                      ? peer.avatar
-                      : undefined
-                  const lastMsg = conv.last_message?.text
-                  const busy = pendingRequestId === conv.id
-                  return (
-                    <div
-                      key={conv.id}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent hover:border-brand-divider hover:bg-primary-ink/5 transition-all"
+            <>
+              {filteredRequests && filteredRequests.length > 0 && (
+                <div className="flex items-center gap-1.5 px-2 pb-2" role="tablist" aria-label="Requests">
+                  {(['all', 'filtered'] as const).map((f) => (
+                    <button
+                      key={f}
+                      role="tab"
+                      aria-selected={requestFilter === f}
+                      onClick={() => setRequestFilter(f)}
+                      className={`rounded-lg px-3 py-1 text-[12px] font-semibold ${requestFilter === f ? 'bg-brand-text text-brand-bg' : 'bg-brand-secondary text-brand-text/60'}`}
                     >
-                      {/* Opening the request opens the conversation. Typing
-                          a reply there accepts it server-side, so the
-                          common case — you read it and answer — costs one
-                          tap instead of two. Accept, Decline and Block
-                          remain for deciding without replying. */}
-                      <button
-                        onClick={() => handleFriendClick(peer)}
-                        className="flex flex-1 min-w-0 items-center gap-3 text-left"
-                      >
-                        <Avatar user={peer} size={42} avatarUrl={avatarUrl} />
-                        <div className="flex-1 min-w-0">
-                          <span className="text-sm font-bold truncate block text-brand-text">
-                            {peer.name}
-                          </span>
-                          {/* Handle under the name here too: deciding whether
-                              to accept a stranger is exactly when knowing
-                              WHICH account this is matters most. */}
-                          {requestProfiles?.get(peer.id)?.username && (
-                            <span className="block truncate text-[11px] leading-tight text-brand-text/40">
-                              @{requestProfiles.get(peer.id)!.username}
+                      {f === 'all' ? `All ${requests.length}` : `Filtered ${filteredRequests.length}`}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {requestFilter === 'filtered' && (
+                <p className="px-3 pb-2 text-[12px] text-brand-text/60">
+                  Requests that might be spam or unsafe. Photos and videos stay blurred until you tap them.
+                </p>
+              )}
+              {filteredRequestList.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <MailQuestion className="w-10 h-10 text-brand-secondary mb-2" />
+                  <p className="text-[13px] font-medium text-brand-text/60">
+                    {search ? 'No requests match your search' : 'No message requests'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-0.5">
+                  {filteredRequestList.map((row) => {
+                    const name = rowName(row, myId)
+                    const busy = pendingRequestId === row.id
+                    return (
+                      <div key={row.id} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-brand-secondary">
+                        {/* Opening the request opens the conversation. Typing a
+                            reply there accepts it server-side. */}
+                        <button onClick={() => openRow(row)} className="flex flex-1 min-w-0 items-center gap-3 text-left">
+                          <InboxAvatar name={name} src={row.peer?.avatarUrl} size={48} />
+                          <div className="flex-1 min-w-0">
+                            <span className="block truncate text-[14px] font-semibold text-brand-text">{name}</span>
+                            {row.peer?.username && (
+                              <span className="block truncate text-[11px] leading-tight text-brand-text/40">@{row.peer.username}</span>
+                            )}
+                            <span className="mt-0.5 block truncate text-[12px] text-brand-text/60">
+                              {rowPreview(row, myId).text}
                             </span>
-                          )}
-                          <span className="text-xs text-brand-text/60 truncate block tracking-wide leading-tight mt-0.5">
-                            {lastMsg || 'Wants to send you a message'}
-                          </span>
+                          </div>
+                        </button>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button onClick={() => handleAcceptRequest(row)} disabled={busy} aria-label="Accept request" className="w-8 h-8 rounded-lg bg-primary-ink text-brand-bg flex items-center justify-center transition-all disabled:opacity-50">
+                            <Check className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleDeclineRequest(row)} disabled={busy} aria-label="Decline request" className="w-8 h-8 rounded-lg bg-brand-secondary text-brand-text/60 hover:text-brand-text flex items-center justify-center transition-all disabled:opacity-50">
+                            <X className="w-4 h-4" />
+                          </button>
                         </div>
-                      </button>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <button
-                          onClick={() => handleAcceptRequest(conv)}
-                          disabled={busy}
-                          aria-label="Accept request"
-                          className="w-8 h-8 rounded-lg bg-primary-ink text-brand-bg flex items-center justify-center transition-all disabled:opacity-50"
-                        >
-                          <Check className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeclineRequest(conv)}
-                          disabled={busy}
-                          aria-label="Decline request"
-                          className="w-8 h-8 rounded-lg bg-brand-secondary text-brand-text/60 hover:text-brand-text flex items-center justify-center transition-all disabled:opacity-50"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
                       </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )
+                    )
+                  })}
+                </div>
+              )}
+            </>
           ) : (
             /* Groups list */
             <>
@@ -884,12 +782,10 @@ export default function PostbookMessenger() {
                 <div className="space-y-0.5">
                   {filteredGroups.map((group) => {
                     const isActive = activeGroupId === group.id
-                    const groupColor = getGroupColor(group.id)
                     const groupAvatarUrl = group.avatar_media_id
                       ? `/v1/media/${group.avatar_media_id}/serve`
                       : null
                     const privacy = group.privacy_level ?? 'public'
-
                     return (
                       <button
                         key={group.id}
@@ -900,22 +796,7 @@ export default function PostbookMessenger() {
                             : 'hover:bg-primary-ink/5 border border-transparent hover:border-brand-divider'
                         }`}
                       >
-                        {/* Group avatar */}
-                        {groupAvatarUrl ? (
-                          <img
-                            src={groupAvatarUrl}
-                            alt={group.name}
-                            className="w-[42px] h-[42px] rounded-xl object-cover shrink-0"
-                          />
-                        ) : (
-                          <div
-                            className="w-[42px] h-[42px] rounded-xl flex items-center justify-center text-white font-bold text-base shrink-0"
-                            style={{ background: groupColor }}
-                          >
-                            {group.name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-
+                        <InboxAvatar name={group.name} src={groupAvatarUrl} size={42} group />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
                             <span className={`text-sm font-bold truncate ${isActive ? 'text-primary-ink' : 'text-brand-text'} group-hover:text-primary-ink transition-colors`}>
@@ -934,18 +815,15 @@ export default function PostbookMessenger() {
                             )}
                           </div>
                         </div>
-
                         <ChevronRight className="w-4 h-4 text-brand-secondary shrink-0" />
                       </button>
                     )
                   })}
                 </div>
               )}
-
-              {/* New Group button */}
               <button
                 onClick={handleNewGroup}
-                className="w-full mt-2 py-4 text-[10px] font-black tracking-widest rounded-2xl bg-primary-ink text-brand-bg flex items-center justify-center gap-2 transition-all"
+                className="w-full mt-2 py-4 text-[11px] font-bold tracking-wide rounded-2xl bg-primary-ink text-brand-bg flex items-center justify-center gap-2 transition-all"
               >
                 <Plus className="w-4 h-4" />
                 New Group
@@ -958,22 +836,38 @@ export default function PostbookMessenger() {
       {/* ============================================================ */}
       {/*  MAIN CONTENT                                                  */}
       {/* ============================================================ */}
-      <div className={`flex-1 flex flex-col min-w-0 bg-brand-secondary ${!activeDm && !activeGroupId && !activeChannelId ? 'hidden md:flex' : 'flex'}`}>
-        {/* One column, one open thing. A direct chat, a group and a channel
-            are three shapes of the same conversation slot; GroupPanel used
-            to render as a sibling of this column, which put an empty-state
-            panel alongside the group you had just opened. */}
+      <div className={`flex-1 flex flex-col min-w-0 bg-brand-secondary ${!anyOpen ? 'hidden md:flex' : 'flex'}`}>
         {activeDm ? (
           <DmChat
+            key={`dm-${activeDm.id}-${urlConversation?.conversationId ?? ''}`}
             userId={activeDm.id}
             userName={activeDm.name}
             userAvatar={activeDm.avatar}
             userOnline={activeDm.isOnline ?? false}
+            userLastActiveAt={activeDm.lastActiveAt ?? null}
             onBack={() => setActiveDm(null)}
             detailsOpen={showDetails}
             onToggleDetails={() => setShowDetails((v) => !v)}
             onConversationReady={setActiveConversationId}
             conversationId={urlConversation?.peerId === activeDm.id ? urlConversation.conversationId : undefined}
+            focusMessageId={focusMessageId}
+            onChatRemoved={() => { clearOpen(); void inbox.reload() }}
+            onToast={showToast}
+          />
+        ) : activeGroupChat ? (
+          <DmChat
+            key={`group-${activeGroupChat.conversationId}`}
+            userId=""
+            userName={activeGroupChat.title}
+            userAvatar={activeGroupChat.avatarUrl ?? ''}
+            userOnline={false}
+            onBack={() => setActiveGroupChat(null)}
+            onConversationReady={setActiveConversationId}
+            conversationId={activeGroupChat.conversationId}
+            group={{ title: activeGroupChat.title, avatarUrl: activeGroupChat.avatarUrl, members: activeGroupChat.members }}
+            focusMessageId={focusMessageId}
+            onChatRemoved={() => { clearOpen(); void inbox.reload() }}
+            onToast={showToast}
           />
         ) : activeGroupId && selectedGroup ? (
           <GroupPanel
@@ -986,8 +880,6 @@ export default function PostbookMessenger() {
                 : null
             }
             onClose={() => setActiveGroupId(null)}
-            // Without this, creating a group from inside the panel falls
-            // back to router.push('/groups/<id>') and leaves the messenger.
             onCreateGroup={handleGroupClick}
           />
         ) : activeChannelId ? (
@@ -1000,9 +892,7 @@ export default function PostbookMessenger() {
         )}
       </div>
 
-      {/* Third column: who you are talking to, and what is in the thread.
-          Only for direct conversations — a group already has GroupPanel — and
-          only from xl, below which the conversation needs the whole width. */}
+      {/* Third column: who you are talking to. DMs only, from xl. */}
       {activeDm && showDetails && (
         <div className="hidden xl:flex">
           <ThreadDetails
@@ -1013,8 +903,6 @@ export default function PostbookMessenger() {
         </div>
       )}
 
-      {/* GroupPanel moved into the conversation column above. CreateGroup
-          is a portalled modal, so it stays here. */}
       {showCreateGroup && (
         <CreateGroupPanel
           onClose={() => setShowCreateGroup(false)}
@@ -1028,24 +916,24 @@ export default function PostbookMessenger() {
 
       </div>
 
-      {/* Compose: the same sheet the feed's chat panel uses, so starting a
-          conversation works identically wherever you begin it. */}
+      {/* Compose: recents + people search; pick several to start a group. */}
       {showNewMessage && (
         <div className="fixed inset-0 z-1000 flex items-start justify-center bg-brand-text/20 p-4 pt-16">
-          <div className="relative h-[520px] w-full max-w-md overflow-hidden rounded-2xl border border-brand-divider bg-brand-bg shadow-2xl">
+          <div className="relative h-[560px] max-h-[85vh] w-full max-w-md overflow-hidden rounded-2xl border border-brand-divider bg-brand-bg shadow-2xl">
             <NewMessageSheet
+              recents={rows}
               onClose={() => setShowNewMessage(false)}
-              onOpened={(user) => {
-                setActiveDm(user)
-                setActiveGroupId(null)
+              onOpened={(user, conversationId) => openPerson({ id: user.id, name: user.name, avatar: user.avatar }, conversationId)}
+              onOpenedGroup={(conversationId, title, members) => {
+                clearOpen()
+                setActiveGroupChat({ conversationId, title, avatarUrl: null, members })
+                void inbox.reload()
               }}
             />
           </div>
         </div>
       )}
 
-      {/* Create a channel without leaving the messenger. It opens in the
-          column the moment it exists, so Settings is one click away. */}
       {showNewChannel && (
         <div className="fixed inset-0 z-1000 flex items-start justify-center bg-brand-text/20 p-4 pt-16">
           <div className="relative max-h-[80vh] w-full max-w-md overflow-hidden rounded-2xl border border-brand-divider bg-brand-bg shadow-2xl">
@@ -1061,9 +949,19 @@ export default function PostbookMessenger() {
         </div>
       )}
 
-      {/* Toast */}
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Delete this chat?"
+          body="It's removed from your inbox and your copy of the history is cleared. The other person keeps theirs. A new message brings the chat back."
+          confirm="Delete"
+          busy={deleting}
+          onCancel={() => setConfirmDelete(null)}
+          onConfirm={() => void doDelete()}
+        />
+      )}
+
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-9999 px-6 py-3 bg-primary-ink text-white text-[13px] font-semibold rounded-xl shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div role="status" className="fixed bottom-6 left-1/2 -translate-x-1/2 z-9999 px-6 py-3 bg-primary-ink text-white text-[13px] font-semibold rounded-xl shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
           {toast}
         </div>
       )}

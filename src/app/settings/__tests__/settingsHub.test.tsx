@@ -15,10 +15,11 @@ const row = (key: string) => SETTINGS_GROUPS.flatMap((g) => g.rows).find((r) => 
 const noop = () => undefined
 
 describe("settings hub: groups and rows", () => {
-    test("groups read Account, Privacy & safety, Notifications, Content & display, Data & storage, Support & about, then the untitled Log out card", () => {
+    test("groups read Account, Privacy & safety, Inbox & messaging, Notifications, Content & display, Data & storage, Support & about, then the untitled Log out card", () => {
         expect(SETTINGS_GROUPS.map((g) => [g.key, g.title])).toEqual([
             ["account", "Account"],
             ["privacy", "Privacy & safety"],
+            ["messaging", "Inbox & messaging"],
             ["notifications", "Notifications"],
             ["display", "Content & display"],
             ["data", "Data & storage"],
@@ -43,6 +44,7 @@ describe("settings hub: groups and rows", () => {
             ["Blocked accounts", "/settings/blocked"],
             ["Hidden channels", "/settings/hidden-channels"],
         ])
+        expect(rows.messaging).toEqual([["Inbox & messaging", "/settings/messaging"]])
         expect(rows.notifications).toEqual([["Notifications", "/settings/notifications"]])
         expect(rows.display).toEqual([
             ["Appearance", "theme"],

@@ -172,7 +172,9 @@ describe("where Send in Messages is offered", () => {
       expect(src).toContain("<SendInMessagesPanel");
       expect(src).toContain("Send in Messages");
     }
-    expect(panel).toContain("<NewMessageSheet sharePostId={postId}");
+    // The share panel is the multi-chat picker now (chat parity §9): up to five chats, one note, one Send.
+    expect(panel).toContain("<ChatTargetPicker");
+    expect(panel).toContain("shareToChats(");
     expect(panel).toContain("getSession()?.id");
   });
 
@@ -184,7 +186,7 @@ describe("where Send in Messages is offered", () => {
   test("the plain New message path is unchanged; share mode commits through sendPostToUser", () => {
     const sheet = read("../NewMessageSheet.tsx");
     // Share mode commits through sendPostToUser; the plain path is unchanged.
-    expect(sheet).toContain("await sendPostToUser(recipient.id, sharePostId, text)");
+    expect(sheet).toContain("await sendPostToUser(first.id, sharePostId, text)");
     expect(sheet).toContain("if (text.trim()) await sendMessage(conversationId, text.trim());");
   });
 });

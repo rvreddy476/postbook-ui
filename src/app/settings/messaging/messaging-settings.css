@@ -1,0 +1,71 @@
+/*
+  Inbox & messaging (page.tsx). Sits on the settings hub's cards
+  (settings-hub.css) and adds the controls: a select or switch at the end of
+  a row, the filtered-word chips and the bubble colour picker. Momentum
+  tokens only; 13–15px type, as the hub.
+*/
+.msg-settings__back { display: inline-flex; align-items: center; gap: 6px; margin: 0 4px 12px; font-size: 13px; font-weight: 600; color: rgb(var(--brand-text) / .7); text-decoration: none; }
+.msg-settings__back:hover { color: rgb(var(--brand-text)); }
+.msg-settings__intro { margin: -8px 4px 16px; font-size: 13px; color: rgb(var(--brand-text) / .6); }
+
+.msg-settings__row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; min-height: 60px; }
+.msg-settings__text { display: flex; flex: 1 1 auto; min-width: 0; flex-direction: column; gap: 2px; }
+.msg-settings__label { font-size: 15px; font-weight: 500; color: rgb(var(--brand-text)); }
+.msg-settings__hint { font-size: 13px; color: rgb(var(--brand-text) / .6); }
+.msg-settings__error { margin: 0; padding: 0 14px 12px 58px; font-size: 13px; font-weight: 600; color: rgb(var(--danger)); }
+.msg-settings__error--inline { padding: 0; }
+.msg-settings__note { margin: 0; padding: 0 14px 12px 58px; font-size: 13px; color: rgb(var(--brand-text) / .6); }
+
+.msg-settings__select { flex: 0 1 auto; max-width: 46%; height: 36px; padding: 0 10px; border: 1px solid var(--brand-divider); border-radius: 10px; background: rgb(var(--brand-secondary)); font-size: 13px; font-weight: 600; color: rgb(var(--brand-text)); cursor: pointer; }
+.msg-settings__select:disabled { cursor: progress; opacity: .6; }
+
+.msg-settings__switch { position: relative; flex: 0 0 auto; width: 44px; height: 26px; padding: 0; border: 0; border-radius: 999px; background: rgb(var(--brand-text) / .2); cursor: pointer; transition: background-color 150ms ease; }
+.msg-settings__switch[aria-checked="true"] { background: rgb(var(--brand-ink)); }
+.msg-settings__switch:disabled { cursor: progress; opacity: .6; }
+.msg-settings__knob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 999px; background: rgb(var(--brand-card)); box-shadow: 0 1px 2px rgb(var(--brand-text) / .25); transition: transform 150ms ease; }
+.msg-settings__switch[aria-checked="true"] .msg-settings__knob { transform: translateX(18px); }
+
+.msg-settings__select:focus-visible, .msg-settings__switch:focus-visible, .msg-settings__input:focus-visible,
+.msg-settings__button:focus-visible, .msg-settings__chip-remove:focus-visible, .msg-settings__swatch:focus-visible {
+  outline: 2px solid rgb(var(--brand-accent)); outline-offset: 2px;
+}
+
+/* Filtered words */
+.msg-settings__panel { display: flex; flex-direction: column; gap: 10px; padding: 0 14px 14px 58px; }
+.msg-settings__add { display: flex; gap: 8px; }
+.msg-settings__input { flex: 1 1 auto; min-width: 0; height: 36px; padding: 0 12px; border: 1px solid var(--brand-divider); border-radius: 10px; background: rgb(var(--brand-secondary)); font-size: 14px; color: rgb(var(--brand-text)); }
+.msg-settings__input::placeholder { color: rgb(var(--brand-text) / .45); }
+.msg-settings__chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.msg-settings__chip { display: inline-flex; max-width: 100%; align-items: center; gap: 4px; height: 30px; padding: 0 4px 0 12px; border-radius: 999px; background: rgb(var(--brand-secondary)); font-size: 13px; font-weight: 500; color: rgb(var(--brand-text)); }
+.msg-settings__chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg-settings__chip-remove { display: inline-flex; width: 22px; height: 22px; flex: 0 0 auto; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 999px; background: transparent; color: rgb(var(--brand-text) / .6); cursor: pointer; }
+.msg-settings__chip-remove:hover { background: rgb(var(--brand-text) / .1); color: rgb(var(--brand-text)); }
+.msg-settings__count { font-size: 13px; color: rgb(var(--brand-text) / .6); }
+.msg-settings__empty { margin: 0; font-size: 13px; color: rgb(var(--brand-text) / .6); }
+.msg-settings__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.msg-settings__actions .msg-settings__count { margin-right: auto; }
+
+.msg-settings__button { display: inline-flex; min-width: 80px; height: 36px; align-items: center; justify-content: center; gap: 6px; padding: 0 14px; border: 1px solid var(--brand-divider); border-radius: 10px; background: rgb(var(--brand-card)); font-size: 14px; font-weight: 600; color: rgb(var(--brand-text)); cursor: pointer; }
+.msg-settings__button:hover { background: rgb(var(--brand-secondary)); }
+.msg-settings__button:disabled { cursor: not-allowed; opacity: .5; }
+.msg-settings__button--primary { border-color: transparent; background: rgb(var(--brand-ink)); color: rgb(var(--on-primary)); }
+.msg-settings__button--primary:hover { background: rgb(var(--brand-ink-hover)); }
+
+/* Bubble colour */
+.msg-settings__swatches { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; }
+.msg-settings__swatch-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; color: rgb(var(--brand-text) / .7); }
+.msg-settings__swatch { width: 36px; height: 36px; padding: 0; border: 2px solid rgb(var(--brand-card)); border-radius: 999px; box-shadow: 0 0 0 1px var(--brand-divider); cursor: pointer; }
+.msg-settings__swatch[aria-checked="true"] { box-shadow: 0 0 0 2px rgb(var(--brand-text)); }
+.msg-settings__preview { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 12px; background: rgb(var(--brand-secondary)); }
+.msg-settings__bubble { max-width: 75%; padding: 8px 12px; border-radius: 16px; font-size: 14px; line-height: 1.4; }
+.msg-settings__bubble--in { align-self: flex-start; border: 1px solid var(--brand-divider); border-bottom-left-radius: 4px; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); }
+.msg-settings__bubble--out { align-self: flex-end; }
+.msg-settings__bubble--out:last-child { border-bottom-right-radius: 4px; }
+
+.msg-settings__toast { position: sticky; bottom: 16px; margin: 16px 4px 0; padding: 0 12px; border-radius: 10px; background: rgb(var(--brand-card)); }
+.msg-settings__toast:empty { display: none; }
+.msg-settings__toast > p { margin: 0; padding: 10px 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .msg-settings__switch, .msg-settings__knob { transition: none; }
+}

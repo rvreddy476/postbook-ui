@@ -280,6 +280,16 @@ export default function PrivacyPage() {
                                 Turning this off also hides other people&apos;s read receipts from you.
                             </p>
                         </div>
+                        <Link
+                            href="/settings/messaging"
+                            className="mt-4 flex items-center gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-brand-text/5 group"
+                        >
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-brand-text">Inbox &amp; messaging settings</p>
+                                <p className="text-xs text-brand-highlight">Who can message or call you, activity status, safe requests and more</p>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-brand-text/60 group-hover:text-brand-text/80 transition-colors shrink-0" />
+                        </Link>
                     </SectionCard>
 
                     {/* Section 2 — Content */}

@@ -2,6 +2,7 @@ import { ensureAccessToken } from '@/lib/accessToken';
 import { CommentChangeGate, PostRoomSubscriptions, groupTypingSignal, type CommentChange } from '@/lib/postThreadLive';
 import { User } from '@/types';
 import { LiveRoomSubscriptions, parseLiveFrame, type LiveFrame } from '@/features/live/realtime';
+import { decodeMessageDeletedFrame, decodeMessageExtras, decodePresenceFrame, type MessageExtras } from '@/lib/chat/contract';
 
 export interface Message {
   id: string;
@@ -9,7 +10,8 @@ export interface Message {
   conversation_id: string;
   bucket: string;
   ts: string;
-  type: 'text' | 'media' | 'image' | 'video' | 'audio' | 'file' | 'system' | 'post';
+  /** text, media, post, and (chat parity) voice, sticker, gif, profile, sound, live, call, system. */
+  type: 'text' | 'media' | 'image' | 'video' | 'audio' | 'file' | 'system' | 'post' | 'voice' | 'sticker' | 'gif' | 'profile' | 'sound' | 'live' | 'call' | (string & {});
   text?: string;
   media_id?: string;
   /**
@@ -34,6 +36,8 @@ export interface Message {
   edited_at?: string;
   is_deleted?: boolean;
   created_at: string;
+  /** Chat-parity fields (CONTRACT §2.2), decoded tolerantly; absent fields are neutral. */
+  extras?: MessageExtras;
 }
 
 export interface ReactionUpdate {
@@ -97,7 +101,11 @@ const normalizeMessage = (raw: Record<string, any>): Message => ({
   edited_at: raw.edited_at as string | undefined,
   is_deleted: raw.is_deleted as boolean | undefined,
   created_at: raw.created_at as string,
+  extras: decodeMessageExtras(raw),
 });
+
+/** Exported for the parity API (paged reads) and tests. */
+export const normalizeChatMessage = normalizeMessage;
 
 const wsUrlForPath = (path: string) => {
   const explicitBase = process.env.NEXT_PUBLIC_WS_BASE_URL;
@@ -148,7 +156,7 @@ const commentUpdateListeners = new Set<(u: ChannelCommentUpdate) => void>();
 const groupCommentUpdateListeners = new Set<(u: GroupCommentUpdate) => void>();
 const groupTypingListeners = new Set<(e: GroupTypingEvent) => void>();
 const pinUpdateListeners = new Set<(e: PinUpdateEvent) => void>();
-const presenceListeners = new Set<(e: { user_id: string; online: boolean }) => void>();
+const presenceListeners = new Set<(e: PresenceUpdateEvent) => void>();
 const liveEventListeners = new Set<(event: LiveFrame) => void>();
 // Live rooms are desired state like post rooms: re-sent on every open so the
 // gateway re-asks live-service-v2 after a reconnect (features/live/realtime).
@@ -388,6 +396,13 @@ const chatClient = {
 };
 
 /**
+ * The chat client for the parity routes (services/chatParityApi.ts): the same
+ * proxy, token and error shape as every call in this file.
+ */
+export const chatRequest = <TResponse = any>(path: string, options: RequestInit = {}, background = false) =>
+  chatClient.request<TResponse>(path, options, background);
+
+/**
  * Connect to the WS Gateway via Proxy Token
  */
 export const connectToHub = async (onMsg: (m: Message) => void) => {
@@ -445,7 +460,8 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
           reply_to_preview: data.payload.reply_to_preview,
           reply_to_sender_id: data.payload.reply_to_sender_id,
           forwarded_from_id: data.payload.forwarded_from_id,
-          created_at: data.payload.created_at
+          created_at: data.payload.created_at,
+          extras: decodeMessageExtras(data.payload),
         };
         onMsg(msg);
         localListeners.forEach(cb => cb(msg));
@@ -489,11 +505,12 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
         };
         messageEditedListeners.forEach(cb => cb(evt));
       } else if (data.type === 'message_deleted') {
-        const evt: MessageDeletedEvent = {
-          conversation_id: data.payload.conversation_id,
-          msg_id: data.payload.msg_id,
-        };
-        messageDeletedListeners.forEach(cb => cb(evt));
+        // Contract frame {conversation_id, message_id}; legacy msg_id.
+        const decoded = decodeMessageDeletedFrame(data);
+        if (decoded) {
+          const evt: MessageDeletedEvent = { conversation_id: decoded.conversationId, msg_id: decoded.messageId };
+          messageDeletedListeners.forEach(cb => cb(evt));
+        }
       } else if (data.type === 'comment_change') {
         if (commentChangeGate.accept(data.payload)) {
           commentChangeListeners.forEach(cb => cb(data.payload));
@@ -519,8 +536,12 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
         };
         pinUpdateListeners.forEach(cb => cb(evt));
       } else if (data.type === 'presence_update') {
-        const evt = { user_id: data.user_id as string, online: data.online as boolean };
-        presenceListeners.forEach(cb => cb(evt));
+        // Contract {user_id, is_online, last_active_at} (top level or payload); legacy {user_id, online}.
+        const decoded = decodePresenceFrame(data);
+        if (decoded) {
+          const evt = { user_id: decoded.userId, online: decoded.isOnline === true, last_active_at: decoded.lastActiveAt };
+          presenceListeners.forEach(cb => cb(evt));
+        }
       } else {
         const liveEvent = parseLiveFrame(data);
         if (liveEvent) {
@@ -621,6 +642,8 @@ export interface SendMessageOptions {
   reply_to_sender_id?: string;
   forwarded_from_id?: string;
   feeling?: string;
+  /** Replying to someone's Note (CONTRACT §2.1). */
+  reply_note_id?: string;
 }
 
 export const sendMessage = async (conversationId: string, text: string, feeling?: string, opts?: Partial<SendMessageOptions>) => {
@@ -879,7 +902,9 @@ export const subscribeToHubConnected = (cb: () => void) => {
 };
 export const refreshPostRooms = () => postRooms.refresh();
 
-export const subscribeToPresenceUpdates = (cb: (e: { user_id: string; online: boolean }) => void) => {
+export interface PresenceUpdateEvent { user_id: string; online: boolean; last_active_at?: string | null }
+
+export const subscribeToPresenceUpdates = (cb: (e: PresenceUpdateEvent) => void) => {
   presenceListeners.add(cb);
   return () => { presenceListeners.delete(cb); };
 };

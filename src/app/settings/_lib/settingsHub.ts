@@ -13,6 +13,7 @@ import {
   Lock,
   LogOut,
   MapPin,
+  MessageCircle,
   Receipt,
   ShieldCheck,
   SunMoon,
@@ -50,7 +51,7 @@ export interface SettingsRow {
 }
 
 export interface SettingsGroup {
-  key: "account" | "privacy" | "notifications" | "display" | "data" | "support" | "session";
+  key: "account" | "privacy" | "messaging" | "notifications" | "display" | "data" | "support" | "session";
   /** Card heading; the Log out card has none. */
   title?: string;
   rows: SettingsRow[];
@@ -77,6 +78,13 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
       { key: "friend-requests", label: "Friend requests", icon: UserCheck, href: "/settings/friend-requests" },
       { key: "blocked", label: "Blocked accounts", icon: UserX, href: "/settings/blocked" },
       { key: "hidden-channels", label: "Hidden channels", icon: EyeOff, href: "/settings/hidden-channels" },
+    ],
+  },
+  {
+    key: "messaging",
+    title: "Inbox & messaging",
+    rows: [
+      { key: "messaging", label: "Inbox & messaging", icon: MessageCircle, href: "/settings/messaging" },
     ],
   },
   {

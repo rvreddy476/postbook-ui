@@ -8,6 +8,7 @@ import {
     ArrowLeft,
     Users,
     MessageSquare,
+    ChevronRight,
 } from "lucide-react"
 import { useMySettings, useUpdateMySettings } from "@/hooks/useMySettings"
 import {
@@ -236,6 +237,16 @@ export default function SocialPreferencesPage() {
                                 ))}
                             </select>
                         </div>
+                        <Link
+                            href="/settings/messaging"
+                            className="mt-4 flex items-center gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-brand-text/5 group"
+                        >
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-brand-text">Inbox &amp; messaging settings</p>
+                                <p className="text-xs text-brand-highlight">Groups, calls, activity status, safe requests and more</p>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-brand-text/60 group-hover:text-brand-text/80 transition-colors shrink-0" />
+                        </Link>
                     </SectionCard>
 
                     {/* Save */}
