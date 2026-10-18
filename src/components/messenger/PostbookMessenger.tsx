@@ -22,7 +22,7 @@ import { useMyGroups } from '@/hooks/useGroups'
 import { useMyBroadcastChannels } from '@/hooks/useBroadcastChannels'
 import { useMyProfile } from '@/hooks/useEditProfile'
 import type { User } from '@/types'
-import type { ChatPeer, InboxRow } from '@/lib/chat/contract'
+import { decodeRequestSender, type ChatPeer, type InboxRow } from '@/lib/chat/contract'
 import { inboxUnreadTotal, rowName, rowPreview, unreadPillText } from '@/lib/chat/inbox'
 import { useInbox } from './inbox/useInbox'
 import { InboxRowItem, type RowAction } from './inbox/InboxRowItem'
@@ -205,6 +205,10 @@ export default function PostbookMessenger() {
       else if (action === 'archive' && showArchived) { await inbox.unarchive(row); showToast('Moved back to your chats') }
       else if (action === 'archive') { await inbox.archive(row); showToast('Chat archived') }
       else if (action === 'read') { await inbox.markRead(row) }
+      else if (action === 'unread') {
+        const ok = await inbox.markUnread(row)
+        showToast(ok ? 'Marked as unread' : "Marking chats unread isn't available yet")
+      }
       else if (action === 'delete') setConfirmDelete(row)
     } catch (err) {
       showToast(serverMessage(err, "Couldn't update that chat"))
@@ -314,6 +318,7 @@ export default function PostbookMessenger() {
           type?: string
           title?: string
           members?: Array<{ user_id?: string; display_name?: string; avatar_media_id?: string }>
+          sender?: unknown
         }
         if (cancelled || !conv.id) return
         if (conv.type === 'group') {
@@ -326,12 +331,17 @@ export default function PostbookMessenger() {
           return
         }
         const peer = (conv.members ?? []).find((m) => m.user_id && m.user_id !== myId)
-        if (!peer?.user_id) return
-        setUrlConversation({ peerId: peer.user_id, conversationId: conv.id })
+        // A request's detail carries the sender: "Deleted account", their name, or @username.
+        const sender = decodeRequestSender(conv.sender)
+        const peerId = peer?.user_id || (sender?.peer && sender.peer.userId !== myId ? sender.peer.userId : null)
+        if (!peerId) return
+        const fromSender = sender !== null && (sender.deleted || sender.peer?.userId === peerId)
+        const memberAvatar = peer?.avatar_media_id ? `/v1/media/${peer.avatar_media_id}/serve` : ''
+        setUrlConversation({ peerId, conversationId: conv.id })
         setActiveDm({
-          id: peer.user_id,
-          name: peer.display_name || 'Conversation',
-          avatar: peer.avatar_media_id ? `/v1/media/${peer.avatar_media_id}/serve` : '',
+          id: peerId,
+          name: fromSender ? sender.label : peer?.display_name || 'Someone',
+          avatar: sender?.deleted ? '' : (fromSender ? sender.peer?.avatarUrl : null) || memberAvatar,
           isOnline: false,
         })
         setActiveGroupId(null)
@@ -370,7 +380,7 @@ export default function PostbookMessenger() {
         const p = (res.data?.data?.profile ?? res.data?.data ?? {}) as Record<string, any>
         openPerson({
           id: wanted,
-          name: p.display_name || p.username || 'Conversation',
+          name: p.display_name || (p.username ? `@${p.username}` : 'Someone'),
           avatar: p.avatar_media_id ? `/v1/media/${p.avatar_media_id}/serve` : '',
         })
       } catch {
@@ -743,10 +753,10 @@ export default function PostbookMessenger() {
                         {/* Opening the request opens the conversation. Typing a
                             reply there accepts it server-side. */}
                         <button onClick={() => openRow(row)} className="flex flex-1 min-w-0 items-center gap-3 text-left">
-                          <InboxAvatar name={name} src={row.peer?.avatarUrl} size={48} />
+                          <InboxAvatar name={name} src={row.peerDeleted ? null : row.peer?.avatarUrl} size={48} />
                           <div className="flex-1 min-w-0">
                             <span className="block truncate text-[14px] font-semibold text-brand-text">{name}</span>
-                            {row.peer?.username && (
+                            {row.peer?.username && !row.peerDeleted && name !== `@${row.peer.username}` && (
                               <span className="block truncate text-[11px] leading-tight text-brand-text/40">@{row.peer.username}</span>
                             )}
                             <span className="mt-0.5 block truncate text-[12px] text-brand-text/60">

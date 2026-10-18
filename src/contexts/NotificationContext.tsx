@@ -17,7 +17,9 @@ import {
     messengerUnreadTotal,
     withoutDatingUnread,
 } from "@/lib/messengerConversations"
-import { playNotificationSound } from "@/hooks/useNotificationSound"
+import { playChatAlert } from "@/hooks/useChatAlertTone"
+import { alertPrefsCache, alertSoundFor, primeAlertPrefs } from "@/lib/chat/alertTone"
+import { getConversationPrefs } from "@/services/chatParityApi"
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -137,9 +139,48 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
             .then((res) => {
                 const conv = (res?.data ?? res ?? {}) as { id?: unknown; source_app?: unknown }
                 rememberConversations([{ ...conv, id: convId }])
+                primeAlertPrefs([{ ...conv, id: convId }])
             })
             .catch(() => { convKindRef.current.delete(convId) })
     }, [rememberConversations])
+
+    /*
+      The chat's own alert tone (CONTRACT §8): silent plays nothing, a muted
+      chat plays nothing, default is the pop. Prefs come from the shared
+      cache (inbox list, chat settings); an unknown chat's are fetched once.
+    */
+    const soundEnabledRef = useRef(soundEnabled)
+    soundEnabledRef.current = soundEnabled
+    const prefsInFlightRef = useRef<Map<string, Promise<void>>>(new Map())
+    const alertFor = useCallback((msg: Message, chatOnScreen: boolean) => {
+        const convId = msg.conversation_id
+        const decide = () => {
+            const src = alertSoundFor(
+                { senderId: msg.sender_id, conversationId: convId },
+                {
+                    myId: currentUserId,
+                    soundEnabled: soundEnabledRef.current,
+                    chatOnScreen,
+                    pageVisible: typeof document === "undefined" || document.visibilityState === "visible",
+                    isDating: datingIdsRef.current.has(convId),
+                    prefs: alertPrefsCache.get(convId),
+                },
+            )
+            if (src) playChatAlert(msg.id, src)
+        }
+        if (!soundEnabledRef.current || alertPrefsCache.get(convId)) return decide()
+        let pending = prefsInFlightRef.current.get(convId)
+        if (!pending) {
+            pending = getConversationPrefs(convId)
+                .then((p) => {
+                    if (p) alertPrefsCache.set(convId, { tone: p.alertTone, muted: p.isMuted, muteUntil: p.muteUntil })
+                })
+                .catch(() => undefined)
+                .finally(() => { prefsInFlightRef.current.delete(convId) })
+            prefsInFlightRef.current.set(convId, pending)
+        }
+        void pending.then(decide)
+    }, [currentUserId])
 
     /* ---- Message subscription ---- */
     useEffect(() => {
@@ -172,6 +213,8 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
                     persistState(next)
                     return next
                 })
+                // Open in a hidden tab still rings; on screen it does not.
+                alertFor(msg, true)
                 return
             }
 
@@ -188,13 +231,11 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
 
             // Sound only — the on-screen "new message" toast was removed
             // (it showed a raw user-id and duplicated the unread badges).
-            if (soundEnabled) {
-                playNotificationSound()
-            }
+            alertFor(msg, false)
         })
 
         return unsub
-    }, [currentUserId, soundEnabled, persistState, classifyConversation])
+    }, [currentUserId, persistState, classifyConversation, alertFor])
 
     /* ---- Offline recovery on mount ---- */
     useEffect(() => {
@@ -207,6 +248,7 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
                 const convResult = await fetchConversations(50, undefined, true)
                 const listed: { id?: string; conversation_id?: string; source_app?: unknown }[] = convResult.data ?? []
                 rememberConversations(listed)
+                primeAlertPrefs(listed)
                 const conversations = messengerConversations(listed)
 
                 for (const conv of conversations) {

@@ -150,6 +150,10 @@ export interface InboxRow {
   alertTone: string | null
   streak: ChatStreak | null
   updatedAt: string | null
+  /** I marked it unread myself (PUT /unread); cleared when I read or open it. */
+  markedUnread: boolean
+  /** The other person's account is gone (a request's `sender.deleted`). */
+  peerDeleted: boolean
 }
 
 export function decodeStreak(raw: unknown): ChatStreak | null {
@@ -198,6 +202,46 @@ function decodeLastMessage(raw: Obj): InboxLastMessage | null {
   return { type: 'text', preview: preview ?? '', senderId: first(raw.last_message_sender), at, ownStatus: null }
 }
 
+export const DELETED_ACCOUNT_LABEL = 'Deleted account'
+
+export interface RequestSender {
+  /** null only when the server sent no user id at all. */
+  peer: ChatPeer | null
+  deleted: boolean
+  /** What to call them: "Deleted account", else the name, else @username. */
+  label: string
+}
+
+/**
+ * The `sender` block on a request row or request conversation (fix pass 2):
+ * `{user_id, display_name, username, avatar_url, deleted}`. A deleted or
+ * missing account has `display_name: ""` and `deleted: true`. Never yields
+ * the word "Conversation".
+ */
+export function decodeRequestSender(raw: unknown): RequestSender | null {
+  if (!isObj(raw)) return null
+  const deleted = raw.deleted === true
+  const userId = first(raw.user_id, raw.id)
+  if (!userId && !deleted) return null
+  const username = deleted ? null : first(raw.username, raw.handle)
+  const name = deleted ? null : first(raw.display_name, raw.name)
+  const label = deleted ? DELETED_ACCOUNT_LABEL : name ?? (username ? `@${username}` : 'Someone')
+  return {
+    peer: userId
+      ? {
+          userId,
+          displayName: label,
+          username,
+          avatarUrl: deleted ? null : first(raw.avatar_url) ?? mediaServe(first(raw.avatar_media_id)),
+          isOnline: null,
+          lastActiveAt: null,
+        }
+      : null,
+    deleted,
+    label,
+  }
+}
+
 export function decodeInboxRow(raw: unknown, myId: string): InboxRow | null {
   if (!isObj(raw)) return null
   const id = first(raw.id, raw.conversation_id)
@@ -205,7 +249,9 @@ export function decodeInboxRow(raw: unknown, myId: string): InboxRow | null {
   const type = first(raw.type) ?? 'direct'
   const isGroup = type === 'group' || type === 'channel'
   const members = arr(raw.members).map(decodeMember).filter((m): m is InboxMember => m !== null)
-  let peer = isGroup ? null : decodePeer(raw.peer)
+  const sender = isGroup ? null : decodeRequestSender(raw.sender)
+  const peerDeleted = sender?.deleted === true || (isObj(raw.peer) && raw.peer.deleted === true)
+  let peer = isGroup ? null : decodePeer(raw.peer) ?? sender?.peer ?? null
   if (!peer && !isGroup) {
     const other = members.find((m) => m.userId !== myId)
     if (other) {
@@ -219,8 +265,12 @@ export function decodeInboxRow(raw: unknown, myId: string): InboxRow | null {
       }
     }
   }
+  // A deleted account keeps its id (the thread still opens) but no name, handle or photo.
+  if (peer && peerDeleted) peer = { ...peer, displayName: DELETED_ACCOUNT_LABEL, username: null, avatarUrl: null, isOnline: null, lastActiveAt: null }
   const lastMessage = decodeLastMessage(raw)
   const unread = numOrNull(raw.unread_count)
+  const markedUnread = raw.marked_unread === true
+  const counted = unread !== null ? Math.max(0, Math.floor(unread)) : raw.has_unread === true ? 1 : 0
   return {
     id,
     type,
@@ -234,7 +284,8 @@ export function decodeInboxRow(raw: unknown, myId: string): InboxRow | null {
     avatarUrl: first(raw.avatar_url) ?? mediaServe(first(raw.avatar_media_id)),
     lastMessage,
     lastMessageAt: first(raw.last_message_at) ?? lastMessage?.at ?? null,
-    unreadCount: unread !== null ? Math.max(0, Math.floor(unread)) : raw.has_unread === true ? 1 : 0,
+    // A row I marked unread counts as at least one, whatever the count says.
+    unreadCount: markedUnread ? Math.max(1, counted) : counted,
     isPinned: raw.is_pinned === true || raw.pinned === true,
     pinnedAt: first(raw.pinned_at),
     isMuted: raw.is_muted === true,
@@ -243,6 +294,8 @@ export function decodeInboxRow(raw: unknown, myId: string): InboxRow | null {
     alertTone: first(raw.alert_tone),
     streak: isGroup ? null : decodeStreak(raw.streak),
     updatedAt: first(raw.updated_at),
+    markedUnread,
+    peerDeleted,
   }
 }
 
@@ -521,6 +574,8 @@ export interface GifItem {
   height: number
   /** First frame, when the sender's SDK gave one (Giphy still rendition). */
   stillUrl: string | null
+  /** A Giphy sticker (sent as type gif): drawn without a bubble, like a sticker. */
+  isSticker: boolean
 }
 
 /* ------------------------------------------------------------------ */
@@ -610,7 +665,7 @@ export function decodeMessageExtras(raw: unknown): MessageExtras {
     const id = first(gifRaw.id)
     if (url && id) {
       // Giphy URLs are kept exactly as stored (their query params matter).
-      gif = { provider: first(gifRaw.provider) ?? 'gif', id, url, previewUrl: first(gifRaw.preview_url) ?? url, width: num(gifRaw.width, 200), height: num(gifRaw.height, 200), stillUrl: first(gifRaw.still_url) }
+      gif = { provider: first(gifRaw.provider) ?? 'gif', id, url, previewUrl: first(gifRaw.preview_url) ?? url, width: num(gifRaw.width, 200), height: num(gifRaw.height, 200), stillUrl: first(gifRaw.still_url), isSticker: gifRaw.is_sticker === true }
     }
   }
   const sensitive = boolOrNull(mediaRaw?.sensitive ?? r.sensitive)

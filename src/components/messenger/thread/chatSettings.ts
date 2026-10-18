@@ -5,7 +5,8 @@
 */
 
 import type { AlertTone, ConversationPrefs, SharedMediaItem } from '@/lib/chat/contract'
-import type { PrefsPatch } from '@/services/chatParityApi'
+import type { MessageReportReason, PrefsPatch } from '@/services/chatParityApi'
+import type { ReportReason } from '@/hooks/useReport'
 
 export type PrefSwitch = 'isMuted' | 'muteCalls' | 'isPinned'
 
@@ -68,6 +69,32 @@ export const NOT_AVAILABLE_YET = {
 } as const
 
 export const REPORT_THANKS = "Thanks, we'll take a look"
+
+/**
+ * Chat settings › Report goes to POST /conversations/:id/report (fix pass 2),
+ * which takes the chat reasons. A server without that route yet falls back
+ * to reporting the person through trust-safety's /v1/reports, whose reason
+ * names differ; this maps one to the other. Groups have no fallback.
+ */
+export function legacyUserReportReason(reason: MessageReportReason): ReportReason {
+  switch (reason) {
+    case 'spam':
+    case 'scam':
+      return 'spam'
+    case 'harassment':
+      return 'harassment'
+    case 'hate':
+      return 'hate_speech'
+    case 'violence':
+      return 'violence'
+    case 'sexual':
+      return 'nudity'
+    default:
+      return 'other'
+  }
+}
+
+export const REPORT_GROUP_NOT_AVAILABLE = "Reporting groups isn't available yet."
 
 export type ConfirmKind = 'block' | 'clear' | 'delete' | 'leave'
 

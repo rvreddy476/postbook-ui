@@ -6,7 +6,7 @@
 */
 
 import { isDatingConversation } from '@/lib/messengerConversations'
-import type { ChatPeer, ChatStreak, InboxRow } from './contract'
+import { DELETED_ACCOUNT_LABEL, type ChatPeer, type ChatStreak, type InboxRow } from './contract'
 
 const ts = (iso: string | null | undefined): number => {
   if (!iso) return 0
@@ -113,8 +113,15 @@ export function primaryRows(rows: readonly InboxRow[], myId: string): InboxRow[]
 /*  Labels                                                             */
 /* ------------------------------------------------------------------ */
 
+/**
+ * A DM's name: "Deleted account" for a gone account, else their name, else
+ * @username, else the title. Never the word "Conversation" (fix pass 2).
+ */
 export function rowName(row: InboxRow, myId: string): string {
-  if (!row.isGroup) return row.peer?.displayName || row.title || 'Conversation'
+  if (!row.isGroup) {
+    if (row.peerDeleted) return DELETED_ACCOUNT_LABEL
+    return row.peer?.displayName || (row.peer?.username ? `@${row.peer.username}` : null) || row.title || 'Someone'
+  }
   if (row.title) return row.title
   const names = row.members.filter((m) => m.userId !== myId).map((m) => m.displayName).filter(Boolean) as string[]
   if (names.length === 0) return 'Group'
@@ -125,6 +132,31 @@ export function rowName(row: InboxRow, myId: string): string {
 export function unreadPillText(n: number): string {
   if (!Number.isFinite(n) || n <= 0) return ''
   return n > 99 ? '99+' : String(Math.floor(n))
+}
+
+/**
+ * What a row shows for unread: a number pill, a plain dot for a chat I
+ * marked unread with nothing new in it, or nothing.
+ */
+export type UnreadIndicator = { kind: 'count'; text: string } | { kind: 'dot' } | null
+
+export function unreadIndicator(row: Pick<InboxRow, 'unreadCount' | 'markedUnread'>): UnreadIndicator {
+  if (row.markedUnread && row.unreadCount <= 1) return { kind: 'dot' }
+  const text = unreadPillText(row.unreadCount)
+  return text ? { kind: 'count', text } : null
+}
+
+/** The row menu offers Mark as read when anything is unread, else Mark as unread. */
+export function readToggleAction(row: Pick<InboxRow, 'unreadCount' | 'markedUnread'>): 'read' | 'unread' {
+  return row.unreadCount > 0 || row.markedUnread ? 'read' : 'unread'
+}
+
+/** The row once read: no count, no mark. */
+export const READ_PATCH: Pick<InboxRow, 'unreadCount' | 'markedUnread'> = { unreadCount: 0, markedUnread: false }
+
+/** The row once marked unread: at least one, and the mark. */
+export function markedUnreadPatch(row: Pick<InboxRow, 'unreadCount'>): Pick<InboxRow, 'unreadCount' | 'markedUnread'> {
+  return { unreadCount: Math.max(1, row.unreadCount), markedUnread: true }
 }
 
 /** Short relative time for a row: now, 5m, 3h, 2d, 3w. */

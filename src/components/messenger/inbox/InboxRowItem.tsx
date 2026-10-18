@@ -1,19 +1,19 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Archive, ArchiveRestore, BellOff, CheckCheck, MoreHorizontal, Pin, PinOff, Bell, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, BellOff, CheckCheck, MailOpen, MoreHorizontal, Pin, PinOff, Bell, Trash2 } from 'lucide-react'
 
 import type { InboxRow } from '@/lib/chat/contract'
-import { rowName, rowPreview, shortAgo, showOnlineDot, streakBadge, unreadPillText } from '@/lib/chat/inbox'
+import { readToggleAction, rowName, rowPreview, shortAgo, showOnlineDot, streakBadge, unreadIndicator } from '@/lib/chat/inbox'
 import { InboxAvatar } from './InboxAvatar'
 
-export type RowAction = 'pin' | 'mute' | 'archive' | 'delete' | 'read'
+export type RowAction = 'pin' | 'mute' | 'archive' | 'delete' | 'read' | 'unread'
 
 /*
   One conversation in Messages: photo avatar with an online dot, name,
   preview (with "Seen" on my own last message), time, unread pill, mute and
   pin glyphs, streak. Hover shows a ⋯ button; right-click opens the same menu:
-  Pin, Mute, Archive, Delete chat, Mark read.
+  Pin, Mute, Mark as read / Mark as unread, Archive, Delete chat.
 */
 export function InboxRowItem({
   row,
@@ -37,7 +37,9 @@ export function InboxRowItem({
   const menuRef = useRef<HTMLDivElement | null>(null)
   const name = rowName(row, myId)
   const preview = rowPreview(row, myId, { sentRequestWaiting })
-  const pill = unreadPillText(row.unreadCount)
+  const indicator = unreadIndicator(row)
+  const pill = indicator !== null
+  const readAction = readToggleAction(row)
   const streak = streakBadge(row.streak)
   const avatar = row.isGroup ? row.avatarUrl : row.peer?.avatarUrl ?? null
 
@@ -64,7 +66,9 @@ export function InboxRowItem({
   const items: { action: RowAction; label: string; icon: typeof Pin; danger?: boolean; hidden?: boolean }[] = [
     { action: 'pin', label: row.isPinned ? 'Unpin' : 'Pin', icon: row.isPinned ? PinOff : Pin },
     { action: 'mute', label: row.isMuted ? 'Unmute' : 'Mute', icon: row.isMuted ? Bell : BellOff },
-    { action: 'read', label: 'Mark as read', icon: CheckCheck, hidden: row.unreadCount === 0 },
+    readAction === 'read'
+      ? { action: 'read', label: 'Mark as read', icon: CheckCheck }
+      : { action: 'unread', label: 'Mark as unread', icon: MailOpen },
     { action: 'archive', label: archived ? 'Unarchive' : 'Archive', icon: archived ? ArchiveRestore : Archive },
     { action: 'delete', label: 'Delete chat', icon: Trash2, danger: true },
   ]
@@ -103,15 +107,22 @@ export function InboxRowItem({
             {row.lastMessageAt && <span className="shrink-0 text-brand-text/40">· {shortAgo(row.lastMessageAt)}</span>}
           </span>
         </span>
-        {pill && (
+        {indicator?.kind === 'count' && (
           <span
             className={`flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums ${
               row.isMuted ? 'bg-brand-text/20 text-brand-text' : 'bg-primary-ink text-white'
             }`}
-            aria-label={`${pill} unread`}
+            aria-label={`${indicator.text} unread`}
           >
-            {pill}
+            {indicator.text}
           </span>
+        )}
+        {indicator?.kind === 'dot' && (
+          <span
+            className={`h-2.5 w-2.5 shrink-0 rounded-full ${row.isMuted ? 'bg-brand-text/30' : 'bg-primary-ink'}`}
+            aria-label="Marked unread"
+            role="img"
+          />
         )}
       </button>
       <button

@@ -808,7 +808,7 @@ export default function DmChat({
     if (!convIdRef.current) return
     setShowStickers(false)
     try { appendSent(await sendGifMessage(convIdRef.current, gif)) }
-    catch { setAttachError("Couldn't send the GIF.") }
+    catch { setAttachError(gif.is_sticker ? "Couldn't send the sticker." : "Couldn't send the GIF.") }
   }, [appendSent])
 
   // ---- Header line

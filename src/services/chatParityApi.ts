@@ -47,7 +47,7 @@ import {
   type StickerPack,
 } from '@/lib/chat/contract'
 import { forwardTargets, outcomeFromError } from '@/lib/chat/forward'
-import type { GifSendPayload } from '@/lib/chat/giphy'
+import { gifWireBody, type GifSendPayload } from '@/lib/chat/giphy'
 
 const enc = encodeURIComponent
 
@@ -107,6 +107,33 @@ export async function updateConversationPrefs(conversationId: string, patch: Pre
 export async function deleteChatForMe(conversationId: string): Promise<true | null> {
   return optional(async () => {
     await chatRequest(`/conversations/${enc(conversationId)}/for-me`, { method: 'DELETE' })
+    return true as const
+  })
+}
+
+/**
+ * Mark a conversation unread (or clear the mark) for me (fix pass 2):
+ * `PUT /conversations/:id/unread {unread}` → 204. Opening or reading the
+ * chat (POST /read) clears it server-side. null when the route is not there.
+ */
+export async function setConversationUnread(conversationId: string, unread: boolean): Promise<true | null> {
+  return optional(async () => {
+    await chatRequest(`/conversations/${enc(conversationId)}/unread`, { method: 'PUT', ...json({ unread }) })
+    return true as const
+  })
+}
+
+/**
+ * Report a whole conversation (fix pass 2): `POST /conversations/:id/report
+ * {reason, note?}` → 202. A DM reports the other person (the server attaches
+ * recent messages as evidence); a group reports the group.
+ */
+export async function reportConversation(conversationId: string, reason: MessageReportReason, note?: string): Promise<true | null> {
+  return optional(async () => {
+    await chatRequest(`/conversations/${enc(conversationId)}/report`, {
+      method: 'POST',
+      ...json(note?.trim() ? { reason, note: note.trim() } : { reason }),
+    })
     return true as const
   })
 }
@@ -174,10 +201,7 @@ export const sendStickerMessage = (conversationId: string, stickerId: string) =>
  * payload is what the SDK returned, URLs untouched (lib/chat/giphy.ts).
  */
 export const sendGifMessage = (conversationId: string, gif: GifSendPayload) =>
-  postMessage(conversationId, {
-    type: 'gif',
-    gif: { provider: gif.provider, id: gif.id, url: gif.url, width: gif.width, height: gif.height, still_url: gif.still_url },
-  })
+  postMessage(conversationId, { type: 'gif', gif: gifWireBody(gif) })
 
 /** Photo or video with the kind the picker knew (media responses gain media.kind). */
 export const sendMediaKindMessage = (conversationId: string, mediaId: string, reply?: ReplyRef) =>

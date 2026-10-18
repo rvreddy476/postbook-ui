@@ -38,7 +38,9 @@ import Avatar from '@/components/ui/Avatar'
 import { useGlobalToast } from '@/contexts/ToastContext'
 import { useBlockUser } from '@/hooks/useBlocking'
 import { useMessagingSettings, useUpdateMessagingSettings } from '@/hooks/useMessagingSettings'
-import { REPORT_REASONS, useSubmitReport, type ReportReason } from '@/hooks/useReport'
+import { useSubmitReport } from '@/hooks/useReport'
+import { previewChatAlert } from '@/hooks/useChatAlertTone'
+import { alertPrefsCache, alertToneSrc } from '@/lib/chat/alertTone'
 import { BUBBLE_STYLES, BUBBLE_STYLE_LABELS, bubbleClass, bubbleSwatchClass, parseBubbleStyle, type BubbleStyle } from '@/lib/chat/bubbleStyle'
 import { ALERT_TONES, type AlertTone, type ConversationPrefs, type SharedMediaItem, type SharedPostItem } from '@/lib/chat/contract'
 import {
@@ -47,7 +49,10 @@ import {
   fetchSharedMedia,
   fetchSharedPosts,
   getConversationPrefs,
+  MESSAGE_REPORT_REASONS,
+  reportConversation,
   updateConversationPrefs,
+  type MessageReportReason,
   type PrefsPatch,
 } from '@/services/chatParityApi'
 import { leaveConversation } from '@/services/messageService'
@@ -58,9 +63,11 @@ import {
   CONFIRM_COPY,
   NOT_AVAILABLE_YET,
   PREF_SWITCH_LABELS,
+  REPORT_GROUP_NOT_AVAILABLE,
   REPORT_THANKS,
   alertTonePatch,
   applyPrefSwitch,
+  legacyUserReportReason,
   prefSwitchPatch,
   profileHref,
   sharedMediaSrc,
@@ -69,6 +76,7 @@ import {
   type PrefSwitch,
 } from './chatSettings'
 import { uniqueIds } from './sharedViewer'
+import { REPORT_NOTE_MAX, REPORT_REASON_LABELS, reportNote } from './pickerSheetModels'
 import '../chat-bubbles.css'
 
 export interface ChatSettingsPanelProps {
@@ -107,7 +115,10 @@ export default function ChatSettingsPanel(props: ChatSettingsPanelProps): JSX.El
     let live = true
     setPrefs(undefined)
     getConversationPrefs(conversationId)
-      .then((p) => { if (live) setPrefs(p) })
+      .then((p) => {
+        if (p) alertPrefsCache.set(conversationId, { tone: p.alertTone, muted: p.isMuted, muteUntil: p.muteUntil })
+        if (live) setPrefs(p)
+      })
       .catch(() => { if (live) setPrefs(null) })
     return () => { live = false }
   }, [conversationId])
@@ -121,6 +132,7 @@ export default function ChatSettingsPanel(props: ChatSettingsPanelProps): JSX.El
       setPrefs(optimistic)
       try {
         const saved = await updateConversationPrefs(conversationId, patch)
+        alertPrefsCache.set(conversationId, { tone: saved.alertTone, muted: saved.isMuted, muteUntil: saved.muteUntil })
         setPrefs(saved)
         onPrefsChange?.(saved)
       } catch {
@@ -140,6 +152,9 @@ export default function ChatSettingsPanel(props: ChatSettingsPanelProps): JSX.El
   }
 
   const pickTone = (tone: AlertTone) => {
+    // Picking a tone plays it, so the choice is heard, not guessed.
+    const src = alertToneSrc(tone)
+    if (src) previewChatAlert(src)
     if (!prefs || prefs.alertTone === tone) return
     void savePrefs({ ...prefs, alertTone: tone }, alertTonePatch(tone))
   }
@@ -278,7 +293,7 @@ export default function ChatSettingsPanel(props: ChatSettingsPanelProps): JSX.El
 
       {/* Privacy and the chat itself */}
       <Group title="Privacy and support">
-        {!isGroup && peer ? <ActionRow icon={Flag} label="Report" onClick={() => setReportOpen(true)} /> : null}
+        {isGroup || peer ? <ActionRow icon={Flag} label="Report" onClick={() => setReportOpen(true)} /> : null}
         {!isGroup && peer ? <ActionRow icon={Ban} label="Block" danger onClick={() => setConfirm('block')} /> : null}
         <ActionRow icon={Eraser} label="Clear chat" onClick={() => setConfirm('clear')} />
         <ActionRow icon={Trash2} label="Delete chat" danger onClick={() => setConfirm('delete')} />
@@ -298,10 +313,11 @@ export default function ChatSettingsPanel(props: ChatSettingsPanelProps): JSX.El
           onConfirm={() => void runConfirmed(confirm)}
         />
       ) : null}
-      {reportOpen && peer ? (
+      {reportOpen && (isGroup || peer) ? (
         <ReportSheet
-          userId={peer.userId}
-          name={peer.displayName}
+          conversationId={conversationId}
+          userId={isGroup ? null : peer?.userId ?? null}
+          name={isGroup ? name : peer?.displayName || name}
           onDone={() => {
             setReportOpen(false)
             toast({ type: 'success', title: REPORT_THANKS })
@@ -717,23 +733,35 @@ function ConfirmSheet({ kind, name, busy, onCancel, onConfirm }: { kind: Confirm
   )
 }
 
-/** Report an account (trust-safety POST /v1/reports, entity_type "user"). */
-function ReportSheet({ userId, name, onDone, onClose }: { userId: string; name: string; onDone(): void; onClose(): void }) {
+/**
+ * Report this chat (POST /conversations/:id/report): a DM reports the other
+ * person with recent messages as evidence, a group reports the group. A
+ * server without the route yet: a DM falls back to reporting the person
+ * (trust-safety /v1/reports, entity_type "user"); a group says so.
+ */
+function ReportSheet({ conversationId, userId, name, onDone, onClose }: { conversationId: string; userId: string | null; name: string; onDone(): void; onClose(): void }) {
   const report = useSubmitReport()
-  const [reason, setReason] = useState<ReportReason | ''>('')
+  const [reason, setReason] = useState<MessageReportReason | ''>('')
+  const [sending, setSending] = useState(false)
   const [details, setDetails] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   const send = async () => {
-    if (!reason) return
+    if (!reason || sending) return
     setError(null)
+    setSending(true)
     try {
-      await report.mutateAsync({ targetType: 'user', targetId: userId, reason, description: details.trim() })
+      const done = await reportConversation(conversationId, reason, reportNote(details))
+      if (done) return onDone()
+      if (!userId) return setError(REPORT_GROUP_NOT_AVAILABLE)
+      await report.mutateAsync({ targetType: 'user', targetId: userId, reason: legacyUserReportReason(reason), description: details.trim() })
       onDone()
     } catch (err) {
-      const status = (err as { response?: { status?: number } })?.response?.status
+      const status = (err as { response?: { status?: number }; status?: number })?.response?.status ?? (err as { status?: number })?.status
       if (status === 409) onDone()
       else setError("Couldn't send the report. Try again.")
+    } finally {
+      setSending(false)
     }
   }
 
@@ -745,27 +773,27 @@ function ReportSheet({ userId, name, onDone, onClose }: { userId: string; name: 
           <X className="h-4 w-4" />
         </button>
       </div>
-      <p className="mt-1 text-[12px] text-brand-text/60">They won't know you reported them.</p>
+      <p className="mt-1 text-[12px] text-brand-text/60">{userId ? "They won't know you reported them." : "No one in the group will know you reported it."}</p>
       <div role="radiogroup" aria-label="Reason" className="mt-3 flex flex-col">
-        {REPORT_REASONS.map((r) => (
+        {MESSAGE_REPORT_REASONS.map((r) => (
           <button
-            key={r.value}
+            key={r}
             type="button"
             role="radio"
-            aria-checked={reason === r.value}
-            onClick={() => setReason(r.value)}
+            aria-checked={reason === r}
+            onClick={() => setReason(r)}
             className="flex items-center justify-between rounded-lg px-2 py-2 text-left text-[14px] text-brand-text transition-colors hover:bg-brand-secondary"
           >
-            {r.label}
-            <span className={`flex h-4 w-4 items-center justify-center rounded-full border ${reason === r.value ? 'border-primary-ink bg-primary-ink' : 'border-brand-divider'}`} aria-hidden>
-              {reason === r.value ? <Check className="h-3 w-3 text-white" /> : null}
+            {REPORT_REASON_LABELS[r]}
+            <span className={`flex h-4 w-4 items-center justify-center rounded-full border ${reason === r ? 'border-primary-ink bg-primary-ink' : 'border-brand-divider'}`} aria-hidden>
+              {reason === r ? <Check className="h-3 w-3 text-white" /> : null}
             </span>
           </button>
         ))}
       </div>
       <textarea
         value={details}
-        onChange={(e) => setDetails(e.target.value.slice(0, 500))}
+        onChange={(e) => setDetails(e.target.value.slice(0, REPORT_NOTE_MAX))}
         placeholder="Anything else we should know? (optional)"
         rows={2}
         className="mt-2 w-full resize-none rounded-lg border border-brand-divider bg-brand-bg px-3 py-2 text-[13px] text-brand-text outline-none focus:border-primary-ink"
@@ -774,10 +802,10 @@ function ReportSheet({ userId, name, onDone, onClose }: { userId: string; name: 
       <button
         type="button"
         onClick={() => void send()}
-        disabled={!reason || report.isPending}
+        disabled={!reason || sending}
         className="mt-3 w-full rounded-full bg-primary-ink py-2 text-[13px] font-semibold text-white disabled:opacity-40"
       >
-        {report.isPending ? 'Sending…' : 'Send report'}
+        {sending ? 'Sending…' : 'Send report'}
       </button>
     </Sheet>
   )

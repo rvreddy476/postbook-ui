@@ -1,12 +1,12 @@
 'use client'
 
 /*
-  The composer's stickers-and-GIFs panel (CONTRACT §2.7). Each tab only
-  exists when there is something for it: no sticker packs hides Stickers;
-  no Giphy key in this build (NEXT_PUBLIC_GIPHY_SDK_KEY) hides GIFs. With
-  neither, the panel (and the composer button that opens it) is not shown.
-  GIFs come from Giphy's web SDK in the browser (founder decision 18 Oct);
-  there is no server GIF route.
+  The composer's stickers-and-GIFs panel (CONTRACT §2.7, fix pass 2). Tabs:
+  "GIF" and "Stickers" from Giphy's web SDK in the browser (stickers =
+  Giphy's whole sticker library), shown only when this build has the key
+  (NEXT_PUBLIC_GIPHY_SDK_KEY); then one tab per non-empty pack of our own
+  catalogue. With none of them, the panel (and the composer button that
+  opens it) is not shown. There is no server GIF route.
 
   The panel closes on Escape and on a press outside it. A press on the
   composer's own toggle button is not "outside" if that button carries
@@ -20,7 +20,8 @@ import { useQuery } from '@tanstack/react-query'
 import { LoaderCircle, Search, X } from 'lucide-react'
 import type { Sticker, StickerPack } from '@/lib/chat/contract'
 import { fetchStickerPacks } from '@/services/chatParityApi'
-import { giphyKey, type GifSendPayload } from '@/lib/chat/giphy'
+import { giphyKey, type GifSendPayload, type GiphyKind } from '@/lib/chat/giphy'
+import { GIPHY_SEARCH_PLACEHOLDER, activeTab, panelTabs } from './stickerPanelTabs'
 
 const GiphyGrid = lazy(() => import('./GiphyGrid'))
 
@@ -47,8 +48,6 @@ export function useStickerGifAvailability(): { stickers: StickerPack[]; gifsEnab
   }
 }
 
-type Tab = 'stickers' | 'gifs'
-
 export interface StickerGifPanelProps {
   onPickSticker(s: Sticker): void
   onPickGif(g: GifSendPayload): void
@@ -58,7 +57,7 @@ export interface StickerGifPanelProps {
 export function StickerGifPanel({ onPickSticker, onPickGif, onClose }: StickerGifPanelProps): JSX.Element | null {
   const { stickers, gifsEnabled, loading, available } = useStickerGifAvailability()
   const rootRef = useRef<HTMLDivElement | null>(null)
-  const [chosenTab, setChosenTab] = useState<Tab | null>(null)
+  const [chosenTab, setChosenTab] = useState<string | null>(null)
 
   const closeRef = useRef(onClose)
   useEffect(() => { closeRef.current = onClose })
@@ -81,12 +80,10 @@ export function StickerGifPanel({ onPickSticker, onPickGif, onClose }: StickerGi
     }
   }, [])
 
-  const hasStickers = stickers.length > 0
-  // The picked tab, unless it has gone away; otherwise whichever exists.
-  const tab: Tab | null =
-    chosenTab === 'stickers' && hasStickers ? 'stickers'
-      : chosenTab === 'gifs' && gifsEnabled ? 'gifs'
-        : hasStickers ? 'stickers' : gifsEnabled ? 'gifs' : null
+  const tabs = panelTabs({ giphyEnabled: gifsEnabled, packs: stickers })
+  // The picked tab, unless it has gone away; otherwise the first.
+  const tab = activeTab(tabs, chosenTab)
+  const pack = tab?.kind === 'pack' ? stickers.find((p) => p.id === tab.packId) ?? null : null
 
   const frame = 'flex h-[380px] w-[352px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-xl'
 
@@ -102,85 +99,74 @@ export function StickerGifPanel({ onPickSticker, onPickGif, onClose }: StickerGi
 
   return (
     <div ref={rootRef} className={frame} role="dialog" aria-label="Stickers and GIFs">
-      <div className="flex shrink-0 items-center gap-1 border-b border-brand-divider px-2 py-1.5" role="tablist">
-        {hasStickers && (
-          <TabButton active={tab === 'stickers'} onClick={() => setChosenTab('stickers')}>Stickers</TabButton>
-        )}
-        {gifsEnabled && (
-          <TabButton active={tab === 'gifs'} onClick={() => setChosenTab('gifs')}>GIFs</TabButton>
-        )}
+      <div className="flex shrink-0 items-center gap-1 border-b border-brand-divider px-2 py-1.5">
+        <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto" role="tablist" aria-label="Stickers and GIFs">
+          {tabs.map((t) => (
+            <TabButton
+              key={t.id}
+              active={t.id === tab.id}
+              onClick={() => setChosenTab(t.id)}
+              icon={t.kind === 'pack' ? stickers.find((p) => p.id === t.packId)?.stickers[0]?.url : undefined}
+            >
+              {t.label}
+            </TabButton>
+          ))}
+        </div>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="ml-auto flex h-8 w-8 items-center justify-center rounded-full text-brand-text/50 transition-colors hover:bg-brand-secondary hover:text-brand-text"
+          className="ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-brand-text/50 transition-colors hover:bg-brand-secondary hover:text-brand-text"
         >
           <X className="h-4 w-4" strokeWidth={1.75} />
         </button>
       </div>
-      {tab === 'stickers' ? <StickersTab packs={stickers} onPick={onPickSticker} /> : <GifsTab onPick={onPickGif} />}
+      {tab.kind === 'giphy' ? (
+        // A new kind is a new grid and a fresh search box.
+        <GiphyTab key={tab.giphy} kind={tab.giphy} onPick={onPickGif} />
+      ) : pack ? (
+        <PackGrid pack={pack} onPick={onPickSticker} />
+      ) : null}
     </div>
   )
 }
 
-function TabButton({ active, onClick, children }: { active: boolean; onClick(): void; children: string }) {
+function TabButton({ active, onClick, icon, children }: { active: boolean; onClick(): void; icon?: string; children: string }) {
   return (
     <button
       type="button"
       role="tab"
       aria-selected={active}
       onClick={onClick}
-      className={`rounded-full px-3 py-1.5 text-[13px] font-semibold transition-colors ${active ? 'bg-brand-secondary text-brand-text' : 'text-brand-text/60 hover:text-brand-text'}`}
+      className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold transition-colors ${active ? 'bg-brand-secondary text-brand-text' : 'text-brand-text/60 hover:text-brand-text'}`}
     >
-      {children}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {icon ? <img src={icon} alt="" className="h-4 w-4 object-contain" loading="lazy" /> : null}
+      <span className="max-w-[96px] truncate">{children}</span>
     </button>
   )
 }
 
-function StickersTab({ packs, onPick }: { packs: StickerPack[]; onPick(s: Sticker): void }) {
-  const [packId, setPackId] = useState<string | null>(null)
-  const pack = packs.find((p) => p.id === packId) ?? packs[0]
-
+function PackGrid({ pack, onPick }: { pack: StickerPack; onPick(s: Sticker): void }) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      {packs.length > 1 && (
-        <div className="flex shrink-0 gap-1.5 overflow-x-auto px-2 py-2" role="tablist" aria-label="Sticker packs">
-          {packs.map((p) => {
-            const active = p.id === pack.id
-            return (
-              <button
-                key={p.id}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => setPackId(p.id)}
-                className={`flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-medium transition-colors ${active ? 'border-primary-ink bg-primary-tint text-primary-ink' : 'border-brand-divider text-brand-text/70 hover:text-brand-text'}`}
-              >
-                <img src={p.stickers[0].url} alt="" className="h-4 w-4 object-contain" loading="lazy" />
-                <span className="max-w-[96px] truncate">{p.name}</span>
-              </button>
-            )
-          })}
-        </div>
-      )}
-      <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-4 gap-1 overflow-y-auto p-2">
-        {pack.stickers.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => onPick(s)}
-            aria-label={`Send sticker from ${pack.name}`}
-            className="flex aspect-square items-center justify-center rounded-xl p-1.5 transition-colors hover:bg-brand-secondary active:scale-95"
-          >
-            <img src={s.url} alt="" width={s.width} height={s.height} className="h-full w-full object-contain" loading="lazy" draggable={false} />
-          </button>
-        ))}
-      </div>
+    <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-4 gap-1 overflow-y-auto p-2">
+      {pack.stickers.map((s) => (
+        <button
+          key={s.id}
+          type="button"
+          onClick={() => onPick(s)}
+          aria-label={`Send sticker from ${pack.name}`}
+          className="flex aspect-square items-center justify-center rounded-xl p-1.5 transition-colors hover:bg-brand-secondary active:scale-95"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={s.url} alt="" width={s.width} height={s.height} className="h-full w-full object-contain" loading="lazy" draggable={false} />
+        </button>
+      ))}
     </div>
   )
 }
 
-function GifsTab({ onPick }: { onPick(g: GifSendPayload): void }) {
+function GiphyTab({ kind, onPick }: { kind: GiphyKind; onPick(g: GifSendPayload): void }) {
   const [text, setText] = useState('')
   const [query, setQuery] = useState('')
 
@@ -198,8 +184,8 @@ function GifsTab({ onPick }: { onPick(g: GifSendPayload): void }) {
             type="search"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Search GIFs"
-            aria-label="Search GIFs"
+            placeholder={GIPHY_SEARCH_PLACEHOLDER[kind]}
+            aria-label={GIPHY_SEARCH_PLACEHOLDER[kind]}
             autoFocus
             className="min-w-0 flex-1 bg-transparent text-[13px] text-brand-text outline-hidden placeholder:text-brand-text/40"
           />
@@ -211,11 +197,11 @@ function GifsTab({ onPick }: { onPick(g: GifSendPayload): void }) {
           fallback={
             <div className="flex h-full items-center justify-center" role="status">
               <LoaderCircle className="h-5 w-5 animate-spin text-brand-text/40" strokeWidth={1.75} />
-              <span className="sr-only">Loading GIFs</span>
+              <span className="sr-only">{kind === 'stickers' ? 'Loading stickers' : 'Loading GIFs'}</span>
             </div>
           }
         >
-          <GiphyGrid apiKey={giphyKey()} query={query} width={GIF_GRID_WIDTH} onPick={onPick} />
+          <GiphyGrid apiKey={giphyKey()} kind={kind} query={query} width={GIF_GRID_WIDTH} onPick={onPick} />
         </Suspense>
       </div>
 

@@ -17,11 +17,31 @@ import {
   fetchInbox,
   fetchMessagePage,
   fetchRequestsPage,
+  setConversationUnread,
   updateConversationPrefs,
   type PrefsPatch,
 } from '@/services/chatParityApi'
 import type { InboxRow } from '@/lib/chat/contract'
-import { applyLiveMessage, archivedLane, filteredLaneOrNull, isIncomingRequest, mergeInboxPages, patchRow, primaryRows, withoutDating } from '@/lib/chat/inbox'
+import { alertPrefsCache, asAlertTone } from '@/lib/chat/alertTone'
+import {
+  applyLiveMessage,
+  archivedLane,
+  filteredLaneOrNull,
+  isIncomingRequest,
+  markedUnreadPatch,
+  mergeInboxPages,
+  patchRow,
+  primaryRows,
+  READ_PATCH,
+  withoutDating,
+} from '@/lib/chat/inbox'
+
+/** The inbox list carries each chat's tone and mute: the alert sound reads them. */
+function primeAlerts(rows: readonly InboxRow[]): void {
+  for (const r of rows) {
+    if (r.alertTone) alertPrefsCache.set(r.id, { tone: asAlertTone(r.alertTone), muted: r.isMuted })
+  }
+}
 
 const PAGE = 30
 
@@ -86,6 +106,7 @@ export function useInbox(myId: string, openConversationId: string | null) {
     try {
       const page = await fetchInbox(myId, { lane: 'primary', limit: PAGE })
       // A full reload replaces the list (a hidden/archived row must go).
+      primeAlerts(page.rows)
       setRows(mergeInboxPages([], page.rows))
       setCursor(page.nextCursor)
       setError(false)
@@ -103,6 +124,7 @@ export function useInbox(myId: string, openConversationId: string | null) {
     setLoadingMore(true)
     try {
       const page = await fetchInbox(myId, { lane: 'primary', cursor, limit: PAGE })
+      primeAlerts(page.rows)
       setRows((prev) => mergeInboxPages(prev, page.rows))
       setCursor(page.nextCursor)
     } catch (err) {
@@ -159,9 +181,18 @@ export function useInbox(myId: string, openConversationId: string | null) {
 
   useEffect(() => () => { if (refetchTimer.current) clearTimeout(refetchTimer.current) }, [])
 
-  /** Opening a thread reads it. */
+  const rowsRef = useRef(rows)
+  rowsRef.current = rows
+
+  /**
+   * Opening a thread reads it. The thread's own POST /read clears a mark I
+   * set; a thread with nothing to read never sends one, so the mark is
+   * cleared here too.
+   */
   const markOpened = useCallback((conversationId: string) => {
-    setRows((prev) => prev.map((r) => (r.id === conversationId && r.unreadCount > 0 ? { ...r, unreadCount: 0 } : r)))
+    const wasMarked = rowsRef.current.some((r) => r.id === conversationId && r.markedUnread)
+    setRows((prev) => prev.map((r) => (r.id === conversationId && (r.unreadCount > 0 || r.markedUnread) ? { ...r, ...READ_PATCH } : r)))
+    if (wasMarked) void setConversationUnread(conversationId, false).catch(() => undefined)
   }, [])
 
   const setPrefs = useCallback(async (row: InboxRow, patch: PrefsPatch, local: Partial<InboxRow>) => {
@@ -177,7 +208,10 @@ export function useInbox(myId: string, openConversationId: string | null) {
 
   const pin = (row: InboxRow) =>
     setPrefs(row, { is_pinned: !row.isPinned }, { isPinned: !row.isPinned, pinnedAt: !row.isPinned ? new Date().toISOString() : null })
-  const mute = (row: InboxRow) => setPrefs(row, { is_muted: !row.isMuted }, { isMuted: !row.isMuted })
+  const mute = async (row: InboxRow) => {
+    await setPrefs(row, { is_muted: !row.isMuted }, { isMuted: !row.isMuted })
+    alertPrefsCache.patch(row.id, { muted: !row.isMuted, muteUntil: null })
+  }
 
   const archive = async (row: InboxRow) => {
     const before = rows
@@ -200,7 +234,9 @@ export function useInbox(myId: string, openConversationId: string | null) {
 
   /** Mark read: the server cursor moves to the newest message we know of. */
   const markRead = async (row: InboxRow, latestMessageId?: string) => {
-    setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, unreadCount: 0 } : r)))
+    setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, ...READ_PATCH } : r)))
+    // A mark I set goes with it, even when there is nothing new to read.
+    if (row.markedUnread) await setConversationUnread(row.id, false).catch(() => undefined)
     let id = latestMessageId
     if (!id) {
       try {
@@ -210,6 +246,30 @@ export function useInbox(myId: string, openConversationId: string | null) {
       }
     }
     if (id) await markConversationRead(row.id, id).catch(() => undefined)
+  }
+
+  /**
+   * Mark unread (PUT /unread): the row shows unread until I open or read it.
+   * false when the server has no route yet (the row is put back); a server
+   * error puts it back and throws.
+   */
+  const markUnread = async (row: InboxRow): Promise<boolean> => {
+    const before = rowsRef.current.find((r) => r.id === row.id)
+    setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, ...markedUnreadPatch(r) } : r)))
+    const restore = () => {
+      if (before) setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, unreadCount: before.unreadCount, markedUnread: before.markedUnread } : r)))
+    }
+    try {
+      const res = await setConversationUnread(row.id, true)
+      if (res === null) {
+        restore()
+        return false
+      }
+      return true
+    } catch (err) {
+      restore()
+      throw err
+    }
   }
 
   return {
@@ -234,5 +294,6 @@ export function useInbox(myId: string, openConversationId: string | null) {
     archive,
     removeForMe,
     markRead,
+    markUnread,
   }
 }

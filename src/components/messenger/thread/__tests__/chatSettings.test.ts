@@ -75,3 +75,12 @@ describe('sharedTabsVisible', () => {
     expect(sharedTabsVisible(undefined, [1])).toBe(true)
   })
 })
+
+describe('chat settings › Report fallback reasons', () => {
+  test('every chat reason maps to a /v1/reports reason', async () => {
+    const { legacyUserReportReason } = await import('../chatSettings')
+    const { MESSAGE_REPORT_REASONS } = await import('@/services/chatParityApi')
+    const mapped = Object.fromEntries(MESSAGE_REPORT_REASONS.map((r) => [r, legacyUserReportReason(r)]))
+    expect(mapped).toEqual({ spam: 'spam', harassment: 'harassment', hate: 'hate_speech', sexual: 'nudity', violence: 'violence', scam: 'spam', other: 'other' })
+  })
+})

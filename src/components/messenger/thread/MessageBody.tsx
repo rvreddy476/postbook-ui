@@ -81,6 +81,11 @@ export function MessageBody({
     }
     case 'gif': {
       const g = msg.extras!.gif!
+      // A Giphy sticker: transparent, uncropped, no bubble — like our own stickers.
+      if (g.isSticker) {
+        // eslint-disable-next-line @next/next/no-img-element
+        return <img src={g.url} alt="Sticker" width={Math.min(160, g.width || 160)} className="max-h-40 w-auto object-contain" loading="lazy" />
+      }
       return (
         <span className="block overflow-hidden rounded-2xl">
           {/* eslint-disable-next-line @next/next/no-img-element */}
