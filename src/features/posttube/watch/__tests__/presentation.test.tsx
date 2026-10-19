@@ -82,6 +82,9 @@ describe("the RUTUBE layout", () => {
   test("a description that only repeats the title is not drawn twice", () => {
     const html = renderToStaticMarkup(<WatchDetails {...detailsBase} description="rain on a tin roof " follow={null} actions={null} />);
     expect(html.split("ain on a tin roof").length - 1).toBe(1);
+    // …and with no topic or tags either, there is nothing to "Show more".
+    const bare = renderToStaticMarkup(<WatchDetails {...detailsBase} topic={null} description="Rain on a tin roof" follow={null} actions={null} />);
+    expect(bare).not.toContain("Show more");
   });
 
   test("no Share button when the creator turned sharing off", () => {

@@ -128,9 +128,8 @@ export function WatchDetails({
         {expanded ? (
           <>
             <hr className="tube-about__rule" />
+            {/* The title is already the heading above; only the topic is new here. */}
             <dl className="tube-about__facts">
-              <dt>Title</dt>
-              <dd>{title}</dd>
               {topic ? (
                 <>
                   <dt>Topic</dt>
@@ -181,9 +180,12 @@ export function WatchDetails({
           </p>
         ) : null}
         {related ? <RelatedCard related={related} /> : null}
-        <button type="button" className="tube-about__toggle" onClick={() => setExpanded((e) => !e)} aria-expanded={expanded}>
-          {expanded ? "Collapse" : "Show more"}
-        </button>
+        {/* Only when there is something more to show (2026-10-19). */}
+        {description || tags.length > 0 || topic ? (
+          <button type="button" className="tube-about__toggle" onClick={() => setExpanded((e) => !e)} aria-expanded={expanded}>
+            {expanded ? "Collapse" : "Show more"}
+          </button>
+        ) : null}
       </div>
     </section>
   );
