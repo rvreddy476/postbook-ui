@@ -9,7 +9,6 @@ import { RailBookmark, RailBubble, RailHeart, RailShare } from "@/features/reels
 import { Avatar } from "@/components/LetterAvatar";
 import { authorAction } from "@/features/reels/menu";
 import { formatCount, type ReelItem } from "@/features/reels/model";
-import { soundPageHref } from "@/features/reels/sounds";
 import { liveRingLabel } from "@/features/reels/live/liveRing";
 
 interface ReelRailProps {
@@ -29,8 +28,6 @@ interface ReelRailProps {
   onLike: () => void;
   onComments: () => void;
   onShare: () => void;
-  /** Spins the sound disc at the bottom of the desktop rail. */
-  playing?: boolean;
   onSave: () => void;
   /** Phone only: the rail carries More there. The desktop rail has none — More is on the frame. */
   onMore?: () => void;
@@ -51,15 +48,16 @@ interface ReelRailProps {
 }
 
 /** Top to bottom; the rail reads Share, Save, Comments, Like, Avatar from the bottom, as TikTok's. */
-export const RAIL_ORDER = ["avatar", "like", "comments", "share", "save"] as const;
+export const RAIL_ORDER = ["follow", "like", "comments", "share", "save", "profile"] as const;
 
 /*
-  The action rail. The author's avatar on top (a link to the profile) with
-  the Follow badge — a 24px accent circle with a white plus — centred on
-  its bottom edge, where TikTok puts its "+"; it follows, or subscribes for
-  a reel posted through a channel, and disappears once the viewer follows.
-  Then Like, Comments, Save, Share; counts under the icons. Liked is the
-  danger colour, saved the accent. Colour only through the theme tokens.
+  The action rail (founder, 19 Oct). On top, only while the viewer does not
+  follow the author: the Follow ring — the author's picture inside a pink
+  ring with FOLLOW along its top and a plus at its foot; it follows, or
+  subscribes for a reel posted through a channel. Then Like, Comments,
+  Share, Save. At the foot, always: the author's picture, a link to the
+  profile (or their stream while live). Sound stays top-left on the frame.
+  Colour only through the theme tokens.
 */
 export function ReelRail({
   reel,
@@ -74,7 +72,6 @@ export function ReelRail({
   onComments,
   onShare,
   onSave,
-  playing = false,
   onMore,
   moreMenu,
   variant = "desktop",
@@ -93,22 +90,14 @@ export function ReelRail({
 
   return (
     <div className={`reel-action-rail is-${variant}`} onClick={(e) => e.stopPropagation()}>
-      <div className="reel-rail-avatar-wrap">
-        {badge ? (
-          <button type="button" className="reel-rail-follow" aria-label={badge.label} disabled={badge.pending} onClick={badge.onClick}>
-            <FollowBadgeMark />
-          </button>
-        ) : null}
-        <Link
-          href={liveHref || profileHref}
-          className={`reel-rail-avatar${liveHref ? " is-live" : ""}`}
-          aria-label={liveHref ? liveRingLabel(reel.authorName) : `${reel.authorName}'s profile`}
-          data-live={liveHref ? "" : undefined}
-        >
-          <Avatar src={reel.authorAvatarUrl ?? ""} name={reel.authorName} seed={reel.authorId} size={desktop ? "lg" : "md"} />
-        </Link>
-        {liveHref && !badge ? <span className="reel-live-tag" aria-hidden="true">LIVE</span> : null}
-      </div>
+      {badge ? (
+        <button type="button" className="reel-rail-follow" aria-label={badge.label} disabled={badge.pending} onClick={badge.onClick}>
+          <span className="reel-rail-follow__face" aria-hidden="true">
+            <Avatar src={reel.authorAvatarUrl ?? ""} name={reel.authorName} seed={reel.authorId} size="md" />
+          </span>
+          <FollowRingMark />
+        </button>
+      ) : null}
       <RailButton
         label={reel.viewerLiked ? "Unlike" : "Like"}
         count={reel.likeCount}
@@ -137,19 +126,17 @@ export function ReelRail({
           {moreMenu}
         </div>
       ) : null}
-      {desktop ? (
-        // TikTok's sound disc: 44px in a 52px slot at the very bottom, turning while the reel plays.
-        // With an added sound it opens that sound's page; otherwise it is the author's profile.
+      <div className="reel-rail-avatar-wrap">
         <Link
-          href={reel.sound ? soundPageHref(reel.sound.id) : profileHref}
-          className="reel-rail-disc"
-          aria-label={reel.sound ? `Sound: ${reel.sound.title}` : `More from ${reel.authorName}`}
-          data-sound={reel.sound ? "" : undefined}
-          data-playing={playing ? "" : undefined}
+          href={liveHref || profileHref}
+          className={`reel-rail-avatar${liveHref ? " is-live" : ""}`}
+          aria-label={liveHref ? liveRingLabel(reel.authorName) : `${reel.authorName}'s profile`}
+          data-live={liveHref ? "" : undefined}
         >
-          <Avatar src={reel.authorAvatarUrl ?? ""} name={reel.authorName} seed={reel.authorId} size="md" />
+          <Avatar src={reel.authorAvatarUrl ?? ""} name={reel.authorName} seed={reel.authorId} size={desktop ? "lg" : "md"} />
         </Link>
-      ) : null}
+        {liveHref ? <span className="reel-live-tag" aria-hidden="true">LIVE</span> : null}
+      </div>
     </div>
   );
 }
@@ -178,22 +165,23 @@ function RailButton({
 }
 
 /**
- * The Follow button's face (founder, 19 Oct): a pink circle with FOLLOW bent
- * along the top half of its edge and a plus in the middle. Drawn in a 44
- * unit box; the letters ride an arc of radius 14 so they stay inside the rim.
+ * The Follow ring's lettering (founder, 19 Oct): the author's picture sits in
+ * the middle of a pink ring, FOLLOW bent along the ring's top half and a
+ * small plus at its foot. Drawn in a 60-unit box: the picture fills radius
+ * 19, the letters ride an arc of radius 21.5 inside the 30-unit rim.
  */
-function FollowBadgeMark() {
+function FollowRingMark() {
   // Every reel on the page draws its own rail, so each arc needs its own id.
   const arc = `reel-follow-arc${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   return (
-    <svg className="reel-rail-follow__mark" viewBox="0 0 44 44" aria-hidden="true" focusable="false">
+    <svg className="reel-rail-follow__mark" viewBox="0 0 60 60" aria-hidden="true" focusable="false">
       <defs>
-        <path id={arc} d="M 8 22 A 14 14 0 0 1 36 22" />
+        <path id={arc} d="M 8.5 30 A 21.5 21.5 0 0 1 51.5 30" />
       </defs>
       <text className="reel-rail-follow__word">
         <textPath href={`#${arc}`} startOffset="50%" textAnchor="middle">FOLLOW</textPath>
       </text>
-      <path className="reel-rail-follow__plus" d="M22 21v11M16.5 26.5h11" />
+      <path className="reel-rail-follow__plus" d="M30 51v6M27 54h6" />
     </svg>
   );
 }

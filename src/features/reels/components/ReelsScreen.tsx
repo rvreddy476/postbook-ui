@@ -819,7 +819,6 @@ export function ReelsScreen() {
                   ) : (
                     <div className="reel-desktop-rail">
                       <ReelRail
-                        playing={!paused}
                         reel={active}
                         {...railFollow}
                         onLike={onLike}
