@@ -82,7 +82,9 @@ test('frame top-right is the three dots alone, 48px circle 8px in; Theater and P
   expect(screen).not.toContain('Maximize2');
   // Only More sits on the frame; Theater and Playback settings are rows in its menu.
   expect(screen).toContain('aria-label="More"');
-  expect(screen).toContain('aria-label="Theater mode"');
+  // Desktop: Theater mode. Phone: Full screen = clear screen plus the browser's full screen (19 Oct).
+  expect(screen).toContain('aria-label={desktop ? "Theater mode" : "Full screen"}');
+  expect(screen).toContain('desktop ? void enterTheater() : enterPhoneFullscreen()');
   expect(screen).not.toContain('aria-label="Playback settings"');
   expect(screen).toContain('onPrefsChange={updatePrefs}');
   expect(screen).toContain('qualityHeights={qualityHeights}');

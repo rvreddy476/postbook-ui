@@ -412,6 +412,28 @@ export function ReelsScreen() {
     dispatchClear({ type: "enter" });
   };
 
+  /*
+    A phone's full-screen button (founder, 19 Oct: "like the mobile app"):
+    the video alone — clear screen — and the browser's own full screen so
+    its address bar goes too. A tap brings the controls back and leaves
+    full screen; so does the browser's back gesture.
+  */
+  const enterPhoneFullscreen = () => {
+    enterClearScreen();
+    const root = document.documentElement;
+    if (!document.fullscreenElement && typeof root.requestFullscreen === "function") {
+      root.requestFullscreen().catch(() => {
+        /* refused (iOS Safari): clear screen alone */
+      });
+    }
+  };
+  useEffect(() => {
+    if (clear.on || theaterRef.current || !document.fullscreenElement) return;
+    document.exitFullscreen().catch(() => {
+      /* ignore */
+    });
+  }, [clear.on]);
+
   /* ── theater ───────────────────────────────────────────── */
   const enterTheater = useCallback(async () => {
     setTheater(true);
@@ -443,7 +465,10 @@ export function ReelsScreen() {
   // Leaving the browser's fullscreen (its own Escape, the OS) leaves the theater too.
   useEffect(() => {
     const onChange = () => {
-      if (!document.fullscreenElement) setTheater(false);
+      if (document.fullscreenElement) return;
+      setTheater(false);
+      // The phone's full screen is clear screen too: leaving one leaves both.
+      dispatchClear({ type: "exit" });
     };
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
@@ -799,7 +824,7 @@ export function ReelsScreen() {
                           </button>
                           {desktop ? moreMenuFor("below") : null}
                         </div>
-                        <button type="button" aria-label="Theater mode" onClick={() => void enterTheater()} className="reel-frame-action">
+                        <button type="button" aria-label={desktop ? "Theater mode" : "Full screen"} onClick={() => (desktop ? void enterTheater() : enterPhoneFullscreen())} className="reel-frame-action">
                           <Maximize size={24} aria-hidden />
                         </button>
                       </div>

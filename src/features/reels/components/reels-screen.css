@@ -439,3 +439,35 @@ button.reel-panel-count:hover { opacity: .75; }
 .reel-action-rail.is-phone .reel-rail-avatar.is-live { box-shadow: 0 0 0 2px rgb(var(--brand-card)), 0 0 0 4px rgb(var(--danger)); }
 .reel-live-tag { position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%); padding: 0 5px; border-radius: 999px; background: rgb(var(--danger)); color: rgb(var(--reel-on-stage)); font-size: 9px; font-weight: 700; letter-spacing: .06em; line-height: 14px; white-space: nowrap; pointer-events: none; box-shadow: 0 0 0 2px rgb(var(--canvas)); }
 .reel-author-card__avatar.is-live { border-radius: 50%; box-shadow: 0 0 0 2px rgb(var(--brand-card)), 0 0 0 4px rgb(var(--danger)); }
+
+/*
+  Phone (founder, 19 Oct: "like the mobile app"). The video fills the
+  screen edge to edge; one row across its top: the menu and the sound at
+  the left, search in the middle, full screen at the right. The rail is
+  part of the video — white glyphs with a soft shadow, no card behind
+  them. Clear screen hides the menu and search with the rest.
+*/
+@media (max-width: 767px) {
+  .reels-main { --reel-viewport: 100dvh; }
+  .reel-stage-area { padding: 0; }
+  .reel-stage-cluster { height: 100%; align-items: stretch; }
+  .reel-stage { width: 100%; height: 100%; max-height: none; aspect-ratio: auto; border-radius: 0; }
+  .reel-playback-controls { top: 10px; left: 56px; }
+  .reel-frame-actions { top: 10px; padding: 0 8px; }
+  .reel-frame-action { width: 40px; height: 40px; }
+  .video-shell[data-app="reels"] .video-shell__drawer-toggle { top: 10px; left: 8px; border-color: transparent; background: rgb(var(--reel-stage) / .35); color: rgb(var(--reel-on-stage)); }
+  .video-shell[data-app="reels"] .video-shell__top-cluster { top: 10px; left: 50%; right: auto; transform: translateX(-50%); width: calc(100% - 224px); min-width: 120px; border-color: transparent; background: rgb(var(--reel-stage) / .35); box-shadow: none; }
+  .video-shell[data-app="reels"] .video-shell__top-search-icon,
+  .video-shell[data-app="reels"] .video-shell__top-search-input,
+  .video-shell[data-app="reels"] .video-shell__top-search-input::placeholder { color: rgb(var(--reel-on-stage) / .85); }
+  .video-shell[data-app="reels"]:has(.reels-content[data-clear-screen]) :is(.video-shell__drawer-toggle,.video-shell__top-cluster) { opacity: 0; visibility: hidden; pointer-events: none; }
+  .reel-mobile-rail { right: 6px; bottom: 96px; }
+  .reel-action-rail.is-phone { gap: 10px; padding: 0; border: 0; border-radius: 0; background: transparent; color: rgb(var(--reel-on-stage)); }
+  .reel-action-rail.is-phone .reel-action-button { min-width: 44px; min-height: 44px; }
+  .reel-action-rail.is-phone .reel-action-button:hover { background: transparent; }
+  .reel-action-rail.is-phone .reel-action-icon { height: 30px; filter: drop-shadow(0 1px 2px rgb(var(--reel-stage) / .6)); }
+  .reel-action-rail.is-phone .reel-action-icon svg { width: 26px; height: 26px; }
+  .reel-action-rail.is-phone .reel-action-count { font-size: 12px; line-height: 14px; text-shadow: 0 1px 2px rgb(var(--reel-stage) / .6); }
+  .reel-action-rail.is-phone .reel-action-button.is-saved { color: rgb(var(--reel-on-stage)); }
+  .reel-action-rail.is-phone .reel-rail-avatar { width: 44px; height: 44px; box-shadow: 0 0 0 2px rgb(var(--reel-on-stage)); }
+}
