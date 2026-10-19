@@ -26,6 +26,7 @@ const actionsBase = {
   onPass: noop,
   onQueue: noop,
   onAdd: noop,
+  onShare: noop,
   onMore: noop,
 };
 
@@ -74,6 +75,13 @@ describe("the RUTUBE layout", () => {
     expect(html).toContain('aria-label="Like"');
     expect(html).toContain('aria-label="Dislike"');
     expect(html).not.toMatch(/Love|Pass|Queue/);
+    expect(html).toContain(">Share<");
+    expect(html).toContain("lucide-thumbs-up");
+  });
+
+  test("no Share button when the creator turned sharing off", () => {
+    const html = renderToStaticMarkup(<WatchActions {...actionsBase} onShare={undefined} />);
+    expect(html).not.toContain('data-action="share"');
   });
 
   test("liked and disliked light their own button only; Watch later lights when saved", () => {

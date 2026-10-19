@@ -771,6 +771,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
       onPass={handlePass}
       onQueue={() => void handleQueue()}
       onAdd={() => requireUser() && setPlaylistOpen(true)}
+      onShare={detail.shareHidden ? undefined : () => setShareOpen(true)}
       onMore={() => setMoreOpen((o) => !o)}
       moreOpen={moreOpen}
       moreMenu={moreMenu}

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { FolderPlus, Heart, ListVideo, MoreHorizontal, ThumbsDown } from "lucide-react";
+import { FolderPlus, ListVideo, MoreHorizontal, Share2, ThumbsDown, ThumbsUp } from "lucide-react";
 
 import { formatCount } from "@/features/reels/model";
 
@@ -10,12 +10,12 @@ import { formatCount } from "@/features/reels/model";
   pill with Like and its count, a divider, and Dislike (private, never
   lit together with Like); Watch later (lit when saved) and Add to
   collection as labelled pills;
-  the ⋯ circle opening the More menu under it (Share, Keep, Not
+  Share (2026-10-19, as YouTube has it on the row); the ⋯ circle opening the More menu under it (Share, Keep, Not
   interested, Don't recommend, Report, Block; the owner's Audio tracks,
   Edit, Delete). 36px high, 13px labels.
 */
 
-export const WATCH_ACTION_ORDER = ["love", "pass", "queue", "add", "more"] as const;
+export const WATCH_ACTION_ORDER = ["love", "pass", "share", "queue", "add", "more"] as const;
 
 export interface WatchActionsProps {
   loved: boolean;
@@ -27,19 +27,21 @@ export interface WatchActionsProps {
   onPass: () => void;
   onQueue: () => void;
   onAdd: () => void;
+  /** Share (founder, 2026-10-19: Like, Dislike and Share on the row, as on YouTube); absent when the creator turned sharing off. */
+  onShare?: () => void;
   onMore: () => void;
   moreOpen?: boolean;
   /** The More popover, rendered by the page under the ⋯ button. */
   moreMenu?: ReactNode;
 }
 
-export function WatchActions({ loved, likeCount, passed, queued, onLove, onPass, onQueue, onAdd, onMore, moreOpen = false, moreMenu }: WatchActionsProps) {
+export function WatchActions({ loved, likeCount, passed, queued, onLove, onPass, onQueue, onAdd, onShare, onMore, moreOpen = false, moreMenu }: WatchActionsProps) {
   return (
     <div className="tube-actions" role="toolbar" aria-label="Video actions">
       <div className="tube-actions__vote">
         <button type="button" className={`tube-actions__btn is-love${loved ? " is-on" : ""}`} aria-pressed={loved} aria-label={loved ? "Remove like" : "Like"} title="Like" onClick={onLove} data-action="love">
-          {/* An outline until liked, then filled — the same as Dislike beside it. */}
-          <Heart size={16} className={loved ? "fill-current" : ""} />
+          {/* Thumbs up and down (2026-10-19), an outline until chosen, then filled. */}
+          <ThumbsUp size={17} className={loved ? "fill-current" : ""} />
           {/* No likes yet (or the count hidden) reads "Like", not a lonely 0. */}
           {!likeCount ? <span className="tube-actions__count">Like</span> : <span className="tube-actions__count">{formatCount(likeCount)}</span>}
         </button>
@@ -48,6 +50,12 @@ export function WatchActions({ loved, likeCount, passed, queued, onLove, onPass,
           <ThumbsDown size={17} className={passed ? "fill-current" : ""} />
         </button>
       </div>
+      {onShare ? (
+        <button type="button" className="tube-actions__pill" onClick={onShare} data-action="share">
+          <Share2 size={17} />
+          Share
+        </button>
+      ) : null}
       <button type="button" className={`tube-actions__pill${queued ? " is-on" : ""}`} aria-pressed={queued} onClick={onQueue} data-action="queue">
         <ListVideo size={17} />
         Watch later
