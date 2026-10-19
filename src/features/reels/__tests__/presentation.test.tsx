@@ -147,11 +147,11 @@ test('desktop rail reads Save, Share, Comments, Like, Avatar from the bottom —
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-count { font-size: 12px; line-height: 16px; font-weight: 700;');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-liked .reel-action-icon { color: rgb(var(--danger)); }');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-saved .reel-action-icon { color: rgb(var(--brand-accent)); }');
-  // The Follow ring: the author's picture (40px) inside a 56px pink ring, FOLLOW (8px) along its top half, a plus at its foot (20 Oct).
-  expect(css).toContain('.reel-rail-follow { position: relative; display: block; width: 56px; height: 56px; padding: 0; border: 0; border-radius: 50%; background: rgb(var(--follow-badge));');
+  // The Follow ring: the author's picture (32px) inside a 48px pink ring, FOLLOW (8px) along its top half, a plus at its foot (20 Oct).
+  expect(css).toContain('.reel-rail-follow { position: relative; display: block; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 50%; background: rgb(var(--follow-badge));');
   expect(html).toContain('class="reel-rail-follow__face"');
   expect(html).toMatch(/<textPath href="#reel-follow-arc[\w-]*" startOffset="50%" text-anchor="middle">FOLLOW<\/textPath>/);
-  expect(html).toContain('d="M28 48.5v7M24.5 52h7"');
+  expect(html).toContain('d="M24 40.5v7M20.5 44h7"');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-avatar-wrap { padding-top: 6px; }');
   expect(renderToStaticMarkup(<ReelRail {...railBase} following={true}/>)).not.toContain('reel-rail-follow');
 });

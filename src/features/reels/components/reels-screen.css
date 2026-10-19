@@ -152,8 +152,8 @@
 .reel-rail-avatar-wrap { position: relative; display: flex; flex-direction: column; align-items: center; }
 .reel-rail-avatar { display: block; width: 48px; height: 48px; border-radius: 50%; overflow: hidden; }
 .reel-rail-avatar > * { width: 100%; height: 100%; }
-.reel-rail-follow { position: relative; display: block; width: 56px; height: 56px; padding: 0; border: 0; border-radius: 50%; background: rgb(var(--follow-badge)); color: rgb(var(--reel-on-stage)); box-shadow: 0 4px 10px rgb(var(--follow-badge) / .35); cursor: pointer; transition: transform 140ms ease, filter 140ms ease; }
-.reel-rail-follow__face { position: absolute; left: 8px; top: 8px; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; }
+.reel-rail-follow { position: relative; display: block; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 50%; background: rgb(var(--follow-badge)); color: rgb(var(--reel-on-stage)); box-shadow: 0 4px 10px rgb(var(--follow-badge) / .35); cursor: pointer; transition: transform 140ms ease, filter 140ms ease; }
+.reel-rail-follow__face { position: absolute; left: 8px; top: 8px; width: 32px; height: 32px; border-radius: 50%; overflow: hidden; }
 .reel-rail-follow__face > * { width: 100%; height: 100%; }
 .reel-rail-follow__mark { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .reel-rail-follow__word { fill: currentColor; font-size: 8px; font-weight: 800; letter-spacing: .02em; }
