@@ -4,12 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObjec
 import type Hls from "hls.js";
 import {
   AudioLines,
-  AudioWaveform,
   Captions,
   ChevronLeft,
   CirclePlay,
   Gauge,
-  Keyboard,
   Lightbulb,
   Link as LinkIcon,
   Link2,
@@ -47,7 +45,6 @@ import { playerKeyAction, playerKeyPreventsDefault, SEEK_LARGE_S } from "../play
 import { startAmbient } from "../watch/ambient";
 import { chapterAt, chapterTicks, type Chapter } from "../watch/chapters";
 import { countdownSpot, END_SCREEN_MIN_FRAME_WIDTH } from "../watch/endScreenView";
-import { keyHelpRows } from "../watch/keysHelp";
 import { scheduleSleep, SLEEP_CHOICES, sleepRemainingMs, sleepValueLabel, type SleepChoice, type SleepSchedule } from "../watch/sleepTimer";
 import { createStableVolume, type StableVolumeHandle } from "../watch/stableVolume";
 import { storyboardCueAt, type StoryboardCue } from "../watch/storyboard";
@@ -1052,15 +1049,16 @@ function PaneHead({ title, onBack, onClose }: { title: string; onBack?: () => vo
   );
 }
 
-type Pane = "root" | "more" | "audio" | "captions" | "keys" | "speed" | "quality" | "sleep";
+type Pane = "root" | "more" | "audio" | "captions" | "speed" | "quality" | "sleep";
 
 /*
   The settings card, laid out after RUTUBE's (founder, 2026-10-19): a dark
   card titled "Settings" with a close button; the main list says what is
   set — Speed, Quality, Captions and Audio track (each only when the video
-  offers a choice), Autoplay, Ambient light — and "More" opens the rest:
-  Start from the beginning, Loop video, Copy link, Copy link at current
-  time, Sleep timer, Stable volume, Keyboard shortcuts.
+  offers a choice), Autoplay, Ambient light — and "More" opens five rows, as
+  RUTUBE's does, so neither list scrolls: Start from the beginning, Loop
+  video, Copy link, Copy link at current time, Sleep timer. (Stable volume
+  and the shortcuts list left the menu on 2026-10-19; the keys still work.)
 */
 export function TubeSettingsMenu({
   open,
@@ -1119,7 +1117,6 @@ export function TubeSettingsMenu({
   const audioChoices = audioTracks?.options.length ? audioTracks.options : [{ id: "original", label: "Original" }];
   const audioLabel = audioChoices.find((t) => t.id === (audioTracks?.current ?? "original"))?.label ?? audioChoices[0].label;
   const showAudio = audioChoices.length > 1 || !!audioTracks?.onManage;
-  const keys = useMemo(() => keyHelpRows(), []);
   const close = () => {
     setPane("root");
     onClose();
@@ -1155,8 +1152,6 @@ export function TubeSettingsMenu({
         {onCopyLink ? <ChoiceMenuRow icon={<LinkIcon />} label="Copy link" dataRow="copy-link" onClick={runAndClose(() => onCopyLink(false))} /> : null}
         {onCopyLink ? <ChoiceMenuRow icon={<Link2 />} label="Copy link at current time" dataRow="copy-link-time" onClick={runAndClose(() => onCopyLink(true))} /> : null}
         <ChoiceMenuChoiceRow icon={<Moon />} label="Sleep timer" value={sleepValueLabel(sleepChoice, sleepSchedule, Date.now())} dataRow="sleep" onClick={() => setPane("sleep")} />
-        <ChoiceMenuSwitchRow icon={<AudioWaveform />} label="Stable volume" dataRow="stable-volume" on={stableVolume} onToggle={() => onStableVolume?.(!stableVolume)} disabled={!onStableVolume} />
-        <ChoiceMenuChoiceRow icon={<Keyboard />} label="Keyboard shortcuts" value="" dataRow="keys" onClick={() => setPane("keys")} />
       </div>
     ),
     audio: (
@@ -1195,23 +1190,6 @@ export function TubeSettingsMenu({
             }}
           />
         ))}
-      </div>
-    ),
-    keys: (
-      <div className="reel-more-menu__list" data-pane="keys">
-        <PaneHead title="Keyboard shortcuts" onBack={() => setPane("more")} onClose={close} />
-        <dl className="tube-keys">
-          {keys.map((row) => (
-            <div key={row.action} className="tube-keys__row">
-              <dt>
-                {row.keys.map((k) => (
-                  <kbd key={k}>{k}</kbd>
-                ))}
-              </dt>
-              <dd>{row.action}</dd>
-            </div>
-          ))}
-        </dl>
       </div>
     ),
     speed: (

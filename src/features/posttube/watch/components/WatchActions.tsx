@@ -51,18 +51,17 @@ export function WatchActions({ loved, likeCount, passed, queued, onLove, onPass,
         </button>
       </div>
       {onShare ? (
-        <button type="button" className="tube-actions__pill" onClick={onShare} data-action="share">
+        <button type="button" className="tube-actions__pill is-icon" aria-label="Share" title="Share" onClick={onShare} data-action="share">
           <Share2 size={17} />
-          Share
         </button>
       ) : null}
-      <button type="button" className={`tube-actions__pill${queued ? " is-on" : ""}`} aria-pressed={queued} onClick={onQueue} data-action="queue">
+      {/* Share, Watch later and Add to collection are icons with their names on hover (2026-10-19),
+          so the channel and the buttons fit on one line beside the Up next column. */}
+      <button type="button" className={`tube-actions__pill is-icon${queued ? " is-on" : ""}`} aria-pressed={queued} aria-label={queued ? "Remove from Watch later" : "Watch later"} title="Watch later" onClick={onQueue} data-action="queue">
         <Bookmark size={17} className={queued ? "fill-current" : ""} />
-        Watch later
       </button>
-      <button type="button" className="tube-actions__pill" onClick={onAdd} data-action="add">
+      <button type="button" className="tube-actions__pill is-icon" aria-label="Add to collection" title="Add to collection" onClick={onAdd} data-action="add">
         <FolderPlus size={17} />
-        Add to collection
       </button>
       <div className="tube-actions__more">
         <button type="button" className={`tube-actions__pill is-icon${moreOpen ? " is-on" : ""}`} aria-label="More" aria-expanded={moreOpen} title="More" onClick={onMore} data-action="more">

@@ -51,9 +51,9 @@
 .tube-creator__thanks:hover { background: rgb(var(--brand-text) / .12); }
 
 /* ---- action row --------------------------------------------------------- */
-.tube-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.tube-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .tube-actions__vote { display: inline-flex; height: 36px; align-items: center; border-radius: 8px; background: rgb(var(--brand-text) / .06); }
-.tube-actions__btn { display: inline-flex; height: 36px; align-items: center; gap: 6px; padding: 0 12px; border: 0; border-radius: 8px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; background: transparent; color: rgb(var(--brand-text)); cursor: pointer; }
+.tube-actions__btn { display: inline-flex; height: 36px; align-items: center; gap: 6px; padding: 0 10px; border: 0; border-radius: 8px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; background: transparent; color: rgb(var(--brand-text)); cursor: pointer; }
 .tube-actions__btn:hover { background: rgb(var(--brand-text) / .08); }
 .tube-actions__btn.is-love.is-on { color: rgb(var(--danger)); }
 .tube-actions__btn.is-pass.is-on { color: rgb(var(--brand-text)); background: rgb(var(--brand-text) / .1); }

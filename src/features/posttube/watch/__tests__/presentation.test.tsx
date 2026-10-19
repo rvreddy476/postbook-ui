@@ -70,12 +70,11 @@ describe("the RUTUBE layout", () => {
     const vote = html.slice(html.indexOf("tube-actions__vote"), html.indexOf('data-action="queue"'));
     expect(vote).toContain('data-action="love"');
     expect(vote).toContain('data-action="pass"');
-    expect(html).toContain(">Watch later<");
-    expect(html).toContain(">Add to collection<");
+    // Share, Watch later and Add to collection are icon buttons named for screen readers and on hover.
+    for (const name of ["Share", "Watch later", "Add to collection"]) expect(html).toContain(`aria-label="${name}" title="${name}"`);
     expect(html).toContain('aria-label="Like"');
     expect(html).toContain('aria-label="Dislike"');
     expect(html).not.toMatch(/Love|Pass|Queue/);
-    expect(html).toContain(">Share<");
     expect(html).toContain("lucide-thumbs-up");
   });
 
@@ -99,7 +98,7 @@ describe("the RUTUBE layout", () => {
     const passed = renderToStaticMarkup(<WatchActions {...actionsBase} passed queued />);
     expect(passed).toContain('class="tube-actions__btn is-pass is-on" aria-pressed="true"');
     expect(passed).not.toContain("is-love is-on");
-    expect(passed).toContain('class="tube-actions__pill is-on" aria-pressed="true" data-action="queue"');
+    expect(passed).toContain('class="tube-actions__pill is-icon is-on" aria-pressed="true" aria-label="Remove from Watch later"');
   });
 
   test("details: title, the creator row with Subscribe and Thanks after the name, the actions, the about card", () => {
