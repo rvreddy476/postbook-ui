@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { FolderPlus, ListVideo, MoreHorizontal, Share2, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Bookmark, FolderPlus, MoreHorizontal, Share2, ThumbsDown, ThumbsUp } from "lucide-react";
 
 import { formatCount } from "@/features/reels/model";
 
@@ -57,7 +57,7 @@ export function WatchActions({ loved, likeCount, passed, queued, onLove, onPass,
         </button>
       ) : null}
       <button type="button" className={`tube-actions__pill${queued ? " is-on" : ""}`} aria-pressed={queued} onClick={onQueue} data-action="queue">
-        <ListVideo size={17} />
+        <Bookmark size={17} className={queued ? "fill-current" : ""} />
         Watch later
       </button>
       <button type="button" className="tube-actions__pill" onClick={onAdd} data-action="add">

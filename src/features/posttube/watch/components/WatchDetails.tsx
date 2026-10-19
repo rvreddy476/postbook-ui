@@ -91,27 +91,30 @@ export function WatchDetails({
     <section className="tube-details" aria-label="About this video">
       <h1 className="tube-details__title">{title}</h1>
 
-      <div className="tube-creator">
-        <Link href={channelHref} className="tube-creator__link">
-          <span className="tube-creator__avatar">
-            <Avatar src={channelAvatar ?? ""} name={channelName} seed={authorId} size="md" />
+      {/* The channel and the buttons on one line, as on RUTUBE (2026-10-19); they wrap on a narrow screen. */}
+      <div className="tube-meta-row">
+        <div className="tube-creator">
+          <Link href={channelHref} className="tube-creator__link">
+            <span className="tube-creator__avatar">
+              <Avatar src={channelAvatar ?? ""} name={channelName} seed={authorId} size="md" />
+            </span>
+            <span className="min-w-0">
+              <p className="tube-creator__name">{channelName}</p>
+              <p className="tube-creator__followers">{subscribersLabel(followerCount)}</p>
+            </span>
+          </Link>
+          <span className="tube-creator__buttons">
+            {follow}
+            {onThanks ? (
+              <button type="button" className="tube-creator__thanks" onClick={onThanks} data-action="thanks">
+                <HandHeart size={16} /> Thanks
+              </button>
+            ) : null}
           </span>
-          <span className="min-w-0">
-            <p className="tube-creator__name">{channelName}</p>
-            <p className="tube-creator__followers">{subscribersLabel(followerCount)}</p>
-          </span>
-        </Link>
-        <span className="tube-creator__buttons">
-          {follow}
-          {onThanks ? (
-            <button type="button" className="tube-creator__thanks" onClick={onThanks} data-action="thanks">
-              <HandHeart size={16} /> Thanks
-            </button>
-          ) : null}
-        </span>
-      </div>
+        </div>
 
-      {actions}
+        {actions}
+      </div>
 
       <ChapterStrip chapters={chapters} currentIndex={currentChapter} onSeek={onSeek} />
 

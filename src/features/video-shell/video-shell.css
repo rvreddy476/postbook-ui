@@ -159,7 +159,9 @@
 
 /* ---- sidebar ---------------------------------------------------------- */
 .video-nav { display: flex; flex-direction: column; height: 100%; min-height: 0; color: rgb(var(--brand-text)); }
-.video-nav__scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 12px 12px 8px; }
+/* The side nav scrolls by wheel and touch without a bar of its own (2026-10-19): one scrollbar on the page, the main one. */
+.video-nav__scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding: 12px 12px 8px; }
+.video-nav__scroll::-webkit-scrollbar { display: none; }
 .video-nav__section + .video-nav__section { margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--brand-divider); }
 .video-nav__heading { margin: 0 0 4px; padding: 6px 12px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: rgb(var(--brand-text) / .55); }
 .video-nav__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }

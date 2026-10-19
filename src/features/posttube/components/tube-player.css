@@ -66,18 +66,25 @@
 .tube-seek__time { font-size: 11px; font-variant-numeric: tabular-nums; }
 
 /*
-  The settings card, after RUTUBE's (2026-10-19): dark over the video in both
-  themes, a "Settings" title with a close button, 300px, hung above the gear.
-  Its height never passes the frame's (--tube-frame-h, set by the player), so
-  a small player scrolls the list instead of cutting off its top.
+  The settings card, after RUTUBE's (2026-10-19): dark, over the video —
+  its right edge 12px in from the frame's, its foot just above the seek bar —
+  never over the control bar and never past the frame (--tube-frame-h, set by
+  the player). Rows are 36px; each pane has RUTUBE's head: back, the title
+  centred, close.
 */
 .tube-settings-menu.reel-more-menu[role="menu"] {
-  width: 300px; max-height: min(420px, calc(var(--tube-frame-h, 420px) - 40px), 70vh);
-  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgb(var(--reel-on-stage) / .3) transparent; text-align: left;
+  width: 300px; max-height: min(420px, calc(var(--tube-frame-h, 420px) - 76px), 70vh);
+  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; text-align: left;
   padding: 6px; border-radius: 14px;
   background: rgb(var(--reel-stage) / .92); color: rgb(var(--reel-on-stage));
   backdrop-filter: blur(8px); box-shadow: 0 12px 32px rgb(0 0 0 / .4);
 }
+.tube-settings-menu.reel-more-menu[role="menu"]::-webkit-scrollbar { display: none; }
+@media (min-width: 768px) {
+  /* The gear's wrapper is not positioned, so the card hangs from the control bar. */
+  .tube-player__controls .tube-settings-menu.reel-more-menu[role="menu"] { right: 12px; left: auto; bottom: calc(100% - 32px); margin: 0; }
+}
+.tube-settings-menu .reel-more-menu__row { height: 36px; }
 .tube-settings-menu .reel-more-menu__row:hover { background: rgb(var(--reel-on-stage) / .1); }
 .tube-settings-menu .reel-more-menu__icon { color: rgb(var(--reel-on-stage) / .9); }
 .tube-settings-menu .reel-more-menu__value, .tube-settings-menu .reel-more-menu__note { color: rgb(var(--reel-on-stage) / .65); }
@@ -86,9 +93,11 @@
 .tube-settings-menu .reel-more-menu__switch[data-on] { background: rgb(var(--brand-accent)); }
 .tube-settings-menu .reel-more-menu__knob { background: rgb(var(--reel-on-stage)); }
 .tube-settings-menu__head { position: relative; display: flex; height: 36px; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
-.tube-settings-menu__close { position: absolute; right: 2px; display: inline-flex; width: 32px; height: 32px; align-items: center; justify-content: center; border: 0; border-radius: 8px; background: transparent; color: inherit; cursor: pointer; }
-.tube-settings-menu__close:hover { background: rgb(var(--reel-on-stage) / .1); }
-.tube-settings-menu__close svg { width: 18px; height: 18px; }
+.tube-settings-menu__icon { position: absolute; display: inline-flex; width: 32px; height: 32px; align-items: center; justify-content: center; border: 0; border-radius: 8px; background: transparent; color: inherit; cursor: pointer; }
+.tube-settings-menu__icon.is-back { left: 2px; }
+.tube-settings-menu__icon.is-close { right: 2px; }
+.tube-settings-menu__icon:hover { background: rgb(var(--reel-on-stage) / .1); }
+.tube-settings-menu__icon svg { width: 18px; height: 18px; }
 .tube-settings-menu .tube-keys__row dd { color: rgb(var(--reel-on-stage) / .7); }
 .tube-settings-menu .tube-keys kbd { background: rgb(var(--reel-on-stage) / .12); color: rgb(var(--reel-on-stage)); }
 .tube-keys { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 4px 8px 8px; }
