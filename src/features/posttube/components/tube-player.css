@@ -98,6 +98,18 @@
 .tube-settings-menu__icon.is-close { right: 2px; }
 .tube-settings-menu__icon:hover { background: rgb(var(--reel-on-stage) / .1); }
 .tube-settings-menu__icon svg { width: 18px; height: 18px; }
+/*
+  The Speed pane and the option rows on the dark card (2026-10-19): the
+  reels styles draw them in the page's text colour, which on this card was
+  dark on dark — the chips, −/+ and "Normal" could not be seen.
+*/
+.tube-settings-menu .reel-more-menu__hint { color: rgb(var(--reel-on-stage) / .65); }
+.tube-settings-menu .reel-more-menu__chip { background: rgb(var(--reel-on-stage) / .12); color: rgb(var(--reel-on-stage)); }
+.tube-settings-menu .reel-more-menu__chip:hover { background: rgb(var(--reel-on-stage) / .2); }
+.tube-settings-menu .reel-more-menu__chip[aria-checked="true"] { background: rgb(var(--reel-on-stage)); color: rgb(var(--reel-stage)); }
+.tube-settings-menu .reel-speed-panel__slider > button { background: rgb(var(--reel-on-stage) / .12); color: rgb(var(--reel-on-stage)); }
+.tube-settings-menu .reel-speed-panel__slider input[type="range"] { accent-color: rgb(var(--reel-on-stage)); }
+.tube-settings-menu .reel-speed-panel__normal { color: rgb(var(--reel-on-stage) / .65); }
 .tube-settings-menu .tube-keys__row dd { color: rgb(var(--reel-on-stage) / .7); }
 .tube-settings-menu .tube-keys kbd { background: rgb(var(--reel-on-stage) / .12); color: rgb(var(--reel-on-stage)); }
 .tube-keys { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 4px 8px 8px; }
