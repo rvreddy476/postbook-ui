@@ -704,7 +704,10 @@ function WatchPageContent({ videoId, listId = null, startSeconds = null }: Watch
   const moreRowList = watchMoreRows({
     channelName,
     isOwner,
-    hasDescription: video.description.trim().length > 0 || video.hashtags.length > 0,
+    // A description that only repeats the title is not one (the about card hides it too).
+    hasDescription:
+      (video.description.trim().length > 0 && video.description.trim().toLowerCase() !== video.title.trim().toLowerCase()) ||
+      video.hashtags.length > 0,
     shareHidden: detail.shareHidden,
     downloadAllowed: detail.allowDownload,
     audioTrackCount: gated ? 0 : audioOptions.length,
