@@ -17,6 +17,8 @@ interface UseFeedDeltaOptions {
   */
   feedType: 'home' | 'following' | 'flicks' | 'posttube'
   enabled?: boolean
+  /** Overrides the feed type's interval below. */
+  intervalMs?: number
 }
 
 /*
@@ -31,16 +33,21 @@ interface UseFeedDeltaOptions {
   The count is still accurate whenever it does appear — the server counts
   everything since the anchor, so a longer interval means a later banner, never
   a smaller number. Refreshing the page always shows the current state.
+
+  following is ONE MINUTE (founder, 18 Oct): it no longer drives a banner but
+  the small dot on the Following tab of the full-screen feed, which is quiet
+  however often it is checked. The caller turns polling off while Following
+  is the tab on screen, and no poll is sent while the page is hidden.
 */
-const POLL_INTERVALS: Record<UseFeedDeltaOptions['feedType'], number> = {
+export const POLL_INTERVALS: Record<UseFeedDeltaOptions['feedType'], number> = {
   home: 600000,
-  following: 600000,
+  following: 60000,
   flicks: 20000,
   posttube: 60000,
 }
 
 export function useFeedDelta(options: UseFeedDeltaOptions) {
-  const { feedType, enabled = true } = options
+  const { feedType, enabled = true, intervalMs } = options
   const [newCount, setNewCount] = useState(0)
   const [newestAnchor, setNewestAnchor] = useState<string | null>(null)
   const anchorRef = useRef<string | null>(null)
@@ -53,9 +60,17 @@ export function useFeedDelta(options: UseFeedDeltaOptions) {
     consumeNew has to advance it without waiting for a render.
   */
   const [hasAnchor, setHasAnchor] = useState(false)
+  /*
+    Bumped by setAnchor and consumeNew. A check that was in flight when the
+    caller cleared the count must not put the old count back when it lands.
+  */
+  const generationRef = useRef(0)
 
   const checkDelta = useCallback(async () => {
     if (!anchorRef.current) return
+    // A hidden tab asks nothing; the next tick after it returns does.
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return
+    const generation = generationRef.current
     try {
       const params = new URLSearchParams({
         feed_type: feedType,
@@ -64,7 +79,7 @@ export function useFeedDelta(options: UseFeedDeltaOptions) {
 
       const res = await api.get<{ data: FeedDeltaResult }>(`/v1/feed/delta?${params}`)
       const data = res.data.data
-      if (data) {
+      if (data && generation === generationRef.current) {
         setNewCount(data.newCount ?? data.new_count ?? 0)
         // The newest counted item's created_at (the server now returns a
         // timestamp, a valid anchor). Still NOT used as the next anchor —
@@ -82,6 +97,7 @@ export function useFeedDelta(options: UseFeedDeltaOptions) {
   // Set initial anchor
   const setAnchor = useCallback((anchor: string) => {
     anchorRef.current = anchor
+    generationRef.current += 1
     setHasAnchor(true)
     setNewCount(0)
   }, [])
@@ -100,16 +116,17 @@ export function useFeedDelta(options: UseFeedDeltaOptions) {
     what the server last knew about.
   */
   const consumeNew = useCallback(() => {
+    generationRef.current += 1
     setNewCount(0)
   }, [])
 
   // Polling
   useEffect(() => {
     if (!enabled || !hasAnchor) return
-    const interval = POLL_INTERVALS[feedType] ?? 30000
+    const interval = intervalMs ?? POLL_INTERVALS[feedType] ?? 30000
     const timer = setInterval(checkDelta, interval)
     return () => clearInterval(timer)
-  }, [enabled, hasAnchor, feedType, checkDelta])
+  }, [enabled, hasAnchor, feedType, checkDelta, intervalMs])
 
   return { newCount, setAnchor, consumeNew, checkDelta }
 }

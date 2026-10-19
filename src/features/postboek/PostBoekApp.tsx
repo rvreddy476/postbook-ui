@@ -8,6 +8,7 @@ import ChatWindow from '@/components/ChatWindow';
 import ContactList from '@/components/ContactList';
 import CreatePortal from '@/components/CreatePortal';
 import Feed from '@/components/Feed';
+import { PostStageFeed } from '@/features/post-stage/components/PostStageFeed';
 import CreativeHome from '@/components/home/CreativeHome';
 import Header from '@/components/Header';
 import LandingPage from '@/components/LandingPage';
@@ -197,7 +198,8 @@ const PostBoekApp: React.FC<{ initialSurface?: 'Home' | 'Feed' }> = ({ initialSu
               case 'Home':
                 return <CreativeHome onCreateClick={() => setIsCreateOpen(true)} />;
               case 'Feed':
-                return <Feed onCreateClick={() => setIsCreateOpen(true)} />;
+                // One post per screen, the Android Home design (features/post-stage).
+                return <PostStageFeed />;
               case 'TV':
                 return <TVGallery />;
 
@@ -220,8 +222,9 @@ const PostBoekApp: React.FC<{ initialSurface?: 'Home' | 'Feed' }> = ({ initialSu
 
   const isGroupMode = !!activeGroupId;
   const isFeedMode = activeTab === 'Home' && !isGroupMode;
-  const isClassicFeed = activeTab === 'Feed' && !isGroupMode;
-  const isReadingMode = isFeedMode || isClassicFeed;
+  // /feed is the full-screen stage: it owns its scrolling, edge to edge, with no side panel.
+  const isStageFeed = activeTab === 'Feed' && !isGroupMode;
+  const isReadingMode = isFeedMode;
 
   return (
     <NotificationProvider currentUserId={currentUser.id} onOpenChat={handleContactClick}>
@@ -268,7 +271,7 @@ const PostBoekApp: React.FC<{ initialSurface?: 'Home' | 'Feed' }> = ({ initialSu
           )}
 
           <main
-            className={`relative min-w-0 flex-1 ${isReadingMode ? '' : 'overflow-y-auto overscroll-y-contain no-scrollbar'} ${isGroupMode
+            className={`relative min-w-0 flex-1 ${isReadingMode ? '' : 'overflow-y-auto overscroll-y-contain no-scrollbar'} ${isGroupMode || isStageFeed
                 ? 'p-0 overflow-hidden'
                 : 'px-3 pb-28 pt-4 sm:px-6 md:pb-8 lg:px-8'
               }`}
@@ -282,7 +285,7 @@ const PostBoekApp: React.FC<{ initialSurface?: 'Home' | 'Feed' }> = ({ initialSu
               the measure readable and matches the reference: one centred
               column with the rails either side of it.
             */}
-            <div className={`mx-auto ${isGroupMode
+            <div className={`mx-auto ${isGroupMode || isStageFeed
               ? 'h-full max-w-none w-full'
               : isFeedMode ? 'w-full max-w-[960px]'
               : 'w-full max-w-[700px]'
@@ -291,8 +294,8 @@ const PostBoekApp: React.FC<{ initialSurface?: 'Home' | 'Feed' }> = ({ initialSu
             </div>
           </main>
 
-          {!isGroupMode && !isFeedMode && (
-            <aside aria-label="Discover and connect" className={`hidden w-[304px] shrink-0 flex-col pt-4 pb-8 pr-5 xl:flex 2xl:w-[340px] 2xl:pr-8 ${isClassicFeed ? 'self-start' : 'overflow-y-auto no-scrollbar'}`}>
+          {!isGroupMode && !isFeedMode && !isStageFeed && (
+            <aside aria-label="Discover and connect" className="hidden w-[304px] shrink-0 flex-col pt-4 pb-8 pr-5 xl:flex 2xl:w-[340px] 2xl:pr-8 overflow-y-auto no-scrollbar">
               <RightPanel onContactClick={handleContactClick} />
             </aside>
           )}

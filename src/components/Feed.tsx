@@ -4,7 +4,6 @@ import {
   Fragment,
   useEffect,
   useRef,
-  useState,
 } from "react";
 import Link from "next/link";
 import {
@@ -14,7 +13,6 @@ import {
   Compass,
   Loader2,
   WifiOff,
-  X,
 } from "lucide-react";
 import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { useReducedMotion } from "framer-motion";
@@ -22,8 +20,7 @@ import PostCard from "./PostCard";
 import PeopleYouMayKnowStrip from "./PeopleYouMayKnowStrip";
 import { useHomeFeed } from "@/hooks/useFeedPosts";
 import { subscribeToPostUpdates } from "@/services/messageService";
-import { useFeedDelta } from "@/hooks/useFeedDelta";
-import { newestCreatedAtOf, uniqueFeedPosts, type FeedPage } from "./feed/feedPresentation";
+import { uniqueFeedPosts, type FeedPage } from "./feed/feedPresentation";
 import "./feed/home-feed.css";
 import { installFeedReturnRefresh } from './feed/feedReturnRefresh';
 import { editorialFormat } from './feed/editorialFormat';
@@ -72,7 +69,6 @@ export default function Feed({
   const reduceMotion = useReducedMotion();
   const queryClient = useQueryClient();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [newPostsDismissed, setNewPostsDismissed] = useState(false);
 
   // One home feed; retain the existing server-ranked query contract.
   const feed = useHomeFeed("ranked", {
@@ -80,10 +76,6 @@ export default function Feed({
     circleOnly: false,
   });
   const posts = uniqueFeedPosts(feed.data?.pages);
-  const { newCount, setAnchor, consumeNew } = useFeedDelta({
-    feedType: "home",
-    enabled: posts.length > 0,
-  });
 
   useEffect(
     () =>
@@ -127,18 +119,10 @@ export default function Feed({
   );
 
   /*
-    Anchor the "N new posts" check on the NEWEST post shown, not on the
-    first one. This feed is ranked, so posts[0] is the best-scoring post —
-    often older than others on the page — and anchoring there counted posts
-    the reader had already scrolled past as new.
+    No "N new posts" banner (founder, 18 Oct): the full-screen feed at /feed
+    refreshes when its nav item is tapped again, and this classic list
+    refreshes on return after a minute away.
   */
-  const newestCreatedAt = newestCreatedAtOf(posts);
-  useEffect(() => {
-    if (newestCreatedAt) setAnchor(newestCreatedAt);
-  }, [newestCreatedAt, setAnchor]);
-  useEffect(() => {
-    if (newCount > 0) setNewPostsDismissed(false);
-  }, [newCount]);
 
   const scrollToTop = () =>
     scrollRef.current?.scrollIntoView({
@@ -153,10 +137,7 @@ export default function Feed({
       ...old, pages: old.pages.slice(0, 1), pageParams: old.pageParams.slice(0, 1),
     }));
     const result = await feed.refetch();
-    if (!result.isError) {
-      consumeNew();
-      scrollToTop();
-    }
+    if (!result.isError) scrollToTop();
   };
   const returnRefresh = useRef(loadNew);
   useEffect(() => { returnRefresh.current = loadNew; });
@@ -166,34 +147,6 @@ export default function Feed({
     <div className="home-feed">
       <div ref={scrollRef} className="scroll-mt-5" />
       {presentation === 'editorial' ? <h2 className="sr-only">Posts</h2> : <h1 className="sr-only">Home feed</h1>}
-      {newCount > 0 && !newPostsDismissed && (
-        <div className="home-feed-notice">
-          <p role="status">
-            <strong>
-              {newCount} new {newCount === 1 ? "post" : "posts"}
-            </strong>{" "}
-            to catch up on
-          </p>
-          <button
-            type="button"
-            className="home-feed-action"
-            onClick={loadNew}
-            disabled={feed.isFetching}
-          >
-            Show posts
-            <ArrowRight size={15} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            aria-label="Dismiss new posts"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-            onClick={() => setNewPostsDismissed(true)}
-          >
-            <X size={17} aria-hidden="true" />
-          </button>
-        </div>
-      )}
-
       <section
         id="feed-panel"
         aria-label="Feed posts"

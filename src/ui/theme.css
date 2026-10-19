@@ -118,6 +118,14 @@
 
   --theme-glass-bg: 255, 255, 255;
   --theme-glass-border: 15, 20, 25;
+
+  /*
+    The Follow badge on the post rail: a pink circle with a white plus under
+    the author's avatar (founder, 19 Oct; Android's FollowBadge). The same
+    value in both themes because it always sits over media, never on the
+    page ground. Its plus is --reel-on-stage.
+  */
+  --theme-follow-badge: 254 44 85;
 }
 
 .dark {
@@ -193,6 +201,9 @@
 
   --theme-glass-bg: 0, 0, 0;
   --theme-glass-border: 247, 249, 249;
+
+  /* Unchanged in dark: it sits over media, not on the ground. */
+  --theme-follow-badge: 254 44 85;
 }
 
 /*

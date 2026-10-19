@@ -225,9 +225,14 @@ export interface PostDetail {
     no_likes?: boolean
     created_at: string
     updated_at: string
-    media?: { media_id: string; kind: string }[]
+    media?: PostMediaItem[]
     cover_media_id?: string
-    counts?: { likes: number; comments: number; shares?: number }
+    /**
+     * `saves` is post-service's bookmark count (post_detail.json golden);
+     * some older rows call it `bookmarks`. Absent on rows that do not carry
+     * it, which the post stage reads as "unknown", never as 0.
+     */
+    counts?: { likes: number; comments: number; shares?: number; saves?: number; bookmarks?: number }
     /** Display view count from analytics-service (videos/reels). */
     view_count?: number
     viewer_reaction?: string | null
@@ -268,6 +273,54 @@ export interface PostDetail {
     body_redacted?: boolean
     /** Age-restricted (post-service age_gate.go): never embeddable. */
     age_restricted?: boolean
+    /*
+      Declared labels and author settings, as post-service sends them on the
+      post read and feed-service passes them through on a feed row
+      (testdata/contracts/posts/post_detail.json, feed_row_photo_carousel.json).
+    */
+    paid_promotion?: boolean
+    is_branded?: boolean
+    ai_generated?: boolean
+    link_url?: string | null
+    language?: string | null
+    comment_access?: string | null
+    remix_setting?: string | null
+    hide_share?: boolean
+    allow_download?: boolean
+    has_reacted?: boolean
+    /** Hydrated by feed-service on a feed row; the direct post read leaves it out. */
+    author?: PostAuthor | null
+    /** The added sound, when the post plays one and this viewer may hear it. */
+    sound?: { id?: string | null; title?: string | null; artist?: string | null } | null
+    reason?: string | null
+    reason_text?: string | null
+}
+
+/** One media row on a post or feed row. Only media_id and kind are always present. */
+export interface PostMediaItem {
+    media_id: string
+    kind: string
+    position?: number
+    alt_text?: string | null
+    alt_decorative?: boolean
+    width?: number
+    height?: number
+    duration_ms?: number
+    status?: string
+    processing_status?: string
+    variants?: Record<string, string>
+    hls_url?: string | null
+    playback_url?: string | null
+    playback_kind?: string | null
+}
+
+/** The author block feed-service hydrates onto a row. */
+export interface PostAuthor {
+    id: string
+    display_name?: string
+    username?: string
+    avatar_media_id?: string | null
+    avatar_url?: string | null
 }
 
 // --- Stories ---

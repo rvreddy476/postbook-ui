@@ -1,8 +1,7 @@
 'use client';
 
-import RichTextRenderer from '@/components/studio/RichTextRenderer';
 import JournalBody from '@/components/JournalBody';
-import { scrimFor } from '@/components/studio/postStyle';
+import { WordsOnColour } from '@/features/post-stage/components/WordsOnColour';
 import React, { useState, useRef, useEffect } from 'react';
 import type { PostDetail } from '@/types/profile';
 import { useFeedReaction } from '@/hooks/useFeedReaction';
@@ -26,7 +25,7 @@ import EmbedCard from '@/components/EmbedCard';
 import { useDataSaver } from '@/hooks/useDataSaver';
 import { ReelReportDialog } from '@/features/reels/components/ReelReportDialog';
 import { embedCode, isEmbeddablePost } from '@/lib/postEmbed';
-import { resolveImageUrl } from '@/lib/imageUrl';
+import { onImageError, resolveImageUrl } from '@/lib/imageUrl';
 import PaywallPreview from '@/components/monetization/PaywallPreview';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -287,6 +286,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             <div className="post-card-avatar w-11 h-11 rounded-full overflow-hidden ring-2 ring-brand-divider hover:ring-primary-outline transition-all shrink-0">
               {avatar ? (
                 <img
+                  onError={onImageError}
                   src={resolveImageUrl(avatar, { dataSaver, size: "small" })}
                   alt=""
                   className="w-full h-full object-cover"
@@ -406,7 +406,6 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           default now.
         */
         const align = rich?.align ?? (hasStyledBg ? 'center' : 'left');
-        const valign = rich?.valign ?? 'middle';
         const scale = Math.min(Math.max(rich?.scale ?? 1, 1), 2);
         const richDoc = rich?.format === 'tiptap' ? rich.doc : undefined;
 
@@ -427,39 +426,14 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             It is plain text from rich_text, rendered as text, never markup.
           */
           const heading = typeof rich?.title === 'string' ? rich.title.trim() : '';
-          const body = (
-            <RichTextRenderer
-              doc={richDoc}
-              className={`${hasStyledBg ? 'font-semibold' : 'text-brand-text'} ${align === 'center' ? 'text-center' : 'text-left'}`}
-            />
-          );
           if (!hasStyledBg) {
             // Set as an article: a measure, a title with display size, an
             // article's leading, a reading time, and a collapse for long
             // entries. See JournalBody.
             return <JournalBody doc={richDoc} title={heading || undefined} />;
           }
-          return (
-            <div
-              className={`relative mx-3 mb-3 overflow-hidden rounded-xl p-6 sm:mx-4 ${valign === 'middle' ? 'flex min-h-[200px] flex-col justify-center' : 'min-h-[160px]'}`}
-              style={{
-                background: bg || '#101828',
-                backgroundImage: bgImage ? `url(/v1/media/${bgImage}/serve)` : undefined,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                color: textColor || '#ffffff',
-                fontSize: `${scale}em`,
-              }}
-            >
-              {bgImage && (
-                <span aria-hidden className="pointer-events-none absolute inset-0" style={{ background: scrimFor(textColor) }} />
-              )}
-              <div className="relative">
-                {heading && <h2 className="mb-2 text-[1.15em] font-bold">{heading}</h2>}
-                {body}
-              </div>
-            </div>
-          );
+          // A few words on a colour: one renderer, shared with the post stage.
+          return <WordsOnColour text={post.text} rich={rich} />;
         }
 
         const textContent = (
@@ -489,26 +463,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           </p>
         );
 
-        if (hasStyledBg) {
-          return (
-            <div
-              className={`relative mx-3 mb-3 overflow-hidden rounded-xl p-6 sm:mx-4 ${
-                valign === 'middle' ? 'flex min-h-[160px] flex-col justify-center' : 'min-h-[160px]'
-              }`}
-              style={{
-                background: bg || '#101828',
-                backgroundImage: bgImage ? `url(/v1/media/${bgImage}/serve)` : undefined,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
-            >
-              {bgImage && (
-                <span aria-hidden className="pointer-events-none absolute inset-0" style={{ background: scrimFor(textColor) }} />
-              )}
-              <div className="relative">{textContent}</div>
-            </div>
-          );
-        }
+        if (hasStyledBg) return <WordsOnColour text={post.text} rich={rich} />;
 
         return (
           <div className={`post-card-copy px-3 sm:px-4 pb-3 ${isReel ? 'pr-16' : ''}`}>
@@ -609,6 +564,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                           <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/50">
                             {avatar ? (
                               <img
+                                onError={onImageError}
                                 src={resolveImageUrl(avatar, { dataSaver, size: "small" })}
                                 className="w-full h-full object-cover"
                                 alt=""
@@ -638,6 +594,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               ) : (
                 <img
                   key={post.media![activeMediaIndex].media_id}
+                  onError={onImageError}
                   src={resolveImageUrl(
                     `/v1/media/${post.media![activeMediaIndex].media_id}/serve`,
                     { dataSaver, size: "large" },

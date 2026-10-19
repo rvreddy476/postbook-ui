@@ -11,7 +11,7 @@ import {
     usePageDocuments, useAddPageDocument, useSubmitPageForReview,
 } from '@/hooks/useBusinessPages'
 import { PAGE_TYPE_BY_VALUE, documentLabel } from '@/lib/pageTypes'
-import { resolveImageUrl } from '@/lib/imageUrl'
+import { onImageError, resolveImageUrl } from '@/lib/imageUrl'
 import type { PageActionButton } from '@/types/profile'
 
 const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
@@ -73,7 +73,7 @@ export default function BusinessPageDetail() {
 
             {/* Cover */}
             <div className="relative h-40 w-full bg-linear-to-br from-[#E8D9C5] to-primary/40 sm:h-52">
-                {cover && <img src={cover} alt="" className="h-full w-full object-cover" />}
+                {cover && <img src={cover} alt="" onError={onImageError} className="h-full w-full object-cover" />}
             </div>
 
             <div className="mx-auto max-w-2xl px-4">
@@ -81,7 +81,7 @@ export default function BusinessPageDetail() {
                 <div className="-mt-10 flex items-end gap-4">
                     <div className="h-20 w-20 overflow-hidden rounded-2xl border-4 border-border bg-white shadow-xs">
                         {avatar ? (
-                            <img src={avatar} alt="" className="h-full w-full object-cover" />
+                            <img src={avatar} alt="" onError={onImageError} className="h-full w-full object-cover" />
                         ) : (
                             <div className="flex h-full w-full items-center justify-center bg-primary-ink text-2xl font-bold text-white">
                                 {page.page_name.charAt(0).toUpperCase()}

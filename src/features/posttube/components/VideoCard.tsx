@@ -6,7 +6,7 @@ import { Play, Eye, MessageCircle, ThumbsUp } from "lucide-react";
 import type { PostTubeVideo } from "../types";
 import { formatCount, formatDuration, timeAgo } from "../model";
 import { useDataSaver } from "@/hooks/useDataSaver";
-import { resolveImageUrl } from "@/lib/imageUrl";
+import { originalImageUrl, resolveImageUrl } from "@/lib/imageUrl";
 import "./tube.css";
 
 function clampPercent(value: number) {
@@ -46,7 +46,13 @@ function VideoThumbnail({ thumbnailUrl, videoUrl, className }: { thumbnailUrl: s
           alt=""
           className={className}
           loading="lazy"
-          onError={() => setImgFailed(true)}
+          onError={(e) => {
+            // A size variant that 404s falls back to the original once, then gives up.
+            const img = e.currentTarget;
+            const original = img.dataset.fallback ? null : originalImageUrl(img.getAttribute("src"));
+            if (original) { img.dataset.fallback = "1"; img.src = original; return; }
+            setImgFailed(true);
+          }}
         />
       )}
     </>
