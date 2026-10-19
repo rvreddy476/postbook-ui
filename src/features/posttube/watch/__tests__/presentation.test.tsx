@@ -79,6 +79,11 @@ describe("the RUTUBE layout", () => {
     expect(html).toContain("lucide-thumbs-up");
   });
 
+  test("a description that only repeats the title is not drawn twice", () => {
+    const html = renderToStaticMarkup(<WatchDetails {...detailsBase} description="rain on a tin roof " follow={null} actions={null} />);
+    expect(html.split("ain on a tin roof").length - 1).toBe(1);
+  });
+
   test("no Share button when the creator turned sharing off", () => {
     const html = renderToStaticMarkup(<WatchActions {...actionsBase} onShare={undefined} />);
     expect(html).not.toContain('data-action="share"');

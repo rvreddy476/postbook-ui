@@ -70,11 +70,13 @@ export function WatchDetails({
   chapters,
   currentChapter,
   onSeek,
-  description,
+  description: rawDescription,
   hashtags,
   related = null,
   revealAbout = 0,
 }: WatchDetailsProps) {
+  // A description that only repeats the title is not drawn twice (founder, 2026-10-19).
+  const description = rawDescription.trim().toLowerCase() === title.trim().toLowerCase() ? "" : rawDescription;
   const [expanded, setExpanded] = useState(false);
   const aboutRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
