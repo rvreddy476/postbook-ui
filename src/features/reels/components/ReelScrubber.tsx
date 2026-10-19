@@ -91,7 +91,7 @@ export function ReelScrubber({ currentMs, durationMs, bufferedMs, onSeek, onScru
         }`}
       >
         <div className="absolute inset-y-0 left-0 bg-white/40" style={{ width: `${bufPct}%` }} />
-        <div className="absolute inset-y-0 left-0 bg-brand-accent" style={{ width: `${pct}%` }} />
+        <div className="absolute inset-y-0 left-0 bg-playhead" style={{ width: `${pct}%` }} />
         <div
           className={`absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow transition-opacity ${
             dragMs !== null ? "opacity-100" : "opacity-0 group-hover/scrub:opacity-100"

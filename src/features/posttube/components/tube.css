@@ -32,7 +32,7 @@
 .tube-tile__views svg { width: 12px; height: 12px; }
 
 .tube-tile__progress { position: absolute; inset: auto 0 0; z-index: 10; height: 3px; background: rgb(var(--reel-on-stage) / .3); }
-.tube-tile__progress-bar { height: 100%; background: rgb(var(--brand-accent)); }
+.tube-tile__progress-bar { height: 100%; background: rgb(var(--playhead)); }
 
 /* The hover play circle: shows on hover of the whole tile, hides once the preview is running. */
 .tube-tile__play { position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 160ms ease; pointer-events: none; }

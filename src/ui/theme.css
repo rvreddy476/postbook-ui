@@ -126,6 +126,12 @@
     page ground. Its plus is --reel-on-stage.
   */
   --theme-follow-badge: 254 44 85;
+  /*
+    The played part of every video progress bar: Reels, the long-video seek
+    bar, resume bars on tiles (founder, 19 Oct: red everywhere, one token).
+    Same in both themes; it always sits over media.
+  */
+  --theme-playhead: 220 38 38;
 }
 
 .dark {
@@ -204,6 +210,7 @@
 
   /* Unchanged in dark: it sits over media, not on the ground. */
   --theme-follow-badge: 254 44 85;
+  --theme-playhead: 220 38 38;
 }
 
 /*

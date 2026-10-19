@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Plus } from "lucide-react";
 
 import { RailBookmark, RailBubble, RailHeart, RailShare } from "@/features/reels/components/ReelRailIcons";
 
@@ -94,6 +94,12 @@ export function ReelRail({
   return (
     <div className={`reel-action-rail is-${variant}`} onClick={(e) => e.stopPropagation()}>
       <div className="reel-rail-avatar-wrap">
+        {badge ? (
+          <button type="button" className="reel-rail-follow" aria-label={badge.label} disabled={badge.pending} onClick={badge.onClick}>
+            <Plus size={12} strokeWidth={3} aria-hidden="true" />
+            Follow
+          </button>
+        ) : null}
         <Link
           href={liveHref || profileHref}
           className={`reel-rail-avatar${liveHref ? " is-live" : ""}`}
@@ -103,11 +109,6 @@ export function ReelRail({
           <Avatar src={reel.authorAvatarUrl ?? ""} name={reel.authorName} seed={reel.authorId} size={desktop ? "lg" : "md"} />
         </Link>
         {liveHref && !badge ? <span className="reel-live-tag" aria-hidden="true">LIVE</span> : null}
-        {badge ? (
-          <button type="button" className="reel-rail-follow" aria-label={badge.label} disabled={badge.pending} onClick={badge.onClick}>
-            Follow
-          </button>
-        ) : null}
       </div>
       <RailButton
         label={reel.viewerLiked ? "Unlike" : "Like"}

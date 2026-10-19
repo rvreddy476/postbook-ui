@@ -52,9 +52,9 @@
 .tube-seek:hover .tube-seek__track { height: 4px; }
 .tube-seek__buffered, .tube-seek__played { position: absolute; inset: 0 auto 0 0; border-radius: 999px; }
 .tube-seek__buffered { background: rgb(var(--reel-on-stage) / .35); }
-.tube-seek__played { background: rgb(var(--brand-accent)); }
+.tube-seek__played { background: rgb(var(--playhead)); }
 .tube-seek__tick { position: absolute; top: -1px; bottom: -1px; width: 2px; margin-left: -1px; background: rgb(var(--reel-stage) / .9); }
-.tube-seek__knob { position: absolute; top: 50%; width: 12px; height: 12px; transform: translate(-50%, -50%) scale(0); border-radius: 50%; background: rgb(var(--brand-accent)); transition: transform 120ms ease; pointer-events: none; }
+.tube-seek__knob { position: absolute; top: 50%; width: 12px; height: 12px; transform: translate(-50%, -50%) scale(0); border-radius: 50%; background: rgb(var(--playhead)); transition: transform 120ms ease; pointer-events: none; }
 .tube-seek:hover .tube-seek__knob { transform: translate(-50%, -50%) scale(1); }
 .tube-seek__input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 

@@ -124,7 +124,7 @@ function SpotlightPreview({ videoUrl, previewUrl, isActive }: { videoUrl: string
         className={`absolute inset-0 z-5 h-full w-full object-cover transition-opacity duration-300 ${playing ? "opacity-100" : "pointer-events-none opacity-0"}`}
       />
       <div className={`absolute bottom-0 left-0 right-0 z-20 h-[3px] bg-white/20 transition-opacity duration-300 ${playing ? "opacity-100" : "opacity-0"}`}>
-        <div ref={barRef} className="h-full bg-brand-accent" style={{ width: "0%" }} />
+        <div ref={barRef} className="h-full bg-playhead" style={{ width: "0%" }} />
       </div>
     </>
   );

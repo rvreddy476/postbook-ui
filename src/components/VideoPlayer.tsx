@@ -390,7 +390,7 @@ export default function VideoPlayer({ mediaId, className = "", initialMuted = fa
               />
               {/* Progress fill */}
               <div
-                className="absolute inset-y-0 left-0 orchid-gradient rounded-full"
+                className="absolute inset-y-0 left-0 rounded-full bg-playhead"
                 style={{ width: `${progress}%` }}
               />
               {/* Scrubber thumb */}
