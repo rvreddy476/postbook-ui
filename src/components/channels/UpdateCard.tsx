@@ -2,17 +2,44 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import {
-  Pin, Megaphone, Image as ImageIcon, Video, Headphones, BarChart3,
-  Calendar, ShoppingBag, AlertTriangle, BookOpen,
-  MessageCircle, Share2, Repeat2, MoreHorizontal, Trash2, Pencil,
-  Heart, Bookmark, Eye, Copy, Flag, BellOff, ExternalLink, SmilePlus,
-  MapPin, Monitor, Clock, CheckCircle, Users, ChevronLeft, ChevronRight,
-  X, Play,
+  Pin,
+  Megaphone,
+  Image as ImageIcon,
+  Video,
+  Headphones,
+  BarChart3,
+  Calendar,
+  ShoppingBag,
+  AlertTriangle,
+  BookOpen,
+  MessageCircle,
+  Repeat2,
+  MoreHorizontal,
+  Trash2,
+  Pencil,
+  Heart,
+  Bookmark,
+  Eye,
+  Copy,
+  Flag,
+  BellOff,
+  ExternalLink,
+  SmilePlus,
+  MapPin,
+  Monitor,
+  Clock,
+  CheckCircle,
+  Users,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Play,
 } from 'lucide-react'
 import type { ChannelUpdate, BroadcastChannel } from '@/types/channels'
 import { usePollResults, useVoteOnPoll } from '@/hooks/useBroadcastChannels'
 import RichTextRenderer from '@/components/studio/RichTextRenderer'
 import type { RichNode } from '@/components/studio/postStyle'
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
 /* ===== Props ===== */
 interface UpdateCardProps {
@@ -756,7 +783,7 @@ const UpdateCard: React.FC<UpdateCardProps> = ({ update, channel, channelId: pro
             aria-label="Share this update"
             title="Share"
             className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-brand-text/45 transition-colors hover:bg-brand-secondary hover:text-brand-text active:scale-95">
-            <Share2 className="w-4 h-4" strokeWidth={1.75} />
+            <ShareIcon className="w-4 h-4" strokeWidth={1.75} />
             <span className="text-[12px] font-semibold">{copied ? 'Link copied' : 'Share'}</span>
           </button>
 

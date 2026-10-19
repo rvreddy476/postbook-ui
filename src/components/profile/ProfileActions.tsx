@@ -3,19 +3,18 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react"
 import Link from "next/link"
 import {
-    Flag,
-    Link2,
-    MoreHorizontal,
-    Pencil,
-    Settings,
-    Share2,
-    Shield,
-    ShieldOff,
-    UserCheck,
-    UserPlus,
-    Clock,
-    Volume2,
-    VolumeX,
+  Flag,
+  Link2,
+  MoreHorizontal,
+  Pencil,
+  Settings,
+  Shield,
+  ShieldOff,
+  UserCheck,
+  UserPlus,
+  Clock,
+  Volume2,
+  VolumeX,
 } from "lucide-react"
 import {
     FOLLOW_BUTTON_LABELS,
@@ -23,6 +22,7 @@ import {
     type FollowButtonState,
     type ProfileMenuRowKey,
 } from "./profileParity"
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
 /*
   The profile's action row (parity 3-W1).
@@ -175,7 +175,7 @@ export function ProfileActions({
 
     const shareButton = (
         <button type="button" onClick={onShare} className={BTN_QUIET} aria-label="Share profile">
-            <Share2 className="h-4 w-4" aria-hidden />
+            <ShareIcon className="h-4 w-4" aria-hidden />
             <span>Share</span>
         </button>
     )

@@ -1,9 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Bookmark, FolderPlus, MoreHorizontal, Share2, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Bookmark, FolderPlus, MoreHorizontal, ThumbsDown, ThumbsUp } from "lucide-react";
 
 import { formatCount } from "@/features/reels/model";
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
 /*
   The action row under the creator row (the RUTUBE watch layout): one
@@ -42,8 +43,8 @@ export function WatchActions({ loved, likeCount, passed, queued, onLove, onPass,
         <button type="button" className={`tube-actions__btn is-love${loved ? " is-on" : ""}`} aria-pressed={loved} aria-label={loved ? "Remove like" : "Like"} title="Like" onClick={onLove} data-action="love">
           {/* Thumbs up and down (2026-10-19), an outline until chosen, then filled. */}
           <ThumbsUp size={17} className={loved ? "fill-current" : ""} />
-          {/* No likes yet (or the count hidden) reads "Like", not a lonely 0. */}
-          {!likeCount ? <span className="tube-actions__count">Like</span> : <span className="tube-actions__count">{formatCount(likeCount)}</span>}
+          {/* The thumb alone, and the count beside it once there is one — no "Like" word (founder, 2026-10-19). */}
+          {likeCount ? <span className="tube-actions__count">{formatCount(likeCount)}</span> : null}
         </button>
         <span className="tube-actions__divider" aria-hidden />
         <button type="button" className={`tube-actions__btn is-pass${passed ? " is-on" : ""}`} aria-pressed={passed} aria-label={passed ? "Remove dislike" : "Dislike"} title="Dislike" onClick={onPass} data-action="pass">
@@ -52,7 +53,7 @@ export function WatchActions({ loved, likeCount, passed, queued, onLove, onPass,
       </div>
       {onShare ? (
         <button type="button" className="tube-actions__pill is-icon" aria-label="Share" title="Share" onClick={onShare} data-action="share">
-          <Share2 size={17} />
+          <ShareIcon size={17} />
         </button>
       ) : null}
       {/* Share, Watch later and Add to collection are icons with their names on hover (2026-10-19),

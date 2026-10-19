@@ -34,7 +34,6 @@ import { compactCount, countWord } from '@/components/feed/cardSummary';
 import {
   MessageCircle,
   MoreHorizontal,
-  Share2,
   Smile,
   Music,
   MapPin,
@@ -46,6 +45,7 @@ import {
   Repeat2,
   Heart,
 } from 'lucide-react';
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
 interface PostCardProps {
   post: PostDetail;
@@ -807,7 +807,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
               {/* Share — opens ShareDialog: repost, with a quote, or send */}
               <button onClick={handleShare} aria-label="Share" className={`${actionButton} text-brand-text/65`}>
-                <Share2 className="w-[18px] h-[18px]" />
+                <ShareIcon className="w-[18px] h-[18px]" />
                 <span>Share</span>
               </button>
 

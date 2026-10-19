@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, BarChart3, Clapperboard, Clock3, Eye, Heart, Layers3, MessageCircle, Pencil, Radio, Share2, Upload, UserPlus, Users, Video } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BarChart3, Clapperboard, Clock3, Eye, Heart, Layers3, MessageCircle, Pencil, Radio, Upload, UserPlus, Users, Video } from "lucide-react";
 import type { ReactNode } from "react";
 import { formatCount, timeAgo } from "@/features/posttube/model";
 import { watchHref, type HubCreatorInsights, type HubInboxRow, type HubLibraryRow, type HubSummary } from "../hubApi";
@@ -11,6 +11,7 @@ import { HubHead } from "./HubFrame";
 import { HubSkeleton, LibraryEmpty, OverviewEmpty } from "./HubEmpty";
 import { HubThumbnail } from "./HubThumbnail";
 import { FlagPills, PillGroup, VisibilityIcon } from "./Pills";
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
 export interface OverviewResource<T> {
   data?: T;
@@ -119,7 +120,7 @@ export function OverviewDashboard({ summary, library, insights, comments, period
           <PerformanceMetric icon={<Eye aria-hidden="true" />} label="Views" value={formatCount(data.views)} note={since} />
           <PerformanceMetric icon={<Heart aria-hidden="true" />} label="Likes" value={formatCount(data.likes)} note={since} />
           <PerformanceMetric icon={<MessageCircle aria-hidden="true" />} label="Comments" value={formatCount(data.comments)} note={since} />
-          <PerformanceMetric icon={<Share2 aria-hidden="true" />} label="Shares" value={formatCount(data.shares)} note={since} />
+          <PerformanceMetric icon={<ShareIcon aria-hidden="true" />} label="Shares" value={formatCount(data.shares)} note={since} />
           <PerformanceMetric icon={<UserPlus aria-hidden="true" />} label="Followers" value={formatDelta(data.followers_delta)} note={followersNote(data)} />
           <PerformanceMetric icon={<Clock3 aria-hidden="true" />} label="Watch time" value={formatWatchTime(data.watch_time_ms)} note="Time spent watching" />
         </div>

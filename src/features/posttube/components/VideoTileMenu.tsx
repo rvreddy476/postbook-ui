@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Ban, Clock, EyeOff, Link2, ListPlus, MoreVertical, Share2 } from "lucide-react";
+import { Ban, Clock, EyeOff, Link2, ListPlus, MoreVertical } from "lucide-react";
 import ShareDialog from "@/components/ShareDialog";
 import { useGlobalToast } from "@/contexts/ToastContext";
 import { useAuthUser } from "@/store/auth";
@@ -11,13 +11,14 @@ import type { PostTubeVideo } from "../types";
 import { sendFeedFeedback } from "../data/posttubeApi";
 import { SaveToPlaylistDialog } from "./SaveToPlaylistDialog";
 import { tileMenuRows, type TileMenuKey } from "./tileMenuRows";
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
-const ICONS: Record<TileMenuKey, typeof Ban> = {
+const ICONS: Record<TileMenuKey, (props: { "aria-hidden"?: boolean }) => React.ReactNode> = {
   "copy-link": Link2,
   "dont-recommend": Ban,
   "not-interested": EyeOff,
   playlist: ListPlus,
-  share: Share2,
+  share: ShareIcon,
   "watch-later": Clock,
 };
 

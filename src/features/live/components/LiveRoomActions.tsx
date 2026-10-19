@@ -1,7 +1,8 @@
 import Link from "next/link"
-import { Share2, UserCheck, UserPlus } from "lucide-react"
+import { UserCheck, UserPlus } from "lucide-react"
 
 import type { ChatRole } from "../chat"
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
 /**
  * Follow and Share in the room header of /live/[streamId] (parity audit
@@ -53,7 +54,7 @@ export function LiveRoomActions({
         </button>
       )}
       <button type="button" className="live-btn live-btn--ghost" onClick={onShare} aria-label="Share this live stream">
-        <Share2 className="h-4 w-4" aria-hidden="true" /> Share
+        <ShareIcon className="h-4 w-4" aria-hidden="true" /> Share
       </button>
     </div>
   )

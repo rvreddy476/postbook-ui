@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Link2, MessageCircle, MessageSquare, Send, Mail, Check, Share2, X } from "lucide-react";
+import { Link2, MessageCircle, MessageSquare, Send, Mail, Check, X } from "lucide-react";
 
 import { SendInMessagesPanel, useCanSendInMessages } from "@/components/messenger/SendInMessagesPanel";
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
 interface ShareSheetProps {
   open: boolean;
@@ -185,7 +186,7 @@ export function ShareSheet({ open, onClose, url, title = "Check this out on VCha
                   className="flex flex-col items-center gap-1.5 rounded-xl py-2 transition hover:bg-brand-secondary"
                 >
                   <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-secondary text-brand-text">
-                    <Share2 className="h-5 w-5" />
+                    <ShareIcon className="h-5 w-5" />
                   </span>
                   <span className="text-[11px] font-medium text-brand-text/70">More</span>
                 </button>

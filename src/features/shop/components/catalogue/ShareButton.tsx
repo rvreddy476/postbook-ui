@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useId, useRef, useState } from "react"
-import { Link2, MessageCircle, Share2 } from "lucide-react"
+import { Link2, MessageCircle } from "lucide-react"
 import { useGlobalToast } from "@/contexts/ToastContext"
 import { recordShare } from "../../api/share"
 import {
@@ -13,6 +13,7 @@ import {
   type ShareNavigator,
   type SharePayload,
 } from "../../model/share"
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
 const ICONS = { copy_link: Link2, whatsapp: MessageCircle } as const
 
@@ -85,7 +86,7 @@ export function ShareButton({ productId, title, priceMinor }: { productId: strin
         aria-controls={open ? menuId : undefined}
         onClick={() => void share()}
       >
-        <Share2 size={18} aria-hidden="true" />
+        <ShareIcon size={18} aria-hidden="true" />
       </button>
       {open && payload ? (
         <ul id={menuId} className="shop-menu__panel shop-share__panel" role="menu" aria-label="Share">

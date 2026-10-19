@@ -7,7 +7,7 @@
 */
 
 import { useQueryClient } from "@tanstack/react-query"
-import { Check, Copy, LifeBuoy, RotateCcw, Share2, ShieldAlert, Star, X } from "lucide-react"
+import { Check, Copy, LifeBuoy, RotateCcw, ShieldAlert, Star, X } from "lucide-react"
 import { useState } from "react"
 
 import { createShare, openExtrasPaymentIntent, putTrustedContact, raiseSOS, rateBooking, requestRework, revokeShare, toDoorstepError } from "../api/client"
@@ -20,6 +20,7 @@ import type { Booking, ShareToken } from "../model/wire"
 import { Busy, VisitImg, Sheet } from "./parts"
 import { PayPanel } from "./PayPanel"
 import { SlotPicker } from "./SlotPicker"
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
 function errLine(error: unknown): string {
   return refusalLine(toDoorstepError(error))
@@ -311,7 +312,7 @@ export function SafetyPanel({ booking }: { booking: Booking }) {
           </button>
         ) : (
           <button type="button" className="ds-btn ds-btn--outline ds-btn--sm" onClick={() => void onShare()}>
-            <Share2 size={14} aria-hidden="true" /> Share status
+            <ShareIcon size={14} aria-hidden="true" /> Share status
           </button>
         )}
       </div>

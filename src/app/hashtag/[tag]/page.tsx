@@ -6,7 +6,7 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import type { PostDetail } from '@/types/profile'
 import AppShell from '@/components/AppShell'
-import { ArrowLeft, ArrowUp, Clock, Clapperboard, Hash, Loader2, RefreshCw, Share2, TrendingUp, Video } from 'lucide-react'
+import { ArrowLeft, ArrowUp, Clock, Clapperboard, Hash, Loader2, RefreshCw, TrendingUp, Video } from 'lucide-react'
 import { useHashtagLiveStream } from '@/hooks/useHashtagLiveStream'
 import { ShareSheet } from '@/features/reels/components/ShareSheet'
 import { HashtagGrid, HashtagGridSkeleton } from '@/features/hashtag/HashtagGrid'
@@ -18,6 +18,7 @@ import {
     type HashtagPageMeta,
     type HashtagTab,
 } from '@/features/hashtag/hashtagPage'
+import { ShareIcon } from "@/components/icons/ShareIcon";
 import '@/features/reels/components/reels-screen.css'
 
 type SortMode = 'recent' | 'top'
@@ -153,7 +154,7 @@ export default function HashtagPage() {
                                 className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-brand-divider text-xs font-bold text-brand-text hover:bg-brand-secondary transition-colors"
                                 aria-haspopup="dialog"
                             >
-                                <Share2 className="w-4 h-4" aria-hidden />
+                                <ShareIcon className="w-4 h-4" aria-hidden />
                                 Share
                             </button>
                             {/* Sort toggle */}

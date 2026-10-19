@@ -18,7 +18,6 @@ import {
   MessageSquare,
   Plus,
   Radio,
-  Share2,
   Smile,
   Sparkles,
   Trash2,
@@ -57,6 +56,7 @@ import {
   type PostDetailsForm,
 } from "@/features/post-compose/model";
 import { useComposeMedia } from "@/features/post-compose/useComposeMedia";
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
 const EmojiPicker = lazy(() => import("@emoji-mart/react"));
 
@@ -897,7 +897,7 @@ function CreatePostScreen() {
                 <div className="flex items-center justify-between border-t border-brand-divider pt-3 text-xs text-brand-text/60">
                   <span className="flex items-center gap-1"><Heart className="h-4 w-4" aria-hidden="true" /> 0</span>
                   <span className="flex items-center gap-1"><MessageSquare className="h-4 w-4" aria-hidden="true" /> 0</span>
-                  <span className="flex items-center gap-1"><Share2 className="h-4 w-4" aria-hidden="true" /> 0</span>
+                  <span className="flex items-center gap-1"><ShareIcon className="h-4 w-4" aria-hidden="true" /> 0</span>
                 </div>
               </div>
             </motion.section>

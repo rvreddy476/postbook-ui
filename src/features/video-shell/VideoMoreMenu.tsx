@@ -15,7 +15,6 @@ import {
   Link2,
   Music2,
   Pencil,
-  Share2,
   SlidersHorizontal,
   Trash2,
   UserX,
@@ -36,6 +35,7 @@ import { OfflineProgressRing } from "@/features/offline/components/OfflineProgre
 import "@/features/offline/components/offline.css";
 
 import type { MoreRow, MoreRowKey } from "./moreRows";
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
 /*
   The More options card of a video: one component for the reels stage and
@@ -119,7 +119,7 @@ const ACTION_ICONS: Record<MoreActionKey, ReactNode> = {
   "not-interested": <CircleSlash />,
   offline: <ArrowDownToLine />,
   report: <Flag />,
-  share: <Share2 />,
+  share: <ShareIcon />,
   "use-sound": <Music2 />,
 };
 
