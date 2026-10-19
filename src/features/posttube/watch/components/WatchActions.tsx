@@ -1,9 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { FolderPlus, ListVideo, MoreHorizontal, ThumbsDown } from "lucide-react";
+import { FolderPlus, Heart, ListVideo, MoreHorizontal, ThumbsDown } from "lucide-react";
 
-import { RailHeart } from "@/features/reels/components/ReelRailIcons";
 import { formatCount } from "@/features/reels/model";
 
 /*
@@ -39,7 +38,8 @@ export function WatchActions({ loved, likeCount, passed, queued, onLove, onPass,
     <div className="tube-actions" role="toolbar" aria-label="Video actions">
       <div className="tube-actions__vote">
         <button type="button" className={`tube-actions__btn is-love${loved ? " is-on" : ""}`} aria-pressed={loved} aria-label={loved ? "Remove like" : "Like"} title="Like" onClick={onLove} data-action="love">
-          <RailHeart size={16} />
+          {/* An outline until liked, then filled — the same as Dislike beside it. */}
+          <Heart size={16} className={loved ? "fill-current" : ""} />
           {/* No likes yet (or the count hidden) reads "Like", not a lonely 0. */}
           {!likeCount ? <span className="tube-actions__count">Like</span> : <span className="tube-actions__count">{formatCount(likeCount)}</span>}
         </button>
