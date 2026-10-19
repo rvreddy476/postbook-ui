@@ -46,6 +46,30 @@
 .tube-tile__text { min-width: 0; flex: 1 1 auto; }
 .tube-tile__title { margin: 0; font-size: 13px; font-weight: 600; line-height: 1.3; letter-spacing: -.005em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .tube-tile:hover .tube-tile__title { color: rgb(var(--brand-ink)); }
+
+/* One link over the whole tile: the title's ::after covers it, above the
+   poster's overlays (z 5–20) and below the "⋮" menu (z 30). */
+.tube-tile__link { color: inherit; text-decoration: none; }
+.tube-tile__link::after { content: ""; position: absolute; inset: 0; z-index: 25; border-radius: 12px; }
+.tube-tile__link:focus-visible { outline: none; }
+.tube-tile__link:focus-visible::after { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 3px; }
+
+.tube-tile__menu { position: relative; z-index: 30; flex: 0 0 auto; margin: -4px -6px 0 0; }
+.tube-tile__menu-button { display: flex; width: 30px; height: 30px; align-items: center; justify-content: center; border: 0; border-radius: 999px; background: transparent; color: rgb(var(--text-muted)); cursor: pointer; }
+.tube-tile__menu-button svg { width: 18px; height: 18px; }
+.tube-tile__menu-button:hover, .tube-tile__menu-button[aria-expanded="true"] { background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); }
+.tube-tile__menu-button:focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 1px; }
+/* Pointer devices see the "⋮" on hover, like the play circle; touch and
+   keyboard always see it. */
+@media (hover: hover) {
+  .tube-tile__menu-button { opacity: 0; transition: opacity 120ms ease; }
+  .tube-tile:hover .tube-tile__menu-button, .tube-tile__menu-button:focus-visible, .tube-tile__menu-button[aria-expanded="true"] { opacity: 1; }
+}
+
+.tube-tile__menu-list { position: fixed; z-index: 60; min-width: 230px; padding: 6px; border: 1px solid var(--brand-divider); border-radius: 12px; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); box-shadow: 0 10px 30px rgb(var(--brand-text) / .16); }
+.tube-tile__menu-item { display: flex; width: 100%; align-items: center; gap: 12px; padding: 9px 10px; border: 0; border-radius: 8px; background: transparent; font-size: 13px; text-align: left; color: inherit; cursor: pointer; }
+.tube-tile__menu-item svg { width: 17px; height: 17px; flex: 0 0 auto; color: rgb(var(--text-muted)); }
+.tube-tile__menu-item:hover, .tube-tile__menu-item:focus-visible { background: rgb(var(--brand-secondary)); outline: none; }
 .tube-tile__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0 4px; margin: 2px 0 0; font-size: 11px; line-height: 1.4; color: rgb(var(--text-muted)); }
 .tube-tile__meta-count { display: inline-flex; align-items: center; gap: 2px; }
 .tube-tile__meta-count svg { width: 12px; height: 12px; }
@@ -100,6 +124,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .tube-tile.is-skeleton .tube-tile__poster, .tube-tile__bone { animation: none; }
-  .tube-tile__play, .tube-strip__pill, .tube-row__arrow { transition: none; }
+  .tube-tile__play, .tube-strip__pill, .tube-row__arrow, .tube-tile__menu-button { transition: none; }
   .tube-row__scroller { scroll-behavior: auto; }
 }

@@ -6,6 +6,12 @@
 */
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+/** "6 Sep" in the current year, "6 Sep 2025" before it. */
+export function shortDate(then: Date, now: number = Date.now()): string {
+  const date = `${then.getDate()} ${MONTHS[then.getMonth()]}`;
+  return then.getFullYear() === new Date(now).getFullYear() ? date : `${date} ${then.getFullYear()}`;
+}
+
 export function postTimeLabel(iso: string, now: number = Date.now()): string {
   const then = new Date(iso);
   const ms = then.getTime();
@@ -18,8 +24,7 @@ export function postTimeLabel(iso: string, now: number = Date.now()): string {
   if (hr < 24) return `${hr}h`;
   const day = Math.floor(hr / 24);
   if (day < 7) return `${day}d`;
-  const date = `${then.getDate()} ${MONTHS[then.getMonth()]}`;
-  return then.getFullYear() === new Date(now).getFullYear() ? date : `${date} ${then.getFullYear()}`;
+  return shortDate(then, now);
 }
 
 /** The full date and time, for the label's hover title. */

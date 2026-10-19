@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Play, Eye, MessageCircle, ThumbsUp } from "lucide-react";
 import type { PostTubeVideo } from "../types";
-import { formatCount, formatDuration, timeAgo } from "../model";
+import { formatCount, formatDuration, timeAgo, viewsLabel } from "../model";
 import { useDataSaver } from "@/hooks/useDataSaver";
 import { originalImageUrl, resolveImageUrl } from "@/lib/imageUrl";
+import { VideoTileMenu } from "./VideoTileMenu";
 import "./tube.css";
 
 function clampPercent(value: number) {
@@ -177,17 +178,27 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
     </div>
   );
 
+  /*
+    The tile is a block with one link stretched over it (the title's ::after
+    in tube.css), so the whole tile still opens the video while the "⋮"
+    menu beside the title is its own button and never navigates.
+  */
+  const titleLink = (
+    <h3 className="tube-tile__title">
+      <Link href={href} className="tube-tile__link">{video.title}</Link>
+    </h3>
+  );
+
   if (variant === "wide") {
     return (
-      <Link
-        href={href}
+      <div
         className="tube-tile tube-tile--wide"
         onMouseEnter={() => setSpotlightActive(true)}
         onMouseLeave={() => setSpotlightActive(false)}
       >
         {poster}
         <div className="tube-tile__text">
-          <h3 className="tube-tile__title">{video.title}</h3>
+          {titleLink}
           <p className="tube-tile__meta">{video.channel_name}</p>
           {hasResumeState && (
             <p className="tube-tile__meta">
@@ -196,16 +207,16 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
             </p>
           )}
           <p className="tube-tile__meta">
-            {formatCount(video.view_count)} views · {timeAgo(video.published_at)}
+            {viewsLabel(video.view_count)} · {timeAgo(video.published_at)}
           </p>
         </div>
-      </Link>
+        <VideoTileMenu video={video} />
+      </div>
     );
   }
 
   return (
-    <Link
-      href={href}
+    <div
       className="tube-tile"
       onMouseEnter={() => setSpotlightActive(true)}
       onMouseLeave={() => setSpotlightActive(false)}
@@ -214,7 +225,7 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
       <div className="tube-tile__body">
         <img src={video.channel_avatar_url} alt="" className="tube-tile__avatar" loading="lazy" />
         <div className="tube-tile__text">
-          <h3 className="tube-tile__title">{video.title}</h3>
+          {titleLink}
           <p className="tube-tile__meta">{video.channel_name}</p>
           <p className="tube-tile__meta">
             {video.like_count > 0 && (
@@ -229,12 +240,13 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
                 <span>{formatCount(video.comment_count)}</span>
               </span>
             )}
-            <span>{formatCount(video.view_count)} views</span>
+            <span>{viewsLabel(video.view_count)}</span>
             <span aria-hidden>·</span>
             <span>{timeAgo(video.published_at)}</span>
           </p>
         </div>
+        <VideoTileMenu video={video} />
       </div>
-    </Link>
+    </div>
   );
 }
