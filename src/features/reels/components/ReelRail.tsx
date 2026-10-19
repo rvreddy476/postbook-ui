@@ -167,21 +167,22 @@ function RailButton({
 /**
  * The Follow ring's lettering (founder, 19 Oct): the author's picture sits in
  * the middle of a pink ring, FOLLOW bent along the ring's top half and a
- * small plus at its foot. Drawn in a 60-unit box: the picture fills radius
- * 19, the letters ride an arc of radius 21.5 inside the 30-unit rim.
+ * small plus at its foot. Drawn in a 56-unit box (20 Oct: a smaller ring,
+ * a bigger picture, bigger letters and plus): the picture fills radius 20,
+ * the letters ride an arc of radius 21.2 inside the 28-unit rim.
  */
 function FollowRingMark() {
   // Every reel on the page draws its own rail, so each arc needs its own id.
   const arc = `reel-follow-arc${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   return (
-    <svg className="reel-rail-follow__mark" viewBox="0 0 60 60" aria-hidden="true" focusable="false">
+    <svg className="reel-rail-follow__mark" viewBox="0 0 56 56" aria-hidden="true" focusable="false">
       <defs>
-        <path id={arc} d="M 8.5 30 A 21.5 21.5 0 0 1 51.5 30" />
+        <path id={arc} d="M 6.8 28 A 21.2 21.2 0 0 1 49.2 28" />
       </defs>
       <text className="reel-rail-follow__word">
         <textPath href={`#${arc}`} startOffset="50%" textAnchor="middle">FOLLOW</textPath>
       </text>
-      <path className="reel-rail-follow__plus" d="M30 51v6M27 54h6" />
+      <path className="reel-rail-follow__plus" d="M28 48.5v7M24.5 52h7" />
     </svg>
   );
 }
