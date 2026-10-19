@@ -142,12 +142,12 @@ test('desktop rail reads Save, Share, Comments, Like, Avatar from the bottom —
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-count { font-size: 12px; line-height: 16px; font-weight: 700;');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-liked .reel-action-icon { color: rgb(var(--danger)); }');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-saved .reel-action-icon { color: rgb(var(--brand-accent)); }');
-  // The round "+ Follow" pill sits ABOVE the avatar, in the follow-badge colour, as on the phone (19 Oct).
-  expect(css).toContain('height: 22px; padding: 0 9px 0 6px; border: 0; border-radius: 999px; font-size: 11px; font-weight: 700;');
-  expect(css).toContain('background: rgb(var(--follow-badge));');
+  // The Follow button sits ABOVE the avatar: a 44px pink circle, FOLLOW curved along its top half, a plus in the middle (19 Oct).
+  expect(css).toContain('.reel-rail-follow { display: block; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: rgb(var(--follow-badge));');
+  expect(html).toMatch(/<textPath href="#reel-follow-arc[\w-]*" startOffset="50%" text-anchor="middle">FOLLOW<\/textPath>/);
+  expect(html).toContain('d="M22 21v11M16.5 26.5h11"');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-avatar-wrap { padding-bottom: 8px; }');
   expect(html.indexOf('class="reel-rail-follow"')).toBeLessThan(html.indexOf('class="reel-rail-avatar"'));
-  expect(html).toContain('>Follow</button>');
   expect(renderToStaticMarkup(<ReelRail {...railBase} following={true}/>)).not.toContain('reel-rail-follow');
 });
 

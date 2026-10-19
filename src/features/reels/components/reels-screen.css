@@ -145,12 +145,16 @@
 .reel-action-count { font-size: 10px; line-height: 12px; font-weight: 600; font-variant-numeric: tabular-nums; padding-bottom: 3px; }
 .reel-action-button.is-liked { color: rgb(var(--danger)); }
 .reel-action-button.is-saved { color: rgb(var(--brand-accent)); }
-/* The avatar with the round "+ Follow" pill above it, as on the phone (founder, 19 Oct). The pill is
-   gone once the viewer follows; the avatar alone stays. Colour is the global follow-badge token. */
+/* The Follow button above the avatar (founder, 19 Oct): a pink circle with FOLLOW curved along the top
+   half of its edge and a plus in the middle. Gone once the viewer follows. Colour is the global
+   follow-badge token; letters and plus are the stage white. */
 .reel-rail-avatar-wrap { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .reel-rail-avatar { display: block; width: 48px; height: 48px; border-radius: 50%; overflow: hidden; }
 .reel-rail-avatar > * { width: 100%; height: 100%; }
-.reel-rail-follow { display: inline-flex; align-items: center; justify-content: center; gap: 2px; height: 22px; padding: 0 9px 0 6px; border: 0; border-radius: 999px; font-size: 11px; font-weight: 700; line-height: 1; white-space: nowrap; background: rgb(var(--follow-badge)); color: rgb(var(--reel-on-stage)); box-shadow: 0 4px 10px rgb(var(--follow-badge) / .35); cursor: pointer; transition: transform 140ms ease, filter 140ms ease; }
+.reel-rail-follow { display: block; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: rgb(var(--follow-badge)); color: rgb(var(--reel-on-stage)); box-shadow: 0 4px 10px rgb(var(--follow-badge) / .35); cursor: pointer; transition: transform 140ms ease, filter 140ms ease; }
+.reel-rail-follow__mark { display: block; width: 100%; height: 100%; overflow: visible; }
+.reel-rail-follow__word { fill: currentColor; font-size: 7.5px; font-weight: 800; letter-spacing: .08em; }
+.reel-rail-follow__plus { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
 .reel-rail-follow:hover { transform: translateY(-1px); filter: brightness(1.06); }
 .reel-rail-follow:active { transform: scale(.96); }
 .reel-rail-follow:focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 2px; }

@@ -1,8 +1,8 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import Link from "next/link";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 
 import { RailBookmark, RailBubble, RailHeart, RailShare } from "@/features/reels/components/ReelRailIcons";
 
@@ -96,8 +96,7 @@ export function ReelRail({
       <div className="reel-rail-avatar-wrap">
         {badge ? (
           <button type="button" className="reel-rail-follow" aria-label={badge.label} disabled={badge.pending} onClick={badge.onClick}>
-            <Plus size={12} strokeWidth={3} aria-hidden="true" />
-            Follow
+            <FollowBadgeMark />
           </button>
         ) : null}
         <Link
@@ -175,5 +174,26 @@ function RailButton({
       <span className="reel-action-icon">{icon}</span>
       {typeof count === "number" ? <span className="reel-action-count">{formatCount(count)}</span> : null}
     </button>
+  );
+}
+
+/**
+ * The Follow button's face (founder, 19 Oct): a pink circle with FOLLOW bent
+ * along the top half of its edge and a plus in the middle. Drawn in a 44
+ * unit box; the letters ride an arc of radius 14 so they stay inside the rim.
+ */
+function FollowBadgeMark() {
+  // Every reel on the page draws its own rail, so each arc needs its own id.
+  const arc = `reel-follow-arc${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  return (
+    <svg className="reel-rail-follow__mark" viewBox="0 0 44 44" aria-hidden="true" focusable="false">
+      <defs>
+        <path id={arc} d="M 8 22 A 14 14 0 0 1 36 22" />
+      </defs>
+      <text className="reel-rail-follow__word">
+        <textPath href={`#${arc}`} startOffset="50%" textAnchor="middle">FOLLOW</textPath>
+      </text>
+      <path className="reel-rail-follow__plus" d="M22 21v11M16.5 26.5h11" />
+    </svg>
   );
 }
