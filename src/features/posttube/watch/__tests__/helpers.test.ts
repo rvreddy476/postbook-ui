@@ -232,36 +232,30 @@ describe("keys pane from the key map", () => {
   });
 });
 
-describe("the rail's More rows: the shared video model, ascending", () => {
+describe("the watch page's ⋯ rows: the app's list (founder, 2026-10-19)", () => {
   /* A bare video: one audio track, no captions, one rendition, no description, sharing off, downloads off. */
   const bare: WatchMoreInput = {
     channelName: "Ravi", isOwner: false, hasDescription: false, shareHidden: true, downloadAllowed: false,
     audioTrackCount: 1, hasCaptions: false, levels: [720], canOffline: true, canManageAudio: true,
   };
   const labels = (extra: Partial<WatchMoreInput> = {}) => watchMoreRows({ ...bare, ...extra }).map((r) => r.label);
+  const full = { hasDescription: true, shareHidden: false, downloadAllowed: true, audioTrackCount: 2, hasCaptions: true, levels: [360, 720, 1080] };
 
-  test("a bare video: viewer and owner", () => {
-    expect(labels()).toEqual(["Block Ravi", "Copy link", "Don't recommend this channel", "Not interested", "Playback speed", "Report"]);
-    expect(labels({ isOwner: true })).toEqual(["Audio tracks", "Copy link", "Delete", "Edit", "Playback speed", "Save offline"]);
+  test("a viewer: Copy link, Description, Don't recommend, Report", () => {
+    expect(labels()).toEqual(["Copy link", "Don't recommend this channel", "Report"]);
+    expect(labels(full)).toEqual(["Copy link", "Description", "Don't recommend this channel", "Report"]);
   });
 
-  test("a full video: every shared row, and Save offline when the creator allows it", () => {
-    const full = { hasDescription: true, shareHidden: false, downloadAllowed: true, audioTrackCount: 2, hasCaptions: true, levels: [360, 720, 1080] };
-    expect(labels(full)).toEqual([
-      "Audio track", "Block Ravi", "Captions", "Copy link", "Description", "Don't recommend this channel",
-      "Not interested", "Playback speed", "Quality", "Report", "Save offline", "Share",
-    ]);
-    expect(labels({ ...full, isOwner: true })).toEqual([
-      "Audio track", "Audio tracks", "Captions", "Copy link", "Delete", "Description", "Edit", "Playback speed", "Quality", "Save offline", "Share",
-    ]);
+  test("the owner: Copy link, Delete, Description, Edit", () => {
+    expect(labels({ isOwner: true })).toEqual(["Copy link", "Delete", "Edit"]);
+    expect(labels({ ...full, isOwner: true })).toEqual(["Copy link", "Delete", "Description", "Edit"]);
   });
 
-  test("never the reels rows; no Keep or Audio tracks without the media id", () => {
-    const full = labels({ hasDescription: true, shareHidden: false, downloadAllowed: true, audioTrackCount: 2, hasCaptions: true, levels: [360, 720] });
-    expect(full).not.toContain("Auto scroll");
-    expect(full).not.toContain("Use this sound");
-    const noMedia = labels({ isOwner: true, canOffline: false, canManageAudio: false });
-    expect(noMedia).toEqual(["Copy link", "Delete", "Edit", "Playback speed"]);
+  test("none of what moved or went: Block, Not interested, Save offline, Share, and the player's rows", () => {
+    const every = [...labels(full), ...labels({ ...full, isOwner: true })];
+    for (const gone of ["Block Ravi", "Not interested", "Save offline", "Share", "Playback speed", "Quality", "Captions", "Audio track", "Audio tracks", "Auto scroll", "Use this sound"]) {
+      expect(every).not.toContain(gone);
+    }
   });
 });
 

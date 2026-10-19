@@ -65,8 +65,28 @@
 .tube-seek__chapter { max-width: 220px; overflow: hidden; text-overflow: ellipsis; font-size: 11px; font-weight: 600; }
 .tube-seek__time { font-size: 11px; font-variant-numeric: tabular-nums; }
 
-/* The settings card: the reels choice-pane shell, 280px, hung above the gear. */
-.tube-settings-menu.reel-more-menu[role="menu"] { width: 280px; max-height: min(420px, 70vh); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; text-align: left; }
+/*
+  The settings card, after RUTUBE's (2026-10-19): dark over the video in both
+  themes, a "Settings" title with a close button, 300px, hung above the gear.
+  Its height never passes the frame's (--tube-frame-h, set by the player), so
+  a small player scrolls the list instead of cutting off its top.
+*/
+.tube-settings-menu.reel-more-menu[role="menu"] {
+  width: 300px; max-height: min(420px, calc(var(--tube-frame-h, 420px) - 64px), 70vh);
+  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; text-align: left;
+  padding: 6px; border-radius: 14px;
+  background: rgb(var(--reel-stage) / .92); color: rgb(var(--reel-on-stage));
+  backdrop-filter: blur(8px); box-shadow: 0 12px 32px rgb(0 0 0 / .4);
+}
+.tube-settings-menu .reel-more-menu__row:hover { background: rgb(var(--reel-on-stage) / .1); }
+.tube-settings-menu .reel-more-menu__icon { color: rgb(var(--reel-on-stage) / .9); }
+.tube-settings-menu .reel-more-menu__value, .tube-settings-menu .reel-more-menu__note { color: rgb(var(--reel-on-stage) / .65); }
+.tube-settings-menu__head { position: relative; display: flex; height: 40px; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+.tube-settings-menu__close { position: absolute; right: 2px; display: inline-flex; width: 32px; height: 32px; align-items: center; justify-content: center; border: 0; border-radius: 8px; background: transparent; color: inherit; cursor: pointer; }
+.tube-settings-menu__close:hover { background: rgb(var(--reel-on-stage) / .1); }
+.tube-settings-menu__close svg { width: 18px; height: 18px; }
+.tube-settings-menu .tube-keys__row dd { color: rgb(var(--reel-on-stage) / .7); }
+.tube-settings-menu .tube-keys kbd { background: rgb(var(--reel-on-stage) / .12); color: rgb(var(--reel-on-stage)); }
 .tube-keys { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 4px 8px 8px; }
 .tube-keys__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 28px; font-size: 12px; }
 .tube-keys__row dt { display: flex; gap: 4px; margin: 0; }

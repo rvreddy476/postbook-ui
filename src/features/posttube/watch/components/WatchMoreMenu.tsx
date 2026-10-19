@@ -36,8 +36,21 @@ export interface WatchMoreInput {
   canManageAudio: boolean;
 }
 
+/**
+  The ⋯ under a long video keeps what the app's menu keeps (founder,
+  2026-10-19): Copy link, Description, Don't recommend this channel and
+  Report — and Edit and Delete on your own video. Speed, quality, captions
+  and audio live in the player's Settings; Share is a button on the row;
+  Block is on the channel page; Not interested and Save offline are gone.
+*/
+const WATCH_MORE_KEEP: ReadonlySet<MoreRow["key"]> = new Set(["copy-link", "delete", "description", "dont-recommend", "edit", "report"]);
+
 /** The watch page's rows from the shared model. Long video has an edit screen (the hub) and no reusable sound. */
 export function watchMoreRows(v: WatchMoreInput): MoreRow[] {
+  return moreRowsAll(v).filter((row) => WATCH_MORE_KEEP.has(row.key));
+}
+
+function moreRowsAll(v: WatchMoreInput): MoreRow[] {
   return moreRows({
     surface: "watch",
     post: {

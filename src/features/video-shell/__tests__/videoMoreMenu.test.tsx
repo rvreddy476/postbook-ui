@@ -66,28 +66,22 @@ function drawnRows(html: string): Map<string, string> {
 const labelsOf = (html: string) =>
   html.split('<span class="reel-more-menu__title">').slice(1).map((part) => part.slice(0, part.indexOf("<")).split("&#x27;").join("'"));
 
-describe("reels and long video draw the same More menu", () => {
-  test("a viewer: the same labels in the same order, apart from Auto scroll and Use this sound", () => {
-    const reels = labelsOf(reelsHtml(false)).filter((l) => l !== "Auto scroll" && l !== "Use this sound");
-    expect(reels).toEqual(labelsOf(watchHtml(false)));
-    expect(reels).toEqual([
-      "Audio track", "Block Bee", "Captions", "Copy link", "Description", "Don't recommend this channel",
-      "Not interested", "Playback speed", "Quality", "Report", "Save offline", "Share",
-    ]);
+describe("the watch page's ⋯ is the app's short list, drawn by the same rows as reels", () => {
+  test("a viewer: Copy link, Description, Don't recommend, Report — each also on the reels menu", () => {
+    const watch = labelsOf(watchHtml(false));
+    expect(watch).toEqual(["Copy link", "Description", "Don't recommend this channel", "Report"]);
+    const reels = labelsOf(reelsHtml(false));
+    for (const label of watch) expect(reels).toContain(label);
   });
 
-  test("the owner: the same, apart from Auto scroll, Use this sound and Edit (a reel has no edit screen)", () => {
-    const reels = labelsOf(reelsHtml(true)).filter((l) => l !== "Auto scroll" && l !== "Use this sound");
-    const watch = labelsOf(watchHtml(true)).filter((l) => l !== "Edit");
-    expect(reels).toEqual(watch);
-    expect(labelsOf(watchHtml(true))).toContain("Edit");
+  test("the owner: Copy link, Delete, Description, Edit", () => {
+    expect(labelsOf(watchHtml(true))).toEqual(["Copy link", "Delete", "Description", "Edit"]);
   });
 
-  test("each shared row is the same markup on both surfaces: icon, label, hint, value, danger", () => {
+  test("each row the two share is the same markup on both surfaces: icon, label, hint, value, danger", () => {
     const reels = drawnRows(reelsHtml(false));
     const watch = drawnRows(watchHtml(false));
-    const sharedKeys = ["audio", "block", "captions", "copy-link", "description", "dont-recommend", "not-interested", "speed", "quality", "report", "offline", "share"];
-    for (const key of sharedKeys) {
+    for (const key of ["copy-link", "description", "dont-recommend", "report"]) {
       expect(reels.get(key), key).toBeDefined();
       expect(reels.get(key), key).toBe(watch.get(key)!);
     }

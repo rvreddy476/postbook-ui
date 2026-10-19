@@ -141,9 +141,11 @@ interface WatchPageProps {
   videoId?: string;
   /** `?list=<playlistId>`: play through that collection. */
   listId?: string | null;
+  /** `?t=<seconds>`: start there (a "Copy link at current time" link) instead of the saved resume point. */
+  startSeconds?: number | null;
 }
 
-function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
+function WatchPageContent({ videoId, listId = null, startSeconds = null }: WatchPageProps) {
   const router = useRouter();
   const user = useAuthUser();
   const { effective: dataSaver } = useDataSaver();
@@ -233,8 +235,8 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   /* ── playback urls ─────────────────────────────────── */
   const hlsUrl = mediaAssetId ? hlsMasterUrl(mediaAssetId) : null;
   const fileUrl = videoMetadataQuery.data?.playback_url || video?.video_url || (mediaAssetId ? mediaServeUrl(mediaAssetId) : "");
-  const startPositionMs = resumePositionMs(progressQuery.data);
-  const startReady = !user || !progressQuery.isLoading;
+  const startPositionMs = startSeconds != null ? startSeconds * 1000 : resumePositionMs(progressQuery.data);
+  const startReady = startSeconds != null || !user || !progressQuery.isLoading;
 
   /* ── progress + telemetry ──────────────────────────── */
   const latestRef = useRef({ positionMs: 0, durationMs: 0 });
@@ -1004,6 +1006,6 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   );
 }
 
-export function WatchPage({ videoId, listId }: WatchPageProps) {
-  return <WatchPageContent key={`${videoId ?? "posttube-watch"}:${listId ?? ""}`} videoId={videoId} listId={listId ?? null} />;
+export function WatchPage({ videoId, listId, startSeconds }: WatchPageProps) {
+  return <WatchPageContent key={`${videoId ?? "posttube-watch"}:${listId ?? ""}`} videoId={videoId} listId={listId ?? null} startSeconds={startSeconds ?? null} />;
 }
