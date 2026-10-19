@@ -11,9 +11,12 @@ export interface ReactionControlProps {
   disabled?: boolean
   allowed?: readonly Reaction[]
   align?: 'start' | 'end'
+  /** Show the reaction's name ("Like", "Love"…) instead of the count — for
+      cards that print the count on their own summary line. */
+  showLabel?: boolean
 }
 /** Presentation only; service adapters own persistence and authoritative counts. */
-export default function ReactionControl({ current: confirmed, count, onChange, disabled = false, allowed, align = 'start' }: ReactionControlProps) {
+export default function ReactionControl({ current: confirmed, count, onChange, disabled = false, allowed, align = 'start', showLabel = false }: ReactionControlProps) {
   const options = allowed ? REACTIONS.filter(option => allowed.includes(option.value)) : REACTIONS
   const [pending, setPending] = useState<{ reaction: Reaction | null } | null>(null)
   const [failed, setFailed] = useState(false)
@@ -78,7 +81,9 @@ export default function ReactionControl({ current: confirmed, count, onChange, d
         onContextMenu={event => event.preventDefault()}
         onClick={() => { if (held.current) { held.current = false; return }; choose(current ? null : 'like') }}>
         {selected ? <span className="reaction-emoji" aria-hidden="true">{selected.emoji}</span> : <Heart size={17} />}
-        <span aria-label="Total reactions">{count}</span>
+        {showLabel
+          ? <span>{selected?.label ?? 'Like'}</span>
+          : <span aria-label="Total reactions">{count}</span>}
       </button>
       {options.length > 1 && <button type="button" className="reaction-expand" aria-label="Choose reaction" aria-expanded={open} aria-controls={id} disabled={busy} onClick={focusPicker}><ChevronDown size={12} /></button>}
     </div>

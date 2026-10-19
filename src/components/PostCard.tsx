@@ -27,10 +27,14 @@ import { ReelReportDialog } from '@/features/reels/components/ReelReportDialog';
 import { embedCode, isEmbeddablePost } from '@/lib/postEmbed';
 import { onImageError, resolveImageUrl } from '@/lib/imageUrl';
 import PaywallPreview from '@/components/monetization/PaywallPreview';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { postTimeLabel, postTimeTitle } from '@/lib/postTime';
+import { isDoubleTap, mediaFrameRatio, type Tap } from '@/components/feed/mediaFrame';
+import { compactCount, countWord } from '@/components/feed/cardSummary';
 import {
   MessageCircle,
-  SlidersHorizontal,
+  MoreHorizontal,
+  Share2,
   Smile,
   Music,
   MapPin,
@@ -45,21 +49,6 @@ import {
 
 interface PostCardProps {
   post: PostDetail;
-}
-
-function timeAgo(dateStr: string): string {
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diffMs = now - then;
-  const diffSec = Math.floor(diffMs / 1000);
-  if (diffSec < 60) return 'just now';
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin}m`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h`;
-  const diffDay = Math.floor(diffHr / 24);
-  if (diffDay < 30) return `${diffDay}d`;
-  return new Date(dateStr).toLocaleDateString();
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
@@ -97,10 +86,41 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   const isOwnPost = profile?.id === post.author_id;
 
-  const toggleLike = () => {
-    if (likeMutation.busy) return;
-    likeMutation.mutate({ next: liked ? null : 'like', current: normalizeReaction(post.viewer_reaction) });
+  /*
+    Double-tap a photo to like it. It only ever likes — a second double tap
+    on a liked post plays the heart again and leaves the like alone, because
+    an unlike you did not mean is worse than a like you did. The Like button
+    is still the way to remove it.
+  */
+  const reduceMotion = useReducedMotion();
+  const [heartBurst, setHeartBurst] = useState(0);
+  const lastTap = useRef<Tap | null>(null);
+  const likeFromDoubleTap = () => {
+    if (post.no_likes) return;
+    setHeartBurst((n) => n + 1);
+    if (liked || likeMutation.busy) return;
+    likeMutation.mutate({ next: 'like', current: normalizeReaction(post.viewer_reaction) });
   };
+  const onMediaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    // Taps on the gallery arrows, links and the video player are theirs.
+    if ((event.target as HTMLElement).closest('button, a, video')) return;
+    const tap = { t: event.timeStamp, x: event.clientX, y: event.clientY };
+    if (isDoubleTap(lastTap.current, tap)) {
+      lastTap.current = null;
+      likeFromDoubleTap();
+    } else {
+      lastTap.current = tap;
+    }
+  };
+
+  // A photo's frame: the first photo's own shape, between 4:5 and 1.91:1.
+  // The server usually sends the size; when it does not, the loaded image
+  // tells us once.
+  const firstMedia = post.media?.[0];
+  const [loadedRatio, setLoadedRatio] = useState<number | null>(null);
+  const photoRatio = firstMedia?.width && firstMedia?.height
+    ? mediaFrameRatio(firstMedia.width, firstMedia.height)
+    : loadedRatio ?? 1;
 
 
   const handleBookmark = () => {
@@ -245,6 +265,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const isReel = post.content_type === 'short';
   const hasMultipleMedia = post.media && post.media.length > 1;
   const hasMedia = post.media && post.media.length > 0;
+  const showLikeTotal = !post.no_likes && likesCount > 0;
+  const showCommentTotal = !post.no_comments && commentsCount > 0;
+  const hasSummary = showLikeTotal || showCommentTotal || sharesCount > 0;
+  const actionButton = 'flex flex-1 min-w-0 min-h-10 items-center justify-center gap-1.5 rounded-lg px-2 text-[13px] font-semibold transition-colors duration-200 hover:bg-brand-secondary active:scale-[0.98]';
   const hasVoted = pollData?.viewer_votes && pollData.viewer_votes.length > 0;
   const pollEnded = pollData?.has_ended;
   const showResults = hasVoted || pollEnded;
@@ -308,7 +332,11 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               )}
             </div>
             <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-brand-text/40 mt-0.5">
-              <span>{timeAgo(post.created_at)}</span>
+              <Link href={`/post/${post.id}`} className="hover:underline">
+                <time dateTime={post.created_at} title={postTimeTitle(post.created_at)}>
+                  {postTimeLabel(post.created_at)}
+                </time>
+              </Link>
               {post.location && (
                 <>
                   <span className="text-brand-text/30">·</span>
@@ -336,9 +364,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             aria-label="Post controls"
             aria-haspopup="menu"
             aria-expanded={isMoreOpen}
-            className={`p-2 rounded-full transition-all ${isMoreOpen ? 'bg-brand-divider text-brand-text' : 'text-brand-text/40 hover:bg-brand-divider hover:text-brand-text/80'}`}
+            className={`p-2 rounded-full transition-all ${isMoreOpen ? 'bg-brand-divider text-brand-text' : 'text-brand-text/55 hover:bg-brand-divider hover:text-brand-text/80'}`}
           >
-            <SlidersHorizontal className="w-5 h-5" />
+            <MoreHorizontal className="w-5 h-5" />
           </button>
 
           <AnimatePresence>
@@ -373,6 +401,15 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             tierRequiredId={post.tier_required_id ?? null}
           />
         </div>
+      )}
+
+      {/* The post's title, typed in its own field in the composer. It was
+          stored and sent but never drawn. A Journal entry draws its own
+          heading inside JournalBody, so it is left out here. */}
+      {!post.body_redacted && post.title?.trim() && post.rich_text?.format !== 'tiptap' && (
+        <h3 className="post-card-title px-3 sm:px-4 pb-1.5 text-[17px] font-bold leading-snug text-brand-text break-words">
+          {post.title.trim()}
+        </h3>
       )}
 
       {/* Post Text with clickable hashtags and @mentions */}
@@ -545,7 +582,13 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         {hasMedia && (
           // The home feed sizes this stage inside the reference-size card.
           // Other post surfaces retain their existing media layout.
-          <div className={`post-card-media relative overflow-hidden bg-brand-secondary ${isReel ? 'aspect-9/16 max-h-[700px]' : hasMultipleMedia ? 'h-[600px] max-h-[70vh]' : 'max-h-[70vh]'}`}>
+          // Photos fill the card's width at their own shape (see mediaFrame);
+          // a video sits in a 16:9 frame; a reel keeps its tall one.
+          <div
+            className={`post-card-media relative w-full overflow-hidden bg-brand-secondary select-none ${isReel ? 'aspect-9/16 max-h-[700px]' : firstMedia?.kind === 'video' ? 'aspect-video' : 'max-h-[85vh]'}`}
+            style={!isReel && firstMedia?.kind !== 'video' ? { aspectRatio: photoRatio } : undefined}
+            onPointerUp={onMediaPointerUp}
+          >
             <div className="post-card-media-content h-full w-full flex items-center justify-center">
               {post.media![activeMediaIndex].kind === 'video' ? (
                 <div className="relative w-full h-full">
@@ -599,11 +642,32 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                     `/v1/media/${post.media![activeMediaIndex].media_id}/serve`,
                     { dataSaver, size: "large" },
                   )}
-                  alt=""
-                  className={`w-full h-full cursor-zoom-in ${isReel ? 'object-cover' : 'object-contain'} border-b border-brand-divider`}
+                  alt={post.media![activeMediaIndex].alt_text ?? ""}
+                  draggable={false}
+                  onLoad={(event) => {
+                    if (activeMediaIndex !== 0 || (firstMedia?.width && firstMedia?.height)) return;
+                    const img = event.currentTarget;
+                    setLoadedRatio(mediaFrameRatio(img.naturalWidth, img.naturalHeight));
+                  }}
+                  className="w-full h-full object-cover"
                 />
               )}
             </div>
+
+            {/* The heart a double tap plays. Under reduced motion it fades
+                in place instead of growing. */}
+            {heartBurst > 0 && (
+              <motion.div
+                key={heartBurst}
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
+                initial={reduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.4 }}
+                animate={reduceMotion ? { opacity: 0 } : { opacity: [0, 1, 1, 0], scale: [0.4, 1.15, 1, 1] }}
+                transition={reduceMotion ? { duration: 0.6 } : { duration: 0.85, times: [0, 0.25, 0.7, 1] }}
+              >
+                <Heart className="h-24 w-24 fill-white text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.35)]" />
+              </motion.div>
+            )}
 
             {/* Gallery Navigation */}
             {hasMultipleMedia && (
@@ -700,35 +764,60 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             </button>
           </div>
         ) : (
-          <div className="post-card-actions px-3 sm:px-4 py-2 flex items-center justify-around border-t border-brand-divider">
-            {/* Like / Love */}
-            {!post.no_likes && (
-              <FeedReactionControl post={post} />
+          <>
+            {/* The counts, on their own line: likes on the left, comments
+                and shares on the right. Nothing when there is nothing. */}
+            {hasSummary && (
+              <div className="post-card-summary px-3 sm:px-4 pt-2.5 pb-2 flex items-center justify-between gap-3 text-[13px] text-brand-text/60">
+                {showLikeTotal ? (
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span aria-hidden="true" className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-primary-ink text-primary-foreground">
+                      <Heart className="h-2.5 w-2.5 fill-current" />
+                    </span>
+                    <span className="tabular-nums" aria-label={countWord(likesCount, 'like', 'likes')}>{compactCount(likesCount)}</span>
+                  </span>
+                ) : <span />}
+                <span className="flex shrink-0 items-center gap-1.5">
+                  {showCommentTotal && (
+                    <button type="button" onClick={() => setShowComments(true)} className="hover:underline">
+                      {countWord(commentsCount, 'comment', 'comments')}
+                    </button>
+                  )}
+                  {showCommentTotal && sharesCount > 0 && <span aria-hidden="true">·</span>}
+                  {sharesCount > 0 && <span>{countWord(sharesCount, 'share', 'shares')}</span>}
+                </span>
+              </div>
             )}
 
-            {/* Comment */}
-            {!post.no_comments && (
-              <button onClick={() => setShowComments(!showComments)} aria-label="Comment" aria-expanded={showComments}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors duration-200 active:scale-95 ${showComments ? 'text-primary-ink bg-primary-tint' : 'text-brand-text/60 hover:text-primary-ink hover:bg-primary-tint/60'}`}>
-                <MessageCircle className={`w-[18px] h-[18px] ${showComments ? 'fill-current' : ''}`} />
-                <span className="text-[12px] font-semibold tabular-nums">{commentsCount > 0 ? commentsCount : 'Comment'}</span>
+            {/* Four equal buttons that say what they do. */}
+            <div className={`post-card-actions mx-2 sm:mx-3 py-1 flex items-stretch gap-1 ${hasSummary || !hasMedia ? 'border-t border-brand-divider' : ''}`}>
+              {!post.no_likes && (
+                <div className="post-card-action flex flex-1 min-w-0 [&_.reaction-control]:w-full [&_.reaction-trigger]:w-full [&_.reaction-trigger>button:first-child]:flex-1 [&_.reaction-trigger>button:first-child]:text-[13px] [&_.reaction-trigger>button:first-child]:font-semibold">
+                  <FeedReactionControl post={post} showLabel />
+                </div>
+              )}
+
+              {!post.no_comments && (
+                <button onClick={() => setShowComments(!showComments)} aria-label="Comment" aria-expanded={showComments}
+                  className={`${actionButton} ${showComments ? 'text-primary-ink' : 'text-brand-text/65'}`}>
+                  <MessageCircle className="w-[18px] h-[18px]" />
+                  <span>Comment</span>
+                </button>
+              )}
+
+              {/* Share — opens ShareDialog: repost, with a quote, or send */}
+              <button onClick={handleShare} aria-label="Share" className={`${actionButton} text-brand-text/65`}>
+                <Share2 className="w-[18px] h-[18px]" />
+                <span>Share</span>
               </button>
-            )}
 
-            {/* Repost — opens ShareDialog with quote + media support */}
-            <button onClick={handleShare} aria-label="Repost"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-brand-text/60 hover:text-success hover:bg-success/5 transition-colors duration-200 active:scale-95">
-              <Repeat2 className="w-[18px] h-[18px]" />
-              <span className="text-[12px] font-semibold tabular-nums">{sharesCount > 0 ? sharesCount : 'Repost'}</span>
-            </button>
-
-            {/* Save (Bookmark) */}
-            <button onClick={handleBookmark} aria-label={bookmarked ? 'Saved' : 'Save'} aria-pressed={bookmarked}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors duration-200 active:scale-95 ${bookmarked ? 'text-primary-ink bg-primary-tint' : 'text-brand-text/60 hover:text-primary-ink hover:bg-primary-tint/60'}`}>
-              <Bookmark className={`w-[18px] h-[18px] ${bookmarked ? 'fill-current' : ''}`} />
-              <span className="text-[12px] font-semibold">{bookmarked ? 'Saved' : 'Save'}</span>
-            </button>
-          </div>
+              <button onClick={handleBookmark} aria-label={bookmarked ? 'Saved' : 'Save'} aria-pressed={bookmarked}
+                className={`${actionButton} ${bookmarked ? 'text-primary-ink' : 'text-brand-text/65'}`}>
+                <Bookmark className={`w-[18px] h-[18px] ${bookmarked ? 'fill-current' : ''}`} />
+                <span>{bookmarked ? 'Saved' : 'Save'}</span>
+              </button>
+            </div>
+          </>
         )}
       </div>
 
