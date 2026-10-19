@@ -261,9 +261,9 @@ describe("the watch page's ⋯ rows: the app's list (founder, 2026-10-19)", () =
 
 describe("watch prefs", () => {
   test("defaults and a stored shape", () => {
-    expect(parseWatchPrefs(null)).toEqual({ ambient: true, stableVolume: false, audioLanguage: null });
+    expect(parseWatchPrefs(null)).toEqual({ ambient: false, stableVolume: false, audioLanguage: null });
     expect(parseWatchPrefs('{"ambient":false,"stableVolume":true,"audioLanguage":"HI"}')).toEqual({ ambient: false, stableVolume: true, audioLanguage: "hi" });
     expect(parseWatchPrefs('{"audioLanguage":"not a tag!"}').audioLanguage).toBeNull();
-    expect(parseWatchPrefs("{bad").ambient).toBe(true);
+    expect(parseWatchPrefs("{bad").ambient).toBe(false);
   });
 });
