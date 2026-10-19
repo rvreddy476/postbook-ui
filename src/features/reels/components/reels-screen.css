@@ -189,7 +189,7 @@
 /* ---- clear screen: the video alone ------------------------------------ */
 .reels-content[data-clear-screen] :is(.reel-playback-controls,.reel-overlay-details,.reel-desktop-rail,.reel-mobile-rail,.reel-frame-actions,[aria-label="Seek"],.reel-unmute-hint) { opacity: 0 !important; visibility: hidden; pointer-events: none !important; }
 .reels-navigation[data-clear-screen] { display: none; }
-.reel-clear-hint { position: absolute; left: 50%; bottom: 20px; z-index: 26; transform: translateX(-50%); padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: rgb(var(--reel-stage) / .75); color: rgb(var(--reel-on-stage)); pointer-events: none; }
+.reel-clear-hint { position: absolute; left: 0; right: 0; bottom: 20px; z-index: 26; width: fit-content; margin: 0 auto; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: rgb(var(--reel-stage) / .75); color: rgb(var(--reel-on-stage)); pointer-events: none; }
 
 /* ---- confirm dialogs and the description sheet ------------------------ */
 .reel-confirm-scrim { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; background: rgb(var(--brand-text) / .45); }
@@ -450,6 +450,8 @@ button.reel-panel-count:hover { opacity: .75; }
 @media (max-width: 767px) {
   .reels-main { --reel-viewport: 100dvh; }
   .reel-stage-area { padding: 0; }
+  /* The sheet wrapper leaves the grid, so the stage keeps the whole height. */
+  .reel-comments-sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 40; }
   .reel-stage-cluster { height: 100%; align-items: stretch; }
   .reel-stage { width: 100%; height: 100%; max-height: none; aspect-ratio: auto; border-radius: 0; }
   .reel-playback-controls { top: 10px; left: 56px; }
