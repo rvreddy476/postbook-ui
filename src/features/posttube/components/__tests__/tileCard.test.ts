@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { timeAgo, viewsLabel } from "../../model";
+import { subscribersLabel, timeAgo, viewsLabel } from "../../model";
 import { tileMenuRows } from "../tileMenuRows";
 
 const NOW = new Date(2026, 9, 19, 12, 0, 0).getTime();
@@ -29,6 +29,8 @@ describe("viewsLabel", () => {
     expect(viewsLabel(0)).toBe("No views yet");
     expect(viewsLabel(1)).toBe("1 view");
     expect(viewsLabel(42)).toBe("42 views");
+    expect(subscribersLabel(1)).toBe("1 subscriber");
+    expect(subscribersLabel(12)).toBe("12 subscribers");
   });
 });
 
@@ -40,19 +42,19 @@ describe("tileMenuRows", () => {
   });
   test("signed in, someone else's video: the whole list, alphabetical", () => {
     expect(labels({ signedIn: true, own: false, queued: false })).toEqual([
+      "Add to collection",
       "Copy link",
       "Don't recommend this channel",
       "Not interested",
-      "Save to playlist",
       "Share",
       "Watch later",
     ]);
   });
   test("your own video has no not-interested rows; a queued one offers removal", () => {
     expect(labels({ signedIn: true, own: true, queued: true })).toEqual([
+      "Add to collection",
       "Copy link",
       "Remove from Watch later",
-      "Save to playlist",
       "Share",
     ]);
   });

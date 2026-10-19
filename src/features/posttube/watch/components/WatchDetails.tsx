@@ -6,7 +6,8 @@ import { HandHeart, Lock, Radio, ShieldAlert } from "lucide-react";
 
 import { Avatar } from "@/components/LetterAvatar";
 
-import { formatCount, formatDuration, timeAgo } from "../../model";
+import { formatCount, formatDuration, subscribersLabel, timeAgo, viewsLabel } from "../../model";
+import { postTimeTitle } from "@/lib/postTime";
 import type { Chapter } from "../chapters";
 import type { AgeGate, WatchRelatedPost } from "../watchApi";
 import { descriptionSegments } from "../linkify";
@@ -95,7 +96,7 @@ export function WatchDetails({
           </span>
           <span className="min-w-0">
             <p className="tube-creator__name">{channelName}</p>
-            <p className="tube-creator__followers">{formatCount(followerCount)} subscribers</p>
+            <p className="tube-creator__followers">{subscribersLabel(followerCount)}</p>
           </span>
         </Link>
         <span className="tube-creator__buttons">
@@ -114,8 +115,8 @@ export function WatchDetails({
 
       <div ref={aboutRef} className="tube-about" data-expanded={expanded ? "" : undefined}>
         <p className="tube-about__meta">
-          <span>{formatCount(viewCount)} views</span>
-          {publishedAt ? <span>· {timeAgo(publishedAt)}</span> : null}
+          <span>{viewsLabel(viewCount)}</span>
+          {publishedAt ? <span>· <time dateTime={publishedAt} title={postTimeTitle(publishedAt)}>{timeAgo(publishedAt)}</time></span> : null}
           {source === "live" ? (
             <span className="tube-about__live">
               <Radio size={12} /> From a live stream

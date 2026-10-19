@@ -6,7 +6,7 @@
     Copy link                      the watch URL to the clipboard
     Don't recommend this channel   POST /v1/feed/feedback {author_id}
     Not interested                 POST /v1/feed/feedback {post_id}
-    Save to playlist               SaveToPlaylistDialog
+    Add to collection              SaveToPlaylistDialog (the watch page word)
     Share                          ShareDialog
     Watch later / Remove from …    POST|DELETE /v1/posts/:id/watch-later
 
@@ -26,7 +26,7 @@ export function tileMenuRows({ signedIn, own, queued }: { signedIn: boolean; own
     { key: "share", label: "Share" },
   ];
   if (signedIn) {
-    rows.push({ key: "playlist", label: "Save to playlist" });
+    rows.push({ key: "playlist", label: "Add to collection" });
     rows.push({ key: "watch-later", label: queued ? "Remove from Watch later" : "Watch later" });
     if (!own) {
       rows.push({ key: "dont-recommend", label: "Don't recommend this channel" });

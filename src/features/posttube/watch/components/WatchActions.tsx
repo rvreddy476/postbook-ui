@@ -40,7 +40,8 @@ export function WatchActions({ loved, likeCount, passed, queued, onLove, onPass,
       <div className="tube-actions__vote">
         <button type="button" className={`tube-actions__btn is-love${loved ? " is-on" : ""}`} aria-pressed={loved} aria-label={loved ? "Remove like" : "Like"} title="Like" onClick={onLove} data-action="love">
           <RailHeart size={16} />
-          {likeCount === null ? <span className="tube-actions__count">Like</span> : <span className="tube-actions__count">{formatCount(likeCount)}</span>}
+          {/* No likes yet (or the count hidden) reads "Like", not a lonely 0. */}
+          {!likeCount ? <span className="tube-actions__count">Like</span> : <span className="tube-actions__count">{formatCount(likeCount)}</span>}
         </button>
         <span className="tube-actions__divider" aria-hidden />
         <button type="button" className={`tube-actions__btn is-pass${passed ? " is-on" : ""}`} aria-pressed={passed} aria-label={passed ? "Remove dislike" : "Dislike"} title="Dislike" onClick={onPass} data-action="pass">

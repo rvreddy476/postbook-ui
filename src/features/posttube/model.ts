@@ -564,3 +564,8 @@ export function viewsLabel(count: number): string {
   if (!count) return "No views yet";
   return `${formatCount(count)} ${count === 1 ? "view" : "views"}`;
 }
+
+/** "1 subscriber", "12 subscribers", "1.2K subscribers". */
+export function subscribersLabel(count: number): string {
+  return `${formatCount(count)} ${count === 1 ? "subscriber" : "subscribers"}`;
+}

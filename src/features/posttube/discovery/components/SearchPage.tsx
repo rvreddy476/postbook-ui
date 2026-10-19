@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronRight, ListVideo, Play, Search, UserRound } from "lucide-react";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { formatCount, formatDuration, timeAgo } from "../../model";
+import { formatCount, formatDuration, subscribersLabel, timeAgo, viewsLabel } from "../../model";
 import {
   SEARCH_LENGTHS,
   SEARCH_SORTS,
@@ -28,7 +28,7 @@ import "../discovery.css";
 
 export function VideoResultRow({ video }: { video: VideoResult }) {
   const duration = video.durationSeconds > 0 ? formatDuration(video.durationSeconds) : "";
-  const meta = [video.creatorName, video.viewCount > 0 ? `${formatCount(video.viewCount)} views` : "", video.publishedAt ? timeAgo(video.publishedAt) : ""]
+  const meta = [video.creatorName, video.viewCount > 0 ? viewsLabel(video.viewCount) : "", video.publishedAt ? timeAgo(video.publishedAt) : ""]
     .filter(Boolean)
     .join(" · ");
   return (
@@ -52,7 +52,7 @@ export function VideoResultRow({ video }: { video: VideoResult }) {
 }
 
 export function ChannelResultRow({ channel }: { channel: ChannelResult }) {
-  const meta = [channel.handle ? `@${channel.handle}` : "", `${formatCount(channel.followerCount)} subscribers`].filter(Boolean).join(" · ");
+  const meta = [channel.handle ? `@${channel.handle}` : "", subscribersLabel(channel.followerCount)].filter(Boolean).join(" · ");
   return (
     <Link href={channel.href} className="disco-row" data-kind="channel">
       <span className="disco-row__avatar">{channel.avatarUrl ? <img src={channel.avatarUrl} alt="" loading="lazy" /> : <UserRound strokeWidth={1.75} aria-hidden />}</span>
