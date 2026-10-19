@@ -1,7 +1,7 @@
 'use client';
 
 import JournalBody from '@/components/JournalBody';
-import { WordsOnColour } from '@/features/post-stage/components/WordsOnColour';
+import { WordsOnColour } from '@/components/feed/WordsOnColour';
 import React, { useState, useRef, useEffect } from 'react';
 import type { PostDetail } from '@/types/profile';
 import { useFeedReaction } from '@/hooks/useFeedReaction';
