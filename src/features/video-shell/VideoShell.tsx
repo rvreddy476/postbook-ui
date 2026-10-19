@@ -48,6 +48,12 @@ export interface VideoShellProps {
   compactSearch?: boolean;
   /** A workspace can replace the app menu without adding a second sidebar. */
   navigation?: (props: VideoNavigationProps) => ReactNode;
+  /**
+   * The menu is hidden at every width and opens over the page from the
+   * burger, closed again on a pick, the scrim or Escape — YouTube's watch
+   * page (founder, 2026-10-19). The column preference is left untouched.
+   */
+  overlayNav?: boolean;
   children: ReactNode;
 }
 
@@ -63,10 +69,14 @@ const SIDEBAR_ID = "video-shell-sidebar";
   the client from localStorage and the viewport — a deterministic first
   render, then a preference, rather than a hydration mismatch.
 */
-export function VideoShell({ app, header, chrome = "header", aside, immersive = false, compactSearch = false, navigation, children }: VideoShellProps) {
+export function VideoShell({ app, header, chrome = "header", aside, immersive = false, compactSearch = false, navigation, overlayNav = false, children }: VideoShellProps) {
   const [sidebar, dispatch] = useReducer(sidebarReducer, SIDEBAR_INITIAL);
   const [panel, dispatchPanel] = useReducer(sidebarPanelReducer, SIDEBAR_PANEL_INITIAL);
   const [exploreOpen, setExploreOpen] = useState(false);
+  // The overlay menu (overlayNav) starts closed on every visit.
+  const [overlayOpen, setOverlayOpen] = useState(false);
+  const drawer = overlayNav || sidebar.drawer;
+  const open = overlayNav ? overlayOpen : sidebar.open;
   const reduceMotion = useReducedMotion();
 
   // Hydrate from storage + viewport, then follow viewport changes.
@@ -96,39 +106,41 @@ export function VideoShell({ app, header, chrome = "header", aside, immersive = 
 
   // The More panel needs the expanded column: a rail or a closed drawer drops it.
   useEffect(() => {
-    if (!sidebar.open) dispatchPanel({ type: "collapse" });
-  }, [sidebar.open]);
+    if (!open) dispatchPanel({ type: "collapse" });
+  }, [open]);
 
   // Escape closes the More panel, else the drawer (the launcher handles its own).
-  const drawerOpen = sidebar.drawer && sidebar.open;
+  const drawerOpen = drawer && open;
   const moreOpen = panel === "more";
   useEffect(() => {
     if (!drawerOpen && !moreOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       if (moreOpen) dispatchPanel({ type: "escape" });
+      else if (overlayNav) setOverlayOpen(false);
       else dispatch({ type: "set", open: false });
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [drawerOpen, moreOpen]);
+  }, [drawerOpen, moreOpen, overlayNav]);
 
-  const toggleSidebar = useCallback(() => dispatch({ type: "toggle" }), []);
-  const closeDrawer = useCallback(() => dispatch({ type: "set", open: false }), []);
+  const toggleSidebar = useCallback(() => (overlayNav ? setOverlayOpen((o) => !o) : dispatch({ type: "toggle" })), [overlayNav]);
+  const closeDrawer = useCallback(() => (overlayNav ? setOverlayOpen(false) : dispatch({ type: "set", open: false })), [overlayNav]);
   const openExplore = useCallback(() => setExploreOpen(true), []);
   const closeExplore = useCallback(() => setExploreOpen(false), []);
   const openMore = useCallback(() => {
-    dispatch({ type: "set", open: true });
+    if (overlayNav) setOverlayOpen(true);
+    else dispatch({ type: "set", open: true });
     dispatchPanel({ type: "open-more" });
-  }, []);
+  }, [overlayNav]);
   const closeMore = useCallback(() => dispatchPanel({ type: "close-more" }), []);
 
   const context = useMemo<VideoShellContextValue>(
-    () => ({ sidebarOpen: sidebar.open, toggleSidebar, openExplore, inShell: true, chrome, panel, openMore, closeMore }),
-    [sidebar.open, toggleSidebar, openExplore, chrome, panel, openMore, closeMore],
+    () => ({ sidebarOpen: open, toggleSidebar, openExplore, inShell: true, chrome, panel, openMore, closeMore }),
+    [open, toggleSidebar, openExplore, chrome, panel, openMore, closeMore],
   );
 
-  const mode = sidebar.drawer ? "drawer" : sidebar.open ? "expanded" : "rail";
+  const mode = drawer ? "drawer" : open ? "expanded" : "rail";
 
   return (
     <VideoShellContext.Provider value={context}>
@@ -145,9 +157,9 @@ export function VideoShell({ app, header, chrome = "header", aside, immersive = 
       >
         {chrome === "header" ? (header ?? <HeaderBar />) : null}
         <div className="video-shell__body">
-          {sidebar.drawer ? (
+          {drawer ? (
             <AnimatePresence>
-              {sidebar.open ? (
+              {open ? (
                 <>
                   <motion.div
                     key="scrim"
@@ -187,13 +199,13 @@ export function VideoShell({ app, header, chrome = "header", aside, immersive = 
           {chrome === "sidebar" ? (
             <>
               {/* No header on a phone either: the menu opens from a floating button. */}
-              {sidebar.drawer ? (
+              {drawer ? (
                 <button
                   type="button"
                   className="video-shell__drawer-toggle"
                   onClick={toggleSidebar}
                   aria-label="Menu"
-                  aria-expanded={sidebar.open}
+                  aria-expanded={open}
                   aria-controls={SIDEBAR_ID}
                 >
                   <Menu size={22} strokeWidth={1.75} aria-hidden />
