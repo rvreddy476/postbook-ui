@@ -839,7 +839,9 @@ function WatchPageContent({ videoId, listId = null, startSeconds = null }: Watch
               onEndedChange={onEndedChange}
               onTheater={toggleTheater}
               theater={theater}
-              onMiniplayer={toggleMini}
+              // Miniplayer hidden for now (founder, 2026-10-19): no button and no I key.
+              // The dock stays in the code; pass toggleMini here to bring it back.
+              onMiniplayer={undefined}
               miniplayer={miniOn}
               onNext={nextTarget ? goNext : undefined}
               chapters={detail.chapters}
