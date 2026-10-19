@@ -22,7 +22,15 @@
 .tube-stage__note:hover { color: rgb(var(--reel-on-stage)); }
 /* Theater: a dark band across the main padding, the player at most 80vh tall. */
 .tube-watch[data-theater] .tube-watch__player { margin: -24px -24px 0; padding: 0 24px; background: rgb(var(--reel-stage)); }
-.tube-watch[data-theater] .tube-stage { max-height: 80vh; margin: 0 auto; border-radius: 0; }
+/*
+  The theater stage fits the window (2026-10-19): at most 80vh, and never
+  taller than the space under the header, so the controls at the frame's
+  foot stay on screen. It narrows to keep 16:9, centred in the dark band —
+  YouTube's theater. A max-height on a 16:9 box alone let the frame inside
+  run 110px past the window, controls and all.
+*/
+.tube-watch[data-theater] { --tube-theater-h: min(80vh, calc(100dvh - 88px)); }
+.tube-watch[data-theater] .tube-stage { width: min(100%, calc(var(--tube-theater-h) * 16 / 9)); max-height: none; margin: 0 auto; border-radius: 0; }
 .tube-watch[data-theater] .tube-player__frame { border-radius: 0; }
 @media (max-width: 767px) {
   .tube-watch[data-theater] .tube-watch__player { margin: -12px -12px 0; padding: 0; }
