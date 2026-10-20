@@ -52,8 +52,9 @@ export const RAIL_ORDER = ["follow", "like", "comments", "share", "save", "profi
 
 /*
   The action rail (founder, 19 Oct). On top, only while the viewer does not
-  follow the author: the Follow ring — the author's picture inside a pink
-  ring with FOLLOW along its top and a plus at its foot; it follows, or
+  follow the author: the Follow seal — the author's picture inside a pink
+  seal the size of the profile picture, FOLLOW running all the way round
+  and turning slowly, a small plus badge at the lower right; it follows, or
   subscribes for a reel posted through a channel. Then Like, Comments,
   Share, Save. At the foot, always: the author's picture, a link to the
   profile (or their stream while live). Sound stays top-left on the frame.
@@ -95,7 +96,12 @@ export function ReelRail({
           <span className="reel-rail-follow__face" aria-hidden="true">
             <Avatar src={reel.authorAvatarUrl ?? ""} name={reel.authorName} seed={reel.authorId} size="md" />
           </span>
-          <FollowRingMark />
+          <FollowSealMark />
+          <span className="reel-rail-follow__plus" aria-hidden="true">
+            <svg viewBox="0 0 12 12" focusable="false">
+              <path d="M6 3.2v5.6M3.2 6h5.6" />
+            </svg>
+          </span>
         </button>
       ) : null}
       <RailButton
@@ -165,25 +171,26 @@ function RailButton({
 }
 
 /**
- * The Follow ring's lettering (founder, 19 Oct): the author's picture sits in
- * the middle of a pink ring, FOLLOW bent along the ring's top half and a
- * small plus at its foot. Drawn in a 48-unit box (20 Oct: a smaller button
- * and picture, the same 8px band so FOLLOW and the plus keep their size):
- * the picture fills radius 16, the letters ride an arc of radius 17.2
- * inside the 24-unit rim.
+ * The Follow seal's face (founder, 20 Oct, from the "Circular Follow Seal"
+ * reference): a thin solid rim and a dotted rim, and "FOLLOW •" twice round a
+ * full circle of radius 16.4 that turns once every 12 seconds (still under
+ * reduced motion). Drawn in a 44-unit box, the size of the profile picture.
  */
-function FollowRingMark() {
-  // Every reel on the page draws its own rail, so each arc needs its own id.
+function FollowSealMark() {
+  // Every reel on the page draws its own rail, so each circle needs its own id.
   const arc = `reel-follow-arc${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   return (
-    <svg className="reel-rail-follow__mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+    <svg className="reel-rail-follow__mark" viewBox="0 0 44 44" aria-hidden="true" focusable="false">
+      <circle className="reel-rail-follow__rim" cx="22" cy="22" r="21.3" />
+      <circle className="reel-rail-follow__rim is-dotted" cx="22" cy="22" r="14.6" />
       <defs>
-        <path id={arc} d="M 6.8 24 A 17.2 17.2 0 0 1 41.2 24" />
+        <path id={arc} d="M 5.6 22 a 16.4 16.4 0 1 1 32.8 0 a 16.4 16.4 0 1 1 -32.8 0" />
       </defs>
-      <text className="reel-rail-follow__word">
-        <textPath href={`#${arc}`} startOffset="50%" textAnchor="middle">FOLLOW</textPath>
-      </text>
-      <path className="reel-rail-follow__plus" d="M24 40.5v7M20.5 44h7" />
+      <g className="reel-rail-follow__spin">
+        <text className="reel-rail-follow__word">
+          <textPath href={`#${arc}`} textLength="103" lengthAdjust="spacing">FOLLOW • FOLLOW • </textPath>
+        </text>
+      </g>
     </svg>
   );
 }

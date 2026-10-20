@@ -147,11 +147,13 @@ test('desktop rail reads Save, Share, Comments, Like, Avatar from the bottom —
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-count { font-size: 12px; line-height: 16px; font-weight: 700;');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-liked .reel-action-icon { color: rgb(var(--danger)); }');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-saved .reel-action-icon { color: rgb(var(--brand-accent)); }');
-  // The Follow ring: the author's picture (32px) inside a 48px pink ring, FOLLOW (8px) along its top half, a plus at its foot (20 Oct).
-  expect(css).toContain('.reel-rail-follow { position: relative; display: block; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 50%; background: rgb(var(--follow-badge));');
+  // The Follow seal (20 Oct): 44px like the profile picture; FOLLOW all the way round, turning; a plus badge at the lower right.
+  expect(css).toContain('.reel-rail-follow { position: relative; display: block; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: rgb(var(--follow-badge));');
+  expect(css).toContain('.reel-rail-follow__spin { transform-origin: 22px 22px; animation: reel-follow-spin 12s linear infinite; }');
+  expect(css).toContain('@media (prefers-reduced-motion: reduce) { .reel-rail-follow__spin { animation: none; } }');
   expect(html).toContain('class="reel-rail-follow__face"');
-  expect(html).toMatch(/<textPath href="#reel-follow-arc[\w-]*" startOffset="50%" text-anchor="middle">FOLLOW<\/textPath>/);
-  expect(html).toContain('d="M24 40.5v7M20.5 44h7"');
+  expect(html).toMatch(/<textPath href="#reel-follow-arc[\w-]*" textLength="103" lengthAdjust="spacing">FOLLOW • FOLLOW • <\/textPath>/);
+  expect(html).toContain('class="reel-rail-follow__plus"');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-avatar-wrap { padding-top: 6px; }');
   expect(renderToStaticMarkup(<ReelRail {...railBase} following={true}/>)).not.toContain('reel-rail-follow');
 });

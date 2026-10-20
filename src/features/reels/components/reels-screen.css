@@ -145,19 +145,26 @@
 .reel-action-count { font-size: 10px; line-height: 12px; font-weight: 600; font-variant-numeric: tabular-nums; padding-bottom: 3px; }
 .reel-action-button.is-liked { color: rgb(var(--danger)); }
 .reel-action-button.is-saved { color: rgb(var(--brand-accent)); }
-/* The Follow ring at the top of the rail (founder, 19 Oct): the author's picture in a pink ring, FOLLOW along
-   the ring's top half, a small plus at its foot. Only while the viewer does not follow. Ring colour is the
-   global follow-badge token; letters and plus are the stage white. The author's own picture, always there,
-   sits at the foot of the rail (.reel-rail-avatar-wrap). */
+/* The Follow seal at the top of the rail (founder, 20 Oct): 44px, the size of the profile picture; the
+   author's picture (26px) in the middle, a solid and a dotted white rim, "FOLLOW •" all the way round turning
+   once every 12s, and a white plus badge at the lower right. Only while the viewer does not follow. Pink is
+   the global follow-badge token. The author's own picture, always there, sits at the foot of the rail. */
 .reel-rail-avatar-wrap { position: relative; display: flex; flex-direction: column; align-items: center; }
 .reel-rail-avatar { display: block; width: 48px; height: 48px; border-radius: 50%; overflow: hidden; }
 .reel-rail-avatar > * { width: 100%; height: 100%; }
-.reel-rail-follow { position: relative; display: block; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 50%; background: rgb(var(--follow-badge)); color: rgb(var(--reel-on-stage)); box-shadow: 0 4px 10px rgb(var(--follow-badge) / .35); cursor: pointer; transition: transform 140ms ease, filter 140ms ease; }
-.reel-rail-follow__face { position: absolute; left: 8px; top: 8px; width: 32px; height: 32px; border-radius: 50%; overflow: hidden; }
+.reel-rail-follow { position: relative; display: block; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: rgb(var(--follow-badge)); color: rgb(var(--reel-on-stage)); box-shadow: 0 3px 8px rgb(var(--follow-badge) / .35); cursor: pointer; transition: transform 140ms ease, filter 140ms ease; }
+.reel-rail-follow__face { position: absolute; left: 9px; top: 9px; width: 26px; height: 26px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 1px rgb(var(--reel-on-stage)); }
 .reel-rail-follow__face > * { width: 100%; height: 100%; }
 .reel-rail-follow__mark { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.reel-rail-follow__word { fill: currentColor; font-size: 8px; font-weight: 800; letter-spacing: .02em; }
-.reel-rail-follow__plus { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
+.reel-rail-follow__rim { fill: none; stroke: currentColor; stroke-width: .7; opacity: .9; }
+.reel-rail-follow__rim.is-dotted { stroke-dasharray: .6 1.6; stroke-linecap: round; }
+.reel-rail-follow__spin { transform-origin: 22px 22px; animation: reel-follow-spin 12s linear infinite; }
+@keyframes reel-follow-spin { to { transform: rotate(360deg); } }
+.reel-rail-follow__word { fill: currentColor; font-size: 5.4px; font-weight: 800; letter-spacing: .16em; }
+.reel-rail-follow__plus { position: absolute; left: 28px; top: 28px; display: flex; width: 12px; height: 12px; align-items: center; justify-content: center; border-radius: 50%; background: rgb(var(--reel-on-stage)); color: rgb(var(--follow-badge)); box-shadow: 0 0 0 1px rgb(var(--follow-badge)); }
+.reel-rail-follow__plus svg { width: 12px; height: 12px; }
+.reel-rail-follow__plus path { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+@media (prefers-reduced-motion: reduce) { .reel-rail-follow__spin { animation: none; } }
 .reel-rail-follow:hover { transform: translateY(-1px); filter: brightness(1.06); }
 .reel-rail-follow:active { transform: scale(.96); }
 .reel-rail-follow:focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 2px; }
