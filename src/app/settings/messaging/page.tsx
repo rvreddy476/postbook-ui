@@ -135,7 +135,11 @@ export default function MessagingSettingsPage() {
                                 <SwitchRow
                                     icon={MessageCircle}
                                     label="Messages"
-                                    hint="Off: nobody can start a chat or message you, and you can't send. Your chats stay readable."
+                                    hint={
+                                        messagesOn(s)
+                                            ? "On: people can message you as you choose below."
+                                            : "Off: nobody can start a chat or message you, and you can't send. Your chats stay readable."
+                                    }
                                     checked={messagesOn(s)}
                                     busy={pending.chat_availability}
                                     error={errors.chat_availability}
