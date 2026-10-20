@@ -66,6 +66,8 @@
 .upload-validation ul { padding-left: 24px; margin: 8px 0 0; }
 .upload-validation li { font-size: 12px; line-height: 1.65; }
 .upload-validation button { border: 0; background: transparent; text-align: left; color: inherit; cursor: pointer; padding: 3px 0; text-decoration: underline; text-underline-offset: 3px; }
+.upload-channel-needed { margin-bottom: 22px; scroll-margin-top: 20px; border-radius: 16px; }
+.upload-channel-needed:focus { outline: 2px solid rgb(var(--brand-ink)); outline-offset: 3px; }
 .upload-form-footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; border-top: 1px solid var(--brand-divider); padding-top: 20px; margin-top: 24px; }
 .upload-footer-secondary { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0; }
 .upload-muted { font-size: 12px; line-height: 1.6; color: rgb(var(--text-muted)); }

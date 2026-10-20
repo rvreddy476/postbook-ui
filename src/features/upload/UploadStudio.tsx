@@ -6,7 +6,9 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGlobalToast } from "@/contexts/ToastContext";
 import { AppShell } from "@/features/reels/components/AppShell";
-import { followUpNotice, hubEditHref } from "./studioApi";
+import { ChannelCreatePrompt, studioNeedsChannel } from "@/features/posttube/channelGate/ChannelGate";
+import { useMyChannel } from "@/hooks/useChannels";
+import { followUpNotice, hubEditHref, publishFailure } from "./studioApi";
 import { CONTENT_TYPE_META, STEP_META, type ContentType } from "./tokens";
 import { useUploadStudio, classifyVideo } from "./useUploadStudio";
 import { StudioToolbar } from "./components/StudioToolbar";
@@ -34,8 +36,17 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
   const { form, patch, steps, currentStepIndex, goToStep, nextStep, prevStep, isFirstStep, isLastStep } = studio;
   const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [attemptedNext, setAttemptedNext] = useState(false);
-  const publishError = studio.publishMutation.error instanceof Error ? studio.publishMutation.error.message : null;
+  const failure = publishFailure(studio.publishMutation.error);
+  const publishError = failure?.message ?? null;
   const toast = useGlobalToast();
+
+  // A reel or short over the shorts cap publishes as a long video, which
+  // needs a channel; the page's own gate only covered long uploads.
+  const classified = classifyVideo(form.videoDurationSec, form.videoWidth, form.videoHeight);
+  const channelRequired = studioNeedsChannel(contentType, classified) || failure?.code === "CHANNEL_REQUIRED";
+  const channelQuery = useMyChannel(channelRequired);
+  const channelMissing = channelRequired && channelQuery.isSuccess && !channelQuery.data;
+  const channelPromptRef = useRef<HTMLDivElement>(null);
 
   // Series / chapters that did not stick after publish: one toast per
   // published post, with a link to the Creator Hub edit sheet.
@@ -94,6 +105,10 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
     // Without this, the (now longer) upload-on-publish window let users fire
     // multiple publishes / create duplicate posts.
     if (navigationLocked || form.publishSuccess) return;
+    if (channelMissing) {
+      requestAnimationFrame(() => channelPromptRef.current?.focus());
+      return;
+    }
     if (!checksPass) {
       setShowValidationErrors(true);
       setAttemptedNext(true);
@@ -105,7 +120,6 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
   };
 
   const config = CONTENT_TYPE_META[contentType];
-  const classified = classifyVideo(form.videoDurationSec, form.videoWidth, form.videoHeight);
   const isLongVideo = classified === "long_video" || contentType === "podcast";
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
   const postUrl = form.publishedPostId
@@ -285,6 +299,13 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
                 else { (document.getElementById("upload-" + error.field) ?? headingRef.current)?.focus(); }
               }}>{error.message}{step !== form.currentStep ? <span> — {STEP_META[step].label}</span> : null}</button>
             </li>))}</ul>
+          </div> : null}
+          {channelMissing ? <div ref={channelPromptRef} tabIndex={-1} className="upload-channel-needed" data-upload-channel-needed>
+            <ChannelCreatePrompt
+              title="This one publishes as a long video"
+              body="Videos longer than a short live on a channel. Create yours here; your upload and details stay as they are."
+              onCreated={() => { void channelQuery.refetch(); studio.publishMutation.reset(); }}
+            />
           </div> : null}
           <fieldset className="upload-step-fields" disabled={navigationLocked} aria-busy={navigationLocked || undefined}>{renderStep()}</fieldset>
           {busy ? <div className="upload-transfer-status" role="status">

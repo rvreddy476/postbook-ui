@@ -14,7 +14,17 @@ export function needsChannel(contentType: string): boolean {
   return contentType === "long" || contentType === "podcast";
 }
 
-export type ChannelGateState = "signed-out" | "loading" | "error" | "no-channel" | "ready";
+/**
+ * The studio's check once the file is known. The server classifies by the
+ * file, not by the page it came from: a reel or short longer than the shorts
+ * cap publishes as a long video and is refused without a channel, so the
+ * studio asks for one as soon as it sees the duration, not at publish.
+ */
+export function studioNeedsChannel(contentType: string, classified: string | null): boolean {
+  return needsChannel(contentType) || classified === "long_video";
+}
+
+export type ChannelGateState ="signed-out" | "loading" | "error" | "no-channel" | "ready";
 
 /** Pure: what the gate shows for a content type and the channel lookup's state. */
 export function channelGateState(input: {
@@ -49,13 +59,12 @@ export function ChannelGate({ contentType, children }: { contentType: string; ch
     error: gated && channelQuery.isError,
     hasChannel: Boolean(channelQuery.data),
   });
-  const form = useCreateChannelForm(state === "no-channel", { onCreated: () => void channelQuery.refetch() });
 
   if (state === "ready") return <>{children}</>;
 
   return (
     <div className="mx-auto w-full max-w-[640px] px-4 py-10">
-      {state === "loading" || (state === "no-channel" && !form) ? (
+      {state === "loading" ? (
         <div className="flex items-center justify-center py-16 text-brand-text/60" aria-busy="true">
           <Loader2 className="h-5 w-5 animate-spin" aria-label="Checking your channel" />
         </div>
@@ -72,19 +81,36 @@ export function ChannelGate({ contentType, children }: { contentType: string; ch
           </button>
         </GateCard>
       ) : (
-        <div className="space-y-4" data-channel-gate>
-          <div className="flex items-start gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-secondary">
-              <Tv className="h-4 w-4 text-brand-text" aria-hidden />
-            </span>
-            <div>
-              <h1 className="text-[16px] font-bold text-brand-text">First, your channel</h1>
-              <p className="mt-0.5 text-[12px] text-brand-text/70">
-                Videos live on a channel. Create yours and the upload opens right after. It takes a name and a handle.
-              </p>
-            </div>
-          </div>
-          {form ? <NoChannelCard {...form} /> : null}
+        <ChannelCreatePrompt
+          heading="h1"
+          title="First, your channel"
+          body="Videos live on a channel. Create yours and the upload opens right after. It takes a name and a handle."
+          onCreated={() => void channelQuery.refetch()}
+        />
+      )}
+    </div>
+  );
+}
+
+/** The channel form with its heading; the gate and the upload studio both show it. */
+export function ChannelCreatePrompt({ title, body, onCreated, heading: Heading = "h2" }: { title: string; body: string; onCreated: () => void; heading?: "h1" | "h2" }) {
+  const form = useCreateChannelForm(true, { onCreated });
+  return (
+    <div className="space-y-4" data-channel-gate>
+      <div className="flex items-start gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-secondary">
+          <Tv className="h-4 w-4 text-brand-text" aria-hidden />
+        </span>
+        <div>
+          <Heading className="text-[16px] font-bold text-brand-text">{title}</Heading>
+          <p className="mt-0.5 text-[12px] text-brand-text/70">{body}</p>
+        </div>
+      </div>
+      {form ? (
+        <NoChannelCard {...form} />
+      ) : (
+        <div className="flex items-center justify-center py-8 text-brand-text/60" aria-busy="true">
+          <Loader2 className="h-5 w-5 animate-spin" aria-label="Loading the channel form" />
         </div>
       )}
     </div>

@@ -43,6 +43,21 @@ export function studioCreateFields(form: StudioFormState): Record<string, unknow
   return out;
 }
 
+/**
+ * Why a publish failed, in words a person can act on. Every service answers
+ * `{ error: { code, message } }`; axios's own message ("Request failed with
+ * status code 403") says nothing, so it is the last resort. `code` lets the
+ * studio react to CHANNEL_REQUIRED by showing the channel form.
+ */
+export function publishFailure(err: unknown): { code: string | null; message: string } | null {
+  if (!err) return null;
+  const body = (err as { response?: { data?: { error?: { code?: unknown; message?: unknown } } } }).response?.data?.error;
+  const code = typeof body?.code === "string" && body.code ? body.code : null;
+  const message = typeof body?.message === "string" && body.message.trim() ? body.message.trim() : null;
+  if (message) return { code, message: /[.!?]$/.test(message) ? message : `${message}.` };
+  return { code, message: err instanceof Error && err.message ? err.message : "Something went wrong." };
+}
+
 /*
   The upload studio's follow-up requests — what runs after the post
   exists: series assignment and chapters. Every request shape the studio
