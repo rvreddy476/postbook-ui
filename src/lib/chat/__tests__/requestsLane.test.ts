@@ -6,6 +6,7 @@ import {
   decodeRequestsPage,
   decrementCount,
   FIRST_REQUESTS_PAGE,
+  hiddenRequestsLine,
   mergeRequestPages,
   nextRequestsCursor,
   requestBadgeCount,
@@ -164,5 +165,16 @@ describe('message_request_removed frame', () => {
     expect(decodeRequestRemovedFrame({ type: 'message_deleted', conversation_id: 'c1' })).toBeNull()
     expect(decodeRequestRemovedFrame({ type: 'message_request_removed' })).toBeNull()
     expect(decodeRequestRemovedFrame(null)).toBeNull()
+  })
+})
+
+describe('hiddenRequestsLine (founder, 2026-10-20)', () => {
+  test('names hidden requests when they are all that waits', () => {
+    expect(hiddenRequestsLine(1, '1')).toBe('1 hidden request')
+    expect(hiddenRequestsLine(3, '3')).toBe('3 hidden requests')
+    expect(hiddenRequestsLine(1200, '999+')).toBe('999+ hidden requests')
+  })
+  test('says nothing when nothing is hidden', () => {
+    expect(hiddenRequestsLine(0, '')).toBe('')
   })
 })

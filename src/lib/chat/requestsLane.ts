@@ -164,6 +164,16 @@ export function requestCountText(count: number, capped: boolean): string {
   return count > 0 ? String(count) : ''
 }
 
+/**
+ * The "Message requests" row's second line when no visible request waits:
+ * the safety filter's Hidden requests still name themselves, so they are
+ * never out of sight (founder, 2026-10-20). '' when nothing waits at all.
+ */
+export function hiddenRequestsLine(hidden: number, hiddenText: string): string {
+  if (hidden <= 0) return ''
+  return hidden === 1 ? '1 hidden request' : `${hiddenText || hidden} hidden requests`
+}
+
 /** The badge count: the count route's number when there is one, else the rows loaded. */
 export function requestBadgeCount(count: number | null, loaded: readonly InboxRow[]): number {
   return count ?? loaded.length

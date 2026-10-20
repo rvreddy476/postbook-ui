@@ -26,6 +26,7 @@ import { useMyProfile } from '@/hooks/useEditProfile'
 import type { User } from '@/types'
 import { decodeRequestSender, type ChatPeer, type InboxRow } from '@/lib/chat/contract'
 import { inboxUnreadTotal, rowName, rowPreview, unreadPillText } from '@/lib/chat/inbox'
+import { hiddenRequestsLine } from '@/lib/chat/requestsLane'
 import { useInbox } from './inbox/useInbox'
 import { InboxRowItem, type RowAction } from './inbox/InboxRowItem'
 import { InboxAvatar } from './inbox/InboxAvatar'
@@ -690,7 +691,7 @@ export default function PostbookMessenger() {
                     </Link>
                     <button
                       type="button"
-                      onClick={() => { setContactTab('requests'); setRequestFilter('all') }}
+                      onClick={() => { setContactTab('requests'); setRequestFilter(requests.length === 0 && hiddenRequestCount > 0 ? 'filtered' : 'all') }}
                       className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-brand-secondary"
                     >
                       <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-secondary text-brand-text/70">
@@ -701,7 +702,7 @@ export default function PostbookMessenger() {
                         <span className="block truncate text-[12px] text-brand-text/60">
                           {requests.length > 0
                             ? (requestCount > 1 ? `${rowName(requests[0], myId)} and ${requestCount - 1} more want to message you` : `${rowName(requests[0], myId)} wants to message you`)
-                            : 'No pending requests'}
+                            : hiddenRequestsLine(hiddenRequestCount, hiddenRequestCountText) || 'No pending requests'}
                         </span>
                       </span>
                       {requestCount > 0 && (
