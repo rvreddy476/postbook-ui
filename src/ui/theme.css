@@ -132,6 +132,9 @@
     Same in both themes; it always sits over media.
   */
   --theme-playhead: 220 38 38;
+  /* The Follow seal in the flag's colours (founder, 20 Oct): a deep saffron ring and a green plus badge. Over media, so the same in both themes. */
+  --theme-follow-seal: 241 90 34;
+  --theme-follow-seal-plus: 19 136 8;
 }
 
 .dark {
@@ -211,6 +214,9 @@
   /* Unchanged in dark: it sits over media, not on the ground. */
   --theme-follow-badge: 254 44 85;
   --theme-playhead: 220 38 38;
+  /* The Follow seal in the flag's colours (founder, 20 Oct): a deep saffron ring and a green plus badge. Over media, so the same in both themes. */
+  --theme-follow-seal: 241 90 34;
+  --theme-follow-seal-plus: 19 136 8;
 }
 
 /*

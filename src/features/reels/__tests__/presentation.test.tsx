@@ -148,7 +148,8 @@ test('desktop rail reads Save, Share, Comments, Like, Avatar from the bottom —
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-liked .reel-action-icon { color: rgb(var(--danger)); }');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-saved .reel-action-icon { color: rgb(var(--brand-accent)); }');
   // The Follow seal (20 Oct): 44px like the profile picture; FOLLOW all the way round, turning; a plus badge at the lower right.
-  expect(css).toContain('.reel-rail-follow { position: relative; display: block; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: rgb(var(--follow-badge));');
+  expect(css).toContain('.reel-rail-follow { position: relative; display: block; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: rgb(var(--follow-seal));');
+  expect(css).toContain('background: rgb(var(--follow-seal-plus)); color: rgb(var(--reel-on-stage));');
   expect(css).toContain('.reel-rail-follow__spin { transform-origin: 22px 22px; animation: reel-follow-spin 12s linear infinite; }');
   expect(css).toContain('@media (prefers-reduced-motion: reduce) { .reel-rail-follow__spin { animation: none; } }');
   expect(html).toContain('class="reel-rail-follow__face"');
