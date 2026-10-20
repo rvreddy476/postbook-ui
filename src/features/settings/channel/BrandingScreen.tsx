@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Check, CircleDollarSign, Loader2, RotateCcw } from "lucide-react";
 
 import { HANDLE_MAX, NAME_MAX } from "./model";
-import { IdentitySection } from "./IdentitySection";
+import { IdentitySection, NameAvailabilityNote, nameFieldError } from "./IdentitySection";
 import { LinksSection } from "./LinksSection";
 import { FeaturedSection } from "./FeaturedSection";
 import { FeedSection } from "./FeedSection";
@@ -117,7 +117,13 @@ function CreateAvailability({ a, handle }: { a: HandleAvailability; handle: stri
 
 export function NoChannelCard(p: NoChannelProps) {
   const handleError = p.errors.handle ?? (p.availability.state === "taken" ? "That handle is taken." : undefined);
-  const disabled = p.creating || p.availability.state === "checking" || p.availability.state === "taken";
+  const nameError = nameFieldError(p.errors.name, p.nameAvailability);
+  const disabled =
+    p.creating ||
+    p.availability.state === "checking" ||
+    p.availability.state === "taken" ||
+    p.nameAvailability.state === "checking" ||
+    p.nameAvailability.state === "taken";
   return (
     <section className="rounded-2xl border border-border bg-brand-card p-5" aria-labelledby="create-channel-title" data-no-channel>
       <h2 id="create-channel-title" className="text-[14px] font-bold text-brand-text">
@@ -125,8 +131,13 @@ export function NoChannelCard(p: NoChannelProps) {
       </h2>
       <p className="mt-0.5 text-[11px] text-muted-foreground">A name and a handle are all it takes. You can change both later.</p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <Field label="Name" htmlFor="create-name" error={p.errors.name} meta={`${Array.from(p.name).length}/${NAME_MAX}`}>
-          <input id="create-name" value={p.name} maxLength={NAME_MAX} onChange={(e) => p.onChange("name", e.target.value)} className={`${inputClass} ${p.errors.name ? inputErrorClass : ""}`} placeholder="Your channel's name" />
+        <Field
+          label="Name"
+          htmlFor="create-name"
+          error={nameError}
+          meta={<NameAvailabilityNote a={p.nameAvailability} count={`${Array.from(p.name).length}/${NAME_MAX}`} onUse={(name) => p.onChange("name", name)} />}
+        >
+          <input id="create-name" value={p.name} maxLength={NAME_MAX} onChange={(e) => p.onChange("name", e.target.value)} className={`${inputClass} ${nameError ? inputErrorClass : ""}`} placeholder="Your channel's name" />
         </Field>
         <Field label="Handle" htmlFor="create-handle" error={handleError} meta={<CreateAvailability a={p.availability} handle={p.handle} />}>
           <div className="relative">

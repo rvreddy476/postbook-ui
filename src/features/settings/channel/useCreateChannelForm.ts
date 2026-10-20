@@ -7,7 +7,7 @@ import { useCreateChannel, useMyChannels } from "@/hooks/useChannels";
 import { useMyProfile } from "@/hooks/useEditProfile";
 import { useAuthUser } from "@/store/auth";
 
-import { useHandleAvailability } from "./hooks";
+import { useHandleAvailability, useNameAvailability } from "./hooks";
 import {
   brandingFromChannel,
   fieldErrorsFromApi,
@@ -49,6 +49,7 @@ export function useCreateChannelForm(enabled: boolean, opts: { onCreated?: () =>
   }, [enabled, draft, legacy, profile, profileQuery.isPending, legacyQuery.isPending]);
 
   const availability = useHandleAvailability(draft?.handle ?? "", "");
+  const nameAvailability = useNameAvailability(draft?.name ?? "", "");
   if (!enabled || !draft) return null;
 
   const base = brandingFromChannel(null);
@@ -64,7 +65,7 @@ export function useCreateChannelForm(enabled: boolean, opts: { onCreated?: () =>
     const errs: FieldErrors = {};
     if (all.name) errs.name = all.name;
     if (all.handle) errs.handle = all.handle;
-    if (hasErrors(errs) || availability.state === "taken") return;
+    if (hasErrors(errs) || availability.state === "taken" || nameAvailability.state === "taken") return;
     create.mutate(
       { name: draft.name.trim(), handle: normalizeHandleInput(draft.handle), about: legacy?.description?.trim() || undefined },
       {
@@ -87,6 +88,7 @@ export function useCreateChannelForm(enabled: boolean, opts: { onCreated?: () =>
     name: draft.name,
     handle: draft.handle,
     availability,
+    nameAvailability,
     errors,
     creating: create.isPending,
     pageMessage: message,

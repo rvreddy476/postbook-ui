@@ -284,6 +284,7 @@ export interface ApiFieldError {
 
 const CODE_TO_FIELD: Record<string, BrandingField> = {
   INVALID_NAME: "name",
+  CHANNEL_NAME_TAKEN: "name",
   INVALID_HANDLE: "handle",
   HANDLE_TAKEN: "handle",
   INVALID_ABOUT: "about",

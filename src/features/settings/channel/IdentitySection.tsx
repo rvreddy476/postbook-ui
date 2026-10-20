@@ -10,6 +10,49 @@ function pickFile(e: React.ChangeEvent<HTMLInputElement>, onPick: (f: File) => v
   if (file) onPick(file);
 }
 
+/**
+ * The Name field's meta: the character count while idle, else the live
+ * check. A taken name offers the server's free variant as one click.
+ * Shared with the create-channel card.
+ */
+export function NameAvailabilityNote({ a, count, onUse }: { a: HandleAvailability; count: string; onUse: (name: string) => void }) {
+  switch (a.state) {
+    case "checking":
+      return (
+        <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" /> Checking
+        </span>
+      );
+    case "available":
+      return (
+        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-success">
+          <Check className="h-3 w-3" /> Available
+        </span>
+      );
+    case "taken":
+      return (
+        <span className="text-[11px] font-medium text-danger" data-name-taken>
+          Taken
+          {a.suggestion ? (
+            <>
+              {" — "}
+              <button type="button" className="underline underline-offset-2" onClick={() => onUse(a.suggestion!)}>
+                use “{a.suggestion}”
+              </button>
+            </>
+          ) : null}
+        </span>
+      );
+    default:
+      return <>{count}</>;
+  }
+}
+
+/** The Name field's error: a validation or server error first, else a taken name. */
+export function nameFieldError(error: string | undefined, a: HandleAvailability): string | undefined {
+  return error ?? (a.state === "taken" ? "That channel name is taken. Names are unique." : undefined);
+}
+
 function AvailabilityNote({ a, handle }: { a: HandleAvailability; handle: string }) {
   switch (a.state) {
     case "checking":
@@ -38,6 +81,7 @@ function AvailabilityNote({ a, handle }: { a: HandleAvailability; handle: string
 export function IdentitySection(p: IdentityProps) {
   const { draft, errors, uploading } = p;
   const handleError = errors.handle ?? (p.availability.state === "taken" ? "That handle is taken." : undefined);
+  const nameError = nameFieldError(errors.name, p.nameAvailability);
 
   return (
     <Card id="identity" title="Identity" hint="Picture, banner, name and handle — what a viewer sees first on your channel.">
@@ -116,14 +160,19 @@ export function IdentitySection(p: IdentityProps) {
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Name" htmlFor="branding-name" error={errors.name} meta={`${Array.from(draft.name).length}/${NAME_MAX}`}>
+          <Field
+            label="Name"
+            htmlFor="branding-name"
+            error={nameError}
+            meta={<NameAvailabilityNote a={p.nameAvailability} count={`${Array.from(draft.name).length}/${NAME_MAX}`} onUse={(name) => p.onChange("name", name)} />}
+          >
             <input
               id="branding-name"
               value={draft.name}
               maxLength={NAME_MAX}
               autoComplete="off"
               onChange={(e) => p.onChange("name", e.target.value)}
-              className={`${inputClass} ${errors.name ? inputErrorClass : ""}`}
+              className={`${inputClass} ${nameError ? inputErrorClass : ""}`}
               placeholder="Your channel's name"
             />
           </Field>
