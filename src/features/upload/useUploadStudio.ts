@@ -545,6 +545,10 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         comment_access: form.commentAccess,
         recording_date: form.recordingDate || undefined,
         recording_location: form.recordingLocation || undefined,
+        ai_generated: form.aiGenerated,
+        // "" clears a place saved earlier in this draft.
+        location_name: form.locationName.trim(),
+        location_place_id: form.locationName.trim() ? form.locationPlaceId ?? "" : "",
         schedule_at: form.scheduleAt ?? undefined,
       });
   }, [form, patch]);

@@ -8,6 +8,7 @@ import type { ContentType } from "../tokens";
 import { TrimControls } from "@/features/posttube/components/TrimControls";
 import { CategoryOverride } from "@/features/posttube/components/CategoryOverride";
 import { StudioSoundSection } from "../components/StudioSoundSection";
+import { LocationField } from "../components/LocationField";
 import type { SoundInfo } from "@/features/reels/sounds";
 
 interface DetailsStepProps {
@@ -393,6 +394,16 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
           onChoose={takesAddedSound(contentType) ? onChooseSound : undefined}
         />
       </Collapsible>
+
+      {/* ── Location (location_name / location_place_id) ── */}
+      <div>
+        <FieldLabel htmlFor="upload-location" label="Location" hint="optional · shown on the post" />
+        <LocationField
+          name={form.locationName}
+          placeId={form.locationPlaceId}
+          onChange={({ name, placeId }) => patch({ locationName: name, locationPlaceId: placeId })}
+        />
+      </div>
 
       {/* ── Tags ── */}
       <div>

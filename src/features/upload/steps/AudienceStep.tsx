@@ -74,13 +74,20 @@ export function AudienceStep({ form, patch }: AudienceStepProps) {
           />
           <div className="border-t border-brand-secondary" />
           <ToggleRow
-            label="Altered / AI-Generated Content"
-            description="This content uses realistic AI-generated or altered elements that could be mistaken as real"
+            label="Altered content"
+            description="This content shows realistic altered or synthetic people, places or events that could be mistaken as real"
             checked={form.alteredContent}
             onChange={(v) => patch({ alteredContent: v })}
           />
+          <div className="border-t border-brand-secondary" />
+          <ToggleRow
+            label="AI-generated"
+            description="Made with AI tools. Marks the post as AI-generated"
+            checked={form.aiGenerated}
+            onChange={(v) => patch({ aiGenerated: v })}
+          />
         </div>
-        {(form.paidPromotion || form.alteredContent) && (
+        {(form.paidPromotion || form.alteredContent || form.aiGenerated) && (
           <div className="mt-3">
             <InfoBanner>
               A disclosure label will be shown to viewers when they watch this content.

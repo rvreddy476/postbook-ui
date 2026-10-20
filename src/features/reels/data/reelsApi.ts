@@ -297,6 +297,9 @@ export async function updateDraft(
     is_made_for_kids: boolean;
     paid_promotion: boolean;
     altered_content: boolean;
+    ai_generated: boolean;
+    location_name: string;
+    location_place_id: string;
     auto_chapters: boolean;
     featured_places: boolean;
     auto_concepts: boolean;

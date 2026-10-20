@@ -66,10 +66,18 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
           <div className="border-t border-brand-secondary" />
           <RadioOption
             name="visibility"
-            label="Circle Only"
-            description="Close friends only"
+            label="Followers"
+            description="People who follow you"
             checked={form.visibility === "followers"}
             onChange={() => patch({ visibility: "followers" })}
+          />
+          <div className="border-t border-brand-secondary" />
+          <RadioOption
+            name="visibility"
+            label="Friends"
+            description="Followers you follow back"
+            checked={form.visibility === "friends"}
+            onChange={() => patch({ visibility: "friends" })}
           />
           <div className="border-t border-brand-secondary" />
           <RadioOption

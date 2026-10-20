@@ -35,6 +35,12 @@ export function studioCreateFields(form: StudioFormState): Record<string, unknow
   if (form.tags.length > 0) out.tags = form.tags;
   if (form.recordingDate) out.recording_date = form.recordingDate;
   if (form.recordingLocation) out.recording_location = form.recordingLocation;
+  if (form.aiGenerated) out.ai_generated = true;
+  const place = form.locationName.trim();
+  if (place) {
+    out.location_name = place;
+    if (form.locationPlaceId) out.location_place_id = form.locationPlaceId;
+  }
   // The picker holds a local "YYYY-MM-DDTHH:mm"; the create route wants RFC3339.
   if (form.scheduleAt) {
     const at = new Date(form.scheduleAt);

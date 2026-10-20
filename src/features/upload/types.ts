@@ -65,6 +65,8 @@ export interface StudioFormState {
   ageRestricted: boolean;
   paidPromotion: boolean;
   alteredContent: boolean;
+  /** The "made with AI" label (post ai_generated), separate from altered content. */
+  aiGenerated: boolean;
 
   /* ── Engage step ────────────────── */
   commentsEnabled: boolean;
@@ -84,6 +86,9 @@ export interface StudioFormState {
   subtitleUploadError: string | null;
   recordingDate: string;
   recordingLocation: string;
+  /** The place shown on the post (location_name); placeId set when picked from search. */
+  locationName: string;
+  locationPlaceId: string | null;
   license: LicenseType;
   allowEmbedding: boolean;
 
@@ -152,6 +157,7 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   ageRestricted: false,
   paidPromotion: false,
   alteredContent: false,
+  aiGenerated: false,
   commentsEnabled: true,
   commentAccess: "everyone",
   commentModeration: "basic",
@@ -167,6 +173,8 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   subtitleUploadError: null,
   recordingDate: "",
   recordingLocation: "",
+  locationName: "",
+  locationPlaceId: null,
   license: "standard",
   allowEmbedding: true,
   visibility: "public",
