@@ -118,7 +118,7 @@ test('rail badge subscribes instead when the reel came through a channel, and st
   const base={...railBase,reel:channelReel,following:false as const,onToggleSubscribe:()=>{}};
   const unsubscribed=renderToStaticMarkup(<ReelRail {...base} subscribed={false}/>);
   expect(unsubscribed).toContain('class="reel-rail-follow"');
-  expect(unsubscribed).toContain('aria-label="Subscribe to Bee&#x27;s channel"');
+  expect(unsubscribed).toContain('aria-label="Follow Bee"');
   expect(renderToStaticMarkup(<ReelRail {...base} subscribed={true}/>)).not.toContain('reel-rail-follow');
   expect(renderToStaticMarkup(<ReelRail {...base} subscribed={undefined}/>)).not.toContain('reel-rail-follow');
 });
@@ -159,7 +159,7 @@ test('desktop rail reads Save, Share, Comments, Like, Avatar from the bottom —
   expect(renderToStaticMarkup(<ReelRail {...railBase} following={true}/>)).not.toContain('reel-rail-follow');
 });
 
-test('the author card: avatar, name link, handle, Follow pill (Following outlined, Subscribe for a channel, nothing when own), counts row', () => {
+test('the author card: avatar, name link, handle, Follow pill (Following outlined; a channel reel says Follow too, 20 Oct; nothing when own), counts row', () => {
   const base={reel:other,isOwn:false,followPending:false,onToggleFollow:()=>{},onLike:()=>{},onSave:()=>{},onShare:()=>{}};
   const notFollowing=renderToStaticMarkup(<ReelAuthorCard {...base} following={false}/>);
   expect(notFollowing).toContain('class="reel-author-card__name" href="/u/bee"');
@@ -169,7 +169,7 @@ test('the author card: avatar, name link, handle, Follow pill (Following outline
   expect(renderToStaticMarkup(<ReelAuthorCard {...base} following={true}/>)).toContain('class="reel-panel-follow is-on"');
   expect(renderToStaticMarkup(<ReelAuthorCard {...base} following={undefined}/>)).not.toContain('reel-panel-follow');
   expect(renderToStaticMarkup(<ReelAuthorCard {...base} isOwn following={false}/>)).not.toContain('reel-panel-follow');
-  expect(renderToStaticMarkup(<ReelAuthorCard {...base} reel={{...other,channelHandle:'bees'}} following={false} subscribed={false} onToggleSubscribe={()=>{}}/>)).toContain('>Subscribe<');
+  expect(renderToStaticMarkup(<ReelAuthorCard {...base} reel={{...other,channelHandle:'bees'}} following={false} subscribed={false} onToggleSubscribe={()=>{}}/>)).toContain('>Follow<');
   for(const label of ['aria-label="Like"','aria-label="0 comments"','aria-label="Save"','aria-label="Share"']) expect(notFollowing).toContain(label);
   const counts=['aria-label="Like"','aria-label="0 comments"','aria-label="Save"','aria-label="Share"'].map((m)=>notFollowing.indexOf(m));
   expect([...counts].sort((a,b)=>a-b)).toEqual(counts);

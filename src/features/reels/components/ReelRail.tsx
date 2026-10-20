@@ -82,7 +82,7 @@ export function ReelRail({
   const action = authorAction(reel, isOwn);
   const badge =
     action === "subscribe" && subscribed === false
-      ? { label: `Subscribe to ${reel.authorName}'s channel`, pending: Boolean(subscribePending), onClick: () => onToggleSubscribe?.() }
+      ? { label: `Follow ${reel.authorName}`, pending: Boolean(subscribePending), onClick: () => onToggleSubscribe?.() }
       : action === "follow" && following === false
         ? { label: `Follow ${reel.authorName}`, pending: followPending, onClick: onToggleFollow }
         : null;
