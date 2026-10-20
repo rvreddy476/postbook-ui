@@ -70,7 +70,7 @@ export function LocationField({
   return (
     <div className="relative">
       <div className="relative">
-        <MapPin className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
+        <MapPin className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
         <input
           id="upload-location"
           role="combobox"
@@ -103,16 +103,16 @@ export function LocationField({
               setOpen(false);
             }
           }}
-          className="h-11 w-full rounded-xl border border-brand-text/10 bg-brand-secondary pl-9 pr-10 text-[14px] text-brand-text placeholder:text-muted outline-hidden transition-all focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
+          className="h-11 w-full rounded-xl border border-brand-text/10 bg-brand-secondary pl-9 pr-10 text-[14px] text-brand-text placeholder:text-muted-foreground outline-hidden transition-all focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
         />
         <span className="absolute right-3 top-1/2 -translate-y-1/2">
           {loading ? (
-            <Loader2 className="h-4 w-4 animate-spin text-muted" aria-label="Searching places" />
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-label="Searching places" />
           ) : name ? (
             <button
               type="button"
               aria-label="Remove location"
-              className="rounded-full p-0.5 text-muted hover:text-brand-text"
+              className="rounded-full p-0.5 text-muted-foreground hover:text-brand-text"
               onClick={() => onChange({ name: "", placeId: null })}
             >
               <X className="h-4 w-4" />
@@ -134,10 +134,10 @@ export function LocationField({
               }}
               className={`flex cursor-pointer items-start gap-2 px-3 py-2 ${i === active ? "bg-brand-secondary" : "hover:bg-brand-secondary"}`}
             >
-              <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted" aria-hidden />
+              <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
               <span className="min-w-0">
                 <span className="block truncate text-[13px] font-medium text-brand-text">{p.name}</span>
-                {p.secondary ? <span className="block truncate text-[11px] text-muted">{p.secondary}</span> : null}
+                {p.secondary ? <span className="block truncate text-[11px] text-muted-foreground">{p.secondary}</span> : null}
               </span>
             </li>
           ))}

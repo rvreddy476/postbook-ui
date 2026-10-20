@@ -35,7 +35,7 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
     <div className="space-y-7">
       <div className="rounded-xl border border-brand-divider bg-brand-secondary p-4 shadow-xs">
         <p className="text-[13px] font-semibold text-brand-text">One final review</p>
-        <p className="mt-1 text-[12px] text-muted">
+        <p className="mt-1 text-[12px] text-muted-foreground">
           Your video uploads and starts processing when you hit Publish — it becomes
           available according to your visibility and schedule after processing finishes.
           Saving a draft also uploads the file, but does not publish it.
@@ -52,7 +52,7 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
           </div>
           <div>
             <h3 className="text-[14px] font-bold text-brand-text">Visibility</h3>
-            <p className="text-[11px] text-muted">Who can see this content</p>
+            <p className="text-[11px] text-muted-foreground">Who can see this content</p>
           </div>
         </div>
         <div className="space-y-1 rounded-xl border border-brand-text/10 bg-brand-card p-2 shadow-xs">
@@ -110,9 +110,9 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
             <h3 className="text-[14px] font-bold text-brand-text">
               Topic <span className="text-danger font-semibold">*</span>
             </h3>
-            <p className="text-[11px] text-muted">Where viewers find it — the same topics as the Watch page</p>
+            <p className="text-[11px] text-muted-foreground">Where viewers find it — the same topics as the Watch page</p>
           </div>
-          {categories.isLoading ? <Loader2 className="ml-auto h-4 w-4 animate-spin text-muted" aria-label="Loading topics" /> : null}
+          {categories.isLoading ? <Loader2 className="ml-auto h-4 w-4 animate-spin text-muted-foreground" aria-label="Loading topics" /> : null}
         </div>
         <div className={`rounded-xl border bg-brand-card shadow-xs transition-colors ${
           categoryError ? "border-danger/40" : "border-brand-divider"
@@ -130,7 +130,7 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
           />
         </div>
         {topicsUnavailable && (
-          <div className="mt-2 flex items-center gap-2 text-[12px] text-muted">
+          <div className="mt-2 flex items-center gap-2 text-[12px] text-muted-foreground">
             <AlertCircle className="h-3.5 w-3.5" />
             <span>Topics could not be loaded.</span>
             <button type="button" onClick={() => void categories.refetch()} className="font-semibold text-brand-text underline-offset-2 hover:underline">
@@ -159,7 +159,7 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
           </div>
           <div>
             <h3 className="text-[14px] font-bold text-brand-text">Schedule</h3>
-            <p className="text-[11px] text-muted">Publish now or schedule for later</p>
+            <p className="text-[11px] text-muted-foreground">Publish now or schedule for later</p>
           </div>
         </div>
         <div className={`rounded-xl border bg-brand-card p-4 shadow-xs transition-colors ${
@@ -177,7 +177,7 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
             <div className={`mt-3 flex items-center gap-2 rounded-xl border bg-brand-secondary p-3 ${
               scheduleError ? "border-danger/40" : "border-brand-divider"
             }`}>
-              <Calendar className="h-4 w-4 text-muted" />
+              <Calendar className="h-4 w-4 text-muted-foreground" />
               <input
                 type="datetime-local"
                 id="upload-scheduleAt"
@@ -209,14 +209,14 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
           </div>
           <div>
             <h3 className="text-[14px] font-bold text-brand-text">Cross-post</h3>
-            <p className="text-[11px] text-muted">Also share to your Feed</p>
+            <p className="text-[11px] text-muted-foreground">Also share to your Feed</p>
           </div>
         </div>
         <div className="rounded-xl border border-brand-text/10 bg-brand-card p-4 shadow-xs">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="text-[13px] font-medium text-brand-text">Publish to Feed</p>
-              <p className="mt-0.5 text-[11px] text-muted">Share as a post on your Feed</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">Share as a post on your Feed</p>
             </div>
             <button
               type="button"

@@ -9,7 +9,7 @@ export function SectionHeader({ title, subtitle }: { title: string; subtitle?: s
   return (
     <div className="mb-4">
       <h3 className="text-[14px] font-bold text-brand-text">{title}</h3>
-      {subtitle && <p className="mt-0.5 text-[12px] text-muted">{subtitle}</p>}
+      {subtitle && <p className="mt-0.5 text-[12px] text-muted-foreground">{subtitle}</p>}
     </div>
   );
 }
@@ -31,12 +31,12 @@ export function FieldLabel({
 }) {
   return (
     <label htmlFor={htmlFor} className="mb-1.5 flex items-center justify-between gap-2">
-      <span className="text-[12px] font-semibold text-muted">
+      <span className="text-[12px] font-semibold text-muted-foreground">
         {label}
         {required && <span className="ml-0.5 text-danger" aria-label="required">*</span>}
       </span>
-      {counter && <span className="text-[11px] text-muted">{counter}</span>}
-      {hint && !counter && <span className="text-[11px] text-muted">{hint}</span>}
+      {counter && <span className="text-[11px] text-muted-foreground">{counter}</span>}
+      {hint && !counter && <span className="text-[11px] text-muted-foreground">{hint}</span>}
     </label>
   );
 }
@@ -94,7 +94,7 @@ export function ToggleRow({
     <div className="flex items-center justify-between gap-4 py-2.5">
       <div className="min-w-0">
         <p className="text-[13px] font-medium text-brand-text">{label}</p>
-        {description && <p className="mt-0.5 text-[11px] text-muted">{description}</p>}
+        {description && <p className="mt-0.5 text-[11px] text-muted-foreground">{description}</p>}
       </div>
       <ToggleSwitch checked={checked} onChange={onChange} disabled={disabled} label={label} />
     </div>
@@ -127,7 +127,7 @@ export function RadioOption({
       />
       <div className="min-w-0">
         <p className="text-[13px] font-medium text-brand-text">{label}</p>
-        {description && <p className="mt-0.5 text-[11px] text-muted">{description}</p>}
+        {description && <p className="mt-0.5 text-[11px] text-muted-foreground">{description}</p>}
       </div>
     </label>
   );
@@ -156,7 +156,7 @@ export function CheckOption({
       />
       <div className="min-w-0">
         <p className="text-[13px] font-medium text-brand-text">{label}</p>
-        {description && <p className="mt-0.5 text-[11px] text-muted">{description}</p>}
+        {description && <p className="mt-0.5 text-[11px] text-muted-foreground">{description}</p>}
       </div>
     </label>
   );
@@ -172,7 +172,7 @@ export function InfoBanner({
   variant?: "info" | "warning" | "error";
 }) {
   const colors = {
-    info: "bg-brand-secondary border-brand-divider text-muted",
+    info: "bg-brand-secondary border-brand-divider text-muted-foreground",
     warning: "bg-warning/5 border-warning/20 text-warning",
     error: "bg-danger/5 border-danger/20 text-danger",
   };
@@ -194,7 +194,7 @@ export function TagChip({
   onRemove?: () => void;
 }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-brand-secondary px-2.5 py-1 text-[11px] font-medium text-muted">
+    <span className="inline-flex items-center gap-1 rounded-full bg-brand-secondary px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
       {label}
       {onRemove && (
         <button type="button" aria-label={`Remove ${label}`} onClick={onRemove} className="hover:text-danger transition-colors">
@@ -226,7 +226,7 @@ export function Collapsible({
         className="flex w-full items-center justify-between px-4 py-3 text-[13px] font-semibold text-brand-text hover:bg-brand-secondary rounded-xl transition-colors"
       >
         {title}
-        <ChevronDown className={`h-4 w-4 text-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
       {open && <div className="border-t border-brand-text/10 px-4 py-3">{children}</div>}
     </div>
@@ -266,7 +266,7 @@ export function StudioInput({
       onChange={(e) => onChange(e.target.value)}
       maxLength={maxLength}
       autoFocus={autoFocus}
-      className="h-11 w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 text-[14px] text-brand-text placeholder:text-muted outline-hidden focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
+      className="h-11 w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 text-[14px] text-brand-text placeholder:text-muted-foreground outline-hidden focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
       placeholder={placeholder}
     />
   );
@@ -293,7 +293,7 @@ export function StudioTextarea({
       onChange={(e) => onChange(e.target.value)}
       maxLength={maxLength}
       rows={rows}
-      className="w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 py-3 text-[13px] text-brand-text placeholder:text-muted outline-hidden focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 resize-none transition-all"
+      className="w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 py-3 text-[13px] text-brand-text placeholder:text-muted-foreground outline-hidden focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 resize-none transition-all"
       placeholder={placeholder}
     />
   );
@@ -339,7 +339,7 @@ export function StudioSelect({
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
-      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
     </div>
   );
 }

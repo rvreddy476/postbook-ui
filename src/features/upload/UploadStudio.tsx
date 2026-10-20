@@ -63,7 +63,7 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
       customContent: (
         <div className="px-4 py-3 pr-10" data-toast="upload-follow-up">
           <p className="text-[13px] font-semibold text-brand-text">{notice.title}</p>
-          <p className="mt-0.5 text-[12px] text-muted">{notice.description}</p>
+          <p className="mt-0.5 text-[12px] text-muted-foreground">{notice.description}</p>
           <Link href={hubEditHref(postId, notice.sheet)} className="mt-1.5 inline-block text-[12px] font-semibold text-brand-text underline underline-offset-2">
             Open in Creator Hub
           </Link>
@@ -195,12 +195,12 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
             <h2 className="mt-6 text-[22px] font-bold text-brand-text">
               {config.label} published!
             </h2>
-            <p className="mt-2 text-[14px] text-muted leading-relaxed max-w-sm mx-auto">
+            <p className="mt-2 text-[14px] text-muted-foreground leading-relaxed max-w-sm mx-auto">
               Your video is being processed and will be available to viewers shortly.
               This usually takes a few minutes.
             </p>
             {form.publishedEpisodeNum !== null && form.seriesChoice.kind !== "none" && (
-              <p className="mt-2 text-[13px] text-muted" data-series-result>
+              <p className="mt-2 text-[13px] text-muted-foreground" data-series-result>
                 Added to {form.seriesChoice.title.trim() || "your series"} as episode {form.publishedEpisodeNum}.
               </p>
             )}
@@ -212,11 +212,11 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
 
             {postUrl && (
               <div className="mt-6 flex items-center gap-2 rounded-xl border border-brand-text/10 bg-brand-card px-4 py-3 shadow-xs">
-                <span className="flex-1 truncate text-left text-[13px] text-muted font-mono">{postUrl}</span>
+                <span className="flex-1 truncate text-left text-[13px] text-muted-foreground font-mono">{postUrl}</span>
                 <button
                   type="button"
                   onClick={() => navigator.clipboard.writeText(postUrl)}
-                  className="shrink-0 rounded-lg p-1.5 text-muted hover:bg-brand-secondary hover:text-muted transition-colors"
+                  className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-brand-secondary hover:text-muted-foreground transition-colors"
                   title="Copy link"
                 >
                   <Copy className="h-4 w-4" />
@@ -230,10 +230,10 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
                 className="mt-4 flex items-center gap-3 rounded-xl border border-brand-text/10 bg-brand-card px-4 py-3 text-left shadow-xs transition-colors hover:bg-brand-secondary"
                 data-link="hub-elements"
               >
-                <LayoutPanelTop className="h-4 w-4 shrink-0 text-muted" />
+                <LayoutPanelTop className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span className="min-w-0">
                   <span className="block text-[13px] font-semibold text-brand-text">Add an end screen and cards</span>
-                  <span className="block text-[11px] text-muted">In Creator Hub, next to chapters</span>
+                  <span className="block text-[11px] text-muted-foreground">In Creator Hub, next to chapters</span>
                 </span>
               </Link>
             )}
@@ -241,7 +241,7 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
             <div className="mt-8 flex items-center justify-center gap-3">
               <Link
                 href={isLongVideo ? "/posttube" : "/reels"}
-                className="flex items-center gap-1.5 rounded-xl border border-brand-text/10 bg-brand-card px-5 py-2.5 text-[13px] font-medium text-muted hover:bg-brand-secondary transition-colors shadow-xs"
+                className="flex items-center gap-1.5 rounded-xl border border-brand-text/10 bg-brand-card px-5 py-2.5 text-[13px] font-medium text-muted-foreground hover:bg-brand-secondary transition-colors shadow-xs"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 Go to {isLongVideo ? "Posttube" : "Reels"}
