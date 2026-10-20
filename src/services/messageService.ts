@@ -2,7 +2,14 @@ import { ensureAccessToken } from '@/lib/accessToken';
 import { CommentChangeGate, PostRoomSubscriptions, groupTypingSignal, type CommentChange } from '@/lib/postThreadLive';
 import { User } from '@/types';
 import { LiveRoomSubscriptions, parseLiveFrame, type LiveFrame } from '@/features/live/realtime';
-import { decodeMessageDeletedFrame, decodeMessageExtras, decodePresenceFrame, type MessageExtras } from '@/lib/chat/contract';
+import {
+  decodeDisappearingTimerFrame,
+  decodeMessageDeletedFrame,
+  decodeMessageExtras,
+  decodePinUpdateFrame,
+  decodePresenceFrame,
+  type MessageExtras,
+} from '@/lib/chat/contract';
 
 export interface Message {
   id: string;
@@ -36,6 +43,8 @@ export interface Message {
   edited_at?: string;
   is_deleted?: boolean;
   created_at: string;
+  /** RFC 3339; set when the message will disappear (the chat's timer was on when it was sent). */
+  expires_at?: string;
   /** Chat-parity fields (CONTRACT §2.2), decoded tolerantly; absent fields are neutral. */
   extras?: MessageExtras;
 }
@@ -75,12 +84,39 @@ export interface MessageDeletedEvent {
   reason?: string;
 }
 
+/** A `pin_update` frame (decodePinUpdateFrame): someone pinned or unpinned in a chat. */
 export interface PinUpdateEvent {
   conversation_id: string;
   message_id: string | null;
   pinned_by: string | null;
   action: 'pin' | 'unpin';
+  /** The pin's own id — unpin frames name the pin by it. */
+  pin_id: string | null;
+  at: string | null;
 }
+
+/** A `disappearing_timer_updated` frame: the conversation-wide timer changed. */
+export interface DisappearingTimerEvent {
+  conversation_id: string;
+  /** ms; null when turned off. */
+  disappear_after_ms: number | null;
+  updated_by: string | null;
+  updated_at: string | null;
+}
+
+/** The event a raw `pin_update` frame becomes; null when it is not one. */
+export const pinUpdateEventFromFrame = (frame: unknown): PinUpdateEvent | null => {
+  const f = decodePinUpdateFrame(frame);
+  if (!f) return null;
+  return { conversation_id: f.conversationId, message_id: f.messageId, pinned_by: f.by, action: f.action, pin_id: f.pinId, at: f.at };
+};
+
+/** The event a raw `disappearing_timer_updated` frame becomes; null when it is not one. */
+export const disappearingTimerEventFromFrame = (frame: unknown): DisappearingTimerEvent | null => {
+  const f = decodeDisappearingTimerFrame(frame);
+  if (!f) return null;
+  return { conversation_id: f.conversationId, disappear_after_ms: f.disappearAfterMs, updated_by: f.updatedBy, updated_at: f.updatedAt };
+};
 
 // Backend returns msg_id, normalize to id for frontend use.
 const normalizeMessage = (raw: Record<string, any>): Message => ({
@@ -103,6 +139,7 @@ const normalizeMessage = (raw: Record<string, any>): Message => ({
   edited_at: raw.edited_at as string | undefined,
   is_deleted: raw.is_deleted as boolean | undefined,
   created_at: raw.created_at as string,
+  expires_at: typeof raw.expires_at === 'string' && raw.expires_at ? raw.expires_at : undefined,
   extras: decodeMessageExtras(raw),
 });
 
@@ -158,6 +195,7 @@ const commentUpdateListeners = new Set<(u: ChannelCommentUpdate) => void>();
 const groupCommentUpdateListeners = new Set<(u: GroupCommentUpdate) => void>();
 const groupTypingListeners = new Set<(e: GroupTypingEvent) => void>();
 const pinUpdateListeners = new Set<(e: PinUpdateEvent) => void>();
+const disappearingTimerListeners = new Set<(e: DisappearingTimerEvent) => void>();
 const presenceListeners = new Set<(e: PresenceUpdateEvent) => void>();
 const liveEventListeners = new Set<(event: LiveFrame) => void>();
 // Live rooms are desired state like post rooms: re-sent on every open so the
@@ -530,13 +568,13 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
         const evt = groupTypingSignal(data);
         if (evt) groupTypingListeners.forEach(cb => cb(evt));
       } else if (data.type === 'pin_update') {
-        const evt: PinUpdateEvent = {
-          conversation_id: data.payload.conversation_id,
-          message_id: data.payload.message_id || null,
-          pinned_by: data.payload.pinned_by || null,
-          action: data.payload.action || (data.payload.message_id ? 'pin' : 'unpin'),
-        };
-        pinUpdateListeners.forEach(cb => cb(evt));
+        // {conversation_id, action: "pinned"|"unpinned", pin_id, message_id, by, at}
+        const evt = pinUpdateEventFromFrame(data);
+        if (evt) pinUpdateListeners.forEach(cb => cb(evt));
+      } else if (data.type === 'disappearing_timer_updated') {
+        // {conversation_id, disappear_after_ms, updated_by, updated_at} to every member.
+        const evt = disappearingTimerEventFromFrame(data);
+        if (evt) disappearingTimerListeners.forEach(cb => cb(evt));
       } else if (data.type === 'presence_update') {
         // Contract {user_id, is_online, last_active_at} (top level or payload); legacy {user_id, online}.
         const decoded = decodePresenceFrame(data);
@@ -868,6 +906,11 @@ export const subscribeToMessageDeletes = (cb: (e: MessageDeletedEvent) => void) 
 export const subscribeToPinUpdates = (cb: (e: PinUpdateEvent) => void) => {
   pinUpdateListeners.add(cb);
   return () => { pinUpdateListeners.delete(cb); };
+};
+
+export const subscribeToDisappearingTimer = (cb: (e: DisappearingTimerEvent) => void) => {
+  disappearingTimerListeners.add(cb);
+  return () => { disappearingTimerListeners.delete(cb); };
 };
 
 export const sendSignaling = (data: object) => {

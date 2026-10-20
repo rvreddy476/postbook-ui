@@ -12,6 +12,7 @@ import { getSession } from '@/services/authService';
 import {
   fetchMessages,
   getPinnedMessage,
+  subscribeToPinUpdates,
   type Message,
 } from '@/services/messageService';
 
@@ -60,12 +61,16 @@ export default function ThreadDetails({ peerId, conversationId, onClose }: Threa
     staleTime: 60_000,
   });
 
-  const { data: pinned } = useQuery({
+  const { data: pinned, refetch: refetchPinned } = useQuery({
     queryKey: ['thread-pinned', conversationId],
     queryFn: () => getPinnedMessage(conversationId!),
     enabled: !!conversationId,
     staleTime: 60_000,
   });
+  // Someone pinned or unpinned here (pin_update): the newest pin may have changed.
+  React.useEffect(() => subscribeToPinUpdates((evt) => {
+    if (conversationId && evt.conversation_id === conversationId) void refetchPinned();
+  }), [conversationId, refetchPinned]);
 
   const name = profile?.display_name || profile?.username || 'Someone';
   const role = profile?.profession?.trim();

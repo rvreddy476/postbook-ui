@@ -17,6 +17,7 @@ import {
   subscribeToMessageEdits,
   subscribeToMessageDeletes,
   subscribeToPinUpdates,
+  subscribeToDisappearingTimer,
   subscribeToPresenceUpdates,
   editMessage,
   toggleReaction,
@@ -34,6 +35,7 @@ import {
   MessageEditedEvent,
   MessageDeletedEvent,
   PinUpdateEvent,
+  DisappearingTimerEvent,
   PinnedMessage,
 } from '@/services/messageService'
 import {
@@ -61,7 +63,7 @@ import { useMediaKinds } from '@/hooks/useMediaKinds'
 import { toChatSource, useDatingKindChat, type ChatSource } from '@/features/dating/components/KindChat'
 import { postCardIds, postCardView, usePostCards } from './postCards'
 import type { User } from '@/types'
-import type { InboxMember } from '@/lib/chat/contract'
+import { decodeDisappearMs, type InboxMember } from '@/lib/chat/contract'
 import { presenceLabel } from '@/lib/chat/inbox'
 import { bubbleClass, parseBubbleStyle } from '@/lib/chat/bubbleStyle'
 import type { GifSendPayload } from '@/lib/chat/giphy'
@@ -72,7 +74,10 @@ import {
   MESSAGE_ACTION_LABELS,
   bubbleKind,
   isBareBubble,
+  applyPinUpdate,
+  dropExpired,
   isExpiryDelete,
+  nextExpiryDelay,
   lastOwnMessageId,
   messageActions,
   nextPinIndex,
@@ -339,6 +344,8 @@ export default function DmChat({
         const peer = convMembers.find(m => m.user_id && m.user_id !== myId)
         const peerRaw = (convRes.data?.peer ?? null) as { is_online?: boolean; last_active_at?: string } | null
         if (!cancelled) {
+          // The shared disappearing timer rides on the conversation itself; the settings read below confirms it.
+          setDisappearAfterMs(decodeDisappearMs(convRes.data?.disappear_after_ms ?? (convRes as { disappear_after_ms?: unknown }).disappear_after_ms))
           setPeerLastReadAt(!group && peer?.last_read_at ? Date.parse(peer.last_read_at) : null)
           if (peerRaw) {
             setPeerPresence((prev) => ({
@@ -353,7 +360,8 @@ export default function DmChat({
         }
         const page = await fetchMessagePage(conversationId, null, 30)
         if (!cancelled) {
-          const displayed = page.messages.map(m => toDisplay(m)).reverse()
+          // Anything already past its expires_at is not shown at all.
+          const displayed = dropExpired(page.messages.map(m => toDisplay(m)).reverse(), Date.now())
           setMessages(displayed)
           setOlderCursor(page.nextCursor)
           if (displayed.length > 0) {
@@ -367,7 +375,7 @@ export default function DmChat({
             if (!cancelled) { setPins(list); setPinIndex(0) }
           }).catch(() => { })
           getConversationPrefs(conversationId).then(prefs => {
-            if (!cancelled) setDisappearAfterMs(prefs?.disappearAfterMs ?? null)
+            if (!cancelled && prefs) setDisappearAfterMs(prefs.disappearAfterMs)
           }).catch(() => { })
         }
       } catch (err) {
@@ -539,12 +547,38 @@ export default function DmChat({
     }))
   }), [])
 
+  // pin_update {action: pinned|unpinned, pin_id, message_id, by, at}: applied in place.
+  // A pin frame without its pin id cannot be unpinned later, so that one re-reads the list.
   useEffect(() => subscribeToPinUpdates((evt: PinUpdateEvent) => {
-    if (evt.conversation_id !== convIdRef.current) return
-    // message-service does not send pin frames yet; if one comes, re-read the list.
     const id = convIdRef.current
-    if (id) listPinnedMessages(id).then(list => { setPins(list); setPinIndex(0) }).catch(() => { })
+    if (!id || evt.conversation_id !== id) return
+    if (evt.action === 'pin' && !evt.pin_id) {
+      listPinnedMessages(id).then(list => { setPins(list); setPinIndex(0) }).catch(() => { })
+      return
+    }
+    setPins(prev => applyPinUpdate(prev, evt))
+    setPinIndex(0)
   }), [])
+
+  // disappearing_timer_updated: the shared timer changed (by anyone, me included).
+  useEffect(() => subscribeToDisappearingTimer((evt: DisappearingTimerEvent) => {
+    if (evt.conversation_id !== convIdRef.current) return
+    setDisappearAfterMs(evt.disappear_after_ms)
+  }), [])
+
+  // Drop each bubble when its expires_at passes, even if the server's delete
+  // frame is late. One timer for the soonest; capped so a 90-day wait never
+  // overflows setTimeout (it re-arms).
+  const [expiryTick, setExpiryTick] = useState(0)
+  useEffect(() => {
+    const delay = nextExpiryDelay(messages, Date.now())
+    if (delay === null) return
+    const t = setTimeout(() => {
+      setMessages(prev => dropExpired(prev, Date.now()))
+      setExpiryTick(n => n + 1)
+    }, Math.min(delay + 250, 6 * 60 * 60 * 1000))
+    return () => clearTimeout(t)
+  }, [messages, expiryTick])
 
   useEffect(() => {
     if (!contextMenu) return

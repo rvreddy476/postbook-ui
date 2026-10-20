@@ -56,7 +56,7 @@ import {
   type MessageReportReason,
   type PrefsPatch,
 } from '@/services/chatParityApi'
-import { leaveConversation } from '@/services/messageService'
+import { ChatApiError, leaveConversation, subscribeToDisappearingTimer } from '@/services/messageService'
 
 import { postCardView, usePostCards } from '../postCards'
 import {
@@ -64,6 +64,7 @@ import {
   DISAPPEAR_OPTIONS,
   CONFIRM_COPY,
   NOT_AVAILABLE_YET,
+  SAVE_FAILED,
   PREF_SWITCH_LABELS,
   REPORT_GROUP_NOT_AVAILABLE,
   REPORT_THANKS,
@@ -72,6 +73,7 @@ import {
   disappearLabel,
   disappearPatch,
   legacyUserReportReason,
+  prefSaveError,
   prefSwitchPatch,
   profileHref,
   sharedMediaSrc,
@@ -99,7 +101,6 @@ export interface ChatSettingsPanelProps {
 }
 
 const SWITCH_ICONS: Record<PrefSwitch, typeof BellOff> = { isMuted: BellOff, muteCalls: PhoneOff, isPinned: Pin }
-const SAVE_FAILED = "Couldn't save that. Try again."
 
 export default function ChatSettingsPanel(props: ChatSettingsPanelProps): JSX.Element {
   const { conversationId, isGroup, title, peer, members, onClose, onSearchInChat, onOpenSharedPost, onCleared, onDeleted, onLeft, onPrefsChange } = props
@@ -139,15 +140,21 @@ export default function ChatSettingsPanel(props: ChatSettingsPanelProps): JSX.El
         alertPrefsCache.set(conversationId, { tone: saved.alertTone, muted: saved.isMuted, muteUntil: saved.muteUntil })
         setPrefs(saved)
         onPrefsChange?.(saved)
-      } catch {
+      } catch (err) {
         setPrefs(before)
-        setPrefError(SAVE_FAILED)
+        setPrefError(prefSaveError(patch, err instanceof ChatApiError ? err.status : undefined))
       } finally {
         setSaving(false)
       }
     },
     [conversationId, onPrefsChange, saving],
   )
+
+  // The timer is shared: another member changing it moves this choice too.
+  useEffect(() => subscribeToDisappearingTimer((evt) => {
+    if (evt.conversation_id !== conversationId) return
+    setPrefs((p) => (p ? { ...p, disappearAfterMs: evt.disappear_after_ms } : p))
+  }), [conversationId])
 
   const flip = (key: PrefSwitch) => {
     if (!prefs) return
@@ -283,7 +290,9 @@ export default function ChatSettingsPanel(props: ChatSettingsPanelProps): JSX.El
               Disappearing messages
             </p>
             <p className="mt-0.5 text-[12px] text-brand-text/60">
-              Messages are removed from this chat once they are this old.
+              {isGroup
+                ? 'New messages disappear for everyone after this long. Group owners and admins can change it.'
+                : 'New messages disappear for both of you after this long.'}
             </p>
             <div role="radiogroup" aria-label="Disappearing messages" className="mt-2 flex flex-wrap gap-1.5">
               {DISAPPEAR_OPTIONS.map((option) => {

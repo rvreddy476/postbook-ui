@@ -84,6 +84,19 @@ export function disappearingNotice(ms: number | null): string | null {
   return `Disappearing messages are on: ${disappearLabel(ms)}`
 }
 
+export const SAVE_FAILED = "Couldn't save that. Try again."
+export const TIMER_ADMINS_ONLY = 'Only the group owner or admins can change disappearing messages.'
+
+/**
+ * The line under the settings after a save the server refused. In a group
+ * only the owner or admins may change the shared timer: a plain member's
+ * try comes back 403, which says so instead of "try again".
+ */
+export function prefSaveError(patch: PrefsPatch, status: number | undefined): string {
+  if (status === 403 && patch.disappear_after_ms !== undefined) return TIMER_ADMINS_ONLY
+  return SAVE_FAILED
+}
+
 /** The profile a "View profile" tap opens: the handle when known, else the id. */
 export function profileHref(peer: { userId: string; username: string | null }): string {
   return `/u/${encodeURIComponent(peer.username || peer.userId)}`

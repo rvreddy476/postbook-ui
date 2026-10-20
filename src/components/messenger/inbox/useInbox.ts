@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { subscribeToMessages, subscribeToPresenceUpdates, markConversationRead, type Message } from '@/services/messageService'
+import { subscribeToDisappearingTimer, subscribeToMessages, subscribeToPresenceUpdates, markConversationRead, type Message } from '@/services/messageService'
 import {
   deleteChatForMe,
   fetchInbox,
@@ -33,6 +33,7 @@ import {
   patchRow,
   primaryRows,
   READ_PATCH,
+  withDisappearTimer,
   withoutDating,
 } from '@/lib/chat/inbox'
 
@@ -176,6 +177,16 @@ export function useInbox(myId: string, openConversationId: string | null) {
             : r,
         ),
       )
+    })
+  }, [])
+
+  // Live: the conversation-wide disappearing timer changed (every member hears it).
+  useEffect(() => {
+    return subscribeToDisappearingTimer((evt) => {
+      const set = (list: InboxRow[]) => withDisappearTimer(list, evt.conversation_id, evt.disappear_after_ms)
+      setRows(set)
+      setRequests(set)
+      setArchived((prev) => (prev ? set(prev) : prev))
     })
   }, [])
 

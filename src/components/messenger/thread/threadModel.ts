@@ -4,7 +4,7 @@
   when media is blurred. No React, so every rule has a test.
 */
 
-import type { Message } from '@/services/messageService'
+import type { Message, PinnedMessage, PinUpdateEvent } from '@/services/messageService'
 import type { MessageExtras } from '@/lib/chat/contract'
 
 export interface DisplayMessage {
@@ -23,6 +23,8 @@ export interface DisplayMessage {
   isEdited?: boolean
   editedAt?: string
   isDeleted?: boolean
+  /** RFC 3339; when the message disappears (the chat's timer was on). */
+  expiresAt?: string
   reactions?: { emoji: string; user_ids: string[] }[]
   extras?: MessageExtras
 }
@@ -54,6 +56,7 @@ export function toDisplay(msg: Message): DisplayMessage {
     isEdited: msg.is_edited,
     editedAt: msg.edited_at,
     isDeleted: msg.is_deleted,
+    expiresAt: msg.expires_at,
     reactions: msg.reactions,
     extras: msg.extras,
   }
@@ -106,18 +109,65 @@ export function nextPinIndex(current: number, count: number): number {
  * thread entirely; an unsent one keeps its "deleted" placeholder.
  *
  * The frame says so with `reason: "expired"` when the server sends one;
- * otherwise a message whose age has passed the chat's disappearing window
- * (a minute of slack for clock skew) is taken as expired.
+ * otherwise a message past its own `expires_at`, or (older messages without
+ * one) whose age has passed the chat's window, is taken as expired. A minute
+ * of slack covers clock skew.
  */
 export function isExpiryDelete(
-  msg: Pick<DisplayMessage, 'ts'> | undefined,
+  msg: Pick<DisplayMessage, 'ts' | 'expiresAt'> | undefined,
   opts: { reason?: string | null; disappearAfterMs: number | null; now: number },
 ): boolean {
   if (opts.reason === 'expired' || opts.reason === 'disappeared') return true
-  if (!msg || !opts.disappearAfterMs) return false
+  if (!msg) return false
+  const expiresAt = msg.expiresAt ? Date.parse(msg.expiresAt) : NaN
+  if (!Number.isNaN(expiresAt)) return expiresAt <= opts.now + 60_000
+  if (!opts.disappearAfterMs) return false
   const sentAt = Date.parse(msg.ts)
   if (Number.isNaN(sentAt)) return false
   return sentAt + opts.disappearAfterMs <= opts.now + 60_000
+}
+
+/** The thread without the messages whose `expires_at` has passed (same array when none has). */
+export function dropExpired<T extends Pick<DisplayMessage, 'expiresAt'>>(messages: T[], now: number): T[] {
+  const kept = messages.filter((m) => {
+    const at = m.expiresAt ? Date.parse(m.expiresAt) : NaN
+    return Number.isNaN(at) || at > now
+  })
+  return kept.length === messages.length ? messages : kept
+}
+
+/**
+ * Milliseconds until the next message on screen expires, so one timer can
+ * drop it on time even when the server's delete frame is late; null when
+ * none will. Never below zero.
+ */
+export function nextExpiryDelay(messages: readonly Pick<DisplayMessage, 'expiresAt'>[], now: number): number | null {
+  let soonest: number | null = null
+  for (const m of messages) {
+    const at = m.expiresAt ? Date.parse(m.expiresAt) : NaN
+    if (Number.isNaN(at)) continue
+    if (soonest === null || at < soonest) soonest = at
+  }
+  return soonest === null ? null : Math.max(0, soonest - now)
+}
+
+/**
+ * The pin list after a `pin_update` frame: a pin goes on top (once), an
+ * unpin removes it by pin id, or by message id when the frame has no pin id.
+ */
+export function applyPinUpdate(
+  pins: PinnedMessage[],
+  evt: Pick<PinUpdateEvent, 'conversation_id' | 'action' | 'pin_id' | 'message_id' | 'pinned_by' | 'at'>,
+): PinnedMessage[] {
+  if (evt.action === 'unpin') {
+    const next = pins.filter((p) => (evt.pin_id ? p.id !== evt.pin_id : p.message_id !== evt.message_id))
+    return next.length === pins.length ? pins : next
+  }
+  if (!evt.pin_id || !evt.message_id || pins.some((p) => p.id === evt.pin_id)) return pins
+  return [
+    { id: evt.pin_id, conversation_id: evt.conversation_id, message_id: evt.message_id, pinned_by: evt.pinned_by ?? '', pinned_at: evt.at ?? '' },
+    ...pins,
+  ]
 }
 
 export const MESSAGE_ACTION_LABELS: Record<MessageAction, string> = {

@@ -86,6 +86,16 @@ export function applyLiveMessage(
   return orderInbox(out)
 }
 
+/**
+ * Rows after a `disappearing_timer_updated` frame: that conversation's timer
+ * set, nothing re-ordered. The same array when no row changes, so a frame
+ * for a chat not in this list does not re-render it.
+ */
+export function withDisappearTimer(rows: InboxRow[], conversationId: string, ms: number | null): InboxRow[] {
+  if (!rows.some((r) => r.id === conversationId && r.disappearAfterMs !== ms)) return rows
+  return rows.map((r) => (r.id === conversationId ? { ...r, disappearAfterMs: ms } : r))
+}
+
 /** A row patched in place (pin, mute, read …), re-ordered. */
 export function patchRow(rows: readonly InboxRow[], id: string, patch: Partial<InboxRow>): InboxRow[] {
   return orderInbox(rows.map((r) => (r.id === id ? { ...r, ...patch } : r)))

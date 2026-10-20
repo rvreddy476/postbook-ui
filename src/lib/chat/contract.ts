@@ -154,6 +154,8 @@ export interface InboxRow {
   markedUnread: boolean
   /** The other person's account is gone (a request's `sender.deleted`). */
   peerDeleted: boolean
+  /** The conversation-wide disappearing timer in ms; null when off. */
+  disappearAfterMs: number | null
 }
 
 export function decodeStreak(raw: unknown): ChatStreak | null {
@@ -296,6 +298,7 @@ export function decodeInboxRow(raw: unknown, myId: string): InboxRow | null {
     updatedAt: first(raw.updated_at),
     markedUnread,
     peerDeleted,
+    disappearAfterMs: decodeDisappearMs(raw.disappear_after_ms),
   }
 }
 
@@ -752,6 +755,67 @@ export function decodeMessageDeletedFrame(frame: unknown): { conversationId: str
   return reason ? { conversationId, messageId, reason } : { conversationId, messageId }
 }
 
+/** A disappearing window off the wire, in ms; null when off (absent, null, 0 or not a number). */
+export function decodeDisappearMs(v: unknown): number | null {
+  return typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : null
+}
+
+export interface DisappearingTimerFrame {
+  conversationId: string
+  disappearAfterMs: number | null
+  updatedBy: string | null
+  updatedAt: string | null
+}
+
+/**
+ * A `disappearing_timer_updated` frame: the conversation-wide timer changed
+ * (every member gets it). `{conversation_id, disappear_after_ms, updated_by,
+ * updated_at}` in `payload`, or at the top level.
+ */
+export function decodeDisappearingTimerFrame(frame: unknown): DisappearingTimerFrame | null {
+  if (!isObj(frame)) return null
+  const p = isObj(frame.payload) ? frame.payload : frame
+  const conversationId = first(p.conversation_id)
+  if (!conversationId) return null
+  return {
+    conversationId,
+    disappearAfterMs: decodeDisappearMs(p.disappear_after_ms),
+    updatedBy: first(p.updated_by),
+    updatedAt: first(p.updated_at),
+  }
+}
+
+export interface PinUpdateFrame {
+  conversationId: string
+  action: 'pin' | 'unpin'
+  pinId: string | null
+  messageId: string | null
+  by: string | null
+  at: string | null
+}
+
+/**
+ * A `pin_update` frame: `{conversation_id, action: "pinned"|"unpinned",
+ * pin_id, message_id, by, at}`. The older "pin"/"unpin" spelling is read
+ * too; any other action is not a pin frame.
+ */
+export function decodePinUpdateFrame(frame: unknown): PinUpdateFrame | null {
+  if (!isObj(frame)) return null
+  const p = isObj(frame.payload) ? frame.payload : frame
+  const conversationId = first(p.conversation_id)
+  const rawAction = first(p.action)
+  const action = rawAction === 'pinned' || rawAction === 'pin' ? 'pin' : rawAction === 'unpinned' || rawAction === 'unpin' ? 'unpin' : null
+  if (!conversationId || !action) return null
+  return {
+    conversationId,
+    action,
+    pinId: first(p.pin_id),
+    messageId: first(p.message_id),
+    by: first(p.by, p.pinned_by),
+    at: first(p.at, p.pinned_at),
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /*  Per-conversation settings (CONTRACT §1.1)                          */
 /* ------------------------------------------------------------------ */
@@ -783,9 +847,6 @@ export function decodeConversationPrefs(body: unknown): ConversationPrefs {
     isPinned: s.is_pinned === true,
     label: first(s.label),
     alertTone: ALERT_TONES.includes(s.alert_tone as AlertTone) ? (s.alert_tone as AlertTone) : 'default',
-    disappearAfterMs:
-      typeof s.disappear_after_ms === 'number' && Number.isFinite(s.disappear_after_ms) && s.disappear_after_ms > 0
-        ? s.disappear_after_ms
-        : null,
+    disappearAfterMs: decodeDisappearMs(s.disappear_after_ms),
   }
 }

@@ -163,12 +163,9 @@ export function useChat(conversationId: string | null | undefined, currentUserId
     if (!conversationId) return
     const unsub = subscribeToPinUpdates((evt: PinUpdateEvent) => {
       if (evt.conversation_id !== conversationId) return
-      if (evt.action === 'unpin') {
-        setPinnedMessage(null)
-      } else {
-        // Refetch pinned message to get full data
-        getPinnedMessage(conversationId).then(pinned => setPinnedMessage(pinned))
-      }
+      // Up to 3 pins can stand: after a pin or an unpin the newest one is
+      // whatever the list says now, so re-read it either way.
+      getPinnedMessage(conversationId).then(pinned => setPinnedMessage(pinned))
     })
     return unsub
   }, [conversationId])
