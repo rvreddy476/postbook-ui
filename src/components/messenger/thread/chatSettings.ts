@@ -47,6 +47,43 @@ export function alertTonePatch(tone: AlertTone): PrefsPatch {
   return { alert_tone: tone }
 }
 
+/* ---- Disappearing messages (disappear_after_ms) ---------------------- */
+
+const HOUR_MS = 60 * 60 * 1000
+const DAY_MS = 24 * HOUR_MS
+
+/** The choices, in order; `ms: null` is Off. */
+export const DISAPPEAR_OPTIONS: readonly { ms: number | null; label: string }[] = [
+  { ms: null, label: 'Off' },
+  { ms: DAY_MS, label: '24 hours' },
+  { ms: 7 * DAY_MS, label: '7 days' },
+  { ms: 90 * DAY_MS, label: '90 days' },
+]
+
+/** PUT /conversations/:id/settings body for a choice. Off is 0, never null (null is "leave as is"). */
+export function disappearPatch(ms: number | null): PrefsPatch {
+  return { disappear_after_ms: ms && ms > 0 ? ms : 0 }
+}
+
+/**
+ * A window in words. A value set elsewhere (another client, an old build)
+ * that is not one of the choices still reads sensibly.
+ */
+export function disappearLabel(ms: number | null): string {
+  if (!ms || ms <= 0) return 'Off'
+  const known = DISAPPEAR_OPTIONS.find((o) => o.ms === ms)
+  if (known) return known.label
+  if (ms % DAY_MS === 0) return ms === DAY_MS ? '1 day' : `${ms / DAY_MS} days`
+  const hours = Math.max(1, Math.round(ms / HOUR_MS))
+  return hours === 1 ? '1 hour' : `${hours} hours`
+}
+
+/** The system line in the thread while it is on; null when off. */
+export function disappearingNotice(ms: number | null): string | null {
+  if (!ms || ms <= 0) return null
+  return `Disappearing messages are on: ${disappearLabel(ms)}`
+}
+
 /** The profile a "View profile" tap opens: the handle when known, else the id. */
 export function profileHref(peer: { userId: string; username: string | null }): string {
   return `/u/${encodeURIComponent(peer.username || peer.userId)}`

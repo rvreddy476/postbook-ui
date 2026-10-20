@@ -71,6 +71,8 @@ export interface MessageEditedEvent {
 export interface MessageDeletedEvent {
   conversation_id: string;
   msg_id: string;
+  /** Why, when the frame says ("expired": a disappearing message the server removed). */
+  reason?: string;
 }
 
 export interface PinUpdateEvent {
@@ -508,7 +510,7 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
         // Contract frame {conversation_id, message_id}; legacy msg_id.
         const decoded = decodeMessageDeletedFrame(data);
         if (decoded) {
-          const evt: MessageDeletedEvent = { conversation_id: decoded.conversationId, msg_id: decoded.messageId };
+          const evt: MessageDeletedEvent = { conversation_id: decoded.conversationId, msg_id: decoded.messageId, reason: decoded.reason };
           messageDeletedListeners.forEach(cb => cb(evt));
         }
       } else if (data.type === 'comment_change') {
@@ -913,7 +915,22 @@ export const subscribeToPresenceUpdates = (cb: (e: PresenceUpdateEvent) => void)
 // Pin Message API
 // ---------------------------------------------------------------------------
 
+/*
+  message-service (internal/http/handler.go "Pins", messenger_extras_handler.go):
+    POST   /conversations/:id/pins          {message_id}  -> 201 the pin row
+    DELETE /conversations/:id/pins/:pinId                 -> 200
+    GET    /conversations/:id/pins                        -> pin rows, newest first
+  A pin row is {id, conversation_id, message_id, pinned_by, pinned_at}; it has
+  no message body, so the bar finds the text among the loaded messages.
+  Unpin takes the PIN id, not the message id. At most 3 pins per chat.
+*/
+
+/** The server's cap on pins in one conversation (store PinMessage). */
+export const MAX_PINS_PER_CONVERSATION = 3;
+
 export interface PinnedMessage {
+  /** The pin's own id — what unpin needs. */
+  id: string;
   conversation_id: string;
   message_id: string;
   pinned_by: string;
@@ -921,30 +938,54 @@ export interface PinnedMessage {
   message?: Message;
 }
 
-export const pinMessage = async (conversationId: string, messageId: string) => {
-  return chatClient.request(`/conversations/${conversationId}/pin/${messageId}`, {
-    method: 'POST',
-  });
+const pinsPath = (conversationId: string) => `/conversations/${encodeURIComponent(conversationId)}/pins`;
+
+/** One pin row off the wire; null when it has no pin id or message id. */
+export const decodePin = (raw: unknown, conversationId: string): PinnedMessage | null => {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  const id = typeof r.id === 'string' ? r.id : '';
+  const messageId = typeof r.message_id === 'string' ? r.message_id : '';
+  if (!id || !messageId) return null;
+  return {
+    id,
+    conversation_id: typeof r.conversation_id === 'string' && r.conversation_id ? r.conversation_id : conversationId,
+    message_id: messageId,
+    pinned_by: typeof r.pinned_by === 'string' ? r.pinned_by : '',
+    pinned_at: typeof r.pinned_at === 'string' ? r.pinned_at : '',
+    message: r.message && typeof r.message === 'object' ? normalizeMessage(r.message as Record<string, unknown>) : undefined,
+  };
 };
 
-export const unpinMessage = async (conversationId: string) => {
-  return chatClient.request(`/conversations/${conversationId}/pin`, {
+/** Pin a message; returns the new pin (its id is what unpin takes). */
+export const pinMessage = async (conversationId: string, messageId: string): Promise<PinnedMessage | null> => {
+  const json = await chatClient.request(pinsPath(conversationId), {
+    method: 'POST',
+    body: JSON.stringify({ message_id: messageId }),
+  });
+  return decodePin(json?.data ?? json, conversationId);
+};
+
+/** Unpin by the PIN id (from listPinnedMessages or pinMessage). */
+export const unpinMessage = async (conversationId: string, pinId: string) => {
+  return chatClient.request(`${pinsPath(conversationId)}/${encodeURIComponent(pinId)}`, {
     method: 'DELETE',
   });
 };
 
+/** Every pin in the conversation, newest first (the server's order). */
+export const listPinnedMessages = async (conversationId: string): Promise<PinnedMessage[]> => {
+  const json = await chatClient.request(pinsPath(conversationId));
+  // An empty list comes back as `data: null` (a nil Go slice).
+  const rows: unknown = json?.data ?? json;
+  if (!Array.isArray(rows)) return [];
+  return rows.map((row) => decodePin(row, conversationId)).filter((p): p is PinnedMessage => p !== null);
+};
+
+/** The newest pin, or null when there is none or the list could not be read. */
 export const getPinnedMessage = async (conversationId: string): Promise<PinnedMessage | null> => {
   try {
-    const json = await chatClient.request(`/conversations/${conversationId}/pin`);
-    const raw = json.data || json;
-    if (!raw || !raw.message_id) return null;
-    return {
-      conversation_id: raw.conversation_id || conversationId,
-      message_id: raw.message_id || raw.msg_id,
-      pinned_by: raw.pinned_by,
-      pinned_at: raw.pinned_at,
-      message: raw.message ? normalizeMessage(raw.message) : undefined,
-    };
+    return (await listPinnedMessages(conversationId))[0] ?? null;
   } catch {
     return null;
   }

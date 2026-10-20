@@ -443,9 +443,8 @@ export function useChat(conversationId: string | null | undefined, currentUserId
   const handlePinMessage = useCallback(async (msgId: string) => {
     if (!conversationId) return
     try {
-      await pinMessage(conversationId, msgId)
-      // Refetch pinned message
-      const pinned = await getPinnedMessage(conversationId)
+      // The answer is the pin row; the list read is the fallback.
+      const pinned = (await pinMessage(conversationId, msgId)) ?? (await getPinnedMessage(conversationId))
       setPinnedMessage(pinned)
     } catch (err) {
       console.error('[useChat] pin failed:', err)
@@ -455,14 +454,16 @@ export function useChat(conversationId: string | null | undefined, currentUserId
 
   // ---- Unpin handler ----
   const handleUnpinMessage = useCallback(async () => {
-    if (!conversationId) return
+    // Unpin takes the pin's own id, not the message id.
+    if (!conversationId || !pinnedMessage) return
     try {
-      await unpinMessage(conversationId)
-      setPinnedMessage(null)
+      await unpinMessage(conversationId, pinnedMessage.id)
+      // Another pin may still stand; show the next newest.
+      setPinnedMessage(await getPinnedMessage(conversationId))
     } catch (err) {
       console.error('[useChat] unpin failed:', err)
     }
-  }, [conversationId])
+  }, [conversationId, pinnedMessage])
 
   // ---- Forward handler ----
   const handleForward = useCallback(async (targetConvId: string, msg: ChatMessage) => {

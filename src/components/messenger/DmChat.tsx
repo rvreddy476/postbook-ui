@@ -23,8 +23,10 @@ import {
   markConversationRead,
   sendTypingIndicator,
   replyToMessage,
+  pinMessage,
   unpinMessage,
-  getPinnedMessage,
+  listPinnedMessages,
+  MAX_PINS_PER_CONVERSATION,
   Message as BackendMessage,
   ReactionUpdate,
   TypingEvent,
@@ -39,6 +41,7 @@ import {
   fetchMessagePage,
   fetchPresenceDetail,
   fetchReadSummary,
+  getConversationPrefs,
   sendGifMessage,
   sendMediaKindMessage,
   sendStickerMessage,
@@ -69,8 +72,10 @@ import {
   MESSAGE_ACTION_LABELS,
   bubbleKind,
   isBareBubble,
+  isExpiryDelete,
   lastOwnMessageId,
   messageActions,
+  nextPinIndex,
   prependOlder,
   quoteLabel,
   searchThread,
@@ -81,6 +86,7 @@ import {
   type MessageAction,
 } from './thread/threadModel'
 import ChatSettingsPanel from './thread/ChatSettingsPanel'
+import { disappearLabel, disappearingNotice } from './thread/chatSettings'
 import SharedReelsViewer from './thread/SharedReelsViewer'
 import ForwardSheet from './thread/ForwardSheet'
 import ReportMessageSheet from './thread/ReportMessageSheet'
@@ -91,8 +97,8 @@ import { StickerGifPanel, useStickerGifAvailability } from './thread/StickerGifP
 import './chat-bubbles.css'
 import {
   ArrowLeft, Phone, Video, MoreHorizontal, ChevronDown, ChevronUp,
-  Send, Pin, Reply, Pencil, Trash2, X, Check, CheckCheck, Loader2, PanelRight,
-  Smile, SmilePlus, ImagePlus, Copy, Forward, Flag, Undo2, Sticker, Search, Users,
+  Send, Pin, PinOff, Reply, Pencil, Trash2, X, Check, CheckCheck, Loader2, PanelRight,
+  Smile, SmilePlus, ImagePlus, Copy, Forward, Flag, Undo2, Sticker, Search, Users, Timer,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -145,6 +151,7 @@ const ACTION_ICONS: Record<MessageAction, LucideIcon> = {
   unsend: Undo2,
   report: Flag,
   pin: Pin,
+  unpin: PinOff,
 }
 
 // ---------------------------------------------------------------------------
@@ -192,7 +199,13 @@ export default function DmChat({
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set())
   const [readReceipts, setReadReceipts] = useState<Map<string, string[]>>(new Map())
   const [peerLastReadAt, setPeerLastReadAt] = useState<number | null>(null)
-  const [pinnedMessage, setPinnedMessage] = useState<PinnedMessage | null>(null)
+  // Every pin in the chat, newest first; the bar shows pins[pinIndex].
+  const [pins, setPins] = useState<PinnedMessage[]>([])
+  const [pinIndex, setPinIndex] = useState(0)
+  // My disappearing-messages window for this chat (ms), null when off.
+  const [disappearAfterMs, setDisappearAfterMs] = useState<number | null>(null)
+  const disappearRef = useRef<number | null>(null)
+  disappearRef.current = disappearAfterMs
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [peerPresence, setPeerPresence] = useState<{ isOnline: boolean | null; lastActiveAt: string | null }>({
     isOnline: userOnline ? true : null,
@@ -302,6 +315,9 @@ export default function DmChat({
     setChatSource(null)
     setMessages([])
     setOlderCursor(null)
+    setPins([])
+    setPinIndex(0)
+    setDisappearAfterMs(null)
     lastBottomIdRef.current = null
     const init = async () => {
       try {
@@ -347,8 +363,11 @@ export default function DmChat({
           } else {
             clearUnreadBadge(conversationId)
           }
-          getPinnedMessage(conversationId).then(pinned => {
-            if (!cancelled) setPinnedMessage(pinned)
+          listPinnedMessages(conversationId).then(list => {
+            if (!cancelled) { setPins(list); setPinIndex(0) }
+          }).catch(() => { })
+          getConversationPrefs(conversationId).then(prefs => {
+            if (!cancelled) setDisappearAfterMs(prefs?.disappearAfterMs ?? null)
           }).catch(() => { })
         }
       } catch (err) {
@@ -453,7 +472,17 @@ export default function DmChat({
 
   useEffect(() => subscribeToMessageDeletes((evt: MessageDeletedEvent) => {
     if (evt.conversation_id !== convIdRef.current) return
-    setMessages(prev => prev.map(m => m.id === evt.msg_id ? { ...m, isDeleted: true, text: '' } : m))
+    setMessages(prev => {
+      const target = prev.find(m => m.id === evt.msg_id)
+      // A disappearing message the server expired leaves no trace; an
+      // unsent one keeps its "deleted" placeholder.
+      if (isExpiryDelete(target, { reason: evt.reason, disappearAfterMs: disappearRef.current, now: Date.now() })) {
+        return prev.filter(m => m.id !== evt.msg_id)
+      }
+      return prev.map(m => m.id === evt.msg_id ? { ...m, isDeleted: true, text: '' } : m)
+    })
+    // A pin on a message that is gone goes with it.
+    setPins(prev => prev.filter(p => p.message_id !== evt.msg_id))
   }), [])
 
   useEffect(() => {
@@ -512,8 +541,9 @@ export default function DmChat({
 
   useEffect(() => subscribeToPinUpdates((evt: PinUpdateEvent) => {
     if (evt.conversation_id !== convIdRef.current) return
-    if (evt.action === 'unpin') setPinnedMessage(null)
-    else if (convIdRef.current) getPinnedMessage(convIdRef.current).then(pinned => setPinnedMessage(pinned))
+    // message-service does not send pin frames yet; if one comes, re-read the list.
+    const id = convIdRef.current
+    if (id) listPinnedMessages(id).then(list => { setPins(list); setPinIndex(0) }).catch(() => { })
   }), [])
 
   useEffect(() => {
@@ -691,6 +721,42 @@ export default function DmChat({
     inputRef.current?.focus()
   }, [])
 
+  // POST /conversations/:id/pins {message_id}; the answer is the pin row.
+  const handlePinMessage = useCallback(async (msg: DisplayMessage) => {
+    const id = convIdRef.current
+    if (!id) return
+    if (pins.length >= MAX_PINS_PER_CONVERSATION) {
+      say(`You can pin up to ${MAX_PINS_PER_CONVERSATION} messages. Unpin one first.`)
+      return
+    }
+    try {
+      const pin = await pinMessage(id, msg.id)
+      const list = pin ? [pin, ...pins.filter(p => p.id !== pin.id)] : await listPinnedMessages(id)
+      setPins(list)
+      setPinIndex(0)
+      say('Message pinned')
+    } catch (err) {
+      console.error('[DmChat] pin failed:', err)
+      say("Couldn't pin that message")
+    }
+  }, [pins, say])
+
+  // DELETE /conversations/:id/pins/:pinId — by the pin's own id.
+  const handleUnpinMessage = useCallback(async (pin: PinnedMessage) => {
+    const id = convIdRef.current
+    if (!id) return
+    const before = pins
+    setPins(prev => prev.filter(p => p.id !== pin.id))
+    setPinIndex(0)
+    try {
+      await unpinMessage(id, pin.id)
+    } catch (err) {
+      console.error('[DmChat] unpin failed:', err)
+      setPins(before)
+      say("Couldn't unpin that message")
+    }
+  }, [pins, say])
+
   const runAction = useCallback((action: MessageAction, msg: DisplayMessage) => {
     setContextMenu(null)
     switch (action) {
@@ -699,13 +765,18 @@ export default function DmChat({
         void navigator.clipboard?.writeText(msg.text).then(() => say('Copied'), () => say("Couldn't copy"))
         return
       case 'forward': return setForwarding(msg)
+      case 'pin': return void handlePinMessage(msg)
+      case 'unpin': {
+        const pin = pins.find(p => p.message_id === msg.id)
+        return pin ? void handleUnpinMessage(pin) : undefined
+      }
       case 'edit': return handleEditStart(msg)
       case 'deleteForMe': return void handleDelete(msg, 'me')
       case 'unsend': return void handleDelete(msg, 'everyone')
       case 'report': return setReporting(msg)
       default: return
     }
-  }, [handleReply, handleEditStart, handleDelete, say])
+  }, [handleReply, handleEditStart, handleDelete, handlePinMessage, handleUnpinMessage, pins, say])
 
   const handleEmojiSelect = useCallback((emoji: { native: string }) => {
     const el = inputRef.current
@@ -727,11 +798,6 @@ export default function DmChat({
     setReactionPickerFor(null)
   }, [reactionPickerFor, handleToggleReaction])
 
-  const handleUnpinMessage = useCallback(async () => {
-    if (!convIdRef.current) return
-    try { await unpinMessage(convIdRef.current); setPinnedMessage(null) }
-    catch (err) { console.error('[DmChat] unpin failed:', err) }
-  }, [])
 
   const scrollToMessage = useCallback((msgId: string) => {
     const el = document.getElementById(`msg-${msgId}`)
@@ -865,6 +931,13 @@ export default function DmChat({
   }, [searchHits, searchIndex, scrollToMessage])
 
   const contextMsg = contextMenu ? messages.find(m => m.id === contextMenu.messageId) ?? null : null
+  const shownPin = pins.length > 0 ? pins[pinIndex % pins.length] : null
+  // A pin row carries no text; it comes from the loaded messages.
+  const shownPinMsg = shownPin ? findMessage(shownPin.message_id) : undefined
+  const shownPinText = shownPinMsg
+    ? (shownPinMsg.isDeleted ? 'This message was deleted' : shownPinMsg.text || 'Attachment')
+    : shownPin?.message?.text || 'Tap to see the message'
+  const disappearNotice = disappearingNotice(disappearAfterMs)
   const headerAvatar = isGroup ? group?.avatarUrl ?? null : (userAvatar && (userAvatar.startsWith('http') || userAvatar.startsWith('/')) ? userAvatar : null)
   const sharedPostIds = useMemo(() => postCardIds(messages), [messages])
   const settingsPeer = isGroup ? null : { userId, displayName: userName, username: null, avatarUrl: headerAvatar }
@@ -887,7 +960,14 @@ export default function DmChat({
           <button type="button" onClick={() => setShowSettings(true)} className="flex min-w-0 items-center gap-3 text-left">
             <InboxAvatar name={userName} src={headerAvatar} size={40} online={!isGroup && peerPresence.isOnline === true} group={isGroup} />
             <span className="flex min-w-0 flex-col">
-              <span className="truncate text-[15px] font-bold tracking-tight text-brand-text">{userName}</span>
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span className="truncate text-[15px] font-bold tracking-tight text-brand-text">{userName}</span>
+                {disappearAfterMs ? (
+                  <span title={`Disappearing messages: ${disappearLabel(disappearAfterMs)}`} className="shrink-0 text-brand-text/60">
+                    <Timer className="h-3.5 w-3.5" strokeWidth={2} aria-label={`Disappearing messages: ${disappearLabel(disappearAfterMs)}`} />
+                  </span>
+                ) : null}
+              </span>
               {statusText && (
                 <span className={`truncate text-[12px] ${anyTyping ? 'text-primary-ink' : peerPresence.isOnline && !isGroup ? 'text-success' : 'text-brand-text/60'}`}>
                   {statusText}
@@ -950,19 +1030,26 @@ export default function DmChat({
         </div>
       )}
 
-      {/* Pinned message banner */}
-      {pinnedMessage && (
+      {/* Pinned message bar: one pin at a time; a tap jumps to it and steps to the next. */}
+      {shownPin && (
         <div
-          onClick={() => scrollToMessage(pinnedMessage.message_id)}
+          role="button"
+          tabIndex={0}
+          onClick={() => { scrollToMessage(shownPin.message_id); setPinIndex(i => nextPinIndex(i, pins.length)) }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); scrollToMessage(shownPin.message_id); setPinIndex(i => nextPinIndex(i, pins.length)) }
+          }}
           className="flex items-center gap-3 px-5 py-2.5 bg-brand-secondary border-b border-brand-divider cursor-pointer shrink-0 hover:bg-brand-secondary/80 transition-colors"
         >
           <Pin className="w-4 h-4 text-brand-text/50 shrink-0 rotate-45" />
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold text-brand-text/60 tracking-wider">Pinned Message</p>
-            <p className="text-[12px] text-brand-highlight truncate">{pinnedMessage.message?.text || 'Click to view'}</p>
+            <p className="text-[10px] font-bold text-brand-text/60 tracking-wider">
+              {pins.length > 1 ? `Pinned message ${pinIndex % pins.length + 1} of ${pins.length}` : 'Pinned message'}
+            </p>
+            <p className="text-[12px] text-brand-highlight truncate">{shownPinText}</p>
           </div>
           <button
-            onClick={(e) => { e.stopPropagation(); handleUnpinMessage() }}
+            onClick={(e) => { e.stopPropagation(); void handleUnpinMessage(shownPin) }}
             aria-label="Unpin"
             className="w-6 h-6 rounded-md hover:bg-brand-secondary flex items-center justify-center text-brand-text/40 hover:text-brand-text/60 transition-all shrink-0"
           >
@@ -1004,6 +1091,16 @@ export default function DmChat({
           ) : (
             <ThreadIntro userId={userId} fallbackName={userName} fallbackAvatar={headerAvatar} />
           )
+        )}
+
+        {/* Same look as a server system line; ours, so it is not in the history. */}
+        {!loading && !error && disappearNotice && (
+          <div className="flex justify-center py-3">
+            <span className="flex items-center gap-1.5 text-[11px] text-brand-text/60 bg-brand-card px-4 py-1.5 rounded-full shadow-xs border border-brand-divider italic">
+              <Timer className="h-3 w-3" aria-hidden />
+              {disappearNotice}
+            </span>
+          </div>
         )}
 
         {!loading && messages.map((msg, i) => {
@@ -1227,7 +1324,7 @@ export default function DmChat({
             </div>
           ) : (
             <div className="w-[200px] overflow-hidden rounded-xl border border-brand-divider bg-brand-card py-1 shadow-xl">
-              {messageActions(contextMsg, myId).map((action) => {
+              {messageActions(contextMsg, myId, { pinned: pins.some(p => p.message_id === contextMsg.id) }).map((action) => {
                 const Icon = ACTION_ICONS[action]
                 const danger = action === 'unsend' || action === 'deleteForMe' || action === 'report'
                 return (
@@ -1400,6 +1497,7 @@ export default function DmChat({
             onCleared={() => { setMessages([]); setOlderCursor(null); setShowSettings(false); say('Chat cleared') }}
             onDeleted={() => { setShowSettings(false); onChatRemoved?.() }}
             onLeft={() => { setShowSettings(false); onChatRemoved?.() }}
+            onPrefsChange={(prefs) => setDisappearAfterMs(prefs.disappearAfterMs)}
           />
         </div>
       )}

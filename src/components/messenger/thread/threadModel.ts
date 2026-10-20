@@ -69,21 +69,55 @@ export function prependOlder(current: readonly DisplayMessage[], olderNewestFirs
   return [...older, ...current]
 }
 
-export type MessageAction = 'reply' | 'copy' | 'forward' | 'edit' | 'deleteForMe' | 'unsend' | 'report' | 'pin'
+export type MessageAction = 'reply' | 'copy' | 'forward' | 'edit' | 'deleteForMe' | 'unsend' | 'report' | 'pin' | 'unpin'
 
-/** The long-press menu for one message, in order. */
-export function messageActions(msg: DisplayMessage, myId: string): MessageAction[] {
+/**
+ * The long-press menu for one message, in order. Pass `pin` to offer
+ * Pin / Unpin (after Forward): `pinned` is whether this message is pinned now.
+ * System lines and calls are never pinned.
+ */
+export function messageActions(msg: DisplayMessage, myId: string, pin?: { pinned: boolean }): MessageAction[] {
   if (msg.isDeleted || msg.id.startsWith('opt-')) return []
   const mine = msg.senderId === myId
   const isText = (msg.type === 'text' || !msg.type) && Boolean(msg.text)
   const out: MessageAction[] = ['reply']
   if (msg.text) out.push('copy')
   out.push('forward')
+  if (pin && msg.type !== 'system' && msg.type !== 'call') out.push(pin.pinned ? 'unpin' : 'pin')
   if (mine && isText) out.push('edit')
   out.push('deleteForMe')
   if (mine) out.push('unsend')
   if (!mine) out.push('report')
   return out
+}
+
+/**
+ * The pin bar's next pin after a tap: the bar shows one pin at a time and a
+ * tap jumps to it, then steps to the next (wrapping), like Telegram.
+ */
+export function nextPinIndex(current: number, count: number): number {
+  if (count <= 0) return 0
+  return (current + 1) % count
+}
+
+/**
+ * A `message_deleted` frame that is the server expiring a disappearing
+ * message, rather than someone unsending it. An expired message leaves the
+ * thread entirely; an unsent one keeps its "deleted" placeholder.
+ *
+ * The frame says so with `reason: "expired"` when the server sends one;
+ * otherwise a message whose age has passed the chat's disappearing window
+ * (a minute of slack for clock skew) is taken as expired.
+ */
+export function isExpiryDelete(
+  msg: Pick<DisplayMessage, 'ts'> | undefined,
+  opts: { reason?: string | null; disappearAfterMs: number | null; now: number },
+): boolean {
+  if (opts.reason === 'expired' || opts.reason === 'disappeared') return true
+  if (!msg || !opts.disappearAfterMs) return false
+  const sentAt = Date.parse(msg.ts)
+  if (Number.isNaN(sentAt)) return false
+  return sentAt + opts.disappearAfterMs <= opts.now + 60_000
 }
 
 export const MESSAGE_ACTION_LABELS: Record<MessageAction, string> = {
@@ -95,6 +129,7 @@ export const MESSAGE_ACTION_LABELS: Record<MessageAction, string> = {
   unsend: 'Unsend',
   report: 'Report',
   pin: 'Pin',
+  unpin: 'Unpin',
 }
 
 /**

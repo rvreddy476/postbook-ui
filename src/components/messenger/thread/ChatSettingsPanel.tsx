@@ -29,6 +29,7 @@ import {
   Play,
   PlayCircle,
   Search,
+  Timer,
   Trash2,
   UserRound,
   X,
@@ -60,6 +61,7 @@ import { leaveConversation } from '@/services/messageService'
 import { postCardView, usePostCards } from '../postCards'
 import {
   ALERT_TONE_LABELS,
+  DISAPPEAR_OPTIONS,
   CONFIRM_COPY,
   NOT_AVAILABLE_YET,
   PREF_SWITCH_LABELS,
@@ -67,6 +69,8 @@ import {
   REPORT_THANKS,
   alertTonePatch,
   applyPrefSwitch,
+  disappearLabel,
+  disappearPatch,
   legacyUserReportReason,
   prefSwitchPatch,
   profileHref,
@@ -159,6 +163,11 @@ export default function ChatSettingsPanel(props: ChatSettingsPanelProps): JSX.El
     void savePrefs({ ...prefs, alertTone: tone }, alertTonePatch(tone))
   }
 
+  const pickDisappear = (ms: number | null) => {
+    if (!prefs || (prefs.disappearAfterMs ?? null) === ms) return
+    void savePrefs({ ...prefs, disappearAfterMs: ms }, disappearPatch(ms))
+  }
+
   /* ── confirmations ─────────────────────────────────────── */
   const [confirm, setConfirm] = useState<ConfirmKind | null>(null)
   const [confirmBusy, setConfirmBusy] = useState(false)
@@ -235,6 +244,7 @@ export default function ChatSettingsPanel(props: ChatSettingsPanelProps): JSX.El
           <Loader2 className="h-4 w-4 animate-spin text-brand-text/40" aria-label="Loading settings" />
         </div>
       ) : prefs ? (
+        <>
         <Group title="Notifications">
           <div className="px-4 py-3">
             <p className="flex items-center gap-2 text-[14px] text-brand-text">
@@ -265,8 +275,43 @@ export default function ChatSettingsPanel(props: ChatSettingsPanelProps): JSX.El
           {(['isMuted', 'muteCalls', 'isPinned'] as const).map((key) => (
             <SwitchRow key={key} icon={SWITCH_ICONS[key]} label={PREF_SWITCH_LABELS[key]} on={prefs[key]} disabled={saving} onToggle={() => flip(key)} />
           ))}
+        </Group>
+        <Group title="Disappearing messages">
+          <div className="px-4 py-3">
+            <p className="flex items-center gap-2 text-[14px] text-brand-text">
+              <Timer className="h-4 w-4 text-brand-text/60" aria-hidden />
+              Disappearing messages
+            </p>
+            <p className="mt-0.5 text-[12px] text-brand-text/60">
+              Messages are removed from this chat once they are this old.
+            </p>
+            <div role="radiogroup" aria-label="Disappearing messages" className="mt-2 flex flex-wrap gap-1.5">
+              {DISAPPEAR_OPTIONS.map((option) => {
+                const on = (prefs.disappearAfterMs ?? null) === option.ms
+                return (
+                  <button
+                    key={option.label}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    disabled={saving}
+                    onClick={() => pickDisappear(option.ms)}
+                    className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors disabled:opacity-60 ${
+                      on ? 'border-primary-ink bg-primary-tint text-primary-ink' : 'border-brand-divider text-brand-text/70 hover:bg-brand-secondary'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                )
+              })}
+            </div>
+            {prefs.disappearAfterMs && !DISAPPEAR_OPTIONS.some((o) => o.ms === prefs.disappearAfterMs) ? (
+              <p className="mt-2 text-[12px] text-brand-text/60">Set to {disappearLabel(prefs.disappearAfterMs)}.</p>
+            ) : null}
+          </div>
           {prefError ? <p role="alert" className="px-4 pb-3 text-[12px] text-danger">{prefError}</p> : null}
         </Group>
+        </>
       ) : null}
 
       {/* Group members */}

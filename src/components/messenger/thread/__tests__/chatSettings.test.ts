@@ -13,7 +13,7 @@ import {
   sharedTabsVisible,
 } from '../chatSettings'
 
-const base: ConversationPrefs = { isMuted: false, muteUntil: null, muteCalls: false, isPinned: false, label: null, alertTone: 'default' }
+const base: ConversationPrefs = { isMuted: false, muteUntil: null, muteCalls: false, isPinned: false, label: null, alertTone: 'default', disappearAfterMs: null }
 
 describe('prefSwitchPatch', () => {
   test('each switch sends only its own wire field', () => {

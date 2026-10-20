@@ -122,8 +122,16 @@ function applyRequestSentToCaches(qc: ReturnType<typeof useQueryClient>, userId:
  */
 async function hydrateProfiles(userIds: string[]): Promise<Map<string, UserProfile>> {
     const map = new Map<string, UserProfile>()
-    const ids = userIds.slice(0, 100)
-    if (ids.length === 0) return map
+    // The batch route takes 100 ids; a longer list goes in chunks so the
+    // rows past 100 are not left as nameless "User" rows.
+    for (let i = 0; i < userIds.length; i += 100) {
+        await hydrateProfileChunk(userIds.slice(i, i + 100), map)
+    }
+    return map
+}
+
+async function hydrateProfileChunk(ids: string[], map: Map<string, UserProfile>): Promise<void> {
+    if (ids.length === 0) return
     const res = await api.post("/v1/profiles/batch", { user_ids: ids })
     const data = res.data
     if (data && typeof data === "object") {
@@ -141,7 +149,6 @@ async function hydrateProfiles(userIds: string[]): Promise<Map<string, UserProfi
             }
         }
     }
-    return map
 }
 
 /** Raw graph-service connection-request shape. */
@@ -281,6 +288,10 @@ export function useFriends(userId: string | undefined, limit = 20) {
                 meta: { limit, offset: 0, total: allIds.length, has_next: allIds.length > ids.length },
             }
         },
+        // "Show more" asks again with a bigger limit; keep the rows already
+        // on screen while it loads (same person only, never another's list).
+        placeholderData: (previous, previousQuery) =>
+            previousQuery?.queryKey[2] === userId ? previous : undefined,
         enabled: !!userId,
     })
 }
@@ -708,45 +719,61 @@ export function useDismissCategory() {
     })
 }
 
+/** The query key useBatchRelationships caches a set of targets under. */
+export function batchRelationshipsKey(viewerId: string, targetIds: string[]) {
+    return ["relationships", "batch", viewerId, ...targetIds.slice().sort()] as const
+}
+
+/**
+ * POST /v1/graph/relationships/batch for up to 100 targets, normalised to
+ * the UI Relationship. Shared by useBatchRelationships and the paged
+ * connection lists, which ask once per page.
+ */
+export async function fetchRelationshipsBatch(viewerId: string, targetIds: string[]): Promise<Map<string, Relationship>> {
+    const capped = targetIds.slice(0, 100)
+    const res = await api.post<RelationshipBatchResponse>("/v1/graph/relationships/batch", {
+        viewer_id: viewerId,
+        target_ids: capped,
+    })
+    // graph-service returns a bare { "<uuid>": {...} } map (no
+    // envelope); tolerate a wrapped shape too. Wire field names
+    // differ from the UI Relationship type, so normalize:
+    // follows -> following, is_connection -> is_connection/accepted.
+    const raw = ((res.data as unknown as { relationships?: Record<string, unknown> }).relationships
+        ?? (res.data as unknown)) as Record<string, Record<string, unknown>>
+    const map = new Map<string, Relationship>()
+    for (const [userId, rel] of Object.entries(raw ?? {})) {
+        if (!rel || typeof rel !== 'object') continue
+        const isConnection = !!rel.is_connection
+        const status = (rel.connection_status as Relationship['connection_status']) ?? 'none'
+        map.set(userId, {
+            following: !!(rel.follows ?? rel.following),
+            followed_by: !!rel.followed_by,
+            is_connection: isConnection,
+            connection_status: isConnection ? 'accepted' : status,
+            // Private accounts: "pending_sent" is a follow request still
+            // waiting (graph-service store.Relationship.FollowRequestStatus).
+            follow_request_status: (rel.follow_request_status as Relationship['follow_request_status']) ?? 'none',
+            // Every field written explicitly, and no `as Relationship`
+            // cast: the cast asserted the whole type while the loop
+            // copied only some of it, so anything unnamed was
+            // undefined at runtime with no error anywhere.
+            blocked: !!rel.blocked,
+            blocked_by: !!rel.blocked_by,
+            is_muted: !!rel.is_muted,
+            can_dm: !!rel.can_dm,
+            can_see_online: !!rel.can_see_online,
+            can_add_to_group: !!rel.can_add_to_group,
+        })
+    }
+    return map
+}
+
 export function useBatchRelationships(viewerId: string, targetIds: string[]) {
     const capped = targetIds.slice(0, 100)
     return useQuery({
-        queryKey: ["relationships", "batch", viewerId, ...capped.slice().sort()],
-        queryFn: async () => {
-            const res = await api.post<RelationshipBatchResponse>("/v1/graph/relationships/batch", {
-                viewer_id: viewerId,
-                target_ids: capped,
-            })
-            // graph-service returns a bare { "<uuid>": {...} } map (no
-            // envelope); tolerate a wrapped shape too. Wire field names
-            // differ from the UI Relationship type, so normalize:
-            // follows -> following, is_connection -> is_connection/accepted.
-            const raw = ((res.data as unknown as { relationships?: Record<string, unknown> }).relationships
-                ?? (res.data as unknown)) as Record<string, Record<string, unknown>>
-            const map = new Map<string, Relationship>()
-            for (const [userId, rel] of Object.entries(raw ?? {})) {
-                if (!rel || typeof rel !== 'object') continue
-                const isConnection = !!rel.is_connection
-                const status = (rel.connection_status as Relationship['connection_status']) ?? 'none'
-                map.set(userId, {
-                    following: !!(rel.follows ?? rel.following),
-                    followed_by: !!rel.followed_by,
-                    is_connection: isConnection,
-                    connection_status: isConnection ? 'accepted' : status,
-                    // Every field written explicitly, and no `as Relationship`
-                    // cast: the cast asserted the whole type while the loop
-                    // copied only some of it, so anything unnamed was
-                    // undefined at runtime with no error anywhere.
-                    blocked: !!rel.blocked,
-                    blocked_by: !!rel.blocked_by,
-                    is_muted: !!rel.is_muted,
-                    can_dm: !!rel.can_dm,
-                    can_see_online: !!rel.can_see_online,
-                    can_add_to_group: !!rel.can_add_to_group,
-                })
-            }
-            return map
-        },
+        queryKey: batchRelationshipsKey(viewerId, capped),
+        queryFn: () => fetchRelationshipsBatch(viewerId, capped),
         staleTime: 30_000,
         enabled: !!viewerId && capped.length > 0,
     })

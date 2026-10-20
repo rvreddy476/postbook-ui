@@ -265,6 +265,6 @@ describe('conversation prefs (§1.1)', () => {
     expect(p.muteCalls).toBe(true)
   })
   test('missing fields are neutral', () => {
-    expect(decodeConversationPrefs({})).toEqual({ isMuted: false, muteUntil: null, muteCalls: false, isPinned: false, label: null, alertTone: 'default' })
+    expect(decodeConversationPrefs({})).toEqual({ isMuted: false, muteUntil: null, muteCalls: false, isPinned: false, label: null, alertTone: 'default', disappearAfterMs: null })
   })
 })

@@ -177,12 +177,21 @@ export interface FollowResult {
     status: string
 }
 
-function invalidateAfterFollowChange(qc: ReturnType<typeof useQueryClient>) {
+export interface FollowMutationOptions {
+    /**
+     * Leave the follower/following lists on screen as they are: they are
+     * marked stale but not refetched, so a row the viewer just unfollowed
+     * stays in their Following list showing "Follow" (Instagram/TikTok).
+     */
+    keepListsInPlace?: boolean
+}
+
+function invalidateAfterFollowChange(qc: ReturnType<typeof useQueryClient>, options?: FollowMutationOptions) {
     qc.invalidateQueries({ queryKey: ["profile"] })
     qc.invalidateQueries({ queryKey: ["aggregated-profile"] })
     qc.invalidateQueries({ queryKey: ["relationship"] })
     qc.invalidateQueries({ queryKey: ["relationships", "batch"] })
-    qc.invalidateQueries({ queryKey: ["connections"] })
+    qc.invalidateQueries({ queryKey: ["connections"], refetchType: options?.keepListsInPlace ? "none" : "active" })
 }
 
 /** POST /v1/graph/follow { user_id } — the request useFollowUser sends. */
@@ -198,18 +207,18 @@ export async function unfollowUser(usernameOrId: string): Promise<void> {
     await api.post(GRAPH_ROUTES.unfollow, graphUserIdBody(userId))
 }
 
-export function useFollowUser() {
+export function useFollowUser(options?: FollowMutationOptions) {
     const qc = useQueryClient()
     return useMutation({
         mutationFn: followUser,
-        onSuccess: () => invalidateAfterFollowChange(qc),
+        onSuccess: () => invalidateAfterFollowChange(qc, options),
     })
 }
 
-export function useUnfollowUser() {
+export function useUnfollowUser(options?: FollowMutationOptions) {
     const qc = useQueryClient()
     return useMutation({
         mutationFn: unfollowUser,
-        onSuccess: () => invalidateAfterFollowChange(qc),
+        onSuccess: () => invalidateAfterFollowChange(qc, options),
     })
 }

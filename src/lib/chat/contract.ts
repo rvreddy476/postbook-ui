@@ -737,13 +737,19 @@ export function decodePresenceFrame(frame: unknown): ({ userId: string } & Prese
   }
 }
 
-/** A `message_deleted` frame: contract `message_id`, legacy `msg_id`. */
-export function decodeMessageDeletedFrame(frame: unknown): { conversationId: string; messageId: string } | null {
+/**
+ * A `message_deleted` frame: contract `message_id`, legacy `msg_id`. An
+ * optional `reason` ("expired" for a disappearing message the server
+ * removed) is passed through when the frame carries one.
+ */
+export function decodeMessageDeletedFrame(frame: unknown): { conversationId: string; messageId: string; reason?: string } | null {
   if (!isObj(frame)) return null
   const p = isObj(frame.payload) ? frame.payload : frame
   const conversationId = first(p.conversation_id)
   const messageId = first(p.message_id, p.msg_id)
-  return conversationId && messageId ? { conversationId, messageId } : null
+  if (!conversationId || !messageId) return null
+  const reason = first(p.reason)
+  return reason ? { conversationId, messageId, reason } : { conversationId, messageId }
 }
 
 /* ------------------------------------------------------------------ */
@@ -760,6 +766,8 @@ export interface ConversationPrefs {
   isPinned: boolean
   label: string | null
   alertTone: AlertTone
+  /** Disappearing messages window in ms; null when off (absent, null or 0 on the wire). */
+  disappearAfterMs: number | null
 }
 
 export function decodeConversationPrefs(body: unknown): ConversationPrefs {
@@ -775,5 +783,9 @@ export function decodeConversationPrefs(body: unknown): ConversationPrefs {
     isPinned: s.is_pinned === true,
     label: first(s.label),
     alertTone: ALERT_TONES.includes(s.alert_tone as AlertTone) ? (s.alert_tone as AlertTone) : 'default',
+    disappearAfterMs:
+      typeof s.disappear_after_ms === 'number' && Number.isFinite(s.disappear_after_ms) && s.disappear_after_ms > 0
+        ? s.disappear_after_ms
+        : null,
   }
 }

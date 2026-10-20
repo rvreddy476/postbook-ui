@@ -91,6 +91,11 @@ export interface PrefsPatch {
   mute_calls?: boolean
   alert_tone?: AlertTone
   label?: 'archived' | 'none'
+  /**
+   * Disappearing messages window in ms; 0 turns it off. Not null: the
+   * settings handler ignores a null field (it only applies what is set).
+   */
+  disappear_after_ms?: number
 }
 
 export async function getConversationPrefs(conversationId: string): Promise<ConversationPrefs | null> {
