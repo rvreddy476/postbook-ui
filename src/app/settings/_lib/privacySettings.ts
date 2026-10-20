@@ -27,6 +27,7 @@ export type ConnectionRequestAudience =
     | "everyone"
 export type MessageAudience =
     | "no_one"
+    | "people_i_follow"
     | "connections_only"
     | "connections_and_mutual_followers"
     | "followers_message_requests"
@@ -88,36 +89,23 @@ export const READ_RECEIPT_OPTIONS: Option<VisibilityAudience>[] = [
     { value: "no_one", label: "No one" },
 ]
 
-/**
- * The four values offered for new choices, the same set Android's picker
- * offers (DirectMessageAudience.kt). The other two server values are retired
- * from the UI but still valid for existing accounts; see messageAudienceOptions.
- */
-const MESSAGE_AUDIENCE_PRIMARY: Option<MessageAudience>[] = [
-    { value: "everyone_message_requests", label: "Everyone (as message requests)" },
-    { value: "followers_message_requests", label: "Followers (as message requests)" },
-    { value: "connections_only", label: "Connections only" },
-    { value: "no_one", label: "No one" },
-]
-
-const MESSAGE_AUDIENCE_RETIRED: Option<MessageAudience>[] = [
-    { value: "connections_and_mutual_followers", label: "Connections and mutual followers" },
-    { value: "friends_of_friends_requests", label: "Friends of friends (as message requests)" },
-]
-
-/**
- * The options for the "who can message me" picker. A stored retired value is
- * listed too, so the control shows what is actually in force instead of
- * silently snapping to a different value the user never picked.
- */
-export function messageAudienceOptions(current: MessageAudience | undefined): Option<MessageAudience>[] {
-    const retired = MESSAGE_AUDIENCE_RETIRED.find((o) => o.value === current)
-    return retired ? [...MESSAGE_AUDIENCE_PRIMARY, retired] : MESSAGE_AUDIENCE_PRIMARY
-}
-
+/*
+  "Who can message you" has ONE control: Settings › Inbox & messaging
+  (messagingSettings.ts, DM consent contract §1). This file only reads the
+  value, and accepts the four values plus the retired ones the server still
+  maps on write.
+*/
 const ACCOUNT_VISIBILITY = new Set<string>(["public", "private"])
 const COMMENT_AUDIENCE = new Set<string>(["everyone", "friends"])
-const MESSAGE_AUDIENCE = new Set<string>([...MESSAGE_AUDIENCE_PRIMARY, ...MESSAGE_AUDIENCE_RETIRED].map((o) => o.value))
+const MESSAGE_AUDIENCE = new Set<string>([
+    "everyone_message_requests",
+    "followers_message_requests",
+    "people_i_follow",
+    "no_one",
+    "connections_only",
+    "connections_and_mutual_followers",
+    "friends_of_friends_requests",
+])
 const CONNECTION_REQUEST_AUDIENCE = new Set<string>([
     "no_one",
     "friends_of_friends_or_contacts",
@@ -149,7 +137,7 @@ export function parsePrivacySettings(body: unknown): PrivacySettings | null {
         // field the response omitted, never to a value the user chose.
         account_visibility: pick(ACCOUNT_VISIBILITY, s.account_visibility, "public"),
         allow_comments_from: pick(COMMENT_AUDIENCE, s.allow_comments_from, "everyone"),
-        who_can_message: pick(MESSAGE_AUDIENCE, s.who_can_message, "connections_only"),
+        who_can_message: pick(MESSAGE_AUDIENCE, s.who_can_message, "everyone_message_requests"),
         who_can_send_connection_request: pick(
             CONNECTION_REQUEST_AUDIENCE,
             s.who_can_send_connection_request,
@@ -192,14 +180,12 @@ export interface SocialForm {
     allowConnectionRequests: boolean
     /** account_visibility === "private". */
     requireFollowApproval: boolean
-    whoCanMessage: MessageAudience
 }
 
 export function socialFormFromSettings(s: PrivacySettings): SocialForm {
     return {
         allowConnectionRequests: s.who_can_send_connection_request !== "no_one",
         requireFollowApproval: s.account_visibility === "private",
-        whoCanMessage: s.who_can_message,
     }
 }
 
@@ -220,7 +206,6 @@ export function socialPatch(original: PrivacySettings, form: SocialForm): Privac
             original.who_can_send_connection_request,
         ),
         account_visibility: form.requireFollowApproval ? "private" : "public",
-        who_can_message: form.whoCanMessage,
     })
 }
 

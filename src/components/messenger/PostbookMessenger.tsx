@@ -18,6 +18,8 @@ import {
   acceptMessageRequest,
   declineMessageRequest,
 } from '@/services/messageService'
+import { blockMessageRequest, reportMessageRequest } from '@/services/chatParityApi'
+import { GRAPH_ROUTES, graphUserIdBody } from '@/lib/graphApi'
 import { useMyGroups } from '@/hooks/useGroups'
 import { useMyBroadcastChannels } from '@/hooks/useBroadcastChannels'
 import { useMyProfile } from '@/hooks/useEditProfile'
@@ -32,7 +34,8 @@ import { ActivityStatusButton } from './inbox/ActivityStatus'
 import { InboxSearch } from './inbox/InboxSearch'
 import {
   Users, MessageCircle, Plus, Hash, Search, Bell, UserPlus,
-  Lock, Shield, ChevronRight, Send, MailQuestion, Check, X, Loader2,
+  Lock, Shield, ChevronRight, Send, MailQuestion, Check, Loader2,
+  Trash2, Ban, Flag, EyeOff, ArrowLeft,
 } from 'lucide-react'
 
 /* ------------------------------------------------------------------ */
@@ -128,6 +131,8 @@ export default function PostbookMessenger() {
   const [toast, setToast] = useState<string | null>(null)
   const [pendingRequestId, setPendingRequestId] = useState<string | null>(null)
   const [requestFilter, setRequestFilter] = useState<'all' | 'filtered'>('all')
+  /** Block or Report on a request waits for a confirm. */
+  const [confirmRequest, setConfirmRequest] = useState<{ row: InboxRow; action: 'block' | 'report' } | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<InboxRow | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [showArchived, setShowArchived] = useState(false)
@@ -139,7 +144,7 @@ export default function PostbookMessenger() {
 
   const openConversationId = activeGroupChat?.conversationId ?? activeConversationId
   const inbox = useInbox(myId, openConversationId)
-  const { rows, requests, filteredRequests, loading: isLoading } = inbox.state
+  const { rows, requests, filteredRequests, requestCount, hiddenRequestCount, requestCountText, hiddenRequestCountText, loading: isLoading } = inbox.state
 
   const showToast = useCallback((msg: string) => {
     setToast(msg)
@@ -411,6 +416,7 @@ export default function PostbookMessenger() {
       setPendingRequestId(row.id)
       try {
         await acceptMessageRequest(row.id)
+        inbox.dropRequest(row.id)
         await inbox.reload()
         showToast('Request accepted')
         setContactTab('friends')
@@ -426,24 +432,58 @@ export default function PostbookMessenger() {
     [pendingRequestId, inbox.reload, showToast, openRow]
   )
 
-  const handleDeclineRequest = useCallback(
+  /*
+    Delete (the server's decline): the request leaves my Requests and the
+    sender is not told. They can't send me another one for 7 days.
+  */
+  const handleDeleteRequest = useCallback(
     async (row: InboxRow) => {
       if (pendingRequestId) return
       setPendingRequestId(row.id)
       try {
         await declineMessageRequest(row.id)
-        await inbox.reload()
-        showToast('Request declined')
+        inbox.dropRequest(row.id)
+        if (openConversationId === row.id) clearOpen()
+        showToast('Request deleted')
       } catch (err) {
-        console.error('Failed to decline message request:', err)
-        showToast(serverMessage(err, 'Could not decline request'))
+        console.error('Failed to delete message request:', err)
+        showToast(serverMessage(err, "Couldn't delete that request"))
       } finally {
         setPendingRequestId(null)
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pendingRequestId, inbox.reload, showToast]
+    [pendingRequestId, inbox.dropRequest, showToast, openConversationId]
   )
+
+  /*
+    Block: the person is blocked (graph-service), and the request closes
+    with both memberships removed. Report: the request closes and goes to
+    trust & safety with the sender and their message.
+  */
+  const doRequestAction = async () => {
+    if (!confirmRequest || pendingRequestId) return
+    const { row, action } = confirmRequest
+    setPendingRequestId(row.id)
+    try {
+      if (action === 'block') {
+        await blockMessageRequest(row.id)
+        const peerId = row.peer?.userId
+        if (peerId && !row.peerDeleted) await api.post(GRAPH_ROUTES.block, graphUserIdBody(peerId))
+      } else {
+        await reportMessageRequest(row.id)
+      }
+      inbox.dropRequest(row.id)
+      if (openConversationId === row.id) clearOpen()
+      showToast(action === 'block' ? 'Blocked' : 'Reported. Thanks for telling us.')
+    } catch (err) {
+      console.error(`Failed to ${action} message request:`, err)
+      showToast(serverMessage(err, action === 'block' ? "Couldn't block them" : "Couldn't send the report"))
+    } finally {
+      setPendingRequestId(null)
+      setConfirmRequest(null)
+    }
+  }
 
   // Infinite scroll: the sentinel at the end of the list loads the next page.
   const sentinelRef = useRef<HTMLDivElement | null>(null)
@@ -526,8 +566,8 @@ export default function PostbookMessenger() {
               { id: 'friends' as const, label: 'Direct', badge: 0 },
               { id: 'groups' as const, label: 'Groups', badge: 0 },
               { id: 'channels' as const, label: 'Channels', badge: 0 },
-              ...(requests.length > 0
-                ? [{ id: 'requests' as const, label: 'Requests', badge: requests.length }]
+              ...(requestCount > 0 || hiddenRequestCount > 0 || contactTab === 'requests'
+                ? [{ id: 'requests' as const, label: 'Requests', badge: requestCount }]
                 : []),
             ]).map((chip) => {
               const active = contactTab === chip.id
@@ -549,7 +589,7 @@ export default function PostbookMessenger() {
                   {chip.label}
                   {chip.badge > 0 && (
                     <span className={`tabular-nums text-[11px] font-bold ${active ? 'text-white/70' : 'text-primary-ink'}`}>
-                      {chip.badge}
+                      {chip.id === 'requests' ? requestCountText : unreadPillText(chip.badge)}
                     </span>
                   )}
                 </button>
@@ -660,13 +700,13 @@ export default function PostbookMessenger() {
                         <span className="block text-[14px] font-semibold text-brand-text">Message requests</span>
                         <span className="block truncate text-[12px] text-brand-text/60">
                           {requests.length > 0
-                            ? (requests.length > 1 ? `${rowName(requests[0], myId)} and ${requests.length - 1} more want to message you` : `${rowName(requests[0], myId)} wants to message you`)
+                            ? (requestCount > 1 ? `${rowName(requests[0], myId)} and ${requestCount - 1} more want to message you` : `${rowName(requests[0], myId)} wants to message you`)
                             : 'No pending requests'}
                         </span>
                       </span>
-                      {requests.length > 0 && (
+                      {requestCount > 0 && (
                         <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary-ink px-1.5 text-[10px] font-bold tabular-nums text-white">
-                          {unreadPillText(requests.length)}
+                          {requestCountText}
                         </span>
                       )}
                     </button>
@@ -716,31 +756,34 @@ export default function PostbookMessenger() {
             )
           ) : contactTab === 'requests' ? (
             <>
-              {filteredRequests && filteredRequests.length > 0 && (
-                <div className="flex items-center gap-1.5 px-2 pb-2" role="tablist" aria-label="Requests">
-                  {(['all', 'filtered'] as const).map((f) => (
-                    <button
-                      key={f}
-                      role="tab"
-                      aria-selected={requestFilter === f}
-                      onClick={() => setRequestFilter(f)}
-                      className={`rounded-lg px-3 py-1 text-[12px] font-semibold ${requestFilter === f ? 'bg-brand-text text-brand-bg' : 'bg-brand-secondary text-brand-text/60'}`}
-                    >
-                      {f === 'all' ? `All ${requests.length}` : `Filtered ${filteredRequests.length}`}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/*
+                Requests (DM consent §5): incoming only, paged. Each request
+                shows who sent it and their message, with Accept, Delete,
+                Block and Report. Opening one opens the conversation; a
+                reply there accepts it. Hidden requests (possible spam) sit
+                behind their own entry at the bottom.
+              */}
               {requestFilter === 'filtered' && (
-                <p className="px-3 pb-2 text-[12px] text-brand-text/60">
-                  Requests that might be spam or unsafe. Photos and videos stay blurred until you tap them.
-                </p>
+                <div className="px-2 pb-2">
+                  <button
+                    type="button"
+                    onClick={() => setRequestFilter('all')}
+                    className="flex items-center gap-1.5 rounded-lg px-1 py-1 text-[12px] font-semibold text-brand-text/60 hover:text-brand-text"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2} />
+                    Requests
+                  </button>
+                  <h2 className="px-1 pt-1 text-[14px] font-semibold text-brand-text">Hidden requests</h2>
+                  <p className="px-1 pt-0.5 text-[12px] text-brand-text/60">
+                    Requests that might be spam or unsafe: new accounts, links, or words you filter.
+                  </p>
+                </div>
               )}
               {filteredRequestList.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16">
                   <MailQuestion className="w-10 h-10 text-brand-secondary mb-2" />
                   <p className="text-[13px] font-medium text-brand-text/60">
-                    {search ? 'No requests match your search' : 'No message requests'}
+                    {search ? 'No requests match your search' : requestFilter === 'filtered' ? 'No hidden requests' : 'No message requests'}
                   </p>
                 </div>
               ) : (
@@ -748,34 +791,69 @@ export default function PostbookMessenger() {
                   {filteredRequestList.map((row) => {
                     const name = rowName(row, myId)
                     const busy = pendingRequestId === row.id
+                    const action = 'flex h-7 items-center gap-1 rounded-lg px-2.5 text-[12px] font-semibold transition-colors disabled:opacity-50'
                     return (
-                      <div key={row.id} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-brand-secondary">
-                        {/* Opening the request opens the conversation. Typing a
-                            reply there accepts it server-side. */}
-                        <button onClick={() => openRow(row)} className="flex flex-1 min-w-0 items-center gap-3 text-left">
+                      <div key={row.id} className="w-full rounded-xl px-3 py-2.5 hover:bg-brand-secondary">
+                        <button onClick={() => openRow(row)} className="flex w-full min-w-0 items-center gap-3 text-left">
                           <InboxAvatar name={name} src={row.peerDeleted ? null : row.peer?.avatarUrl} size={48} />
                           <div className="flex-1 min-w-0">
                             <span className="block truncate text-[14px] font-semibold text-brand-text">{name}</span>
                             {row.peer?.username && !row.peerDeleted && name !== `@${row.peer.username}` && (
                               <span className="block truncate text-[11px] leading-tight text-brand-text/40">@{row.peer.username}</span>
                             )}
-                            <span className="mt-0.5 block truncate text-[12px] text-brand-text/60">
-                              {rowPreview(row, myId).text}
+                            <span className="mt-0.5 block line-clamp-2 text-[12px] text-brand-text/60">
+                              {rowPreview(row, myId).text || 'Wants to send you a message'}
                             </span>
                           </div>
                         </button>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <button onClick={() => handleAcceptRequest(row)} disabled={busy} aria-label="Accept request" className="w-8 h-8 rounded-lg bg-primary-ink text-brand-bg flex items-center justify-center transition-all disabled:opacity-50">
-                            <Check className="w-4 h-4" />
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-[60px]" role="group" aria-label={`Request from ${name}`}>
+                          <button type="button" onClick={() => void handleAcceptRequest(row)} disabled={busy} className={`${action} bg-primary-ink text-white`}>
+                            <Check className="h-3.5 w-3.5" strokeWidth={2} />Accept
                           </button>
-                          <button onClick={() => handleDeclineRequest(row)} disabled={busy} aria-label="Decline request" className="w-8 h-8 rounded-lg bg-brand-secondary text-brand-text/60 hover:text-brand-text flex items-center justify-center transition-all disabled:opacity-50">
-                            <X className="w-4 h-4" />
+                          <button type="button" onClick={() => void handleDeleteRequest(row)} disabled={busy} className={`${action} bg-brand-secondary text-brand-text/70 hover:text-brand-text`}>
+                            <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />Delete
+                          </button>
+                          <button type="button" onClick={() => setConfirmRequest({ row, action: 'block' })} disabled={busy} className={`${action} bg-brand-secondary text-brand-text/70 hover:text-brand-text`}>
+                            <Ban className="h-3.5 w-3.5" strokeWidth={2} />Block
+                          </button>
+                          <button type="button" onClick={() => setConfirmRequest({ row, action: 'report' })} disabled={busy} className={`${action} bg-brand-secondary text-danger hover:bg-danger/10`}>
+                            <Flag className="h-3.5 w-3.5" strokeWidth={2} />Report
                           </button>
                         </div>
                       </div>
                     )
                   })}
                 </div>
+              )}
+              {!searching && (requestFilter === 'filtered' ? inbox.state.hasMoreHiddenRequests : inbox.state.hasMoreRequests) && (
+                <button
+                  type="button"
+                  onClick={() => void inbox.loadMoreRequests(requestFilter)}
+                  disabled={inbox.state.loadingMoreRequests}
+                  className="mx-auto mt-2 flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-brand-text/60 hover:bg-brand-secondary hover:text-brand-text disabled:opacity-50"
+                >
+                  {inbox.state.loadingMoreRequests && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  More requests
+                </button>
+              )}
+              {requestFilter === 'all' && filteredRequests !== null && !searching && (
+                <button
+                  type="button"
+                  onClick={() => setRequestFilter('filtered')}
+                  className="mt-3 flex w-full items-center gap-3 rounded-xl border-t border-brand-divider px-3 py-3 text-left hover:bg-brand-secondary"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-secondary text-brand-text/60">
+                    <EyeOff className="h-4 w-4" strokeWidth={1.75} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13px] font-semibold text-brand-text">Hidden requests</span>
+                    <span className="block truncate text-[12px] text-brand-text/60">Might be spam or unsafe</span>
+                  </span>
+                  {hiddenRequestCount > 0 && (
+                    <span className="tabular-nums text-[12px] font-semibold text-brand-text/60">{hiddenRequestCountText}</span>
+                  )}
+                  <ChevronRight className="h-4 w-4 text-brand-text/30" />
+                </button>
               )}
             </>
           ) : (
@@ -957,6 +1035,21 @@ export default function PostbookMessenger() {
             />
           </div>
         </div>
+      )}
+
+      {confirmRequest && (
+        <ConfirmDialog
+          title={confirmRequest.action === 'block' ? `Block ${rowName(confirmRequest.row, myId)}?` : 'Report this request?'}
+          body={
+            confirmRequest.action === 'block'
+              ? "They won't be able to message or call you, and this request is removed. They aren't told."
+              : "The request is removed and we'll review the sender and their message. They aren't told who reported them."
+          }
+          confirm={confirmRequest.action === 'block' ? 'Block' : 'Report'}
+          busy={pendingRequestId === confirmRequest.row.id}
+          onCancel={() => setConfirmRequest(null)}
+          onConfirm={() => void doRequestAction()}
+        />
       )}
 
       {confirmDelete && (

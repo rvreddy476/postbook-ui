@@ -10,6 +10,7 @@ import { getSession } from '@/services/authService';
 import type { User } from '@/types';
 import type { InboxMember, InboxRow } from '@/lib/chat/contract';
 import { conversationIdOf, sendPostErrorText, sendPostToUser } from './sendPost';
+import { requestSendErrorText, who } from '@/lib/chat/dmConsent';
 import { InboxAvatar } from './inbox/InboxAvatar';
 import { groupTitleFor, toggleRecipient, MAX_GROUP_PICK } from './newMessagePicker';
 
@@ -135,6 +136,12 @@ export default function NewMessageSheet({ onClose, onOpened, onOpenedGroup, rece
       onOpened(first, conversationId);
       onClose();
     } catch (err: any) {
+      // DM consent: the server's reason (or the request rules) in words.
+      const consent = isGroup ? null : requestSendErrorText(err, who((first as { username?: string | null }).username, first.name));
+      if (consent) {
+        setError(consent);
+        return;
+      }
       const msg = String(err?.message ?? '');
       const refused = err?.status === 403 || /\(403\)|forbidden|not allowed|permission|privacy|cannot message|can't message|blocked/i.test(msg);
       setError(

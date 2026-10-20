@@ -47,6 +47,16 @@ import {
   type StickerPack,
 } from '@/lib/chat/contract'
 import { forwardTargets, outcomeFromError } from '@/lib/chat/forward'
+import {
+  decodeRequestCount,
+  decodeRequestsPage,
+  FIRST_REQUESTS_PAGE,
+  requestsQuery,
+  type RequestCount,
+  type RequestsCursor,
+  type RequestsFilter,
+  type RequestsPage,
+} from '@/lib/chat/requestsLane'
 import { gifWireBody, type GifSendPayload } from '@/lib/chat/giphy'
 
 const enc = encodeURIComponent
@@ -77,11 +87,35 @@ export async function fetchInbox(myId: string, opts: { lane?: InboxLane; cursor?
   return decodeInboxPage(await chatRequest(`/conversations?${q}`), myId)
 }
 
-/** Requests lane, `filter=filtered` for the safe-requests sub-list (§7). */
-export async function fetchRequestsPage(myId: string, filter: 'all' | 'filtered' = 'all'): Promise<InboxPage> {
-  const q = new URLSearchParams({ limit: '50', offset: '0' })
-  if (filter === 'filtered') q.set('filter', 'filtered')
-  return decodeInboxPage(await chatRequest(`/requests?${q}`), myId)
+/**
+ * One page of incoming message requests (DM consent §5), `filtered` for the
+ * Hidden requests sub-list. Cursor paging when the server has it, offset
+ * paging otherwise (lib/chat/requestsLane.ts).
+ */
+export async function fetchRequestsPage(
+  myId: string,
+  filter: RequestsFilter = 'all',
+  at: Exclude<RequestsCursor, null> = FIRST_REQUESTS_PAGE,
+): Promise<RequestsPage> {
+  return decodeRequestsPage(await chatRequest(`/requests?${requestsQuery(filter, at)}`), myId)
+}
+
+/**
+ * The Requests badge and the Hidden requests count (`GET /requests/count`).
+ * null when the route is missing (the badge then counts loaded rows).
+ */
+export async function fetchRequestCount(): Promise<RequestCount | null> {
+  return optional(async () => decodeRequestCount(await chatRequest('/requests/count', {}, true)))
+}
+
+/** Block the person behind a request: the request closes and both memberships go. */
+export async function blockMessageRequest(conversationId: string): Promise<void> {
+  await chatRequest(`/conversations/${enc(conversationId)}/requests/block`, { method: 'POST' })
+}
+
+/** Report a request: it closes, and trust & safety gets the sender and the message. */
+export async function reportMessageRequest(conversationId: string): Promise<void> {
+  await chatRequest(`/conversations/${enc(conversationId)}/requests/report`, { method: 'POST' })
 }
 
 export interface PrefsPatch {

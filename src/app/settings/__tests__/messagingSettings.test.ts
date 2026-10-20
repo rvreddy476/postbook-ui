@@ -7,7 +7,7 @@ import {
     GROUP_ADD_OPTIONS,
     MAX_FILTERED_KEYWORDS,
     MESSAGE_AUDIENCE_OPTIONS,
-    MESSAGE_AUDIENCE_RETIRED,
+    LEGACY_MESSAGE_AUDIENCE,
     MESSAGING_DEFAULTS,
     MESSAGING_KEYS,
     MessagingSettingsError,
@@ -17,6 +17,8 @@ import {
     callChoices,
     chatAvailabilityValue,
     diffMessagingSettings,
+    displayedCallAudience,
+    displayedMessageAudience,
     groupAddChoices,
     heldFields,
     isChatPaused,
@@ -24,6 +26,8 @@ import {
     keywordProblem,
     keywordProblemText,
     messageAudienceChoices,
+    messageAudiencePatch,
+    messagesOn,
     messagingFieldError,
     messagingSettingsError,
     normaliseKeyword,
@@ -90,7 +94,7 @@ describe("parseMessagingSettings", () => {
         expect(MESSAGING_DEFAULTS).toMatchObject({
             who_can_message: "everyone_message_requests",
             who_can_add_to_groups: "connections_only",
-            who_can_call: "connections_only",
+            who_can_call: "accepted_chats_only",
             who_can_see_online_status: "connections_only",
             who_can_see_read_receipts: "connections_only",
             send_typing_indicators: true,
@@ -114,7 +118,7 @@ describe("parseMessagingSettings", () => {
         })!
         expect(s.dm_safe_mode).toBe(true)
         expect(s.dm_filtered_keywords).toEqual([])
-        expect(s.who_can_call).toBe("connections_only")
+        expect(s.who_can_call).toBe("accepted_chats_only")
         expect(parseMessagingSettings({ data: { account_visibility: "public", dm_filtered_keywords: ["a", 2, null, "b"] } })!.dm_filtered_keywords).toEqual(["a", "b"])
     })
 
@@ -206,11 +210,81 @@ describe("diffMessagingSettings / save request", () => {
         expect(heldFields({ dm_filtered_keywords: ["SPAM"] }, loaded())).toEqual([])
     })
 
-    test("pause switch maps to chat_availability", () => {
+    test("the Messages master switch maps to chat_availability (on = enabled)", () => {
         expect(isChatPaused({ chat_availability: "paused" })).toBe(true)
         expect(isChatPaused({ chat_availability: "enabled" })).toBe(false)
-        expect(chatAvailabilityValue(true)).toBe("paused")
-        expect(chatAvailabilityValue(false)).toBe("enabled")
+        expect(messagesOn({ chat_availability: "enabled" })).toBe(true)
+        expect(messagesOn({ chat_availability: "paused" })).toBe(false)
+        // The page saves chatAvailabilityValue(!on).
+        expect(chatAvailabilityValue(!true)).toBe("enabled")
+        expect(chatAvailabilityValue(!false)).toBe("paused")
+    })
+})
+
+describe("who can message you (DM consent §1)", () => {
+    test("exactly the four choices, each with a one-line explanation", () => {
+        expect(MESSAGE_AUDIENCE_OPTIONS.map((o) => [o.value, o.label])).toEqual([
+            ["everyone_message_requests", "Everyone"],
+            ["followers_message_requests", "Followers"],
+            ["people_i_follow", "People I follow"],
+            ["no_one", "No one"],
+        ])
+        for (const o of MESSAGE_AUDIENCE_OPTIONS) {
+            expect(o.description.length).toBeGreaterThan(10)
+            expect(o.description).not.toContain("\n")
+        }
+    })
+
+    test("a retired stored value shows as the choice it maps to, never as a fifth option", () => {
+        expect(LEGACY_MESSAGE_AUDIENCE).toEqual({
+            connections_only: "people_i_follow",
+            connections_and_mutual_followers: "people_i_follow",
+            friends_of_friends_requests: "followers_message_requests",
+        })
+        for (const [legacy, mapped] of Object.entries(LEGACY_MESSAGE_AUDIENCE)) {
+            expect(displayedMessageAudience(legacy)).toBe(mapped)
+            const choices = messageAudienceChoices(legacy)
+            expect(choices).toHaveLength(4)
+            expect(choices.map((o) => o.value)).not.toContain(legacy)
+        }
+        expect(displayedMessageAudience("no_one")).toBe("no_one")
+    })
+
+    test("under-18 accounts are not offered Everyone or Followers", () => {
+        expect(messageAudienceChoices("people_i_follow", { under18: true }).map((o) => o.value)).toEqual(["people_i_follow", "no_one"])
+        expect(messageAudienceChoices("connections_only", { under18: true }).map((o) => o.value)).toEqual(["people_i_follow", "no_one"])
+        // Were an adult-only value ever stored for one, it is still shown (the truth in force).
+        expect(messageAudienceChoices("everyone_message_requests", { under18: true }).map((o) => o.value)).toEqual([
+            "people_i_follow",
+            "no_one",
+            "everyone_message_requests",
+        ])
+        expect(messageAudienceChoices("everyone_message_requests").map((o) => o.value)).toHaveLength(4)
+    })
+
+    test("under_18_mode is read from the settings document, and never sent", () => {
+        expect(parseMessagingSettings({ data: { ...full.data, under_18_mode: true } })!.under_18_mode).toBe(true)
+        expect(parseMessagingSettings({ data: { ...full.data, under_18_mode: false } })!.under_18_mode).toBe(false)
+        expect(parseMessagingSettings(full)!.under_18_mode).toBeUndefined()
+        expect(MESSAGING_KEYS as readonly string[]).not.toContain("under_18_mode")
+        const s = loaded({ under_18_mode: true })
+        expect(diffMessagingSettings(s, { ...s, who_can_message: "no_one" })).toEqual({ who_can_message: "no_one" })
+    })
+
+    test("picking a choice: the new value is sent; the stored one again sends nothing; a retired one migrates", () => {
+        expect(messageAudiencePatch("everyone_message_requests", "no_one")).toEqual({ who_can_message: "no_one" })
+        expect(messageAudiencePatch("no_one", "no_one")).toEqual({})
+        expect(messageAudiencePatch("connections_only", "people_i_follow")).toEqual({ who_can_message: "people_i_follow" })
+    })
+
+    test("an unknown stored value is listed with the generic label", () => {
+        expect(messageAudienceChoices("x_y").at(-1)).toEqual({ value: "x_y", label: "Current setting (x_y)", description: "" })
+    })
+
+    test("calls: connections_only is retired and shows as accepted chats", () => {
+        expect(CALL_OPTIONS.map((o) => o.value)).toEqual(["accepted_chats_only", "no_one"])
+        expect(displayedCallAudience("connections_only")).toBe("accepted_chats_only")
+        expect(callChoices("connections_only")).toEqual(CALL_OPTIONS)
     })
 })
 
@@ -296,20 +370,6 @@ describe("400 error details", () => {
 })
 
 describe("options and labels", () => {
-    test("who can message: the four offered values; a stored retired value is listed with its own words", () => {
-        expect(MESSAGE_AUDIENCE_OPTIONS.map((o) => o.value)).toEqual([
-            "everyone_message_requests",
-            "followers_message_requests",
-            "connections_only",
-            "no_one",
-        ])
-        expect(messageAudienceChoices("connections_only")).toHaveLength(4)
-        const retired = messageAudienceChoices("friends_of_friends_requests")
-        expect(retired).toHaveLength(5)
-        expect(retired[4]).toEqual({ value: "friends_of_friends_requests", label: "Friends of friends (as message requests)" })
-        expect(messageAudienceChoices("connections_and_mutual_followers")[4].label).toBe("Connections and mutual followers")
-    })
-
     test("an unknown stored value is listed with a generic label carrying the raw value", () => {
         expect(callChoices("verified_only").at(-1)).toEqual({ value: "verified_only", label: unknownOptionLabel("verified_only") })
         expect(unknownOptionLabel("verified_only")).toBe("Current setting (verified_only)")
@@ -321,12 +381,9 @@ describe("options and labels", () => {
 
     test("every confirmed server value has its own words", () => {
         const confirmed: Record<string, [ReturnType<typeof callChoices>, string[]]> = {
-            who_can_message: [
-                [...MESSAGE_AUDIENCE_OPTIONS, ...MESSAGE_AUDIENCE_RETIRED],
-                ["no_one", "connections_only", "connections_and_mutual_followers", "followers_message_requests", "everyone_message_requests", "friends_of_friends_requests"],
-            ],
+            who_can_message: [MESSAGE_AUDIENCE_OPTIONS, ["no_one", "people_i_follow", "followers_message_requests", "everyone_message_requests"]],
             who_can_add_to_groups: [GROUP_ADD_OPTIONS, ["no_one", "connections_only", "connections_and_contacts", "everyone_with_approval", "friends_of_friends_invites"]],
-            who_can_call: [CALL_OPTIONS, ["no_one", "connections_only", "accepted_chats_only"]],
+            who_can_call: [CALL_OPTIONS, ["no_one", "accepted_chats_only"]],
             visibility: [VISIBILITY_OPTIONS, ["everyone", "connections_only", "no_one"]],
         }
         for (const [name, [options, values]] of Object.entries(confirmed)) {
@@ -362,7 +419,7 @@ describe("hub and page", () => {
     test("the page exists and shows the §9 controls in order", () => {
         expect(existsSync(resolve(appDir, "settings/messaging/page.tsx"))).toBe(true)
         const labels = [
-            "Who can message you",
+            "Messages",
             "Who can add you to groups",
             "Who can call you",
             "Activity status",
@@ -375,10 +432,15 @@ describe("hub and page", () => {
         // The last two are their own components; their place on the page is where they are drawn.
         expect(page).toContain('label="Filtered words"')
         expect(page).toContain('label="Bubble colour"')
+        // Who can message you is its own component, drawn right after the Messages switch.
+        expect(page).toContain('label="Who can message you"')
         const markers = [...labels.map((l) => `label="${l}"`), "<KeywordEditor", "<BubblePicker"]
+        markers.splice(1, 0, "<AudiencePicker")
         const at = markers.map((m) => page.indexOf(m))
         expect(at.every((i) => i >= 0)).toBe(true)
         expect([...at].sort((a, b) => a - b)).toEqual(at)
+        // The old inverted "Pause chats" switch is gone; the master switch replaced it.
+        expect(page).not.toContain('label="Pause chats"')
         expect(page).toContain("<AppShell>")
         expect(page).toContain('href="/settings"')
         expect(page).not.toMatch(/tiktok/i)

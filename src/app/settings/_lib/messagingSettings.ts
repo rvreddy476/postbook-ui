@@ -34,11 +34,16 @@ export interface MessagingSettings {
     dm_sensitive_media_filter: boolean
     dm_filtered_keywords: string[]
     chat_bubble_style: BubbleStyle
+    /**
+     * Read only, set by the server for an under-18 account (it is never
+     * written from here). Present only when the response carried it.
+     */
+    under_18_mode?: boolean
 }
 
-export type MessagingPatch = Partial<MessagingSettings>
+export type MessagingPatch = Partial<Omit<MessagingSettings, "under_18_mode">>
 
-export type MessagingKey = keyof MessagingSettings
+export type MessagingKey = keyof Omit<MessagingSettings, "under_18_mode">
 
 /** Every field this page reads and writes, in the order the page shows them. */
 export const MESSAGING_KEYS = [
@@ -60,7 +65,7 @@ export const MESSAGING_KEYS = [
 export const MESSAGING_DEFAULTS: Readonly<MessagingSettings> = Object.freeze({
     who_can_message: "everyone_message_requests",
     who_can_add_to_groups: "connections_only",
-    who_can_call: "connections_only",
+    who_can_call: "accepted_chats_only",
     who_can_see_online_status: "connections_only",
     who_can_see_read_receipts: "connections_only",
     send_typing_indicators: true,
@@ -129,6 +134,7 @@ export function parseMessagingSettings(body: unknown): MessagingSettings | null 
     if (typeof bubble === "string" && (BUBBLE_STYLES as readonly string[]).includes(bubble)) {
         out.chat_bubble_style = bubble as BubbleStyle
     }
+    if (typeof s.under_18_mode === "boolean") out.under_18_mode = s.under_18_mode
     return out
 }
 
@@ -203,19 +209,59 @@ export function withCurrent(primary: Option<string>[], current: string, extra: O
     return [...primary, known ?? { value: current, label: unknownOptionLabel(current) }]
 }
 
-/** Who can message you: the four values offered for new choices (as Android). */
-export const MESSAGE_AUDIENCE_OPTIONS: Option<string>[] = [
-    { value: "everyone_message_requests", label: "Everyone (as message requests)" },
-    { value: "followers_message_requests", label: "Followers (as message requests)" },
-    { value: "connections_only", label: "Connections only" },
-    { value: "no_one", label: "No one" },
+/* ---- Who can message you (DM consent contract §1) -------------------- */
+
+/** A choice with its one-line explanation. */
+export interface AudienceOption extends Option<string> {
+    description: string
+}
+
+/**
+ * The four values, and the only ones the server returns. People you follow
+ * always reach your Chats (except under "No one"); the value decides what
+ * happens to everyone else.
+ */
+export const MESSAGE_AUDIENCE_OPTIONS: AudienceOption[] = [
+    {
+        value: "everyone_message_requests",
+        label: "Everyone",
+        description: "People you follow go to your chats. Anyone else can send you a request.",
+    },
+    {
+        value: "followers_message_requests",
+        label: "Followers",
+        description: "People you follow go to your chats. Your followers can send you a request.",
+    },
+    {
+        value: "people_i_follow",
+        label: "People I follow",
+        description: "Only people you follow can message you. Nobody else can send a request.",
+    },
+    {
+        value: "no_one",
+        label: "No one",
+        description: "Nobody can start a chat with you. Your existing chats stay as they are.",
+    },
 ]
 
-/** Still valid on the server, no longer offered; shown only when stored. */
-export const MESSAGE_AUDIENCE_RETIRED: Option<string>[] = [
-    { value: "connections_and_mutual_followers", label: "Connections and mutual followers" },
-    { value: "friends_of_friends_requests", label: "Friends of friends (as message requests)" },
-]
+/**
+ * Retired values and the choice each now means. The server migrates stored
+ * rows with the same map and only ever returns the four, but an older read
+ * still shows as the choice it became, never as an extra option.
+ */
+export const LEGACY_MESSAGE_AUDIENCE: Readonly<Record<string, string>> = Object.freeze({
+    connections_only: "people_i_follow",
+    connections_and_mutual_followers: "people_i_follow",
+    friends_of_friends_requests: "followers_message_requests",
+})
+
+/** Choices an under-18 account may not pick (the server clamps them to People I follow). */
+export const ADULT_ONLY_MESSAGE_AUDIENCE: readonly string[] = ["everyone_message_requests", "followers_message_requests"]
+
+/** The value the picker shows: a retired value as the choice it maps to. */
+export function displayedMessageAudience(stored: string): string {
+    return LEGACY_MESSAGE_AUDIENCE[stored] ?? stored
+}
 
 export const GROUP_ADD_OPTIONS: Option<string>[] = [
     { value: "connections_only", label: "Connections only" },
@@ -225,11 +271,24 @@ export const GROUP_ADD_OPTIONS: Option<string>[] = [
     { value: "no_one", label: "No one" },
 ]
 
+/*
+  Calls (DM consent §3): accepting a request no longer makes a connection,
+  so "connections only" is retired and means accepted chats. The server
+  maps it on write and migrates stored rows the same way.
+*/
 export const CALL_OPTIONS: Option<string>[] = [
-    { value: "connections_only", label: "Connections only" },
     { value: "accepted_chats_only", label: "People whose chats you accepted" },
     { value: "no_one", label: "No one" },
 ]
+
+export const LEGACY_CALL_AUDIENCE: Readonly<Record<string, string>> = Object.freeze({
+    connections_only: "accepted_chats_only",
+})
+
+/** The value the calls picker shows: a retired value as the choice it maps to. */
+export function displayedCallAudience(stored: string): string {
+    return LEGACY_CALL_AUDIENCE[stored] ?? stored
+}
 
 export const VISIBILITY_OPTIONS: Option<string>[] = [
     { value: "everyone", label: "Everyone" },
@@ -237,14 +296,40 @@ export const VISIBILITY_OPTIONS: Option<string>[] = [
     { value: "no_one", label: "No one" },
 ]
 
-export function messageAudienceChoices(current: string): Option<string>[] {
-    return withCurrent(MESSAGE_AUDIENCE_OPTIONS, current, MESSAGE_AUDIENCE_RETIRED)
+/**
+ * The choices for "Who can message you", for the STORED value. A retired
+ * value shows as the choice it maps to. An under-18 account is not offered
+ * Everyone or Followers; were one of those ever stored for it, it is still
+ * listed so the control shows what is in force. An unknown value is listed
+ * with the generic label.
+ */
+export function messageAudienceChoices(stored: string, opts: { under18?: boolean } = {}): AudienceOption[] {
+    const shown = displayedMessageAudience(stored)
+    const offered = opts.under18
+        ? MESSAGE_AUDIENCE_OPTIONS.filter((o) => !ADULT_ONLY_MESSAGE_AUDIENCE.includes(o.value))
+        : MESSAGE_AUDIENCE_OPTIONS
+    if (offered.some((o) => o.value === shown)) return offered
+    const known = MESSAGE_AUDIENCE_OPTIONS.find((o) => o.value === shown)
+    return [...offered, known ?? { value: shown, label: unknownOptionLabel(shown), description: "" }]
 }
+
+/** The patch for picking `value` while `stored` is in force; empty when nothing changes. */
+export function messageAudiencePatch(stored: string, value: string): MessagingPatch {
+    if (value === stored) return {}
+    // Picking the choice a retired value already shows as still migrates it.
+    return { who_can_message: value }
+}
+
 export function groupAddChoices(current: string): Option<string>[] {
     return withCurrent(GROUP_ADD_OPTIONS, current)
 }
 export function callChoices(current: string): Option<string>[] {
-    return withCurrent(CALL_OPTIONS, current)
+    return withCurrent(CALL_OPTIONS, displayedCallAudience(current))
+}
+
+/** The "Messages" master switch: on means chat_availability = enabled. */
+export function messagesOn(s: Pick<MessagingSettings, "chat_availability">): boolean {
+    return !isChatPaused(s)
 }
 export function visibilityChoices(current: string): Option<string>[] {
     return withCurrent(VISIBILITY_OPTIONS, current)

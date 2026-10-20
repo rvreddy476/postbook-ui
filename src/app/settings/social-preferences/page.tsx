@@ -13,10 +13,8 @@ import {
 import { useMySettings, useUpdateMySettings } from "@/hooks/useMySettings"
 import {
     isEmptyPatch,
-    messageAudienceOptions,
     socialFormFromSettings,
     socialPatch,
-    type MessageAudience,
     type SocialForm,
 } from "../_lib/privacySettings"
 import { failedSave } from "../_lib/saveFeedback"
@@ -222,28 +220,14 @@ export default function SocialPreferencesPage() {
                         description="Control who can message you."
                         delay={0.1}
                     >
-                        <div className="space-y-1.5">
-                            <label htmlFor="dm-policy" className="block text-xs font-semibold text-brand-highlight">
-                                Allow DMs from
-                            </label>
-                            <select
-                                id="dm-policy"
-                                value={form.whoCanMessage}
-                                onChange={(e) => set("whoCanMessage", e.target.value as MessageAudience)}
-                                className="w-full max-w-xs rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
-                            >
-                                {messageAudienceOptions(settingsQuery.data.who_can_message).map((o) => (
-                                    <option key={o.value} value={o.value}>{o.label}</option>
-                                ))}
-                            </select>
-                        </div>
+                        {/* One place for who can message you: Inbox & messaging. */}
                         <Link
                             href="/settings/messaging"
-                            className="mt-4 flex items-center gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-brand-text/5 group"
+                            className="flex items-center gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-brand-text/5 group"
                         >
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-semibold text-brand-text">Inbox &amp; messaging settings</p>
-                                <p className="text-xs text-brand-highlight">Groups, calls, activity status, safe requests and more</p>
+                                <p className="text-xs text-brand-highlight">Messages on or off, who can message you, calls, safe requests and more</p>
                             </div>
                             <ChevronRight className="h-4 w-4 text-brand-text/60 group-hover:text-brand-text/80 transition-colors shrink-0" />
                         </Link>

@@ -10,6 +10,7 @@ import {
   decodePresenceFrame,
   type MessageExtras,
 } from '@/lib/chat/contract';
+import { decodeRequestRemovedFrame } from '@/lib/chat/requestsLane';
 
 export interface Message {
   id: string;
@@ -196,6 +197,7 @@ const groupCommentUpdateListeners = new Set<(u: GroupCommentUpdate) => void>();
 const groupTypingListeners = new Set<(e: GroupTypingEvent) => void>();
 const pinUpdateListeners = new Set<(e: PinUpdateEvent) => void>();
 const disappearingTimerListeners = new Set<(e: DisappearingTimerEvent) => void>();
+const requestRemovedListeners = new Set<(e: { conversationId: string; reason: string | null }) => void>();
 const presenceListeners = new Set<(e: PresenceUpdateEvent) => void>();
 const liveEventListeners = new Set<(event: LiveFrame) => void>();
 // Live rooms are desired state like post rooms: re-sent on every open so the
@@ -373,15 +375,19 @@ const getErrorCode = (payload: unknown): string => {
  * message (every existing caller reads `.message`), plus the HTTP status and
  * the server's code so a caller can tell, say, a refused request
  * (422 INVALID_REQUEST_MESSAGE) from a network failure without matching text.
+ * `body` is the parsed error body, so a refusal's `reason` (DM consent
+ * contract §4) can be read wherever the server put it.
  */
 export class ChatApiError extends Error {
   readonly status: number;
   readonly code: string;
-  constructor(message: string, status: number, code: string) {
+  readonly body?: unknown;
+  constructor(message: string, status: number, code: string, body?: unknown) {
     super(message);
     this.name = 'ChatApiError';
     this.status = status;
     this.code = code;
+    this.body = body;
   }
 }
 
@@ -429,7 +435,7 @@ const chatClient = {
       if (!background && (res.status === 401 || /invalid token/i.test(message))) {
         closeChatSocket(message);
       }
-      throw new ChatApiError(message, res.status, getErrorCode(payload));
+      throw new ChatApiError(message, res.status, getErrorCode(payload), payload);
     }
     return payload as TResponse;
   }
@@ -575,6 +581,10 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
         // {conversation_id, disappear_after_ms, updated_by, updated_at} to every member.
         const evt = disappearingTimerEventFromFrame(data);
         if (evt) disappearingTimerListeners.forEach(cb => cb(evt));
+      } else if (data.type === 'message_request_removed') {
+        // {conversation_id, reason?} to the recipient: the request expired and leaves Requests.
+        const evt = decodeRequestRemovedFrame(data);
+        if (evt) requestRemovedListeners.forEach(cb => cb(evt));
       } else if (data.type === 'presence_update') {
         // Contract {user_id, is_online, last_active_at} (top level or payload); legacy {user_id, online}.
         const decoded = decodePresenceFrame(data);
@@ -906,6 +916,12 @@ export const subscribeToMessageDeletes = (cb: (e: MessageDeletedEvent) => void) 
 export const subscribeToPinUpdates = (cb: (e: PinUpdateEvent) => void) => {
   pinUpdateListeners.add(cb);
   return () => { pinUpdateListeners.delete(cb); };
+};
+
+/** `message_request_removed`: an incoming request left my Requests (it expired). */
+export const subscribeToRequestRemoved = (cb: (e: { conversationId: string; reason: string | null }) => void) => {
+  requestRemovedListeners.add(cb);
+  return () => { requestRemovedListeners.delete(cb); };
 };
 
 export const subscribeToDisappearingTimer = (cb: (e: DisappearingTimerEvent) => void) => {

@@ -7,7 +7,6 @@ import {
     ArrowLeft,
     BellRing,
     CheckCheck,
-    CirclePause,
     Ellipsis,
     EyeOff,
     ListFilter,
@@ -16,6 +15,7 @@ import {
     Phone,
     Plus,
     ShieldCheck,
+    UserCheck,
     Users,
     X,
     type LucideIcon,
@@ -29,12 +29,15 @@ import {
     callChoices,
     chatAvailabilityValue,
     diffMessagingSettings,
+    displayedCallAudience,
+    displayedMessageAudience,
     groupAddChoices,
     heldFields,
-    isChatPaused,
     keywordCountText,
     keywordProblemText,
     messageAudienceChoices,
+    messageAudiencePatch,
+    messagesOn,
     messagingSettingsError,
     removeKeyword,
     visibilityChoices,
@@ -55,7 +58,8 @@ import "./messaging-settings.css"
   of the settings document on identity user-service (GET/PUT
   /v1/users/me/settings):
 
-    Who can message you              who_can_message
+    Messages (master switch)         chat_availability      enabled | paused
+    Who can message you              who_can_message        the four choices (DM consent §1)
     Who can add you to groups        who_can_add_to_groups
     Who can call you                 who_can_call
     Activity status                  who_can_see_online_status
@@ -66,7 +70,6 @@ import "./messaging-settings.css"
     Blur sensitive media             dm_sensitive_media_filter
     Filtered words                   dm_filtered_keywords   (explicit Save; whole list)
     Bubble colour                    chat_bubble_style      (explicit Save)
-    Pause chats                      chat_availability      enabled | paused
 
   Selects and switches save on change: a PUT of that one field, shown at once
   and rolled back if the server refuses. The form is drawn only after the
@@ -129,15 +132,21 @@ export default function MessagingSettingsPage() {
                     ) : (
                         <div className="settings-hub__groups">
                             <Group title="Who can reach you">
-                                <SelectRow
+                                <SwitchRow
                                     icon={MessageCircle}
-                                    label="Who can message you"
-                                    hint="Anyone outside this goes to your message requests, or can't message you."
-                                    value={s.who_can_message}
-                                    options={messageAudienceChoices(s.who_can_message)}
+                                    label="Messages"
+                                    hint="Off: nobody can start a chat or message you, and you can't send. Your chats stay readable."
+                                    checked={messagesOn(s)}
+                                    busy={pending.chat_availability}
+                                    error={errors.chat_availability}
+                                    onChange={(on) => void save("chat_availability", { chat_availability: chatAvailabilityValue(!on) })}
+                                />
+                                <AudiencePicker
+                                    stored={s.who_can_message}
+                                    under18={s.under_18_mode === true}
                                     busy={pending.who_can_message}
                                     error={errors.who_can_message}
-                                    onChange={(v) => void save("who_can_message", { who_can_message: v })}
+                                    onPick={(v) => void save("who_can_message", messageAudiencePatch(s.who_can_message, v))}
                                 />
                                 <SelectRow
                                     icon={Users}
@@ -151,7 +160,7 @@ export default function MessagingSettingsPage() {
                                 <SelectRow
                                     icon={Phone}
                                     label="Who can call you"
-                                    value={s.who_can_call}
+                                    value={displayedCallAudience(s.who_can_call)}
                                     options={callChoices(s.who_can_call)}
                                     busy={pending.who_can_call}
                                     error={errors.who_can_call}
@@ -240,17 +249,6 @@ export default function MessagingSettingsPage() {
                                 </li>
                             </Group>
 
-                            <Group title="Availability">
-                                <SwitchRow
-                                    icon={CirclePause}
-                                    label="Pause chats"
-                                    hint="While paused you can't send or receive messages, and no one sees you typing or reading."
-                                    checked={isChatPaused(s)}
-                                    busy={pending.chat_availability}
-                                    error={errors.chat_availability}
-                                    onChange={(v) => void save("chat_availability", { chat_availability: chatAvailabilityValue(v) })}
-                                />
-                            </Group>
                         </div>
                     )}
 
@@ -369,6 +367,64 @@ function SwitchRow({
                 >
                     <span className="msg-settings__knob" />
                 </button>
+            </div>
+            <FieldError text={error} />
+        </li>
+    )
+}
+
+/**
+ * Who can message you (DM consent §1): the four choices, each with its one
+ * line. People you follow always reach your chats, except under No one. A
+ * retired stored value shows as the choice it maps to; an under-18 account
+ * is not offered Everyone or Followers.
+ */
+function AudiencePicker({
+    stored,
+    under18,
+    busy,
+    error,
+    onPick,
+}: {
+    stored: string
+    under18: boolean
+    busy?: boolean
+    error?: string
+    onPick: (value: string) => void
+}) {
+    const id = useId()
+    const shown = displayedMessageAudience(stored)
+    const options = messageAudienceChoices(stored, { under18 })
+    return (
+        <li>
+            <div className="msg-settings__row">
+                <RowIcon icon={UserCheck} />
+                <RowText
+                    id={id}
+                    label="Who can message you"
+                    hint={under18 ? "Accounts under 18 only get messages from people they follow." : undefined}
+                />
+            </div>
+            <div className="msg-settings__choices" role="radiogroup" aria-labelledby={id}>
+                {options.map((o) => (
+                    <button
+                        key={o.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={o.value === shown}
+                        disabled={busy}
+                        className="msg-settings__choice"
+                        onClick={() => {
+                            if (o.value !== shown || stored !== shown) onPick(o.value)
+                        }}
+                    >
+                        <span className="msg-settings__radio" aria-hidden />
+                        <span className="msg-settings__text">
+                            <span className="msg-settings__label">{o.label}</span>
+                            {o.description ? <span className="msg-settings__hint">{o.description}</span> : null}
+                        </span>
+                    </button>
+                ))}
             </div>
             <FieldError text={error} />
         </li>

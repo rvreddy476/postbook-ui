@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test"
 
 import {
     diffPrivacySettings,
-    messageAudienceOptions,
     parsePrivacySettings,
     privacyFormFromSettings,
     privacyPatch,
@@ -80,10 +79,23 @@ describe("social preferences (T-04)", () => {
 
     test("a private account stays private when another control is saved", () => {
         const s = stored()
-        const form = { ...socialFormFromSettings(s), whoCanMessage: "no_one" as const }
+        const form = { ...socialFormFromSettings(s), allowConnectionRequests: false }
         const req = settingsSaveRequest(socialPatch(s, form))
-        expect(req).toEqual({ method: "put", url: "/v1/users/me/settings", body: { who_can_message: "no_one" } })
+        expect(req).toEqual({ method: "put", url: "/v1/users/me/settings", body: { who_can_send_connection_request: "no_one" } })
         expect(req?.body.account_visibility).toBeUndefined()
+    })
+
+    test("who can message you is not on this page (one control, in Inbox & messaging)", () => {
+        const s = stored()
+        expect(Object.keys(socialFormFromSettings(s))).not.toContain("whoCanMessage")
+        const all = socialPatch(s, { allowConnectionRequests: false, requireFollowApproval: false })
+        expect(all).not.toHaveProperty("who_can_message")
+    })
+
+    test("the contract's new value and the retired ones are read as stored", () => {
+        for (const v of ["people_i_follow", "connections_only", "friends_of_friends_requests"]) {
+            expect(parsePrivacySettings({ data: { ...privateAccount.data, who_can_message: v } })?.who_can_message).toBe(v as never)
+        }
     })
 
     test("turning friend requests back on restores the stored audience instead of widening it", () => {
@@ -103,16 +115,6 @@ describe("social preferences (T-04)", () => {
         expect(socialPatch(s, form)).toEqual({ account_visibility: "public" })
     })
 
-    test("the message picker keeps a stored retired value selectable so it round-trips", () => {
-        const values = messageAudienceOptions("friends_of_friends_requests").map((o) => o.value)
-        expect(values).toContain("friends_of_friends_requests")
-        expect(messageAudienceOptions("connections_only").map((o) => o.value)).toEqual([
-            "everyone_message_requests",
-            "followers_message_requests",
-            "connections_only",
-            "no_one",
-        ])
-    })
 })
 
 describe("privacy page (T-08)", () => {

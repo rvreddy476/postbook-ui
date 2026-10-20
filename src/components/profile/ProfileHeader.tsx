@@ -428,9 +428,10 @@ export function ProfileHeader({
                               not only creators; the circle control stays
                               alongside for its incoming requests.
 
-                              Message is the request-only MessageButton,
-                              unchanged: never locked, labelled, and it
-                              says when a message will be a request.
+                              Message follows the server's decision (DM
+                              consent §4): Message, Send request,
+                              Requested, or disabled with the reason; a
+                              tap opens the thread.
                             */}
                             <div className="flex items-center justify-center md:justify-end gap-2 shrink-0">
                                 <ProfileActions
@@ -471,6 +472,8 @@ export function ProfileHeader({
                                     messageSlot={
                                         <MessageButton
                                             targetUserId={profile.id}
+                                            targetUsername={profile.username}
+                                            targetName={profile.display_name}
                                             variant="full"
                                         />
                                     }

@@ -11,11 +11,12 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { subscribeToDisappearingTimer, subscribeToMessages, subscribeToPresenceUpdates, markConversationRead, type Message } from '@/services/messageService'
+import { subscribeToDisappearingTimer, subscribeToMessages, subscribeToRequestRemoved, subscribeToPresenceUpdates, markConversationRead, type Message } from '@/services/messageService'
 import {
   deleteChatForMe,
   fetchInbox,
   fetchMessagePage,
+  fetchRequestCount,
   fetchRequestsPage,
   setConversationUnread,
   updateConversationPrefs,
@@ -27,15 +28,25 @@ import {
   applyLiveMessage,
   archivedLane,
   filteredLaneOrNull,
-  isIncomingRequest,
   markedUnreadPatch,
   mergeInboxPages,
   patchRow,
   primaryRows,
   READ_PATCH,
   withDisappearTimer,
-  withoutDating,
 } from '@/lib/chat/inbox'
+import {
+  decrementCount,
+  FIRST_REQUESTS_PAGE,
+  mergeRequestPages,
+  nextRequestsCursor,
+  requestBadgeCount,
+  requestCountText,
+  withoutRequest,
+  type RequestCount,
+  type RequestsCursor,
+  type RequestsFilter,
+} from '@/lib/chat/requestsLane'
 
 /** The inbox list carries each chat's tone and mute: the alert sound reads them. */
 function primeAlerts(rows: readonly InboxRow[]): void {
@@ -50,6 +61,16 @@ export interface InboxState {
   rows: InboxRow[]
   requests: InboxRow[]
   filteredRequests: InboxRow[] | null
+  /** Incoming requests waiting for me: GET /requests/count, else the rows loaded. */
+  requestCount: number
+  /** Hidden requests, the same way; 0 when the server has no Hidden list. */
+  hiddenRequestCount: number
+  /** The badge words for each ("999+" when the server capped its count). */
+  requestCountText: string
+  hiddenRequestCountText: string
+  hasMoreRequests: boolean
+  hasMoreHiddenRequests: boolean
+  loadingMoreRequests: boolean
   loading: boolean
   error: boolean
   hasMore: boolean
@@ -68,22 +89,86 @@ export function useInbox(myId: string, openConversationId: string | null) {
   openRef.current = openConversationId
   const refetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  /*
+    Requests (DM consent §5): incoming only, paged. The first page of each
+    list is read with the inbox; more pages load as the list scrolls. The
+    Hidden list is offered only when the server really filters (a server
+    without the filter answers with the same rows).
+  */
+  const [requestsAt, setRequestsAt] = useState<RequestsCursor>(null)
+  const [filteredAt, setFilteredAt] = useState<RequestsCursor>(null)
+  /** GET /requests/count; null when the route is missing (the badge counts loaded rows). */
+  const [requestCount, setRequestCount] = useState<RequestCount | null>(null)
+  const [loadingMoreRequests, setLoadingMoreRequests] = useState(false)
+  const requestsRef = useRef(requests)
+  requestsRef.current = requests
+  const filteredRef = useRef(filteredRequests)
+  filteredRef.current = filteredRequests
+
+  const loadRequestCount = useCallback(async () => {
+    try {
+      setRequestCount(await fetchRequestCount())
+    } catch {
+      setRequestCount(null)
+    }
+  }, [])
+
   const loadRequests = useCallback(async () => {
+    void loadRequestCount()
     let all: InboxRow[] = []
     try {
-      const page = await fetchRequestsPage(myId, 'all')
-      all = withoutDating(page.rows).filter((r) => isIncomingRequest({ ...r, isRequest: true }, myId))
+      const page = await fetchRequestsPage(myId, 'all', FIRST_REQUESTS_PAGE)
+      all = page.rows
       setRequests(all)
+      setRequestsAt(nextRequestsCursor(page, FIRST_REQUESTS_PAGE, page.received))
     } catch {
       setRequests([])
+      setRequestsAt(null)
     }
     try {
-      const filtered = await fetchRequestsPage(myId, 'filtered')
-      setFilteredRequests(filteredLaneOrNull(all, withoutDating(filtered.rows)))
+      const page = await fetchRequestsPage(myId, 'filtered', FIRST_REQUESTS_PAGE)
+      const lane = filteredLaneOrNull(all, page.rows)
+      setFilteredRequests(lane)
+      setFilteredAt(lane ? nextRequestsCursor(page, FIRST_REQUESTS_PAGE, page.received) : null)
     } catch {
       setFilteredRequests(null)
+      setFilteredAt(null)
     }
-  }, [myId])
+  }, [myId, loadRequestCount])
+
+  /** The next page of Requests, or of Hidden requests. */
+  const loadMoreRequests = useCallback(async (filter: RequestsFilter) => {
+    const at = filter === 'filtered' ? filteredAt : requestsAt
+    if (!at || loadingMoreRequests) return
+    setLoadingMoreRequests(true)
+    try {
+      const page = await fetchRequestsPage(myId, filter, at)
+      const current = filter === 'filtered' ? filteredRef.current ?? [] : requestsRef.current
+      const merged = mergeRequestPages(current, page.rows)
+      if (filter === 'filtered') setFilteredRequests(merged.rows)
+      else setRequests(merged.rows)
+      // A page the list already had (added 0) means the server ignored where we asked to start: stop.
+      const next = nextRequestsCursor(page, at, merged.added)
+      if (filter === 'filtered') setFilteredAt(next)
+      else setRequestsAt(next)
+    } catch (err) {
+      console.error('[inbox] next requests page failed:', err)
+    } finally {
+      setLoadingMoreRequests(false)
+    }
+  }, [myId, requestsAt, filteredAt, loadingMoreRequests])
+
+  /** A request answered from the list (or expired) leaves it at once, and the count with it. */
+  const dropRequest = useCallback((conversationId: string) => {
+    if (requestsRef.current.some((r) => r.id === conversationId)) setRequestCount((c) => decrementCount(c, false))
+    else if (filteredRef.current?.some((r) => r.id === conversationId)) setRequestCount((c) => decrementCount(c, true))
+    else void loadRequestCount() // not on a loaded page: ask the server
+    setRequests((prev) => withoutRequest(prev, conversationId))
+    setFilteredRequests((prev) => (prev ? withoutRequest(prev, conversationId) : prev))
+  }, [loadRequestCount])
+
+  // Live: a request expired (message_request_removed, to the recipient).
+  useEffect(() => subscribeToRequestRemoved((evt) => dropRequest(evt.conversationId)), [dropRequest])
 
   /** Archived chats, read on demand (lane=archived). */
   const [archived, setArchived] = useState<InboxRow[] | null>(null)
@@ -283,16 +368,28 @@ export function useInbox(myId: string, openConversationId: string | null) {
     }
   }
 
+  const shownRequestCount = requestBadgeCount(requestCount ? requestCount.count : null, requests)
+  const shownHiddenCount = filteredRequests ? requestBadgeCount(requestCount ? requestCount.filteredCount : null, filteredRequests) : 0
+
   return {
     state: {
       rows: primaryRows(rows, myId),
       requests,
       filteredRequests,
+      requestCount: shownRequestCount,
+      hiddenRequestCount: shownHiddenCount,
+      requestCountText: requestCountText(shownRequestCount, requestCount?.capped === true),
+      hiddenRequestCountText: requestCountText(shownHiddenCount, requestCount?.capped === true),
+      hasMoreRequests: requestsAt !== null,
+      hasMoreHiddenRequests: filteredAt !== null,
+      loadingMoreRequests,
       loading,
       error,
       hasMore: Boolean(cursor),
       loadingMore,
     } satisfies InboxState,
+    loadMoreRequests,
+    dropRequest,
     allRows: rows,
     archived,
     loadArchived,

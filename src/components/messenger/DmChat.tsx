@@ -64,6 +64,18 @@ import { toChatSource, useDatingKindChat, type ChatSource } from '@/features/dat
 import { postCardIds, postCardView, usePostCards } from './postCards'
 import type { User } from '@/types'
 import { decodeDisappearMs, type InboxMember } from '@/lib/chat/contract'
+import {
+  createConversationErrorText,
+  isOutgoingPendingRequest,
+  isConsentRefusal,
+  readCreatedConversation,
+  requestCharsLeft,
+  requestComposerGuard,
+  requestComposerProblemText,
+  requestSendErrorText,
+  requestWaitingBanner,
+  who,
+} from '@/lib/chat/dmConsent'
 import { presenceLabel } from '@/lib/chat/inbox'
 import { bubbleClass, parseBubbleStyle } from '@/lib/chat/bubbleStyle'
 import type { GifSendPayload } from '@/lib/chat/giphy'
@@ -103,7 +115,7 @@ import './chat-bubbles.css'
 import {
   ArrowLeft, Phone, Video, MoreHorizontal, ChevronDown, ChevronUp,
   Send, Pin, PinOff, Reply, Pencil, Trash2, X, Check, CheckCheck, Loader2, PanelRight,
-  Smile, SmilePlus, ImagePlus, Copy, Forward, Flag, Undo2, Sticker, Search, Users, Timer,
+  Smile, SmilePlus, ImagePlus, Copy, Forward, Flag, Undo2, Sticker, Search, Users, Timer, Clock,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -191,6 +203,8 @@ export default function DmChat({
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  /** Why the server refused to start this chat, in words; null for any other failure. */
+  const [errorText, setErrorText] = useState<string | null>(null)
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [showStickers, setShowStickers] = useState(false)
@@ -245,6 +259,8 @@ export default function DmChat({
   }, [onToast, toast])
   const [attachError, setAttachError] = useState<string | null>(null)
   const [isRequestThread, setIsRequestThread] = useState(false)
+  /** A request I started that is still waiting (DM consent §5): one text message, no calls. */
+  const [requestOutgoing, setRequestOutgoing] = useState(false)
   const [chatSource, setChatSource] = useState<ChatSource | null>(null)
   const kindChat = useDatingKindChat({ conversationId: openConversationId, conversation: chatSource, myId, peerName: userName, messages })
   const postCards = usePostCards(postCardIds(messages))
@@ -268,10 +284,17 @@ export default function DmChat({
     [isGroup, messages, myId, memberById],
   )
   const profileIds = useMemo(
-    () => Array.from(new Set([...remoteTypingIds, ...Array.from(typingUsers), ...profileCardIds, ...groupSenderIds])),
-    [remoteTypingIds, typingUsers, profileCardIds, groupSenderIds]
+    () => Array.from(new Set([
+      ...remoteTypingIds, ...Array.from(typingUsers), ...profileCardIds, ...groupSenderIds,
+      // The waiting-request banner names them by @handle.
+      ...(requestOutgoing && userId ? [userId] : []),
+    ])),
+    [remoteTypingIds, typingUsers, profileCardIds, groupSenderIds, requestOutgoing, userId]
   )
   const { data: profiles } = useBatchProfiles(profileIds)
+  // Waiting request: who they are ("@asha"), and whether my one message is already in.
+  const requestTarget = who(profiles?.get(userId)?.username, userName)
+  const requestAlreadySent = requestOutgoing && messages.some((m) => m.senderId === myId && !m.isDeleted)
 
   const nameOf = useCallback((id: string): string => {
     if (id === myId) return 'You'
@@ -328,6 +351,7 @@ export default function DmChat({
       try {
         setLoading(true)
         setError(false)
+        setErrorText(null)
         const convRes = openConversationId
           ? await getConversation(openConversationId)
           : await getOrCreateDirectConversation(userId)
@@ -336,9 +360,10 @@ export default function DmChat({
         if (!conversationId) throw new Error('No conversation id returned')
         convIdRef.current = conversationId
         // A request thread: the first message goes as a request, text only.
-        setIsRequestThread(
-          Boolean(convRes.data?.is_request ?? (convRes as { is_request?: boolean }).is_request),
-        )
+        const created = readCreatedConversation(convRes)
+        setIsRequestThread(created.isRequest)
+        // Mine and still waiting: the one-message rule applies (a group never is one).
+        setRequestOutgoing(!group && isOutgoingPendingRequest(created, myId))
         // The peer's durable read watermark (DM only), so "Seen" survives a reload.
         const convMembers = (convRes.data?.members ?? convRes.members ?? []) as Array<{ user_id?: string; last_read_at?: string }>
         const peer = convMembers.find(m => m.user_id && m.user_id !== myId)
@@ -380,7 +405,12 @@ export default function DmChat({
         }
       } catch (err) {
         console.error('[DmChat] init failed:', err)
-        if (!cancelled) setError(true)
+        if (!cancelled) {
+          setError(true)
+          // Starting a chat the server refused: say why (DM consent §4), not "could not load".
+          const refused = !openConversationId && isConsentRefusal(err)
+          setErrorText(refused ? createConversationErrorText(err, who(null, userName)) : null)
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -652,6 +682,14 @@ export default function DmChat({
   const handleSend = useCallback(async (opts?: { kindChecked?: boolean }) => {
     const text = input.trim()
     if (!text || !convIdRef.current) return
+    if (requestOutgoing) {
+      // The server refuses these too; saying so here saves a round trip.
+      const guard = requestComposerGuard(text, requestAlreadySent)
+      if (!guard.ok) {
+        setAttachError(requestComposerProblemText(guard.problem, requestTarget))
+        return
+      }
+    }
     if (kindChat.active && !opts?.kindChecked && !(await kindChat.okToSend(text))) return
     const optimisticId = `opt-${Date.now()}`
     const optimistic: DisplayMessage = {
@@ -678,20 +716,21 @@ export default function DmChat({
         if (prev.some(m => m.id === real.id)) return prev.filter(m => m.id !== optimisticId)
         return prev.map(m => (m.id === optimisticId ? toDisplay(real) : m))
       })
-      if (isRequestThread && messages.length === 0) {
+      if (requestOutgoing) {
         toast({
           type: 'success',
           title: 'Message request sent',
-          description: 'They will see it once they accept. Accepting connects you.',
+          description: `${requestTarget} will see it in their requests. You can chat freely once they accept.`,
         })
       }
     } catch (err) {
       console.error('[DmChat] send failed:', err)
       setMessages(prev => prev.filter(m => m.id !== optimisticId))
       setInput(text)
-      setAttachError((err as Error)?.message || "Couldn't send that message.")
+      const requestText = isRequestThread ? requestSendErrorText(err, requestTarget) : null
+      setAttachError(requestText || (err as Error)?.message || "Couldn't send that message.")
     }
-  }, [input, myId, replyingTo, isRequestThread, messages.length, toast, kindChat])
+  }, [input, myId, replyingTo, isRequestThread, requestOutgoing, requestAlreadySent, requestTarget, toast, kindChat])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey && !(e.nativeEvent as KeyboardEvent).isComposing) {
@@ -957,6 +996,10 @@ export default function DmChat({
     useMemo(() => messages.filter(m => m.mediaId && !m.extras?.media?.kind && m.type !== 'voice').map(m => m.mediaId!), [messages]),
   )
   const hasText = input.trim().length > 0
+  // A waiting request of mine: what is wrong with the draft, shown as it is typed.
+  const requestGuard = requestOutgoing && hasText ? requestComposerGuard(input.trim(), requestAlreadySent) : null
+  const requestInputProblem = requestGuard && !requestGuard.ok ? requestGuard.problem : null
+  const canSendText = hasText && !requestInputProblem
   const searchHits = useMemo(() => (threadSearch === null ? [] : searchThread(messages, threadSearch)), [messages, threadSearch])
   useEffect(() => {
     if (searchHits.length === 0) return
@@ -1012,7 +1055,8 @@ export default function DmChat({
         </div>
 
         <div className="flex shrink-0 items-center gap-0.5">
-          {!isGroup && (
+          {/* No calls before a request I sent is accepted (DM consent §5). */}
+          {!isGroup && !requestOutgoing && (
             <>
               <button title="Voice call" aria-label="Voice call" onClick={() => initiateCall(peerAsUser, 'audio')} className="flex h-10 w-10 items-center justify-center rounded-full text-brand-text/60 transition-colors hover:bg-brand-secondary hover:text-brand-text active:scale-95">
                 <Phone className="h-[18px] w-[18px]" strokeWidth={1.75} />
@@ -1110,8 +1154,8 @@ export default function DmChat({
         )}
 
         {error && !loading && (
-          <div className="flex items-center justify-center flex-1 h-full text-danger/70 text-[12px]">
-            Could not load messages
+          <div className="flex items-center justify-center flex-1 h-full px-6 text-center text-danger/70 text-[12px]">
+            {errorText ?? 'Could not load messages'}
           </div>
         )}
 
@@ -1379,6 +1423,18 @@ export default function DmChat({
         </div>
       )}
 
+      {/* A request I sent, still waiting: one text message, no links, until they accept. */}
+      {requestOutgoing && (
+        <div role="status" className="flex shrink-0 items-start gap-2 border-t border-brand-divider bg-primary-tint px-5 py-2.5 text-[12px] text-primary-ink">
+          <Clock className="mt-px h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
+          <span>
+            {requestAlreadySent
+              ? requestComposerProblemText('already_sent', requestTarget)
+              : requestWaitingBanner(requestTarget)}
+          </span>
+        </div>
+      )}
+
       {attachError && (
         <div role="alert" className="flex shrink-0 items-center justify-between gap-3 border-t border-brand-divider bg-danger/10 px-5 py-2.5 text-[12px] text-danger">
           <span>{attachError}</span>
@@ -1469,7 +1525,8 @@ export default function DmChat({
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
                   onBlur={() => { if (convIdRef.current && input) sendTypingStop(convIdRef.current) }}
-                  placeholder={isRequestThread ? 'Write a message request' : 'Message…'}
+                  placeholder={requestAlreadySent ? 'Waiting for them to accept' : isRequestThread ? 'Write a message request' : 'Message…'}
+                  disabled={requestAlreadySent}
                   aria-label="Message"
                   className="min-w-0 flex-1 resize-none bg-transparent px-1 py-2.5 text-[14px] leading-5 text-brand-text outline-hidden placeholder:text-brand-text/40"
                 />
@@ -1505,14 +1562,24 @@ export default function DmChat({
             {(hasText || isRequestThread) && !recording && (
               <button
                 onClick={() => void handleSend()}
-                disabled={!hasText}
+                disabled={!canSendText}
                 aria-label="Send message"
-                className={`mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors duration-200 active:scale-90 ${hasText ? 'bg-send text-white hover:bg-send-hover' : 'text-brand-text/30'}`}
+                className={`mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors duration-200 active:scale-90 ${canSendText ? 'bg-send text-white hover:bg-send-hover' : 'text-brand-text/30'}`}
               >
                 <Send className="h-[18px] w-[18px] -ml-px" strokeWidth={1.75} />
               </button>
             )}
           </div>
+          {requestOutgoing && !requestAlreadySent && hasText && (
+            <div className="flex items-center justify-between gap-3 px-3 pt-1.5 text-[11px]">
+              <span className={requestInputProblem ? 'text-danger' : 'text-brand-text/50'}>
+                {requestInputProblem ? requestComposerProblemText(requestInputProblem, requestTarget) : 'Text only, no links.'}
+              </span>
+              <span className={`tabular-nums ${requestCharsLeft(input.trim()) < 0 ? 'text-danger' : 'text-brand-text/50'}`}>
+                {requestCharsLeft(input.trim())}
+              </span>
+            </div>
+          )}
         </div>
       )}
 
