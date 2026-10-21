@@ -4,30 +4,33 @@ import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObjec
 import type Hls from "hls.js";
 import {
   AudioLines,
-  AudioWaveform,
   Captions,
+  ChevronLeft,
+  CirclePlay,
   Gauge,
-  Keyboard,
+  Lightbulb,
+  Link as LinkIcon,
+  Link2,
   Loader2,
   Maximize,
   Minimize,
   Moon,
+  MoreHorizontal,
   Pause,
   PictureInPicture2,
   Play,
   RectangleHorizontal,
+  RefreshCw,
   RotateCcw,
   RotateCw,
   Settings,
   SkipForward,
-  SlidersHorizontal,
-  Sparkles,
   Volume2,
   VolumeX,
+  X,
 } from "lucide-react";
 
 import {
-  ChoiceMenuBack,
   ChoiceMenuChoiceRow,
   ChoiceMenuOption,
   ChoiceMenuRow,
@@ -35,17 +38,18 @@ import {
   SpeedPanel,
 } from "@/features/reels/components/ChoiceMenu";
 import { Popover } from "@/features/reels/components/Popover";
-import { pickHlsLevel, SPEEDS, speedChipLabel } from "@/features/reels/playback/playerPrefs";
+import { pickHlsLevel, SPEEDS } from "@/features/reels/playback/playerPrefs";
 import { fitFrame, type FrameBox } from "../endScreenGeometry";
 import { formatClockMs, type TubePlayerPrefs } from "../model";
 import { playerKeyAction, playerKeyPreventsDefault, SEEK_LARGE_S } from "../playerKeys";
 import { startAmbient } from "../watch/ambient";
 import { chapterAt, chapterTicks, type Chapter } from "../watch/chapters";
 import { countdownSpot, END_SCREEN_MIN_FRAME_WIDTH } from "../watch/endScreenView";
-import { keyHelpRows } from "../watch/keysHelp";
 import { scheduleSleep, SLEEP_CHOICES, sleepRemainingMs, sleepValueLabel, type SleepChoice, type SleepSchedule } from "../watch/sleepTimer";
 import { createStableVolume, type StableVolumeHandle } from "../watch/stableVolume";
 import { storyboardCueAt, type StoryboardCue } from "../watch/storyboard";
+import { watchLinkAt } from "../watch/startAt";
+import { useGlobalToast } from "@/contexts/ToastContext";
 import "./tube-player.css";
 
 /*
@@ -242,6 +246,26 @@ export function TubePlayer({
   const [levels, setLevels] = useState<number[]>([]);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Settings → More → Loop video: the element's own loop, for this video only.
+  const [loop, setLoop] = useState(false);
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.loop = loop;
+  }, [loop]);
+  const toast = useGlobalToast();
+  const restart = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.currentTime = trimStartMs / 1000;
+    void video.play().catch(() => undefined);
+  };
+  const copyLink = (atTime: boolean) => {
+    const base = `${window.location.origin}${window.location.pathname}`;
+    const url = atTime ? watchLinkAt(base, videoRef.current?.currentTime ?? 0) : base;
+    navigator.clipboard.writeText(url).then(
+      () => toast({ type: "success", title: atTime ? "Link at this moment copied" : "Link copied" }),
+      () => toast({ type: "error", title: "Could not copy the link" }),
+    );
+  };
   const [fullscreen, setFullscreen] = useState(false);
   const [ownCaptionLang, setOwnCaptionLang] = useState<string | null>(captions[0]?.lang ?? null);
   const captionLang = captionLangProp !== undefined ? captionLangProp : ownCaptionLang;
@@ -758,6 +782,8 @@ export function TubePlayer({
       <div
         ref={containerRef}
         className="tube-player__frame group/player"
+        // The settings card fits inside the frame, however small (tube-player.css).
+        style={{ ["--tube-frame-h" as string]: `${Math.round(frameSize.height)}px` }}
         onMouseMove={showControls}
         onMouseLeave={() => playing && !settingsOpen && setControlsVisible(false)}
         tabIndex={0}
@@ -931,7 +957,7 @@ export function TubePlayer({
                 <Captions className="h-5 w-5" />
               </ControlButton>
             ) : null}
-            <div className="relative">
+            <div>
               <ControlButton label="Settings" onClick={() => setSettingsOpen((o) => !o)} active={settingsOpen}>
                 <Settings className="h-5 w-5" />
               </ControlButton>
@@ -953,6 +979,9 @@ export function TubePlayer({
                 sleepChoice={sleepChoice}
                 sleepSchedule={sleepSchedule}
                 onSleep={chooseSleep}
+                onRestart={restart}
+                loop={{ on: loop, onChange: setLoop }}
+                onCopyLink={copyLink}
               />
             </div>
             {onMiniplayer ? (
@@ -995,8 +1024,42 @@ function ControlButton({ label, onClick, active, children }: { label: string; on
 
 /* ── Settings menu: the reels choice-pane shell ─────────── */
 
-type Pane = "root" | "audio" | "captions" | "keys" | "speed" | "quality" | "sleep";
+/** RUTUBE's marks beside a rung: FHD from 1080p, HD from 720p, SD from 480p. */
+export function qualityBadge(height: number): string {
+  if (height >= 1080) return "FHD";
+  if (height >= 720) return "HD";
+  if (height >= 480) return "SD";
+  return "";
+}
 
+/** A pane's head, as on RUTUBE: back at the left (not on the first pane), the title centred, close at the right. */
+function PaneHead({ title, onBack, onClose }: { title: string; onBack?: () => void; onClose: () => void }) {
+  return (
+    <div className="tube-settings-menu__head">
+      {onBack ? (
+        <button type="button" className="tube-settings-menu__icon is-back" aria-label="Back" onClick={onBack}>
+          <ChevronLeft />
+        </button>
+      ) : null}
+      <span>{title}</span>
+      <button type="button" className="tube-settings-menu__icon is-close" aria-label={`Close ${title === "Settings" ? "settings" : title}`} onClick={onClose}>
+        <X />
+      </button>
+    </div>
+  );
+}
+
+type Pane = "root" | "more" | "audio" | "captions" | "speed" | "quality" | "sleep";
+
+/*
+  The settings card, laid out after RUTUBE's (founder, 2026-10-19): a dark
+  card titled "Settings" with a close button; the main list says what is
+  set — Speed, Quality, Captions and Audio track (each only when the video
+  offers a choice), Autoplay, Ambient light — and "More" opens five rows, as
+  RUTUBE's does, so neither list scrolls: Start from the beginning, Loop
+  video, Copy link, Copy link at current time, Sleep timer. (Stable volume
+  and the shortcuts list left the menu on 2026-10-19; the keys still work.)
+*/
 export function TubeSettingsMenu({
   open,
   onClose,
@@ -1015,6 +1078,9 @@ export function TubeSettingsMenu({
   sleepChoice,
   sleepSchedule,
   onSleep,
+  onRestart,
+  loop,
+  onCopyLink,
 }: {
   open: boolean;
   onClose: () => void;
@@ -1033,6 +1099,12 @@ export function TubeSettingsMenu({
   sleepChoice: SleepChoice;
   sleepSchedule: SleepSchedule;
   onSleep: (choice: SleepChoice) => void;
+  /** Back to the first frame, playing. */
+  onRestart?: () => void;
+  /** Play the video round and round. */
+  loop?: { on: boolean; onChange: (on: boolean) => void };
+  /** Copy the watch link; `atTime` adds `?t=` for the current second. */
+  onCopyLink?: (atTime: boolean) => void;
 }) {
   const [pane, setPane] = useState<Pane>("root");
   useEffect(() => {
@@ -1041,36 +1113,50 @@ export function TubeSettingsMenu({
 
   const rungs = Array.from(new Set(levels.filter((h) => h > 0))).sort((a, b) => b - a);
   const qualityLabel = prefs.quality === "auto" ? "Auto" : prefs.quality;
-  const captionLabel = captions.length === 0 ? "None" : !prefs.captions ? "Off" : captions.find((c) => c.lang === captionLang)?.label ?? "On";
+  const captionLabel = !prefs.captions ? "Off" : captions.find((c) => c.lang === captionLang)?.label ?? "On";
   const audioChoices = audioTracks?.options.length ? audioTracks.options : [{ id: "original", label: "Original" }];
   const audioLabel = audioChoices.find((t) => t.id === (audioTracks?.current ?? "original"))?.label ?? audioChoices[0].label;
-  const keys = useMemo(() => keyHelpRows(), []);
+  const showAudio = audioChoices.length > 1 || !!audioTracks?.onManage;
   const close = () => {
     setPane("root");
     onClose();
   };
+  const runAndClose = (fn?: () => void) => () => {
+    fn?.();
+    close();
+  };
 
-  // Ascending order, the founder's rule: Ambient mode · Audio track · Auto play · Captions · Keys · Playback speed · Quality · Sleep timer · Stable volume.
   const root = (
     <div className="reel-more-menu__list" data-pane="root">
-      <ChoiceMenuSwitchRow icon={<Sparkles />} label="Ambient mode" dataRow="ambient" on={ambient} onToggle={() => onAmbient?.(!ambient)} disabled={!onAmbient} />
-      <ChoiceMenuChoiceRow icon={<AudioLines />} label="Audio track" value={audioLabel} dataRow="audio" onClick={() => setPane("audio")} />
-      {autoplayNext ? (
-        <ChoiceMenuSwitchRow icon={<SkipForward />} label="Auto play" dataRow="autoplay" on={autoplayNext.on} onToggle={() => autoplayNext.onChange(!autoplayNext.on)} />
+      <PaneHead title="Settings" onClose={close} />
+      <ChoiceMenuChoiceRow icon={<Gauge />} label="Speed" value={`${Number(prefs.speed)}x`} dataRow="speed" onClick={() => setPane("speed")} />
+      <ChoiceMenuChoiceRow icon={<Settings />} label="Quality" value={qualityLabel} dataRow="quality" onClick={() => setPane("quality")} />
+      {captions.length > 0 ? (
+        <ChoiceMenuChoiceRow icon={<Captions />} label="Captions" value={captionLabel} dataRow="captions" onClick={() => setPane("captions")} />
       ) : null}
-      <ChoiceMenuChoiceRow icon={<Captions />} label="Captions" value={captionLabel} dataRow="captions" disabled={captions.length === 0} onClick={() => setPane("captions")} />
-      <ChoiceMenuChoiceRow icon={<Keyboard />} label="Keys" value="" dataRow="keys" onClick={() => setPane("keys")} />
-      <ChoiceMenuChoiceRow icon={<Gauge />} label="Playback speed" value={prefs.speed === 1 ? "Normal" : `${speedChipLabel(prefs.speed)}x`} dataRow="speed" onClick={() => setPane("speed")} />
-      <ChoiceMenuChoiceRow icon={<SlidersHorizontal />} label="Quality" value={qualityLabel} dataRow="quality" onClick={() => setPane("quality")} />
-      <ChoiceMenuChoiceRow icon={<Moon />} label="Sleep timer" value={sleepValueLabel(sleepChoice, sleepSchedule, Date.now())} dataRow="sleep" onClick={() => setPane("sleep")} />
-      <ChoiceMenuSwitchRow icon={<AudioWaveform />} label="Stable volume" dataRow="stable-volume" on={stableVolume} onToggle={() => onStableVolume?.(!stableVolume)} disabled={!onStableVolume} />
+      {showAudio ? <ChoiceMenuChoiceRow icon={<AudioLines />} label="Audio track" value={audioLabel} dataRow="audio" onClick={() => setPane("audio")} /> : null}
+      {autoplayNext ? (
+        <ChoiceMenuSwitchRow icon={<CirclePlay />} label="Autoplay" dataRow="autoplay" on={autoplayNext.on} onToggle={() => autoplayNext.onChange(!autoplayNext.on)} />
+      ) : null}
+      <ChoiceMenuSwitchRow icon={<Lightbulb />} label="Ambient light" dataRow="ambient" on={ambient} onToggle={() => onAmbient?.(!ambient)} disabled={!onAmbient} />
+      <ChoiceMenuChoiceRow icon={<MoreHorizontal />} label="More" value="" dataRow="more" onClick={() => setPane("more")} />
     </div>
   );
 
   const panes: Record<Exclude<Pane, "root">, ReactNode> = {
+    more: (
+      <div className="reel-more-menu__list" data-pane="more">
+        <PaneHead title="More" onBack={() => setPane("root")} onClose={close} />
+        {onRestart ? <ChoiceMenuRow icon={<RotateCcw />} label="Start from the beginning" dataRow="restart" onClick={runAndClose(onRestart)} /> : null}
+        {loop ? <ChoiceMenuSwitchRow icon={<RefreshCw />} label="Loop video" dataRow="loop" on={loop.on} onToggle={() => loop.onChange(!loop.on)} /> : null}
+        {onCopyLink ? <ChoiceMenuRow icon={<LinkIcon />} label="Copy link" dataRow="copy-link" onClick={runAndClose(() => onCopyLink(false))} /> : null}
+        {onCopyLink ? <ChoiceMenuRow icon={<Link2 />} label="Copy link at current time" dataRow="copy-link-time" onClick={runAndClose(() => onCopyLink(true))} /> : null}
+        <ChoiceMenuChoiceRow icon={<Moon />} label="Sleep timer" value={sleepValueLabel(sleepChoice, sleepSchedule, Date.now())} dataRow="sleep" onClick={() => setPane("sleep")} />
+      </div>
+    ),
     audio: (
       <div className="reel-more-menu__list" data-pane="audio">
-        <ChoiceMenuBack label="Audio track" onClick={() => setPane("root")} />
+        <PaneHead title="Audio track" onBack={() => setPane("root")} onClose={close} />
         {audioChoices.map((t) => (
           <ChoiceMenuOption key={t.id} label={t.label} selected={t.id === (audioTracks?.current ?? "original")} onClick={() => audioTracks?.onChange(t.id)} />
         ))}
@@ -1091,7 +1177,7 @@ export function TubeSettingsMenu({
     ),
     captions: (
       <div className="reel-more-menu__list" data-pane="captions">
-        <ChoiceMenuBack label="Captions" onClick={() => setPane("root")} />
+        <PaneHead title="Captions" onBack={() => setPane("root")} onClose={close} />
         <ChoiceMenuOption label="Off" selected={!prefs.captions} onClick={() => onChange({ captions: false })} />
         {captions.map((c) => (
           <ChoiceMenuOption
@@ -1106,42 +1192,25 @@ export function TubeSettingsMenu({
         ))}
       </div>
     ),
-    keys: (
-      <div className="reel-more-menu__list" data-pane="keys">
-        <ChoiceMenuBack label="Keys" onClick={() => setPane("root")} />
-        <dl className="tube-keys">
-          {keys.map((row) => (
-            <div key={row.action} className="tube-keys__row">
-              <dt>
-                {row.keys.map((k) => (
-                  <kbd key={k}>{k}</kbd>
-                ))}
-              </dt>
-              <dd>{row.action}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    ),
     speed: (
       <div className="reel-more-menu__list" data-pane="speed">
-        <ChoiceMenuBack label="Playback speed" onClick={() => setPane("root")} />
+        <PaneHead title="Speed" onBack={() => setPane("root")} onClose={close} />
         <SpeedPanel speed={prefs.speed} presets={SPEEDS} onChange={(speed) => onChange({ speed })} />
       </div>
     ),
     quality: (
       <div className="reel-more-menu__list" data-pane="quality">
-        <ChoiceMenuBack label="Quality" onClick={() => setPane("root")} />
-        <ChoiceMenuOption label="Auto" selected={prefs.quality === "auto"} onClick={() => onChange({ quality: "auto" })} />
+        <PaneHead title="Quality" onBack={() => setPane("root")} onClose={close} />
+        <ChoiceMenuOption label="Automatic" selected={prefs.quality === "auto"} onClick={() => onChange({ quality: "auto" })} />
         {rungs.map((h) => (
-          <ChoiceMenuOption key={h} label={`${h}p`} selected={prefs.quality === `${h}p`} onClick={() => onChange({ quality: `${h}p` })} />
+          <ChoiceMenuOption key={h} label={qualityBadge(h) ? `${h}p ${qualityBadge(h)}` : `${h}p`} selected={prefs.quality === `${h}p`} onClick={() => onChange({ quality: `${h}p` })} />
         ))}
         {rungs.length === 0 ? <p className="reel-more-menu__note">Only Auto is available for this video.</p> : null}
       </div>
     ),
     sleep: (
       <div className="reel-more-menu__list" data-pane="sleep">
-        <ChoiceMenuBack label="Sleep timer" onClick={() => setPane("root")} />
+        <PaneHead title="Sleep timer" onBack={() => setPane("more")} onClose={close} />
         {SLEEP_CHOICES.map((c) => (
           <ChoiceMenuOption key={c.value} label={c.label} selected={sleepChoice === c.value} onClick={() => onSleep(c.value)} />
         ))}

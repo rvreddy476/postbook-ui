@@ -1,8 +1,19 @@
+import { notificationActor, notificationActorId, notificationIcon, notificationTitle, type NotificationIcon } from '@/lib/notificationPresentation'
+
 export interface InboxNotification {
   id: string
   type: string
+  /** What the row shows: the web's own copy for a known type, else the server's title. */
   title: string
   body: string
+  /** The server's complete sentence (`title` on GET /v1/notifications); undefined from older servers. */
+  server_title?: string
+  /** The server's glyph category; undefined from older servers or for an unknown key. */
+  icon?: NotificationIcon
+  /** undefined when the row has no actor (missing, or the zero UUID). */
+  actor_id?: string
+  /** The hydrated actor's display name (or handle), when the server sent one. */
+  actor_name?: string
   deep_link?: string
   is_read: boolean
   created_at: string
@@ -47,10 +58,23 @@ const copy: Record<string, [string, string]> = {
   'doorstep.booking.extras_payment_due': ['Payment requested', 'Review the approved additional work and payment in your booking.'],
   'doorstep.message.new': ['New service message', 'Open your booking to read and reply.'],
   'follow': ['New follower', 'Someone started following you.'],
+  'user.followed': ['New follower', 'Someone started following you.'],
   'reaction': ['New reaction', 'Someone reacted to your post.'],
+  'post.liked': ['New like', 'Someone liked your post.'],
+  'post.super_liked': ['New super like', 'Someone gave your post a super like.'],
+  'comment_reaction': ['New reaction', 'Someone reacted to your comment.'],
   'comment': ['New comment', 'Someone commented on your post.'],
+  'post.commented': ['New comment', 'Someone commented on your post.'],
+  'comment.replied': ['New reply', 'Someone replied to your comment.'],
+  'mention': ['You were mentioned', 'Open the post to see where.'],
+  'mention.created': ['You were mentioned', 'Open the post to see where.'],
+  'comment_mention': ['You were mentioned', 'Someone mentioned you in a comment.'],
+  'group.mention': ['You were mentioned', 'Someone mentioned you in a group.'],
+  'community.mention': ['You were mentioned', 'Someone mentioned you in a community.'],
   'friend_request': ['New friend request', 'Open the request to respond.'],
+  'user.friend_request': ['New friend request', 'Open the request to respond.'],
   'friend_accepted': ['Friend request accepted', 'Your friend request was accepted.'],
+  'user.friend_accepted': ['Friend request accepted', 'Your friend request was accepted.'],
 }
 
 /** Stored mobile links must never launch an arbitrary scheme or external URL. */
@@ -72,8 +96,27 @@ export function decodeNotificationPage(value: unknown): { notifications: InboxNo
   const notifications = envelope.data.map((row: unknown): InboxNotification => {
     const n = row as Record<string, unknown> | null
     if (!n || typeof n.notification_id !== 'string' || typeof n.type !== 'string' || !Number.isInteger(n.bucket) || typeof n.ts !== 'string' || typeof n.created_at !== 'string' || typeof n.is_read !== 'boolean') throw new Error('A notification could not be read. Please refresh.')
-    const text = copy[n.type] ?? (n.type.startsWith('doorstep.pro.') ? ['Partner update', 'Open your workspace for details.'] : n.type.startsWith('doorstep.') ? ['Service booking update', 'Open your booking for details.'] : ['New notification', 'Open this update for details.'])
-    return { id: n.notification_id, type: n.type, title: text[0], body: text[1], deep_link: notificationWebLink(n.deep_link), is_read: n.is_read, created_at: n.created_at, bucket: n.bucket as number, ts: n.ts }
+    const known = copy[n.type]
+    const fallback = n.type.startsWith('doorstep.pro.') ? ['Partner update', 'Open your workspace for details.'] : n.type.startsWith('doorstep.') ? ['Service booking update', 'Open your booking for details.'] : ['New notification', 'Open this update for details.']
+    const serverTitle = notificationTitle(n.title)
+    const actor = notificationActor(n.actor)
+    // The web's own wording wins for the types it knows; the server's
+    // sentence only replaces the generic fallback line.
+    return {
+      id: n.notification_id,
+      type: n.type,
+      title: known ? known[0] : serverTitle ?? fallback[0],
+      body: known ? known[1] : fallback[1],
+      server_title: serverTitle,
+      icon: notificationIcon(n.icon),
+      actor_id: notificationActorId(n.actor_user_id),
+      actor_name: actor?.display_name ?? actor?.username,
+      deep_link: notificationWebLink(n.deep_link),
+      is_read: n.is_read,
+      created_at: n.created_at,
+      bucket: n.bucket as number,
+      ts: n.ts,
+    }
   })
   return { notifications, next_cursor: typeof envelope.meta?.next_cursor === 'string' && envelope.meta.next_cursor ? envelope.meta.next_cursor : null }
 }

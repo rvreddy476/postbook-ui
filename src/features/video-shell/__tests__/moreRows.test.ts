@@ -26,8 +26,8 @@ const contextKeys = (i: MoreRowsInput) => moreRows(i).filter((r) => r.kind === "
 const SURFACES: MoreSurface[] = ["reels", "watch"];
 
 describe("the shared More rows", () => {
-  test("a viewer on a full video: the eleven shared rows, in these words, on both surfaces", () => {
-    const want = ["Audio track", "Block Ravi", "Captions", "Copy link", "Description", "Don't recommend this channel", "Not interested", "Playback speed", "Quality", "Report", "Share"];
+  test("a viewer on a full video: the ten shared rows, in these words, on both surfaces", () => {
+    const want = ["Audio track", "Block Ravi", "Captions", "Copy link", "Description", "Don't recommend this channel", "Not interested", "Playback speed", "Quality", "Report"];
     expect(sharedLabels(input("reels"))).toEqual(want);
     expect(sharedLabels(input("watch"))).toEqual(want);
   });
@@ -73,14 +73,14 @@ describe("order", () => {
   test("the full reels list and the full watch list, top to bottom", () => {
     expect(labels(input("reels"))).toEqual([
       "Audio track", "Auto scroll", "Block Ravi", "Captions", "Copy link", "Description", "Don't recommend this channel",
-      "Not interested", "Playback speed", "Quality", "Report", "Save offline", "Share", "Use this sound",
+      "Not interested", "Playback speed", "Quality", "Report", "Use this sound",
     ]);
     expect(labels(input("watch"))).toEqual([
       "Audio track", "Block Ravi", "Captions", "Copy link", "Description", "Don't recommend this channel",
-      "Not interested", "Playback speed", "Quality", "Report", "Save offline", "Share",
+      "Not interested", "Playback speed", "Quality", "Report",
     ]);
     expect(labels(input("watch", {}, true))).toEqual([
-      "Audio track", "Audio tracks", "Captions", "Copy link", "Delete", "Description", "Edit", "Playback speed", "Quality", "Save offline", "Share",
+      "Audio track", "Audio tracks", "Captions", "Copy link", "Delete", "Description", "Edit", "Playback speed", "Quality",
     ]);
   });
 });
@@ -95,12 +95,10 @@ describe("visibility rules, the same on both surfaces", () => {
     }
   });
 
-  test("sharing off: no Share; Copy link stays", () => {
+  test("Copy link stays whether sharing is on or off", () => {
     for (const surface of SURFACES) {
-      const off = keys(input(surface, { shareHidden: true }));
-      expect(off).not.toContain("share");
-      expect(off).toContain("copy-link");
-      expect(keys(input(surface))).toContain("share");
+      expect(keys(input(surface, { shareHidden: true }))).toContain("copy-link");
+      expect(keys(input(surface, { shareHidden: false }))).toContain("copy-link");
     }
   });
 
@@ -166,12 +164,19 @@ describe("context rows, only where allowed", () => {
     expect(keys(input("watch", { usableSound: true }))).not.toContain("use-sound");
   });
 
-  test("Save offline: the post allows it, or you own it — and only where the browser has private storage", () => {
+  test("More has no Share and no Save offline row, for viewers and owners, on reels and long video", () => {
+    // Founder, 21 Oct: Share lives on the reel rail and the watch page's action row; saved copies are managed on the Offline page.
+    const posts: Partial<MorePost>[] = [{}, { downloadAllowed: false }, { offlineSaved: true }, { offlineSaved: true, downloadAllowed: false }, { shareHidden: true }];
     for (const surface of SURFACES) {
-      expect(keys(input(surface, { downloadAllowed: true }))).toContain("offline");
-      expect(keys(input(surface, { downloadAllowed: false }))).not.toContain("offline");
-      expect(keys(input(surface, { downloadAllowed: false }, true))).toContain("offline");
-      expect(keys(input(surface, { downloadAllowed: true }, true, { offline: false }))).not.toContain("offline");
+      for (const isOwner of [false, true]) {
+        for (const post of posts) {
+          const rows = moreRows(input(surface, post, isOwner));
+          const got: string[] = rows.map((r) => r.key);
+          expect(got).not.toContain("share");
+          expect(got).not.toContain("offline");
+          for (const gone of ["Share", "Save offline", "Remove offline copy"]) expect(rows.map((r) => r.label)).not.toContain(gone);
+        }
+      }
     }
   });
 
@@ -186,8 +191,8 @@ describe("context rows, only where allowed", () => {
     }
   });
 
-  test("every context row is one of the allowed six; nothing else differs", () => {
-    const allowed = new Set(["auto-scroll", "use-sound", "offline", "delete", "edit", "manage-audio"]);
+  test("every context row is one of the allowed five; nothing else differs", () => {
+    const allowed = new Set(["auto-scroll", "use-sound", "delete", "edit", "manage-audio"]);
     for (const surface of SURFACES) {
       for (const isOwner of [false, true]) {
         for (const key of contextKeys(input(surface, {}, isOwner))) expect(allowed.has(key)).toBe(true);

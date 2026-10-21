@@ -110,13 +110,14 @@ describe("where the sound line is drawn", () => {
     expect(screen).toContain("nextSoundStep({ reel: target, signedIn: Boolean(viewerId), intent })");
   });
 
-  test("the rail disc opens the sound's page when the reel plays one, the profile when not", () => {
+  test("no sound disc on the rail (19 Oct): its foot is the author's profile picture, even with a sound", () => {
     const base = { isOwn: false, following: false as const, followPending: false, onToggleFollow: noop, onLike: noop, onComments: noop, onShare: noop, onSave: noop };
-    const sounding = renderToStaticMarkup(<ReelRail {...base} reel={withSound} playing />);
-    expect(sounding).toContain('class="reel-rail-disc" aria-label="Sound: Original sound - Asha" data-sound="" data-playing="" href="/reels/sound/s-1"');
-    const silent = renderToStaticMarkup(<ReelRail {...base} reel={plain} />);
-    expect(silent).toContain('class="reel-rail-disc" aria-label="More from Bee" href="/u/bee"');
-    expect(renderToStaticMarkup(<ReelRail {...base} reel={withSound} variant="phone" />)).not.toContain("reel-rail-disc");
+    for (const variant of ["desktop", "phone"] as const) {
+      const html = renderToStaticMarkup(<ReelRail {...base} reel={withSound} variant={variant} />);
+      expect(html).not.toContain("reel-rail-disc");
+      expect(html).not.toContain("/reels/sound/");
+      expect(html).toContain('class="reel-rail-avatar"');
+    }
   });
 });
 

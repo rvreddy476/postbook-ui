@@ -55,7 +55,8 @@ export interface AudioTrack {
 
 /* ── Reel Draft / Creation ───────────────────────────────── */
 
-export type ReelVisibility = "public" | "followers" | "private" | "unlisted";
+/** "friends" = mutual follows (post-service migration 066). */
+export type ReelVisibility = "public" | "followers" | "friends" | "private" | "unlisted";
 export type ReelStatus = "draft" | "processing" | "publishing_pending" | "published" | "rejected" | "deleted";
 export type ModerationStatus = "pending" | "approved" | "flagged" | "rejected";
 export type LicenseType = "standard" | "creative_commons";

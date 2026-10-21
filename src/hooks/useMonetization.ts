@@ -341,6 +341,43 @@ export function useRequestPayout() {
   });
 }
 
+/**
+  Whether withdrawals are open (MONETIZATION_PAYOUTS_ENABLED). The earnings
+  summary stamps `withdrawable` from that flag on every reply, so it is the
+  client's one signal. Fails closed: an error, maintenance or a reply
+  without the flag all read as "not available".
+*/
+export function payoutsAvailableFrom(raw: unknown): boolean {
+  const d = raw && typeof raw === "object" && "data" in raw ? (raw as { data: unknown }).data : raw;
+  return !!d && typeof d === "object" && (d as { withdrawable?: unknown }).withdrawable === true;
+}
+
+export const PAYOUTS_AVAILABLE_KEY = ["monetization-payouts-available"] as const;
+
+export function usePayoutsAvailable() {
+  return useQuery({
+    queryKey: PAYOUTS_AVAILABLE_KEY,
+    queryFn: async () => {
+      try {
+        const res = await api.get<unknown>("/v1/monetization/creator-fund/earnings", { params: { days: "1" } });
+        return payoutsAvailableFrom(res.data);
+      } catch {
+        return false;
+      }
+    },
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+}
+
+/** The server's refusal while withdrawals are off (503 PAYOUTS_NOT_ENABLED). */
+export function isPayoutsNotEnabledError(err: unknown): boolean {
+  const data = (err as { response?: { data?: unknown } })?.response?.data as { error?: unknown } | undefined;
+  const e = data?.error;
+  const code = e && typeof e === "object" ? (e as { code?: unknown }).code : e;
+  return code === "PAYOUTS_NOT_ENABLED";
+}
+
 export function usePayoutHistory() {
   return useInfiniteQuery({
     queryKey: ["monetization-payout-history"],
@@ -358,20 +395,60 @@ export function usePayoutHistory() {
   });
 }
 
+/*
+  Tax details (PAN, GSTIN, residency) are collected only while payouts are
+  open (founder, 15 Oct). Every tax write goes through this guard, which
+  refuses before any request unless the one payouts signal said yes. Fails
+  closed: unknown, loading or errored all read as "closed".
+*/
+export class TaxCollectionClosedError extends Error {
+  readonly code = "PAYOUTS_NOT_ENABLED";
+  constructor() {
+    super("Tax details are collected once payouts open");
+    this.name = "TaxCollectionClosedError";
+  }
+}
+
+function assertTaxCollectionOpen(payoutsOpen: boolean): void {
+  if (payoutsOpen !== true) throw new TaxCollectionClosedError();
+}
+
+export interface TaxInfoPayload {
+  country: string;
+  pan_number: string;
+  gst_number: string;
+}
+
+export async function postTaxInfo(payload: TaxInfoPayload, payoutsOpen: boolean): Promise<TaxInfo> {
+  assertTaxCollectionOpen(payoutsOpen);
+  const taxData: Record<string, string> = {};
+  if (payload.pan_number.trim()) taxData.pan_number = payload.pan_number.trim();
+  if (payload.gst_number.trim()) taxData.gst_number = payload.gst_number.trim();
+
+  const res = await api.post<ApiResponse<RawTaxInfo>>("/v1/monetization/tax-info", {
+    country: payload.country,
+    tax_data_encrypted: JSON.stringify(taxData),
+  });
+  return normalizeTaxInfo(res.data.data);
+}
+
+export interface TaxProfileBody {
+  pan_encrypted: string | null;
+  gstin: string | null;
+  tax_residency: string;
+}
+
+export async function postTaxProfile(body: TaxProfileBody, payoutsOpen: boolean): Promise<void> {
+  assertTaxCollectionOpen(payoutsOpen);
+  await api.post("/v1/monetization/tax-profile", body);
+}
+
 export function useSaveTaxInfo() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { country: string; pan_number: string; gst_number: string }) => {
-      const taxData: Record<string, string> = {};
-      if (payload.pan_number.trim()) taxData.pan_number = payload.pan_number.trim();
-      if (payload.gst_number.trim()) taxData.gst_number = payload.gst_number.trim();
-
-      const res = await api.post<ApiResponse<RawTaxInfo>>("/v1/monetization/tax-info", {
-        country: payload.country,
-        tax_data_encrypted: JSON.stringify(taxData),
-      });
-      return normalizeTaxInfo(res.data.data);
-    },
+    // Reads the same cached payouts signal the page renders from; absent means closed.
+    mutationFn: (payload: TaxInfoPayload) =>
+      postTaxInfo(payload, qc.getQueryData<boolean>(PAYOUTS_AVAILABLE_KEY) === true),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["monetization-dashboard"] });
     },

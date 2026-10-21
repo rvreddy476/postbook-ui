@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { channelGateState, needsChannel } from "../ChannelGate";
+import { channelGateState, needsChannel, studioNeedsChannel } from "../ChannelGate";
 
 const base = { signedIn: true, pending: false, error: false, hasChannel: false };
 
@@ -26,5 +26,19 @@ describe("channel gate", () => {
     expect(channelGateState({ ...base, contentType: "long", signedIn: false })).toBe("signed-out");
     expect(channelGateState({ ...base, contentType: "long", pending: true })).toBe("loading");
     expect(channelGateState({ ...base, contentType: "podcast", error: true })).toBe("error");
+  });
+});
+
+describe("studio channel check", () => {
+  test("a reel or short whose file classifies as a long video needs a channel", () => {
+    expect(studioNeedsChannel("reel", "long_video")).toBe(true);
+    expect(studioNeedsChannel("short", "long_video")).toBe(true);
+  });
+
+  test("a reel or short that stays short does not; long uploads always do", () => {
+    expect(studioNeedsChannel("reel", "flick")).toBe(false);
+    expect(studioNeedsChannel("short", null)).toBe(false);
+    expect(studioNeedsChannel("long", "flick")).toBe(true);
+    expect(studioNeedsChannel("podcast", null)).toBe(true);
   });
 });

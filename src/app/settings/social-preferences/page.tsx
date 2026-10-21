@@ -1,16 +1,25 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import AppShell from '@/components/AppShell'
 import Link from "next/link"
 import { motion } from "framer-motion"
 import {
     ArrowLeft,
     Users,
-    Eye,
     MessageSquare,
+    ChevronRight,
 } from "lucide-react"
-import api from "@/lib/api"
+import { useMySettings, useUpdateMySettings } from "@/hooks/useMySettings"
+import {
+    isEmptyPatch,
+    socialFormFromSettings,
+    socialPatch,
+    type SocialForm,
+} from "../_lib/privacySettings"
+import { failedSave } from "../_lib/saveFeedback"
+import { useSaveToast } from "../_components/useSaveToast"
+import { SettingsLoadError, SettingsLoading } from "../_components/SettingsLoadState"
 
 /* ------------------------------------------------------------------ */
 /*  Toggle Switch                                                       */
@@ -20,16 +29,19 @@ function ToggleSwitch({
     checked,
     onChange,
     disabled,
+    label,
 }: {
     checked: boolean
     onChange: (checked: boolean) => void
     disabled?: boolean
+    label?: string
 }) {
     return (
         <button
             type="button"
             role="switch"
             aria-checked={checked}
+            aria-label={label}
             disabled={disabled}
             onClick={() => onChange(!checked)}
             className={[
@@ -91,72 +103,49 @@ function SectionCard({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Save Toast                                                          */
-/* ------------------------------------------------------------------ */
-
-function useSaveToast() {
-    const [message, setMessage] = useState<{ text: string; isError: boolean } | null>(null)
-
-    const show = (text: string, isError = false) => {
-        setMessage({ text, isError })
-        setTimeout(() => setMessage(null), 2000)
-    }
-
-    const Toast = message ? (
-        <p
-            className={[
-                "mt-3 text-xs font-semibold",
-                message.isError ? "text-red-500" : "text-emerald-600",
-            ].join(" ")}
-        >
-            {message.text}
-        </p>
-    ) : null
-
-    return { show, Toast }
-}
-
-/* ------------------------------------------------------------------ */
 /*  Main Page                                                           */
 /* ------------------------------------------------------------------ */
 
+/*
+ * Every control here is a field of the settings document on identity
+ * user-service (GET/PUT /v1/users/me/settings). The page reads that document
+ * BEFORE rendering the form and saves only the fields the user changed, so a
+ * save can never reset a value that was set elsewhere. In particular,
+ * toggling friend requests leaves account_visibility exactly as stored.
+ *
+ * Removed: "Allow follows", "Show follower count" and "Show friend count".
+ * None has a field in updateSettingsRequest, so none could ever be saved.
+ */
 export default function SocialPreferencesPage() {
-    const [allowFriendRequests, setAllowFriendRequests] = useState(true)
-    const [allowFollows, setAllowFollows] = useState(true)
-    const [requireFollowApproval, setRequireFollowApproval] = useState(false)
-    const [showFollowerCount, setShowFollowerCount] = useState(true)
-    const [showFriendCount, setShowFriendCount] = useState(false)
-    const [dmPolicy, setDmPolicy] = useState<"everyone" | "friends" | "nobody">("everyone")
-    const { show, Toast } = useSaveToast()
+    const settingsQuery = useMySettings()
+    const update = useUpdateMySettings()
+    const { showResult, Toast } = useSaveToast()
+    const [form, setForm] = useState<SocialForm | null>(null)
 
-    // Endpoint audit: this used to PUT /v1/users/me/social-preferences, which
-    // exists in neither the api-gateway route table nor user-service. These
-    // are part of the single settings document: PUT /v1/users/me/settings.
-    //
-    // The enum values below are user-service's, not this page's vocabulary
-    // (allowedPrivacyValues in identity-platform user-service); an
-    // out-of-range value is rejected with INVALID_REQUEST for the whole body.
-    //
-    // allow_follows, show_follower_count and show_friend_count have NO field
-    // in updateSettingsRequest, so they are not sent rather than being
-    // silently dropped by the server behind a "Saved!" toast.
+    // Seed the form once the server's values are in.
+    useEffect(() => {
+        if (settingsQuery.data && !form) setForm(socialFormFromSettings(settingsQuery.data))
+    }, [settingsQuery.data, form])
+
+    const patch = useMemo(
+        () => (settingsQuery.data && form ? socialPatch(settingsQuery.data, form) : {}),
+        [settingsQuery.data, form],
+    )
+    const dirty = !isEmptyPatch(patch)
+
     const handleSave = async () => {
+        if (!dirty) return
         try {
-            await api.put("/v1/users/me/settings", {
-                who_can_send_connection_request: allowFriendRequests ? "everyone" : "no_one",
-                account_visibility: requireFollowApproval ? "private" : "public",
-                who_can_message:
-                    dmPolicy === "everyone"
-                        ? "everyone_message_requests"
-                        : dmPolicy === "friends"
-                          ? "connections_only"
-                          : "no_one",
-            })
-            show("Saved!")
-        } catch {
-            show("Could not save", true)
+            const stored = await update.mutateAsync(patch)
+            setForm(socialFormFromSettings(stored))
+            showResult({ ok: true, data: stored })
+        } catch (err) {
+            showResult(failedSave(err))
         }
     }
+
+    const set = <K extends keyof SocialForm>(key: K, value: SocialForm[K]) =>
+        setForm((f) => (f ? { ...f, [key]: value } : f))
 
     return (
         <AppShell>
@@ -183,101 +172,80 @@ export default function SocialPreferencesPage() {
                 </div>
             </div>
 
-            {/* Section 1 — Connections */}
-            <SectionCard
-                icon={<Users className="h-6 w-6 text-brand-text/50" />}
-                title="Connections"
-                description="Manage who can connect with you."
-                delay={0.05}
-            >
-                <div className="divide-y divide-brand-divider space-y-0">
-                    <div className="flex items-center justify-between py-3">
-                        <div>
-                            <p className="text-sm font-semibold text-brand-text">Allow Friend Requests</p>
-                            <p className="text-xs text-brand-highlight">Let others send you friend requests</p>
-                        </div>
-                        <ToggleSwitch checked={allowFriendRequests} onChange={setAllowFriendRequests} />
-                    </div>
-                    <div className="flex items-center justify-between py-3">
-                        <div>
-                            <p className="text-sm font-semibold text-brand-text">Allow Follows</p>
-                            <p className="text-xs text-brand-highlight">Let others follow your profile</p>
-                        </div>
-                        <ToggleSwitch checked={allowFollows} onChange={setAllowFollows} />
-                    </div>
-                    <div className="flex items-center justify-between py-3">
-                        <div>
-                            <p className="text-sm font-semibold text-brand-text">Require Follow Approval</p>
-                            <p className="text-xs text-brand-highlight">Manually approve each follow request</p>
-                        </div>
-                        <ToggleSwitch
-                            checked={requireFollowApproval}
-                            onChange={setRequireFollowApproval}
-                            disabled={!allowFollows}
-                        />
-                    </div>
-                </div>
-            </SectionCard>
-
-            {/* Section 2 — Visibility */}
-            <SectionCard
-                icon={<Eye className="h-6 w-6 text-brand-text/50" />}
-                title="Visibility"
-                description="Choose what counts to show on your profile."
-                delay={0.1}
-            >
-                <div className="divide-y divide-brand-divider space-y-0">
-                    <div className="flex items-center justify-between py-3">
-                        <div>
-                            <p className="text-sm font-semibold text-brand-text">Show Follower Count</p>
-                            <p className="text-xs text-brand-highlight">Display how many people follow you</p>
-                        </div>
-                        <ToggleSwitch checked={showFollowerCount} onChange={setShowFollowerCount} />
-                    </div>
-                    <div className="flex items-center justify-between py-3">
-                        <div>
-                            <p className="text-sm font-semibold text-brand-text">Show Friend Count</p>
-                            <p className="text-xs text-brand-highlight">Display your friend count on your profile</p>
-                        </div>
-                        <ToggleSwitch checked={showFriendCount} onChange={setShowFriendCount} />
-                    </div>
-                </div>
-            </SectionCard>
-
-            {/* Section 3 — Messaging */}
-            <SectionCard
-                icon={<MessageSquare className="h-6 w-6 text-brand-text/50" />}
-                title="Messaging"
-                description="Control who can message you."
-                delay={0.15}
-            >
-                <div className="space-y-1.5">
-                    <label htmlFor="dm-policy" className="block text-xs font-semibold text-brand-highlight">
-                        Allow DMs from
-                    </label>
-                    <select
-                        id="dm-policy"
-                        value={dmPolicy}
-                        onChange={(e) => setDmPolicy(e.target.value as "everyone" | "friends" | "nobody")}
-                        className="w-48 rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
+            {settingsQuery.isError ? (
+                <SettingsLoadError onRetry={() => void settingsQuery.refetch()} />
+            ) : !settingsQuery.data || !form ? (
+                <SettingsLoading />
+            ) : (
+                <>
+                    {/* Section 1 — Connections */}
+                    <SectionCard
+                        icon={<Users className="h-6 w-6 text-brand-text/50" />}
+                        title="Connections"
+                        description="Manage who can connect with you."
+                        delay={0.05}
                     >
-                        <option value="everyone">Everyone</option>
-                        <option value="friends">Friends only</option>
-                        <option value="nobody">Nobody</option>
-                    </select>
-                </div>
-            </SectionCard>
+                        <div className="divide-y divide-brand-divider space-y-0">
+                            <div className="flex items-center justify-between py-3">
+                                <div>
+                                    <p className="text-sm font-semibold text-brand-text">Allow Friend Requests</p>
+                                    <p className="text-xs text-brand-highlight">Let others send you friend requests</p>
+                                </div>
+                                <ToggleSwitch
+                                    label="Allow friend requests"
+                                    checked={form.allowConnectionRequests}
+                                    onChange={(v) => set("allowConnectionRequests", v)}
+                                />
+                            </div>
+                            <div className="flex items-center justify-between py-3">
+                                <div>
+                                    <p className="text-sm font-semibold text-brand-text">Require Follow Approval</p>
+                                    <p className="text-xs text-brand-highlight">
+                                        Private account: approve each follower before they see your posts
+                                    </p>
+                                </div>
+                                <ToggleSwitch
+                                    label="Require follow approval"
+                                    checked={form.requireFollowApproval}
+                                    onChange={(v) => set("requireFollowApproval", v)}
+                                />
+                            </div>
+                        </div>
+                    </SectionCard>
 
-            {/* Save */}
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
-                <button
-                    onClick={handleSave}
-                    className="rounded-xl bg-primary-ink px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:bg-primary-hover"
-                >
-                    Save Preferences
-                </button>
-                {Toast}
-            </motion.div>
+                    {/* Section 2 — Messaging */}
+                    <SectionCard
+                        icon={<MessageSquare className="h-6 w-6 text-brand-text/50" />}
+                        title="Messaging"
+                        description="Control who can message you."
+                        delay={0.1}
+                    >
+                        {/* One place for who can message you: Inbox & messaging. */}
+                        <Link
+                            href="/settings/messaging"
+                            className="flex items-center gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-brand-text/5 group"
+                        >
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-brand-text">Inbox &amp; messaging settings</p>
+                                <p className="text-xs text-brand-highlight">Messages on or off, who can message you, calls, safe requests and more</p>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-brand-text/60 group-hover:text-brand-text/80 transition-colors shrink-0" />
+                        </Link>
+                    </SectionCard>
+
+                    {/* Save */}
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
+                        <button
+                            onClick={handleSave}
+                            disabled={!dirty || update.isPending}
+                            className="rounded-xl bg-primary-ink px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {update.isPending ? "Saving…" : "Save Preferences"}
+                        </button>
+                        {Toast}
+                    </motion.div>
+                </>
+            )}
         </div>
         </AppShell>
     )

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Flame, History, Loader2, Tv2, Upload } from "lucide-react";
 
+import { useReselect } from "@/lib/reselect";
 import { useAuthUser } from "@/store/auth";
 import { VideoCard } from "./VideoCard";
 import { TileSkeleton, VideoRow } from "./VideoRow";
@@ -83,6 +84,22 @@ export function HomePage() {
   );
 
   const isEmpty = !videosFeed.isLoading && videos.length === 0;
+
+  // Refresh only when the viewer asks (founder, 21 Oct): clicking Watch /
+  // PostTube while already here; no button (founder removed it). What is on screen
+  // stays until the fresh pages arrive; then the page returns to the top.
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await Promise.all([videosFeed.refetch(), chip === CHIP_ALL ? flicksFeed.refetch() : null, continueWatchingFeed.refetch(), trendingFeed.refetch()]);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+  useReselect("/posttube", () => void refresh());
 
   // Shelves only on "All": a category or the subscriptions feed is its own list.
   const shelves = chip === CHIP_ALL ? { reels: flicks.length > 0, trending: trending.length > 0, continue: continueWatching.length > 0 } : { reels: false, trending: false, continue: false };

@@ -1,4 +1,5 @@
 import api from "@/lib/api"
+import { isUseResumableUpload, uploadResumable } from "@/lib/resumableUpload"
 
 interface InitUploadResponse {
     data: {
@@ -42,12 +43,23 @@ export async function uploadMedia(
     mediaSubtype: "general" | "avatar" | "cover" | "gif" | "chat" = "general"
 ): Promise<string> {
     // Step 1: Init upload
-    const initRes = await api.post<InitUploadResponse>("/v1/media/init", {
-        file_type: fileType,
-        media_subtype: mediaSubtype,
-        mime_type: file.type,
-        file_size_bytes: file.size,
-    })
+    let initRes: { data: InitUploadResponse }
+    try {
+        initRes = await api.post<InitUploadResponse>("/v1/media/init", {
+            file_type: fileType,
+            media_subtype: mediaSubtype,
+            mime_type: file.type,
+            file_size_bytes: file.size,
+        })
+    } catch (err) {
+        // A video too big for one PUT (413 USE_RESUMABLE_UPLOAD) goes up in
+        // parts instead. Only a general video: the resumable path takes no
+        // subtype, and a chat attachment must stay on the protected prefix.
+        if (fileType === "video" && mediaSubtype === "general" && isUseResumableUpload(err)) {
+            return uploadResumable(file)
+        }
+        throw err
+    }
 
     const { media_id, upload_url } = initRes.data.data
 

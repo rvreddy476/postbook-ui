@@ -1,9 +1,21 @@
 import api from "@/lib/api";
 
-import { saveChapters } from "@/features/posttube/hub/hubApi";
+import { saveChapters, type HubPostPatch } from "@/features/posttube/hub/hubApi";
 
 import { studioSoundFields } from "./studioSound";
+import { isShortStudio } from "./tokens";
 import type { StudioFormState } from "./types";
+
+/**
+ * The schedule picker holds a local wall clock ("YYYY-MM-DDTHH:mm"); every
+ * route (create publish_at, draft schedule_at, draft publish) wants RFC3339.
+ * undefined for no schedule or a value that is not a date.
+ */
+export function scheduleIso(local: string | null | undefined): string | undefined {
+  if (!local) return undefined;
+  const at = new Date(local);
+  return Number.isNaN(at.getTime()) ? undefined : at.toISOString();
+}
 
 /**
  * Everything the studio collected, as POST /v1/posts fields, for the
@@ -12,6 +24,8 @@ import type { StudioFormState } from "./types";
  * with TITLE_REQUIRED and its topic, settings and schedule were dropped.
  * Field names are post-service CreatePostRequest's. A chosen sound adds
  * audio_track_id and audio_start_ms; with none chosen neither is sent.
+ * share_to_postbook is always sent: the server reads an explicit false as
+ * "keep this out of the home Feed", and an omitted one as true.
  */
 export function studioCreateFields(form: StudioFormState): Record<string, unknown> {
   const out: Record<string, unknown> = {
@@ -21,11 +35,9 @@ export function studioCreateFields(form: StudioFormState): Record<string, unknow
     is_made_for_kids: form.isMadeForKids,
     paid_promotion: form.paidPromotion,
     altered_content: form.alteredContent,
-    license: form.license,
-    allow_embedding: form.allowEmbedding,
     remix_setting: form.remixSetting,
-    comment_moderation: form.commentModeration,
     comment_access: form.commentAccess,
+    share_to_postbook: form.crossPostPostbook,
     original_audio_volume: form.originalAudioVolume,
     overlay_audio_volume: form.overlayAudioVolume,
     ...studioSoundFields(form),
@@ -33,14 +45,42 @@ export function studioCreateFields(form: StudioFormState): Record<string, unknow
   if (form.category) out.category = form.category;
   if (form.language) out.language = form.language;
   if (form.tags.length > 0) out.tags = form.tags;
-  if (form.recordingDate) out.recording_date = form.recordingDate;
-  if (form.recordingLocation) out.recording_location = form.recordingLocation;
-  // The picker holds a local "YYYY-MM-DDTHH:mm"; the create route wants RFC3339.
-  if (form.scheduleAt) {
-    const at = new Date(form.scheduleAt);
-    if (!Number.isNaN(at.getTime())) out.publish_at = at.toISOString();
+  if (form.aiGenerated) out.ai_generated = true;
+  const place = form.locationName.trim();
+  if (place) {
+    out.location_name = place;
+    if (form.locationPlaceId) out.location_place_id = form.locationPlaceId;
   }
+  const publishAt = scheduleIso(form.scheduleAt);
+  if (publishAt) out.publish_at = publishAt;
   return out;
+}
+
+/**
+ * Settings the create route does not take, sent as one owner PATCH
+ * (/v1/posts/:id) once the post exists — scheduled posts too, since the row
+ * is written at create. Today that is only age_restricted, and only from
+ * the long-video studio (shorts never ask). null = nothing to send.
+ */
+export function postPublishPatch(form: Pick<StudioFormState, "contentType" | "ageRestricted">): HubPostPatch | null {
+  if (isShortStudio(form.contentType)) return null;
+  if (!form.ageRestricted) return null;
+  return { age_restricted: true };
+}
+
+/**
+ * Why a publish failed, in words a person can act on. Every service answers
+ * `{ error: { code, message } }`; axios's own message ("Request failed with
+ * status code 403") says nothing, so it is the last resort. `code` lets the
+ * studio react to CHANNEL_REQUIRED by showing the channel form.
+ */
+export function publishFailure(err: unknown): { code: string | null; message: string } | null {
+  if (!err) return null;
+  const body = (err as { response?: { data?: { error?: { code?: unknown; message?: unknown } } } }).response?.data?.error;
+  const code = typeof body?.code === "string" && body.code ? body.code : null;
+  const message = typeof body?.message === "string" && body.message.trim() ? body.message.trim() : null;
+  if (message) return { code, message: /[.!?]$/.test(message) ? message : `${message}.` };
+  return { code, message: err instanceof Error && err.message ? err.message : "Something went wrong." };
 }
 
 /*

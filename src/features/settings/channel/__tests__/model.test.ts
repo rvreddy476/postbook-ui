@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { sameChannelName } from "../hooks";
 
 import {
   BrandingValidationError,
@@ -187,5 +188,16 @@ describe("server errors", () => {
     expect(r.pageMessage).toBe("boom");
     expect(fieldErrorsFromApi(new Error("offline")).pageMessage).toBe("Could not reach the server.");
     expect(fieldErrorsFromApi(axiosError(409, "HANDLE_TAKEN", "That handle is taken")).errors).toEqual({ handle: "That handle is taken" });
+  });
+});
+
+describe("channel name uniqueness", () => {
+  test("CHANNEL_NAME_TAKEN lands on the name field", () => {
+    expect(readApiError(axiosError(409, "CHANNEL_NAME_TAKEN", "Already in use")).field).toBe("name");
+  });
+
+  test("names compare like the server: trimmed, case ignored", () => {
+    expect(sameChannelName("  Raghu Studio ", "raghu studio")).toBe(true);
+    expect(sameChannelName("Raghu Studio", "Raghu Studios")).toBe(false);
   });
 });

@@ -115,6 +115,10 @@
   --color-success: rgb(var(--success));
   --color-warning: rgb(var(--warning));
   --color-danger: rgb(var(--danger));
+  --color-follow-badge: rgb(var(--follow-badge));
+  --color-playhead: rgb(var(--playhead));
+  --color-follow-seal: rgb(var(--follow-seal));
+  --color-follow-seal-plus: rgb(var(--follow-seal-plus));
   --color-info: rgb(var(--info));
   --color-send: rgb(var(--send));
   --color-send-hover: rgb(var(--send-hover));
@@ -243,6 +247,10 @@
     --tile-more: var(--theme-tile-more);
     --send-hover: var(--theme-send-hover);
     --receipt-seen: var(--theme-receipt-seen);
+    --follow-badge: var(--theme-follow-badge);
+    --playhead: var(--theme-playhead);
+    --follow-seal: var(--theme-follow-seal);
+    --follow-seal-plus: var(--theme-follow-seal-plus);
   }
 
   .dark {
@@ -284,6 +292,10 @@
     --tile-more: var(--theme-tile-more);
     --send-hover: var(--theme-send-hover);
     --receipt-seen: var(--theme-receipt-seen);
+    --follow-badge: var(--theme-follow-badge);
+    --playhead: var(--theme-playhead);
+    --follow-seal: var(--theme-follow-seal);
+    --follow-seal-plus: var(--theme-follow-seal-plus);
   }
 
   html,

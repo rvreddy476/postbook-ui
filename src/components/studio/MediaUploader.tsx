@@ -2,6 +2,7 @@
 
 import React, { useRef, useCallback, useState } from 'react';
 import { Camera, Video, X, Plus, FileText } from 'lucide-react';
+import { SHORTS_MAX_DURATION_LABEL } from '@/lib/videoLimits';
 
 interface MediaUploaderProps {
   files: File[];
@@ -30,8 +31,8 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({ files, onChange, isVideo,
   const maxFiles = isVideo ? 1 : 4;
   const accept = isVideo ? 'video/*' : 'image/*';
   const formats = isVideo ? 'MP4, MOV, WebM' : 'JPG, PNG, WebP';
-  const limits = isVideo ? '500 MB limit' : '20 MB each';
-  const countLabel = isVideo ? 'Up to 5 minutes' : 'Up to 4 photos';
+  const limits = isVideo ? 'Any file size' : '20 MB each';
+  const countLabel = isVideo ? `Up to ${SHORTS_MAX_DURATION_LABEL}` : 'Up to 4 photos';
 
   if (files.length === 0) {
     return (

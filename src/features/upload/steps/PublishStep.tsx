@@ -1,14 +1,21 @@
 "use client";
 
-import { Globe, Calendar, Link2, AlertCircle, Loader2, Tag } from "lucide-react";
-import { useVideoCategories } from "@/features/posttube/hooks/usePosttubeHome";
-import { ToggleRow, RadioOption, StudioSelect } from "../primitives";
-import { categoryOptions } from "../categories";
+import { AlertCircle, Calendar, Clock, Eye, Film } from "lucide-react";
+
 import { SeriesPicker } from "../components/SeriesPicker";
-import type { ContentType } from "../tokens";
+import {
+  CommentSettings,
+  DisclosureSettings,
+  FeedSetting,
+  RemixSetting,
+  ScheduleSetting,
+  TopicSetting,
+  VisibilitySetting,
+  visibilityLabel,
+} from "../components/StudioSettings";
+import { isShortStudio, type ContentType } from "../tokens";
 import type { StudioFormState } from "../types";
 import { getStepErrors } from "../validation";
-import { tomorrowLocalInput } from "../fileRules";
 
 interface PublishStepProps {
   form: StudioFormState;
@@ -17,218 +24,81 @@ interface PublishStepProps {
   publishError?: string | null;
   retryProcessingCheck?: () => void;
   onReplaceVideo?: () => void;
-  /** Which studio this is: decides which taxonomy kinds the topic select offers. */
+  /** Which studio this is: decides the settings shown and which taxonomy kinds the topic select offers. */
   contentType?: ContentType;
 }
 
+function clock(totalSec: number): string {
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}` : `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function scheduleText(local: string | null): string {
+  if (local === null) return "Publishes when you press Publish";
+  const at = new Date(local);
+  if (Number.isNaN(at.getTime())) return "Scheduled — pick a time";
+  return `Scheduled for ${at.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}`;
+}
+
+/** What is about to go out: the cover, the title and the three facts that matter. */
+function PublishSummary({ form, short, publishError }: { form: StudioFormState; short: boolean; publishError?: string | null }) {
+  const cover = form.coverSourceType === "custom_image" ? form.customCoverPreviewUrl : form.coverPreviewUrl;
+  return (
+    <div className="upload-summary" data-publish-summary>
+      <div className="upload-summary-thumb" data-vertical={short || undefined} aria-hidden="true">
+        {cover ? <img src={cover} alt="" /> : form.videoPreviewUrl ? <video src={form.videoPreviewUrl} muted playsInline preload="metadata" /> : <Film />}
+      </div>
+      <div className="upload-summary-body">
+        <strong>{form.title.trim() || "Untitled"}</strong>
+        <ul className="upload-summary-meta">
+          {form.videoDurationSec != null ? <li><Clock aria-hidden="true" />{clock(form.videoDurationSec)}</li> : null}
+          <li><Eye aria-hidden="true" />{visibilityLabel(form.visibility)}</li>
+          <li><Calendar aria-hidden="true" />{scheduleText(form.scheduleAt)}</li>
+        </ul>
+        <p className="upload-summary-note">
+          The file uploads when you press Publish and is watchable once processing finishes, usually a few minutes.
+        </p>
+        {publishError ? (
+          <p className="upload-field-error" role="alert">
+            <AlertCircle aria-hidden="true" />
+            <span>We couldn&apos;t publish it. {publishError} Your details are still here; you can try again.</span>
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export function PublishStep({ form, patch, showErrors, publishError, contentType = "long" }: PublishStepProps) {
-  const categoryError = !!showErrors && !form.category.trim();
+  const short = isShortStudio(contentType);
   const scheduleError = !!showErrors && getStepErrors("publish", form).some((error) => error.field === "scheduleAt");
-  // One taxonomy for all video: GET /v1/posts/categories, the same list the
-  // home strip reads. The select stores the slug and shows the label.
-  const categories = useVideoCategories();
-  const topicOptions = categoryOptions(categories.data, contentType, form.category);
-  const topicsUnavailable = !categories.isLoading && topicOptions.length === 0;
-  const isLongStudio = contentType === "long" || contentType === "podcast";
+  const takesSeries = !short && (form.finalVideoCategory ?? "long_video") === "long_video";
 
   return (
-    <div className="space-y-7">
-      <div className="rounded-xl border border-brand-divider bg-brand-secondary p-4 shadow-xs">
-        <p className="text-[13px] font-semibold text-brand-text">One final review</p>
-        <p className="mt-1 text-[12px] text-muted">
-          Your video uploads and starts processing when you hit Publish — it becomes
-          available according to your visibility and schedule after processing finishes.
-          Saving a draft also uploads the file, but does not publish it.
-        </p>
-        {publishError && (
-          <p className="upload-field-error" role="alert">We couldn’t publish your video. {publishError} Your details are still here; you can try again.</p>
-        )}
-      </div>
-      {/* ── Visibility ── */}
-      <div>
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-text/10">
-            <Globe className="h-4 w-4 text-brand-text" />
-          </div>
-          <div>
-            <h3 className="text-[14px] font-bold text-brand-text">Visibility</h3>
-            <p className="text-[11px] text-muted">Who can see this content</p>
-          </div>
-        </div>
-        <div className="space-y-1 rounded-xl border border-brand-text/10 bg-brand-card p-2 shadow-xs">
-          <RadioOption
-            name="visibility"
-            label="Public"
-            description="Everyone can discover and watch"
-            checked={form.visibility === "public"}
-            onChange={() => patch({ visibility: "public" })}
-          />
-          <div className="border-t border-brand-secondary" />
-          <RadioOption
-            name="visibility"
-            label="Circle Only"
-            description="Close friends only"
-            checked={form.visibility === "followers"}
-            onChange={() => patch({ visibility: "followers" })}
-          />
-          <div className="border-t border-brand-secondary" />
-          <RadioOption
-            name="visibility"
-            label="Unlisted"
-            description="Link access — won't appear in feeds"
-            checked={form.visibility === "unlisted"}
-            onChange={() => patch({ visibility: "unlisted" })}
-          />
-          <div className="border-t border-brand-secondary" />
-          <RadioOption
-            name="visibility"
-            label="Private"
-            description="Only you and people you choose"
-            checked={form.visibility === "private"}
-            onChange={() => patch({ visibility: "private" })}
-          />
-        </div>
-      </div>
-
-      {/* ── Topic (required; the slug is stored) ── */}
-      <div>
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-            categoryError ? "bg-danger/10" : "bg-brand-text/10"
-          }`}>
-            <Tag className={`h-4 w-4 ${categoryError ? "text-danger" : "text-brand-text"}`} />
-          </div>
-          <div>
-            <h3 className="text-[14px] font-bold text-brand-text">
-              Topic <span className="text-danger font-semibold">*</span>
-            </h3>
-            <p className="text-[11px] text-muted">Where viewers find it — the same topics as the Watch page</p>
-          </div>
-          {categories.isLoading ? <Loader2 className="ml-auto h-4 w-4 animate-spin text-muted" aria-label="Loading topics" /> : null}
-        </div>
-        <div className={`rounded-xl border bg-brand-card shadow-xs transition-colors ${
-          categoryError ? "border-danger/40" : "border-brand-divider"
-        }`}>
-          <StudioSelect
-            id="upload-category"
-            label="Topic"
-            required
-            invalid={categoryError}
-            describedBy={categoryError ? "upload-category-error" : undefined}
-            value={form.category}
-            onChange={(v) => patch({ category: v })}
-            options={topicOptions}
-            placeholder={categories.isLoading ? "Loading topics…" : "Select a topic"}
-          />
-        </div>
-        {topicsUnavailable && (
-          <div className="mt-2 flex items-center gap-2 text-[12px] text-muted">
-            <AlertCircle className="h-3.5 w-3.5" />
-            <span>Topics could not be loaded.</span>
-            <button type="button" onClick={() => void categories.refetch()} className="font-semibold text-brand-text underline-offset-2 hover:underline">
-              Try again
-            </button>
-          </div>
-        )}
-        {categoryError && (
-          <div id="upload-category-error" className="upload-field-error" role="alert">
-            <AlertCircle className="h-3.5 w-3.5" />
-            Choose a topic to help viewers find your video.
-          </div>
-        )}
-      </div>
-
-      {/* ── Series (long videos; added after publish) ── */}
-      {isLongStudio && (form.finalVideoCategory ?? "long_video") === "long_video" ? <SeriesPicker form={form} patch={patch} showErrors={showErrors} /> : null}
-
-      {/* ── Schedule ── */}
-      <div>
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-            scheduleError ? "bg-danger/10" : "bg-brand-text/10"
-          }`}>
-            <Calendar className={`h-4 w-4 ${scheduleError ? "text-danger" : "text-brand-text"}`} />
-          </div>
-          <div>
-            <h3 className="text-[14px] font-bold text-brand-text">Schedule</h3>
-            <p className="text-[11px] text-muted">Publish now or schedule for later</p>
-          </div>
-        </div>
-        <div className={`rounded-xl border bg-brand-card p-4 shadow-xs transition-colors ${
-          scheduleError ? "border-danger/40" : "border-brand-divider"
-        }`}>
-          <ToggleRow
-            label="Schedule publish"
-            description="Auto-publish at a specific time"
-            checked={form.scheduleAt !== null}
-            onChange={(v) =>
-              patch({ scheduleAt: v ? tomorrowLocalInput() : null })
-            }
-          />
-          {form.scheduleAt !== null && (
-            <div className={`mt-3 flex items-center gap-2 rounded-xl border bg-brand-secondary p-3 ${
-              scheduleError ? "border-danger/40" : "border-brand-divider"
-            }`}>
-              <Calendar className="h-4 w-4 text-muted" />
-              <input
-                type="datetime-local"
-                id="upload-scheduleAt"
-                aria-label="Publish date and time (your local time)"
-                required
-                aria-invalid={scheduleError}
-                aria-describedby={scheduleError ? "upload-schedule-error" : "upload-schedule-hint"}
-                value={form.scheduleAt}
-                onChange={(e) => patch({ scheduleAt: e.target.value })}
-                className="min-w-0 w-full flex-1 bg-transparent text-[13px] text-brand-text outline-hidden"
-              />
-            </div>
-          )}
-        </div>
-        {form.scheduleAt !== null ? <p id="upload-schedule-hint" className="upload-input-hint">Date and time use your device's local time zone.</p> : null}
-        {scheduleError && (
-          <div id="upload-schedule-error" className="upload-field-error" role="alert">
-            <AlertCircle className="h-3.5 w-3.5" />
-            Choose a valid date and time in the future, or turn scheduling off.
-          </div>
-        )}
-      </div>
-
-      {/* ── Cross-post to Feed ── */}
-      <div>
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-text/10">
-            <Link2 className="h-4 w-4 text-brand-text" />
-          </div>
-          <div>
-            <h3 className="text-[14px] font-bold text-brand-text">Cross-post</h3>
-            <p className="text-[11px] text-muted">Also share to your Feed</p>
-          </div>
-        </div>
-        <div className="rounded-xl border border-brand-text/10 bg-brand-card p-4 shadow-xs">
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="text-[13px] font-medium text-brand-text">Publish to Feed</p>
-              <p className="mt-0.5 text-[11px] text-muted">Share as a post on your Feed</p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-label="Publish to Feed"
-              aria-checked={form.crossPostPostbook}
-              onClick={() => patch({ crossPostPostbook: !form.crossPostPostbook })}
-              className={`relative inline-flex h-7 w-[52px] shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent/20 ${
-                form.crossPostPostbook ? "bg-primary-ink" : "bg-brand-text/20"
-              }`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-brand-card shadow-md transition-transform duration-200 ${
-                  form.crossPostPostbook ? "translate-x-[26px]" : "translate-x-[3px]"
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-      </div>
+    <div className="upload-stack">
+      <PublishSummary form={form} short={short} publishError={publishError} />
+      <VisibilitySetting form={form} patch={patch} />
+      {short ? (
+        <>
+          {/* Reels ask everything on this one page (founder, 2026-10-21). */}
+          <CommentSettings form={form} patch={patch} />
+          <RemixSetting form={form} patch={patch} />
+          <DisclosureSettings form={form} patch={patch} includeAltered={false} />
+          <ScheduleSetting form={form} patch={patch} invalid={scheduleError} />
+          <TopicSetting form={form} patch={patch} contentType={contentType} showErrors={showErrors} />
+        </>
+      ) : (
+        <>
+          <TopicSetting form={form} patch={patch} contentType={contentType} showErrors={showErrors} />
+          {/* Series (long videos; added after publish). */}
+          {takesSeries ? <SeriesPicker form={form} patch={patch} showErrors={showErrors} /> : null}
+          <ScheduleSetting form={form} patch={patch} invalid={scheduleError} />
+        </>
+      )}
+      {/* Reels never reach the home Feed (founder, 25 Sep), so the switch is long-video only. */}
+      {short ? null : <FeedSetting form={form} patch={patch} contentType={contentType} />}
     </div>
   );
 }

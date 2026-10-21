@@ -20,10 +20,11 @@ import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { useReducedMotion } from "framer-motion";
 import PostCard from "./PostCard";
 import PeopleYouMayKnowStrip from "./PeopleYouMayKnowStrip";
-import { useHomeFeed } from "@/hooks/useFeedPosts";
+import { homeFeedKey, useHomeFeed, type HomeFeedOptions } from "@/hooks/useFeedPosts";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 import { subscribeToPostUpdates } from "@/services/messageService";
 import { useFeedDelta } from "@/hooks/useFeedDelta";
-import { uniqueFeedPosts, type FeedPage } from "./feed/feedPresentation";
+import { newestCreatedAtOf, uniqueFeedPosts, type FeedPage } from "./feed/feedPresentation";
 import "./feed/home-feed.css";
 import { installFeedReturnRefresh } from './feed/feedReturnRefresh';
 import { editorialFormat } from './feed/editorialFormat';
@@ -62,6 +63,13 @@ function FeedSkeleton() {
   );
 }
 
+type FeedTab = "for-you" | "following";
+
+const FEED_TABS: { key: FeedTab; label: string }[] = [
+  { key: "for-you", label: "For You" },
+  { key: "following", label: "Following" },
+];
+
 export default function Feed({
   onCreateClick,
   presentation = 'classic',
@@ -74,14 +82,26 @@ export default function Feed({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [newPostsDismissed, setNewPostsDismissed] = useState(false);
 
-  // One home feed; retain the existing server-ranked query contract.
-  const feed = useHomeFeed("ranked", {
+  const [tab, setTab] = useState<FeedTab>("for-you");
+
+  // For You is the server-ranked feed; Following is the people the viewer
+  // follows, newest first (founder, 2026-10-19: the two tabs back on the bar
+  // above the cards, as they were before the 2d0efb2 redesign).
+  const forYouOptions: HomeFeedOptions = { excludeSelf: false, circleOnly: false, enabled: tab === "for-you" };
+  const followingOptions: HomeFeedOptions = {
     excludeSelf: false,
     circleOnly: false,
-  });
+    followingOnly: true,
+    enabled: tab === "following",
+  };
+  const forYou = useHomeFeed("ranked", forYouOptions);
+  const following = useHomeFeed("chronological", followingOptions);
+  const feed = tab === "following" ? following : forYou;
+  const activeKey =
+    tab === "following" ? homeFeedKey("chronological", followingOptions) : homeFeedKey("ranked", forYouOptions);
   const posts = uniqueFeedPosts(feed.data?.pages);
   const { newCount, setAnchor, consumeNew } = useFeedDelta({
-    feedType: "home",
+    feedType: tab === "following" ? "following" : "home",
     enabled: posts.length > 0,
   });
 
@@ -126,11 +146,16 @@ export default function Feed({
     [queryClient],
   );
 
-  const newestId = posts[0]?.id;
-  const newestCreatedAt = posts[0]?.created_at;
+  /*
+    Anchor the "N new posts" check on the NEWEST post shown, not on the
+    first one. This feed is ranked, so posts[0] is the best-scoring post —
+    often older than others on the page — and anchoring there counted posts
+    the reader had already scrolled past as new.
+  */
+  const newestCreatedAt = newestCreatedAtOf(posts);
   useEffect(() => {
     if (newestCreatedAt) setAnchor(newestCreatedAt);
-  }, [newestId, newestCreatedAt, setAnchor]);
+  }, [newestCreatedAt, setAnchor]);
   useEffect(() => {
     if (newCount > 0) setNewPostsDismissed(false);
   }, [newCount]);
@@ -142,7 +167,7 @@ export default function Feed({
     });
   const loadNew = async () => {
     // Start again at the first cursor rather than refetching every old page.
-    const queryKey = ['home-feed', 'ranked', false, false];
+    const queryKey = activeKey;
     await queryClient.cancelQueries({ queryKey, exact: true });
     queryClient.setQueryData<InfiniteData<FeedPage>>(queryKey, (old) => old && ({
       ...old, pages: old.pages.slice(0, 1), pageParams: old.pageParams.slice(0, 1),
@@ -161,6 +186,21 @@ export default function Feed({
     <div className="home-feed">
       <div ref={scrollRef} className="scroll-mt-5" />
       {presentation === 'editorial' ? <h2 className="sr-only">Posts</h2> : <h1 className="sr-only">Home feed</h1>}
+      <div className="mb-5 flex items-center gap-4">
+        <SegmentedControl
+          layoutId="feedTabIndicator"
+          aria-label="Feed"
+          size="sm"
+          value={tab}
+          onChange={(id) => {
+            setTab(id as FeedTab);
+            setNewPostsDismissed(false);
+            scrollToTop();
+          }}
+          segments={FEED_TABS.map((t) => ({ id: t.key, label: t.label }))}
+        />
+        <span aria-hidden className="h-px flex-1 bg-brand-divider" />
+      </div>
       {newCount > 0 && !newPostsDismissed && (
         <div className="home-feed-notice">
           <p role="status">
@@ -266,7 +306,7 @@ export default function Feed({
                 </Fragment>
               ))}
             </div>
-            {feed.hasNextPage && (
+            {feed.hasNextPage && posts.length > 0 && (
               <div className="mt-6 flex justify-center">
                 <button
                   type="button"

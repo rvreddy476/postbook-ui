@@ -163,12 +163,9 @@ export function useChat(conversationId: string | null | undefined, currentUserId
     if (!conversationId) return
     const unsub = subscribeToPinUpdates((evt: PinUpdateEvent) => {
       if (evt.conversation_id !== conversationId) return
-      if (evt.action === 'unpin') {
-        setPinnedMessage(null)
-      } else {
-        // Refetch pinned message to get full data
-        getPinnedMessage(conversationId).then(pinned => setPinnedMessage(pinned))
-      }
+      // Up to 3 pins can stand: after a pin or an unpin the newest one is
+      // whatever the list says now, so re-read it either way.
+      getPinnedMessage(conversationId).then(pinned => setPinnedMessage(pinned))
     })
     return unsub
   }, [conversationId])
@@ -443,9 +440,8 @@ export function useChat(conversationId: string | null | undefined, currentUserId
   const handlePinMessage = useCallback(async (msgId: string) => {
     if (!conversationId) return
     try {
-      await pinMessage(conversationId, msgId)
-      // Refetch pinned message
-      const pinned = await getPinnedMessage(conversationId)
+      // The answer is the pin row; the list read is the fallback.
+      const pinned = (await pinMessage(conversationId, msgId)) ?? (await getPinnedMessage(conversationId))
       setPinnedMessage(pinned)
     } catch (err) {
       console.error('[useChat] pin failed:', err)
@@ -455,14 +451,16 @@ export function useChat(conversationId: string | null | undefined, currentUserId
 
   // ---- Unpin handler ----
   const handleUnpinMessage = useCallback(async () => {
-    if (!conversationId) return
+    // Unpin takes the pin's own id, not the message id.
+    if (!conversationId || !pinnedMessage) return
     try {
-      await unpinMessage(conversationId)
-      setPinnedMessage(null)
+      await unpinMessage(conversationId, pinnedMessage.id)
+      // Another pin may still stand; show the next newest.
+      setPinnedMessage(await getPinnedMessage(conversationId))
     } catch (err) {
       console.error('[useChat] unpin failed:', err)
     }
-  }, [conversationId])
+  }, [conversationId, pinnedMessage])
 
   // ---- Forward handler ----
   const handleForward = useCallback(async (targetConvId: string, msg: ChatMessage) => {

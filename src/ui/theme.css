@@ -104,8 +104,37 @@
   --theme-brand-deep: 40 90 138;
   --theme-canvas-tint: 233 240 249;
 
+  /*
+    Chat bubble colours (chat_bubble_style, CONTRACT §7): the colour of MY
+    outgoing bubbles, chosen once in Settings and used in every chat.
+    "default" is the brand ink. Every value carries white text at >= 4.5:1.
+  */
+  --theme-bubble-ocean: 14 116 144;
+  --theme-bubble-ember: 194 65 12;
+  --theme-bubble-forest: 22 101 52;
+  --theme-bubble-violet: 109 40 217;
+  --theme-bubble-mono: 15 20 25;
+  --theme-on-bubble: 255 255 255;
+
   --theme-glass-bg: 255, 255, 255;
   --theme-glass-border: 15, 20, 25;
+
+  /*
+    The Follow badge on the post rail: a pink circle with a white plus under
+    the author's avatar (founder, 19 Oct; Android's FollowBadge). The same
+    value in both themes because it always sits over media, never on the
+    page ground. Its plus is --reel-on-stage.
+  */
+  --theme-follow-badge: 254 44 85;
+  /*
+    The played part of every video progress bar: Reels, the long-video seek
+    bar, resume bars on tiles (founder, 19 Oct: red everywhere, one token).
+    Same in both themes; it always sits over media.
+  */
+  --theme-playhead: 220 38 38;
+  /* The Follow seal in the flag's colours (founder, 20 Oct): a deep saffron ring and a green plus badge. Over media, so the same in both themes. */
+  --theme-follow-seal: 241 90 34;
+  --theme-follow-seal-plus: 19 136 8;
 }
 
 .dark {
@@ -172,8 +201,22 @@
   --theme-brand-deep: 58 116 172;
   --theme-canvas-tint: 12 18 26;
 
+  --theme-bubble-ocean: 14 116 144;
+  --theme-bubble-ember: 194 65 12;
+  --theme-bubble-forest: 22 101 52;
+  --theme-bubble-violet: 109 40 217;
+  --theme-bubble-mono: 64 72 82;
+  --theme-on-bubble: 255 255 255;
+
   --theme-glass-bg: 0, 0, 0;
   --theme-glass-border: 247, 249, 249;
+
+  /* Unchanged in dark: it sits over media, not on the ground. */
+  --theme-follow-badge: 254 44 85;
+  --theme-playhead: 220 38 38;
+  /* The Follow seal in the flag's colours (founder, 20 Oct): a deep saffron ring and a green plus badge. Over media, so the same in both themes. */
+  --theme-follow-seal: 241 90 34;
+  --theme-follow-seal-plus: 19 136 8;
 }
 
 /*

@@ -1,20 +1,26 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useComments, useAddComment, useDeleteComment, useEditComment, useCommentReplies, useSetCommentReaction, flattenReplies, patchCommentEverywhere, type CommentSort } from '@/hooks/usePostComments';
+import { useComments, useAddComment, useDeleteComment, useEditComment, useCommentReplies, useSetCommentReaction, flattenReplies, patchCommentEverywhere, repliesKey, type CommentSort } from '@/hooks/usePostComments';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCommentsAround } from '@/hooks/useCommentsAround';
 import { usePostRoom } from '@/hooks/usePostRoom';
 import { useMyProfile, useUserProfile } from '@/hooks/useEditProfile';
 import { useSubmitReport, REPORT_REASONS } from '@/hooks/useReport';
 import { useGlobalToast } from '@/contexts/ToastContext';
-import { Smile, Trash2, Pencil, Send, MessageCircle, Flag, X, Check, CornerDownRight, Heart, Pin } from 'lucide-react';
+import { Smile, Send, MessageCircle, X, Check, CornerDownRight, Heart, Pin } from 'lucide-react';
+import api from '@/lib/api';
 import type { CommentItem } from '@/types/profile';
 import CommentReactions from '@/components/comments/CommentReactions';
 import MentionInput from '@/components/comments/MentionInput';
 import MentionText from '@/components/comments/MentionText';
 import ReplyComposer from '@/components/comments/ReplyComposer';
 import EmojiPickerPopover from '@/components/comments/EmojiPickerPopover';
+import CommentMenu, { commentMenuItems, type CommentMenuAction } from '@/components/comments/CommentMenu';
+import { applyPin, pinnedFirst, type CommentCreatorTools } from '@/components/comments/creatorTools';
+import { findReplyPages, focusTarget, isMissingComment, type ReplyPage } from '@/components/comments/focusComment';
+
+export type { CommentCreatorTools } from '@/components/comments/creatorTools';
 
 // Resolves a comment author's display name, username and avatar via cached profile lookup.
 const useCommentAuthor = (authorId: string, myId?: string, myName?: string, myAvatar?: string, myUsername?: string) => {
@@ -40,26 +46,20 @@ const useCommentAuthor = (authorId: string, myId?: string, myName?: string, myAv
   };
 };
 
-/**
- * The post author's tools on a long video's comments (the watch page):
- * heart (POST|DELETE /v1/comments/:id/heart) and pin (PUT|DELETE
- * /v1/comments/:id/pin). The requests live with the caller; rows render
- * `hearted_by_author` and `pinned` for everyone once the prop is given, and
- * only the author (myId === postAuthorId) gets the controls.
- */
-export interface CommentCreatorTools {
-  onHeart: (commentId: string, on: boolean) => Promise<void>;
-  onPin: (commentId: string, on: boolean) => Promise<void>;
-}
-
 interface CommentSectionProps {
   postId: string;
   postAuthorId?: string;
   commentsCount: number;
   alwaysExpanded?: boolean;
+  /** Scroll to and briefly highlight this comment or reply (?focusComment=). */
   focusCommentId?: string;
   /** Top / newest; absent = the server's default order, as before. */
   sort?: CommentSort;
+  /**
+   * The post author's heart and pin (components/comments/creatorTools). Rows
+   * show `pinned` and `hearted_by_author` to everyone; the menu rows appear
+   * only for the post's author, and only when the surface passes this.
+   */
   creatorTools?: CommentCreatorTools;
 }
 
@@ -212,17 +212,37 @@ interface CommentNodeProps extends Viewer {
   /** The top-level comment a reply attaches to; a top-level comment is its own parent. */
   parentId: string;
   isReply: boolean;
-  isFocused?: boolean;
+  /** The comment or reply being pointed at (?focusComment=); it gets a brief tint. */
+  highlightId?: string;
+  /** Open this top-level comment's replies (the focused reply lives there). */
+  openReplies?: boolean;
   notifyError: (title: string) => void;
   creatorTools?: CommentCreatorTools;
 }
 
 /**
- * Author row, body with linked mentions, emoji reactions, Reply / Report /
- * Edit / Delete, and an inline reply composer. Top-level comments also own
+ * Pin or unpin `id` in every top-level list of the post. One pin per post:
+ * pinning a comment clears the pin on the others. Returns the previous
+ * entries so a refused request can put them back.
+ */
+function patchPinEverywhere(qc: ReturnType<typeof useQueryClient>, postId: string, id: string, on: boolean) {
+  const snapshot = [
+    ...qc.getQueriesData<CommentItem[]>({ queryKey: ['comments', postId] }),
+    ...qc.getQueriesData<CommentItem[]>({ queryKey: ['comments-around', postId] }),
+  ];
+  for (const [key, value] of snapshot) {
+    if (Array.isArray(value)) qc.setQueryData(key, applyPin(value, id, on));
+  }
+  return snapshot;
+}
+
+/**
+ * Author row, body with linked mentions, emoji reactions, Reply, the ⋮ menu
+ * (Pin / Love for the post's author, Edit / Delete on your own, Report on
+ * anyone else's) and an inline reply composer. Top-level comments also own
  * their replies list (first-reply preview, "View N replies", paging).
  */
-export const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, postAuthorId, parentId, isReply, isFocused, myId, myName, myUsername, myAvatar, notifyError, creatorTools }) => {
+export const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, postAuthorId, parentId, isReply, highlightId, openReplies, myId, myName, myUsername, myAvatar, notifyError, creatorTools }) => {
   const qc = useQueryClient();
   const isPostAuthor = !!myId && myId === postAuthorId;
   const [creatorPending, setCreatorPending] = useState(false);
@@ -230,13 +250,15 @@ export const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, postA
     if (!creatorTools || creatorPending) return;
     const on = kind === 'heart' ? !comment.hearted_by_author : !comment.pinned;
     setCreatorPending(true);
-    patchCommentEverywhere(qc, postId, comment.id, (c) => (kind === 'heart' ? { ...c, hearted_by_author: on } : { ...c, pinned: on }));
+    const pinSnapshot = kind === 'pin' ? patchPinEverywhere(qc, postId, comment.id, on) : [];
+    if (kind === 'heart') patchCommentEverywhere(qc, postId, comment.id, (c) => ({ ...c, hearted_by_author: on }));
     try {
       if (kind === 'heart') await creatorTools.onHeart(comment.id, on);
       else await creatorTools.onPin(comment.id, on);
     } catch {
-      patchCommentEverywhere(qc, postId, comment.id, (c) => (kind === 'heart' ? { ...c, hearted_by_author: !on } : { ...c, pinned: !on }));
-      notifyError(kind === 'heart' ? 'Could not save the heart' : 'Could not pin that');
+      if (kind === 'heart') patchCommentEverywhere(qc, postId, comment.id, (c) => ({ ...c, hearted_by_author: !on }));
+      for (const [key, value] of pinSnapshot) qc.setQueryData(key, value);
+      notifyError(kind === 'heart' ? 'Could not save the heart' : on ? 'Could not pin that' : 'Could not unpin that');
     } finally {
       setCreatorPending(false);
     }
@@ -245,7 +267,9 @@ export const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, postA
   const [editText, setEditText] = useState(comment.body || comment.text || '');
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
-  const [repliesOpen, setRepliesOpen] = useState(false);
+  const [repliesOpen, setRepliesOpen] = useState(!!openReplies);
+  useEffect(() => { if (openReplies) setRepliesOpen(true); }, [openReplies]);
+  const isFocused = !!highlightId && highlightId === comment.id;
 
   const deleteMutation = useDeleteComment();
   const editMutation = useEditComment();
@@ -276,24 +300,53 @@ export const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, postA
   const replyPrefill = isReply && author.username ? `@${author.username} ` : '';
   const indent = isReply ? 'ml-7' : 'ml-8';
 
+  const menuItems = commentMenuItems({
+    isOwn,
+    isPostAuthor,
+    isReply,
+    canEdit: canEdit(comment.created_at),
+    pinned: !!comment.pinned,
+    hearted: !!comment.hearted_by_author,
+    creatorTools: !!creatorTools,
+    signedIn: !!myId,
+    pending: comment.id.startsWith('pending-'),
+  });
+
+  const onMenu = (action: CommentMenuAction) => {
+    switch (action) {
+      case 'pin': case 'unpin': void creatorToggle('pin'); break;
+      case 'heart': case 'unheart': void creatorToggle('heart'); break;
+      case 'edit': setEditing(true); setEditText(body); break;
+      case 'report': setReportOpen(true); break;
+      case 'delete':
+        if (confirm(isReply ? 'Delete this reply?' : 'Delete this comment?')) {
+          deleteMutation.mutate({ commentId: comment.id, postId }, { onError: () => notifyError('Could not delete that') });
+        }
+        break;
+    }
+  };
+
   return (
     <div
       id={`comment-${comment.id}`}
+      data-comment-focused={isFocused || undefined}
+      tabIndex={isFocused ? -1 : undefined}
       className={isReply
-        ? 'mt-1.5 py-1.5'
-        : `px-4 py-3 transition-colors duration-300 ${isFocused ? 'bg-brand-tint' : ''}`}
+        ? `mt-1.5 rounded-lg py-1.5 transition-colors duration-300 ${isFocused ? 'bg-primary-tint px-2' : ''}`
+        : `px-4 py-3 transition-colors duration-300 ${isFocused ? 'bg-primary-tint' : ''}`}
     >
       {/* Header row: small avatar + name + time */}
       <div className="flex items-center gap-2">
         <img src={author.avatar} alt="" className={`${isReply ? 'w-5 h-5' : 'w-6 h-6'} rounded-full object-cover shrink-0`} />
         <span className="text-[12px] font-semibold text-brand-text">{author.username ? `@${author.username}` : author.name}</span>
         <span className="text-[11px] text-brand-text/60">{timeAgo(comment.created_at)}</span>
-        {creatorTools && comment.pinned ? (
-          <span data-comment-pinned className="inline-flex items-center gap-1 rounded-full bg-brand-secondary px-1.5 py-0.5 text-[10px] font-semibold text-brand-text/70"><Pin className="h-3 w-3" /> Pinned</span>
+        {comment.pinned && !isReply ? (
+          <span data-comment-pinned className="inline-flex items-center gap-1 rounded-full bg-brand-secondary px-1.5 py-0.5 text-[10px] font-semibold text-brand-text/70"><Pin className="h-3 w-3" aria-hidden="true" /> Pinned</span>
         ) : null}
-        {creatorTools && comment.hearted_by_author ? (
-          <span data-comment-hearted aria-label="Loved by the creator" title="Loved by the creator" className="inline-flex items-center text-danger"><Heart className="h-3 w-3 fill-current" /></span>
+        {comment.hearted_by_author ? (
+          <span data-comment-hearted role="img" aria-label="Loved by the creator" title="Loved by the creator" className="inline-flex items-center text-danger"><Heart className="h-3 w-3 fill-current" aria-hidden="true" /></span>
         ) : null}
+        <CommentMenu items={menuItems} onSelect={onMenu} disabled={creatorPending} noun={isReply ? 'reply' : 'comment'} />
       </div>
 
       <div className={`mt-1 ${indent}`}>
@@ -311,7 +364,7 @@ export const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, postA
           <p className="text-[13px] text-brand-text leading-relaxed break-words"><MentionText body={body} /></p>
         )}
 
-        {/* Action bar: Reactions  Reply  Report  |  Edit  Delete */}
+        {/* Action bar: Reactions  Reply. Pin, Love, Edit, Delete and Report live in the ⋮ menu. */}
         {!editing && (
           <div data-comment-actions className="flex flex-wrap items-center gap-3 mt-1.5">
             <CommentReactions item={comment} onChange={react} disabled={setReaction.isPending} />
@@ -320,43 +373,6 @@ export const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, postA
               className="text-[12px] font-semibold text-brand-highlight hover:text-brand-text transition">
               Reply
             </button>
-
-            {creatorTools && isPostAuthor && (
-              <>
-                <button type="button" onClick={() => void creatorToggle('heart')} disabled={creatorPending} aria-pressed={!!comment.hearted_by_author} data-creator-heart
-                  className={`flex items-center gap-1 text-[12px] transition ${comment.hearted_by_author ? 'text-danger' : 'text-brand-text/60 hover:text-danger'}`}>
-                  <Heart className={`w-3 h-3 ${comment.hearted_by_author ? 'fill-current' : ''}`} /> {comment.hearted_by_author ? 'Loved' : 'Love'}
-                </button>
-                {!isReply && (
-                  <button type="button" onClick={() => void creatorToggle('pin')} disabled={creatorPending} aria-pressed={!!comment.pinned} data-creator-pin
-                    className={`flex items-center gap-1 text-[12px] transition ${comment.pinned ? 'text-brand-text' : 'text-brand-text/60 hover:text-brand-text'}`}>
-                    <Pin className="w-3 h-3" /> {comment.pinned ? 'Unpin' : 'Pin'}
-                  </button>
-                )}
-              </>
-            )}
-
-            {!isOwn && (
-              <button type="button" onClick={() => setReportOpen(true)}
-                className="flex items-center gap-1 text-[12px] text-brand-text/60 hover:text-danger transition">
-                <Flag className="w-3 h-3" />
-                <span>Report</span>
-              </button>
-            )}
-
-            {isOwn && canEdit(comment.created_at) && (
-              <button type="button" onClick={() => { setEditing(true); setEditText(body); }}
-                className="flex items-center gap-1 text-[12px] text-brand-text/60 hover:text-brand-text transition">
-                <Pencil className="w-3 h-3" /> Edit
-              </button>
-            )}
-
-            {isOwn && (
-              <button type="button" onClick={() => { if (confirm(isReply ? 'Delete this reply?' : 'Delete this comment?')) deleteMutation.mutate({ commentId: comment.id, postId }); }}
-                className="flex items-center gap-1 text-[12px] text-brand-text/60 hover:text-danger transition">
-                <Trash2 className="w-3 h-3" /> Delete
-              </button>
-            )}
           </div>
         )}
 
@@ -372,7 +388,7 @@ export const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, postA
       {preview && (
         <div className="ml-10">
           <CommentNode comment={preview} postId={postId} postAuthorId={postAuthorId} parentId={comment.id} isReply
-            myId={myId} myName={myName} myUsername={myUsername} myAvatar={myAvatar} notifyError={notifyError} creatorTools={creatorTools} />
+            myId={myId} myName={myName} myUsername={myUsername} myAvatar={myAvatar} notifyError={notifyError} creatorTools={creatorTools} highlightId={highlightId} />
         </div>
       )}
 
@@ -399,7 +415,7 @@ export const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, postA
         <div className="ml-10">
           {loadedReplies.map(reply => (
             <CommentNode key={reply.id} comment={reply} postId={postId} postAuthorId={postAuthorId} parentId={comment.id} isReply
-              myId={myId} myName={myName} myUsername={myUsername} myAvatar={myAvatar} notifyError={notifyError} creatorTools={creatorTools} />
+              myId={myId} myName={myName} myUsername={myUsername} myAvatar={myAvatar} notifyError={notifyError} creatorTools={creatorTools} highlightId={highlightId} />
           ))}
           {replies.hasNextPage && (
             <button type="button" disabled={replies.isFetchingNextPage} onClick={() => void replies.fetchNextPage()}
@@ -423,28 +439,32 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
   const [commentText, setCommentText] = useState('');
   const [submitError, setSubmitError] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [highlightId, setHighlightId] = useState<string | undefined>(focusCommentId);
-  const scrolledRef = useRef(false);
+  const [highlightId, setHighlightId] = useState<string | undefined>();
+  /** The focused comment's row id once it is known to be (or about to be) on screen. */
+  const [scrollTo, setScrollTo] = useState<string | undefined>();
+  /** The top-level comment whose replies hold the focused reply. */
+  const [openRepliesFor, setOpenRepliesFor] = useState<string | undefined>();
+  /** The linked comment is gone or could not be found; the thread shows as usual. */
+  const [focusLost, setFocusLost] = useState(false);
+  const resolvedRef = useRef<string | undefined>(undefined);
   const emojiButtonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const toast = useGlobalToast();
+  const qc = useQueryClient();
   const notifyError = (title: string) => { toast({ type: 'error', title }); };
 
   const { data: profile } = useMyProfile();
 
-  const { data: aroundComments, isLoading: aroundLoading, isError: aroundError, refetch: retryAround } = useCommentsAround(
-    focusCommentId ? postId : undefined,
-    focusCommentId,
-  );
-  const { data: normalComments, isLoading: normalLoading, isError: normalError, refetch: retryNormal } = useComments(
-    postId,
-    isExpanded && !focusCommentId,
-    sort,
-  );
+  const around = useCommentsAround(focusCommentId ? postId : undefined, focusCommentId);
+  // A deleted, hidden or foreign comment answers 404: fall back to the plain thread.
+  const focusMissing = !!focusCommentId && around.isError && isMissingComment(around.error);
+  const useAround = !!focusCommentId && !focusMissing;
+  const normal = useComments(postId, isExpanded && !useAround, sort);
 
-  const comments = focusCommentId ? aroundComments : normalComments;
-  const isLoading = focusCommentId ? aroundLoading : normalLoading;
-  const loadError = focusCommentId ? aroundError : normalError;
+  const source = useAround ? around : normal;
+  const comments = source.data ? pinnedFirst(source.data as CommentItem[]) : undefined;
+  const isLoading = source.isLoading;
+  const loadError = source.isError;
 
   const addComment = useAddComment();
 
@@ -452,20 +472,73 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
     ? `/v1/media/${profile.avatar_media_id}/serve`
     : 'https://api.dicebear.com/7.x/avataaars/svg?seed=User';
 
+  // A new ?focusComment= starts over.
   useEffect(() => {
-    if (!focusCommentId || !comments?.length || scrolledRef.current) return;
+    resolvedRef.current = undefined;
+    setScrollTo(undefined);
+    setOpenRepliesFor(undefined);
+    setFocusLost(false);
+    setHighlightId(undefined);
+  }, [focusCommentId]);
 
-    const timer = setTimeout(() => {
-      const el = document.getElementById(`comment-${focusCommentId}`);
+  // Where is the focused comment? A top-level row or a first-reply preview is
+  // already on screen; a deeper reply is looked up thread by thread and its
+  // replies are seeded into the cache so the opened thread shows it.
+  const aroundData = around.data as CommentItem[] | undefined;
+  useEffect(() => {
+    if (!focusCommentId || !useAround || !aroundData || resolvedRef.current === focusCommentId) return;
+    resolvedRef.current = focusCommentId;
+    const target = focusTarget(aroundData, focusCommentId);
+    if (target.kind === 'top' || target.kind === 'preview') { setScrollTo(focusCommentId); return; }
+    if (target.kind === 'none') { setFocusLost(true); return; }
+    let cancelled = false;
+    let done = false;
+    const fetchPage = async (parentId: string, cursor: string): Promise<ReplyPage> => {
+      const res = await api.get<ReplyPage>(`/v1/comments/${parentId}/replies`, { params: { limit: '20', ...(cursor ? { cursor } : {}) } });
+      const data = res.data?.data;
+      return { data: Array.isArray(data) ? data : [], meta: res.data?.meta };
+    };
+    void (async () => {
+      for (const parentId of target.parents) {
+        try {
+          const found = await findReplyPages(fetchPage, parentId, focusCommentId);
+          if (cancelled) return;
+          if (found) {
+            qc.setQueryData(repliesKey(parentId), found);
+            setOpenRepliesFor(parentId);
+            setScrollTo(focusCommentId);
+            done = true;
+            return;
+          }
+        } catch { /* that thread did not load; try the next */ }
+        if (cancelled) return;
+      }
+      done = true;
+      setFocusLost(true);
+    })();
+    return () => { cancelled = true; if (!done) resolvedRef.current = undefined; };
+  }, [focusCommentId, useAround, aroundData, qc]);
+
+  // Scroll to the row once it renders, tint it briefly, and move focus there.
+  useEffect(() => {
+    if (!scrollTo) return;
+    let tries = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const attempt = () => {
+      const el = document.getElementById(`comment-${scrollTo}`);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        scrolledRef.current = true;
-        setTimeout(() => setHighlightId(undefined), 3000);
+        setHighlightId(scrollTo);
+        requestAnimationFrame(() => el.focus({ preventScroll: true }));
+        timer = setTimeout(() => setHighlightId(undefined), 3000);
+        return;
       }
-    }, 300);
-
+      if (++tries > 25) { setFocusLost(true); return; }
+      timer = setTimeout(attempt, 150);
+    };
+    timer = setTimeout(attempt, 100);
     return () => clearTimeout(timer);
-  }, [focusCommentId, comments]);
+  }, [scrollTo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -505,7 +578,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
     <div className="flex flex-col h-full bg-brand-card">
       {/* Comments list — scrollable */}
       <div data-comments-list className="flex-1 min-h-0 overflow-y-auto divide-y divide-brand-secondary">
-        {loadError && <div role="alert" className="p-4 text-sm">Comments could not refresh. <button type="button" className="underline" onClick={() => { if(focusCommentId) void retryAround(); else void retryNormal(); }}>Try again</button></div>}
+        {(focusMissing || focusLost) && (
+          <p role="status" data-comment-focus-lost className="px-4 py-2.5 text-[12px] text-brand-text/60">That comment is no longer available.</p>
+        )}
+        {loadError && <div role="alert" className="p-4 text-sm">Comments could not refresh. <button type="button" className="underline" onClick={() => { void source.refetch(); }}>Try again</button></div>}
         {isLoading && (
           <div className="flex justify-center py-8">
             <div className="w-5 h-5 border-2 border-brand-divider border-t-brand-text/80 rounded-full animate-spin" />
@@ -534,7 +610,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
             myName={profile?.display_name}
             myUsername={profile?.username}
             myAvatar={avatarSrc}
-            isFocused={highlightId === comment.id}
+            highlightId={highlightId}
+            openReplies={openRepliesFor === comment.id}
             notifyError={notifyError}
             creatorTools={creatorTools}
           />

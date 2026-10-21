@@ -49,6 +49,23 @@ export function isStreamFull(err: unknown): boolean {
   return errorCode(err) === "STREAM_FULL"
 }
 
+/**
+ * 400 CHAT_BLOCKED_WORD (service.ErrChatBlockedWord): the host's word filter
+ * refused the message. Nothing was posted; the draft stays so it can be edited.
+ */
+export const BLOCKED_WORD_COPY = "Your message wasn't sent. It has a word the host filters out of this chat. Edit it and try again."
+export const MUTED_COPY = "You've been muted in this chat."
+
+/** The chat refusal that means "the host's word filter caught this message". */
+export function isBlockedWord(err: unknown): boolean {
+  return errorCode(err) === "CHAT_BLOCKED_WORD"
+}
+
+/** The chat refusal that means "you are muted in this chat". */
+export function isChatMute(err: unknown): boolean {
+  return errorCode(err) === "CHAT_MUTED"
+}
+
 /** POST /streams/:id/chat. */
 export function chatSendErrorCopy(err: unknown): string {
   switch (errorCode(err)) {
@@ -57,9 +74,9 @@ export function chatSendErrorCopy(err: unknown): string {
     case "LIVE_BANNED":
       return "You can't chat on live streams right now."
     case "CHAT_MUTED":
-      return "You've been muted in this chat."
+      return MUTED_COPY
     case "CHAT_BLOCKED_WORD":
-      return "That message has a word the host doesn't allow."
+      return BLOCKED_WORD_COPY
     case "RATE_LIMITED":
       return "You're sending too quickly. Wait a moment."
     case "STREAM_NOT_LIVE":
@@ -108,7 +125,7 @@ export function isStreamNotLive(err: unknown): boolean {
   return errorCode(err) === "STREAM_NOT_LIVE"
 }
 
-/** DELETE /chat/:messageId, POST/DELETE /bans, PUT /moderators. */
+/** DELETE /chat/:messageId, POST/DELETE /bans, PUT /moderators, mute, pin, word filters. */
 export function moderationErrorCopy(err: unknown): string {
   switch (errorCode(err)) {
     case "FORBIDDEN":
@@ -117,6 +134,9 @@ export function moderationErrorCopy(err: unknown): string {
       return "That isn't possible for this person."
     case "NOT_FOUND":
       return "That message is already gone."
+    // POST/DELETE /chat/word-filters (service.ErrInvalidWord).
+    case "INVALID_WORD":
+      return "Filter words can be 1 to 100 characters."
   }
   return "That didn't work. Try again."
 }

@@ -8,6 +8,8 @@ export interface PostControlsProps {
   own: boolean;
   pinned: boolean;
   deleting: boolean;
+  /** Offer "Copy embed code": only a public video post has an embed page to point at. */
+  canEmbed?: boolean;
   onRecommend: () => void;
   onHide: () => void;
   onMute: () => void;
@@ -55,7 +57,7 @@ export default function PostControls(props: PostControlsProps) {
         { label: 'Recommend similar', icon: SlidersHorizontal, run: props.onRecommend },
         { label: 'Hide this update', icon: EyeOff, run: props.onHide },
         { label: 'Mute this author', icon: VolumeX, run: props.onMute },
-        { label: 'Copy embed code', icon: CodeXml, run: props.onEmbed },
+        ...(props.canEmbed ? [{ label: 'Copy embed code', icon: CodeXml, run: props.onEmbed }] : []),
         { label: 'Report a concern', icon: ShieldAlert, run: props.onReport, danger: true },
         { label: 'Block this account', icon: UserRoundX, run: props.onBlock, danger: true },
       ];

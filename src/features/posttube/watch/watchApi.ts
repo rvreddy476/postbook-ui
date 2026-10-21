@@ -1,4 +1,5 @@
 import api from "@/lib/api";
+import { disclosuresFromWire, type Disclosures } from "@/lib/disclosures";
 
 import { fetchCollection, fetchCollectionItems, type Collection, type CollectionItem } from "@/features/posttube/library";
 import { mediaHref } from "@/features/reels/model";
@@ -79,6 +80,10 @@ export interface WatchPostRow extends HydratedPostRow {
   /** End screens and cards are off for made-for-kids videos (either key). */
   made_for_kids?: boolean | null;
   is_made_for_kids?: boolean | null;
+  /** Creator disclosures (postgres.Post, never omitted). */
+  ai_generated?: boolean | null;
+  paid_promotion?: boolean | null;
+  altered_content?: boolean | null;
   related_post?: {
     id?: string | null;
     title?: string | null;
@@ -136,6 +141,8 @@ export interface WatchDetail {
   ageRestricted: boolean;
   /** No end screen or cards are fetched for it. */
   madeForKids: boolean;
+  /** AI-generated / paid promotion / altered content, labels under the title. */
+  disclosures: Disclosures;
 }
 
 /** A row + its card model → what the page reads. Missing keys fall back to what the card already knew. */
@@ -162,6 +169,7 @@ export function normalizeWatchDetail(row: WatchPostRow, video: PostTubeVideo): W
     relatedPost: row.related_post_id === row.id ? null : normalizeRelatedPost(row.related_post),
     ageRestricted: row.age_restricted === true,
     madeForKids: row.made_for_kids === true || row.is_made_for_kids === true,
+    disclosures: disclosuresFromWire(row),
   };
 }
 
@@ -214,17 +222,7 @@ export async function setPass(postId: string, on: boolean): Promise<void> {
   else await api.delete(`/v1/posts/${postId}/tune`);
 }
 
-/* ── Creator heart / pin on comments ────────────────────── */
-
-export async function setCommentHeart(commentId: string, on: boolean): Promise<void> {
-  if (on) await api.post(`/v1/comments/${commentId}/heart`);
-  else await api.delete(`/v1/comments/${commentId}/heart`);
-}
-
-export async function setCommentPin(commentId: string, on: boolean): Promise<void> {
-  if (on) await api.put(`/v1/comments/${commentId}/pin`);
-  else await api.delete(`/v1/comments/${commentId}/pin`);
-}
+/* Creator heart / pin on comments: components/comments/creatorTools, shared by every comment surface. */
 
 /* ── Up next ────────────────────────────────────────────── */
 

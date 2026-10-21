@@ -90,6 +90,7 @@ export function LibraryTable({ rows, selected, onToggle, onToggleAll, sortKey, s
             <th>Visibility</th>
             <SortHead label="Published" k="published" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
             <SortHead label="Views" k="views" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="num" />
+            <SortHead label="Likes" k="likes" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="num" />
             <SortHead label="Comments" k="comments" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="num" />
           </tr>
         </thead>
@@ -132,6 +133,7 @@ export function LibraryTable({ rows, selected, onToggle, onToggleAll, sortKey, s
                   {formatCount(row.view_count)}
                   <RowSparkline postId={row.id} />
                 </td>
+                <td className="num">{formatCount(row.like_count)}</td>
                 <td className="num">{formatCount(row.comment_count)}</td>
               </tr>
             );

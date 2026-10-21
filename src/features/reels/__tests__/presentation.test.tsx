@@ -82,7 +82,9 @@ test('frame top-right is the three dots alone, 48px circle 8px in; Theater and P
   expect(screen).not.toContain('Maximize2');
   // Only More sits on the frame; Theater and Playback settings are rows in its menu.
   expect(screen).toContain('aria-label="More"');
-  expect(screen).toContain('aria-label="Theater mode"');
+  // Desktop: Theater mode. Phone: Full screen = clear screen plus the browser's full screen (19 Oct).
+  expect(screen).toContain('aria-label={desktop ? "Theater mode" : "Full screen"}');
+  expect(screen).toContain('desktop ? void enterTheater() : enterPhoneFullscreen()');
   expect(screen).not.toContain('aria-label="Playback settings"');
   expect(screen).toContain('onPrefsChange={updatePrefs}');
   expect(screen).toContain('qualityHeights={qualityHeights}');
@@ -95,13 +97,16 @@ test('frame top-right is the three dots alone, 48px circle 8px in; Theater and P
 const other=toReelItem({id:'r3',author_id:'b',content_type:'reel',author:{id:'b',username:'bee',display_name:'Bee'},media:[{media_id:'m',kind:'video'}]})!;
 const railBase={reel:other,isOwn:false,followPending:false,onToggleFollow:()=>{},onLike:()=>{},onComments:()=>{},onShare:()=>{},onSave:()=>{},onMore:()=>{}};
 
-test('rail avatar: a plain profile link with the Follow badge attached; the badge goes once followed, on an own reel, or while unknown', () => {
+test('rail: the Follow ring on top only while not following; the profile picture at the foot always', () => {
   const notFollowing=renderToStaticMarkup(<ReelRail {...railBase} following={false}/>);
   expect(notFollowing).toContain('reel-rail-avatar-wrap');
   expect(notFollowing).toContain('class="reel-rail-avatar" aria-label="Bee&#x27;s profile" href="/u/bee"');
   expect(notFollowing).toContain('class="reel-rail-follow"');
-  expect(notFollowing).toContain('class="reel-rail-follow"');
   expect(notFollowing).toContain('aria-label="Follow Bee"');
+  expect(notFollowing.indexOf('class="reel-rail-follow"')).toBeLessThan(notFollowing.indexOf('aria-label="Like"'));
+  expect(notFollowing.indexOf('class="reel-rail-avatar"')).toBeGreaterThan(notFollowing.indexOf('aria-label="Save"'));
+  const followed=renderToStaticMarkup(<ReelRail {...railBase} following={true}/>);
+  expect(followed).toContain('class="reel-rail-avatar" aria-label="Bee&#x27;s profile" href="/u/bee"');
   expect(notFollowing).not.toContain('aria-haspopup="dialog"');
   expect(renderToStaticMarkup(<ReelRail {...railBase} following={true}/>)).not.toContain('reel-rail-follow');
   expect(renderToStaticMarkup(<ReelRail {...railBase} following={undefined}/>)).not.toContain('reel-rail-follow');
@@ -113,7 +118,7 @@ test('rail badge subscribes instead when the reel came through a channel, and st
   const base={...railBase,reel:channelReel,following:false as const,onToggleSubscribe:()=>{}};
   const unsubscribed=renderToStaticMarkup(<ReelRail {...base} subscribed={false}/>);
   expect(unsubscribed).toContain('class="reel-rail-follow"');
-  expect(unsubscribed).toContain('aria-label="Subscribe to Bee&#x27;s channel"');
+  expect(unsubscribed).toContain('aria-label="Follow Bee"');
   expect(renderToStaticMarkup(<ReelRail {...base} subscribed={true}/>)).not.toContain('reel-rail-follow');
   expect(renderToStaticMarkup(<ReelRail {...base} subscribed={undefined}/>)).not.toContain('reel-rail-follow');
 });
@@ -128,9 +133,9 @@ test('the phone rail carries the same avatar and badge, and keeps its More', () 
 });
 
 test('desktop rail reads Save, Share, Comments, Like, Avatar from the bottom — no More — as 48px circles with counts 6px under', () => {
-  expect([...RAIL_ORDER].reverse()).toEqual(['save','share','comments','like','avatar']);
+  expect([...RAIL_ORDER].reverse()).toEqual(['profile','save','share','comments','like','follow']);
   const html=renderToStaticMarkup(<ReelRail {...railBase} following={false}/>);
-  const order=['reel-rail-avatar','aria-label="Like"','aria-label="Comments"','aria-label="Share"','aria-label="Save"'].map((m)=>html.indexOf(m));
+  const order=['class="reel-rail-follow"','aria-label="Like"','aria-label="Comments"','aria-label="Share"','aria-label="Save"','class="reel-rail-avatar"'].map((m)=>html.indexOf(m));
   for(const at of order) expect(at).toBeGreaterThan(-1);
   expect([...order].sort((a,b)=>a-b)).toEqual(order);
   expect(html).not.toContain('aria-label="More"');
@@ -142,13 +147,19 @@ test('desktop rail reads Save, Share, Comments, Like, Avatar from the bottom —
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-count { font-size: 12px; line-height: 16px; font-weight: 700;');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-liked .reel-action-icon { color: rgb(var(--danger)); }');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-saved .reel-action-icon { color: rgb(var(--brand-accent)); }');
-  // The plus badge: 24×24, accent, centred on the avatar's bottom edge (top = avatar top + 36 → 20px to the Like circle).
-  expect(css).toContain('width: auto; height: 16px; padding: 0 6px; border: 0; border-radius: 999px; font-size: 9px; font-weight: 700;');
-  expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-avatar-wrap { padding-bottom: 16px; }');
-  expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-follow { bottom: 0; }');
+  // The Follow seal (20 Oct): 44px like the profile picture; FOLLOW all the way round, turning; a plus badge at the lower right.
+  expect(css).toContain('.reel-rail-follow { position: relative; display: block; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: rgb(var(--follow-seal));');
+  expect(css).toContain('background: rgb(var(--follow-seal-plus)); color: rgb(var(--reel-on-stage));');
+  expect(css).toContain('.reel-rail-follow__spin { transform-origin: 22px 22px; animation: reel-follow-spin 12s linear infinite; }');
+  expect(css).toContain('@media (prefers-reduced-motion: reduce) { .reel-rail-follow__spin { animation: none; } }');
+  expect(html).toContain('class="reel-rail-follow__face"');
+  expect(html).toMatch(/<textPath href="#reel-follow-arc[\w-]*" textLength="103" lengthAdjust="spacing">FOLLOW • FOLLOW • <\/textPath>/);
+  expect(html).toContain('class="reel-rail-follow__plus"');
+  expect(css).toContain('.reel-action-rail.is-desktop .reel-rail-avatar-wrap { padding-top: 6px; }');
+  expect(renderToStaticMarkup(<ReelRail {...railBase} following={true}/>)).not.toContain('reel-rail-follow');
 });
 
-test('the author card: avatar, name link, handle, Follow pill (Following outlined, Subscribe for a channel, nothing when own), counts row', () => {
+test('the author card: avatar, name link, handle, Follow pill (Following outlined; a channel reel says Follow too, 20 Oct; nothing when own), counts row', () => {
   const base={reel:other,isOwn:false,followPending:false,onToggleFollow:()=>{},onLike:()=>{},onSave:()=>{},onShare:()=>{}};
   const notFollowing=renderToStaticMarkup(<ReelAuthorCard {...base} following={false}/>);
   expect(notFollowing).toContain('class="reel-author-card__name" href="/u/bee"');
@@ -158,7 +169,7 @@ test('the author card: avatar, name link, handle, Follow pill (Following outline
   expect(renderToStaticMarkup(<ReelAuthorCard {...base} following={true}/>)).toContain('class="reel-panel-follow is-on"');
   expect(renderToStaticMarkup(<ReelAuthorCard {...base} following={undefined}/>)).not.toContain('reel-panel-follow');
   expect(renderToStaticMarkup(<ReelAuthorCard {...base} isOwn following={false}/>)).not.toContain('reel-panel-follow');
-  expect(renderToStaticMarkup(<ReelAuthorCard {...base} reel={{...other,channelHandle:'bees'}} following={false} subscribed={false} onToggleSubscribe={()=>{}}/>)).toContain('>Subscribe<');
+  expect(renderToStaticMarkup(<ReelAuthorCard {...base} reel={{...other,channelHandle:'bees'}} following={false} subscribed={false} onToggleSubscribe={()=>{}}/>)).toContain('>Follow<');
   for(const label of ['aria-label="Like"','aria-label="0 comments"','aria-label="Save"','aria-label="Share"']) expect(notFollowing).toContain(label);
   const counts=['aria-label="Like"','aria-label="0 comments"','aria-label="Save"','aria-label="Share"'].map((m)=>notFollowing.indexOf(m));
   expect([...counts].sort((a,b)=>a-b)).toEqual(counts);

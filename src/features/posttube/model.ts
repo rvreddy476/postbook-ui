@@ -1,6 +1,7 @@
 import { formatCount, mediaHref } from "@/features/reels/model";
 import { clampSpeed, SPEED_MAX, SPEED_MIN, type Speed } from "@/features/reels/playback/playerPrefs";
 import type { PostTubeVideo } from "./types";
+import { shortDate } from "@/lib/postTime";
 
 /*
   Pure helpers for the PostTube (long video) app. Nothing here touches the
@@ -526,21 +527,24 @@ export function formatClockMs(ms: number): string {
   return formatDuration(ms / 1000) || "0:00";
 }
 
+/*
+  "just now", "5 min ago", "2 hours ago", "3 days ago", then the date —
+  "6 Sep", or "6 Sep 2025" before this year. "19d ago" and "2mo ago" were
+  shorthand a reader had to decode; past a week the date says more.
+*/
 export function timeAgo(dateStr: string | null | undefined, now = Date.now()): string {
   if (!dateStr) return "";
-  const then = new Date(dateStr).getTime();
-  if (!Number.isFinite(then)) return "";
-  const s = Math.max(0, Math.floor((now - then) / 1000));
+  const then = new Date(dateStr);
+  if (!Number.isFinite(then.getTime())) return "";
+  const s = Math.max(0, Math.floor((now - then.getTime()) / 1000));
   if (s < 60) return "just now";
   const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
+  if (m < 60) return `${m} min ago`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
+  if (h < 24) return `${h} ${h === 1 ? "hour" : "hours"} ago`;
   const d = Math.floor(h / 24);
-  if (d < 30) return `${d}d ago`;
-  const mo = Math.floor(d / 30);
-  if (mo < 12) return `${mo}mo ago`;
-  return `${Math.floor(mo / 12)}y ago`;
+  if (d < 7) return `${d} ${d === 1 ? "day" : "days"} ago`;
+  return shortDate(then, now);
 }
 
 export function hlsMasterUrl(mediaId: string): string {
@@ -553,4 +557,15 @@ export function subtitleTrackUrl(mediaId: string, lang: string): string {
 
 export function mediaServeUrl(mediaId: string): string {
   return mediaHref(`/v1/media/${mediaId}/serve`);
+}
+
+/** "No views yet", "1 view", "1.2K views". "0 views" read as a broken counter. */
+export function viewsLabel(count: number): string {
+  if (!count) return "No views yet";
+  return `${formatCount(count)} ${count === 1 ? "view" : "views"}`;
+}
+
+/** "1 subscriber", "12 subscribers", "1.2K subscribers". */
+export function subscribersLabel(count: number): string {
+  return `${formatCount(count)} ${count === 1 ? "subscriber" : "subscribers"}`;
 }

@@ -6,11 +6,9 @@ import data from '@emoji-mart/data'
 // Same lazy pattern as ChatWindow / CommentSection: emoji-mart is ~200KB and
 // only needed once someone opens a picker.
 const EmojiPicker = lazy(() => import('@emoji-mart/react'))
-import { Avatar, getInitials } from './shared'
 import {
   getOrCreateDirectConversation,
   getConversation,
-  fetchMessages,
   sendMessage,
   subscribeToMessages,
   subscribeToReactions,
@@ -19,17 +17,17 @@ import {
   subscribeToMessageEdits,
   subscribeToMessageDeletes,
   subscribeToPinUpdates,
+  subscribeToDisappearingTimer,
+  subscribeToPresenceUpdates,
   editMessage,
-  deleteMessage,
   toggleReaction,
   markConversationRead,
   sendTypingIndicator,
   replyToMessage,
-  forwardMessage,
-  sendMediaMessage,
   pinMessage,
   unpinMessage,
-  getPinnedMessage,
+  listPinnedMessages,
+  MAX_PINS_PER_CONVERSATION,
   Message as BackendMessage,
   ReactionUpdate,
   TypingEvent,
@@ -37,24 +35,88 @@ import {
   MessageEditedEvent,
   MessageDeletedEvent,
   PinUpdateEvent,
+  DisappearingTimerEvent,
   PinnedMessage,
 } from '@/services/messageService'
+import {
+  deleteMessageScoped,
+  fetchMessagePage,
+  fetchPresenceDetail,
+  fetchReadSummary,
+  getConversationPrefs,
+  sendGifMessage,
+  sendMediaKindMessage,
+  sendStickerMessage,
+  sendTypingStop,
+  sendVoiceMessage,
+  type ReplyRef,
+} from '@/services/chatParityApi'
 import { getSession } from '@/services/authService'
 import { useGlobalToast } from '@/contexts/ToastContext'
 import { useConversationPresence, useSetTyping } from '@/hooks/usePresence'
 import { useBatchProfiles } from '@/hooks/useProfile'
 import { useNotifications } from '@/contexts/NotificationContext'
+import { useMessagingSettings } from '@/hooks/useMessagingSettings'
 import { initiateCall } from '@/services/callService'
 import { uploadMedia } from '@/lib/mediaUpload'
 import { useMediaKinds } from '@/hooks/useMediaKinds'
 import { toChatSource, useDatingKindChat, type ChatSource } from '@/features/dating/components/KindChat'
+import { postCardIds, postCardView, usePostCards } from './postCards'
 import type { User } from '@/types'
+import { decodeDisappearMs, type InboxMember } from '@/lib/chat/contract'
 import {
-  ArrowLeft, Phone, Video, MoreVertical, Plus,
-  // Pin stays imported for the pinned-message banner; only the per-message
-  // action rail dropped it.
-  Send, Pin, Reply, Pencil, Trash2, X, Check, CheckCheck, Loader2, Image, PanelRight,
-  Smile, SmilePlus, ImagePlus,
+  createConversationErrorText,
+  isOutgoingPendingRequest,
+  isConsentRefusal,
+  readCreatedConversation,
+  requestCharsLeft,
+  requestComposerGuard,
+  requestComposerProblemText,
+  requestSendErrorText,
+  requestWaitingBanner,
+  who,
+} from '@/lib/chat/dmConsent'
+import { presenceLabel } from '@/lib/chat/inbox'
+import { bubbleClass, parseBubbleStyle } from '@/lib/chat/bubbleStyle'
+import type { GifSendPayload } from '@/lib/chat/giphy'
+import { InboxAvatar } from './inbox/InboxAvatar'
+import { MessageBody } from './thread/MessageBody'
+import { ThreadIntro, TypingBubble } from './thread/ThreadIntro'
+import {
+  MESSAGE_ACTION_LABELS,
+  bubbleKind,
+  isBareBubble,
+  applyPinUpdate,
+  dropExpired,
+  isExpiryDelete,
+  nextExpiryDelay,
+  lastOwnMessageId,
+  messageActions,
+  nextPinIndex,
+  prependOlder,
+  quoteLabel,
+  searchThread,
+  shouldBlurMedia,
+  toDisplay,
+  formatTime,
+  type DisplayMessage,
+  type MessageAction,
+} from './thread/threadModel'
+import ChatSettingsPanel from './thread/ChatSettingsPanel'
+import { disappearLabel, disappearingNotice } from './thread/chatSettings'
+import SharedReelsViewer from './thread/SharedReelsViewer'
+import ForwardSheet from './thread/ForwardSheet'
+import ReportMessageSheet from './thread/ReportMessageSheet'
+import ReactionsSheet from './thread/ReactionsSheet'
+import SeenBySheet from './thread/SeenBySheet'
+import { VoiceRecorder } from './thread/VoiceRecorder'
+import { StickerGifPanel, useStickerGifAvailability } from './thread/StickerGifPanel'
+import './chat-bubbles.css'
+import {
+  ArrowLeft, Phone, Video, MoreHorizontal, ChevronDown, ChevronUp,
+  Send, Pin, PinOff, Reply, Pencil, Trash2, X, Check, CheckCheck, Loader2, PanelRight,
+  Smile, SmilePlus, ImagePlus, Copy, Forward, Flag, Undo2, Sticker, Search, Users, Timer, Clock,
+  type LucideIcon,
 } from 'lucide-react'
 
 // ---------------------------------------------------------------------------
@@ -66,6 +128,8 @@ interface DmChatProps {
   userAvatar: string
   userOnline: boolean
   userLastSeen?: string
+  /** The peer's last-active time from the inbox row (CONTRACT §1 peer). */
+  userLastActiveAt?: string | null
   onBack: () => void
   /** Optional third column, supplied by the messenger page only. */
   detailsOpen?: boolean
@@ -74,273 +138,279 @@ interface DmChatProps {
   onConversationReady?: (id: string) => void
   /**
    * Open this existing conversation instead of finding the direct thread
-   * with userId. Used for a dating match, whose chat is a separate
-   * conversation; get-or-create would open (or create) the wrong one.
+   * with userId. Used for inbox rows, dating matches and group chats.
    */
   conversationId?: string
-}
-
-interface DisplayMessage {
-  id: string
-  senderId: string
-  text: string
-  time: string
-  ts: string
-  type: string
-  mediaId?: string
-  replyToId?: string
-  /** Quote snapshot from the server; the only text available when the
-   *  original message sits outside the loaded page. */
-  replyToPreview?: string
-  replyToSenderId?: string
-  forwardedFromId?: string
-  isEdited?: boolean
-  editedAt?: string
-  isDeleted?: boolean
-  reactions?: { emoji: string; user_ids: string[] }[]
+  /** A chat-service group conversation (conversationId is then required). */
+  group?: { title: string; avatarUrl: string | null; members: InboxMember[] }
+  /** Scroll to this message once loaded (message search). */
+  focusMessageId?: string | null
+  /** The chat was deleted for me / I left the group. */
+  onChatRemoved?: () => void
+  onToast?: (text: string) => void
 }
 
 interface ContextMenuState {
   visible: boolean
-  /** The bubble's viewport rect; the rail is placed against it. */
   rect: { left: number; right: number; top: number; bottom: number }
-  /** True when the bubble is mine (right side) — the rail then goes left. */
   mine: boolean
   messageId: string
-  senderId: string
-  ts: string
 }
 
-const QUICK_EMOJIS = ['\uD83D\uDC4D', '\u2764\uFE0F', '\uD83D\uDE02', '\uD83D\uDE2E', '\uD83D\uDE22', '\uD83D\uDD25']
+const QUICK_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥']
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-function formatTime(iso: string): string {
-  try {
-    const d = new Date(iso)
-    let h = d.getHours()
-    const m = d.getMinutes().toString().padStart(2, '0')
-    const ampm = h >= 12 ? 'PM' : 'AM'
-    h = h % 12 || 12
-    return `${h}:${m} ${ampm}`
-  } catch { return '' }
-}
-
-function toDisplay(msg: BackendMessage): DisplayMessage {
-  return {
-    id: msg.id,
-    senderId: msg.sender_id,
-    text: msg.text ?? '',
-    time: formatTime(msg.created_at || msg.ts),
-    ts: msg.ts || msg.created_at,
-    type: msg.type || 'text',
-    mediaId: msg.media_id,
-    replyToId: msg.reply_to_id,
-    replyToPreview: msg.reply_to_preview,
-    replyToSenderId: msg.reply_to_sender_id,
-    forwardedFromId: msg.forwarded_from_id,
-    isEdited: msg.is_edited,
-    editedAt: msg.edited_at,
-    isDeleted: msg.is_deleted,
-    reactions: msg.reactions,
-  }
+const ACTION_ICONS: Record<MessageAction, LucideIcon> = {
+  reply: Reply,
+  copy: Copy,
+  forward: Forward,
+  edit: Pencil,
+  deleteForMe: Trash2,
+  unsend: Undo2,
+  report: Flag,
+  pin: Pin,
+  unpin: PinOff,
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function DmChat({ userId, userName, userAvatar, userOnline, userLastSeen, onBack, detailsOpen, onToggleDetails, onConversationReady, conversationId: openConversationId }: DmChatProps) {
+export default function DmChat({
+  userId, userName, userAvatar, userOnline, userLastSeen, userLastActiveAt, onBack, detailsOpen, onToggleDetails,
+  onConversationReady, conversationId: openConversationId, group, focusMessageId, onChatRemoved, onToast,
+}: DmChatProps) {
   const currentUser = getSession()
   const myId = currentUser?.id ?? ''
+  const isGroup = Boolean(group)
 
-  // initiateCall takes the app's User shape; the props carry exactly what
-  // a call needs to show — id, name, avatar.
   const peerAsUser: User = useMemo(
     () => ({ id: userId, name: userName, avatar: userAvatar, isOnline: userOnline }),
     [userId, userName, userAvatar, userOnline],
   )
 
-  // The badge is client state, separate from the server's read cursor.
-  // markConversationRead() below writes the cursor; these clear the number
-  // the user actually sees. DmChat never called them — only the retired
-  // floating ChatWindow did — so reading a conversation in the messenger
-  // left its count standing for good.
   const {
     markConversationRead: clearUnreadBadge,
     markConversationAsViewed,
     unmarkConversationAsViewed,
   } = useNotifications()
 
+  const { data: chatSettings } = useMessagingSettings()
+  const bubbleStyle = parseBubbleStyle(chatSettings?.chat_bubble_style)
+  const sensitiveFilterOn = chatSettings?.dm_sensitive_media_filter === true
+
   const [messages, setMessages] = useState<DisplayMessage[]>([])
+  const [olderCursor, setOlderCursor] = useState<string | null>(null)
+  const [loadingOlder, setLoadingOlder] = useState(false)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  /** Why the server refused to start this chat, in words; null for any other failure. */
+  const [errorText, setErrorText] = useState<string | null>(null)
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
-  /** The composer's emoji picker. */
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
-  /** A full emoji picker opened from a message's action bar ("+" after the quick row). */
+  const [showStickers, setShowStickers] = useState(false)
   const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null)
   const emojiPanelRef = useRef<HTMLDivElement | null>(null)
   const actionBarRef = useRef<HTMLDivElement | null>(null)
-  /**
-   * Where the action rail sits. Measured after render rather than guessed:
-   * its width depends on whether Edit/Delete are present, and an unmeasured
-   * guess would push it off-screen on a narrow column.
-   *
-   * Placed BESIDE the bubble on the opposite side — my messages sit right,
-   * so the rail goes left, and vice versa — falling back to above the
-   * bubble when there isn't room on that side.
-   */
   const [actionBarStyle, setActionBarStyle] = useState<React.CSSProperties>({ visibility: 'hidden' })
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
   const [replyingTo, setReplyingTo] = useState<DisplayMessage | null>(null)
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set())
   const [readReceipts, setReadReceipts] = useState<Map<string, string[]>>(new Map())
-  /** The peer's read watermark (ms), from the conversation's durable cursor. */
   const [peerLastReadAt, setPeerLastReadAt] = useState<number | null>(null)
-  const [pinnedMessage, setPinnedMessage] = useState<PinnedMessage | null>(null)
-  // Mirror convIdRef into state so the M1 presence hook can react when the
-  // direct conversation is resolved (createOrGet is async on first open).
+  // Every pin in the chat, newest first; the bar shows pins[pinIndex].
+  const [pins, setPins] = useState<PinnedMessage[]>([])
+  const [pinIndex, setPinIndex] = useState(0)
+  // My disappearing-messages window for this chat (ms), null when off.
+  const [disappearAfterMs, setDisappearAfterMs] = useState<number | null>(null)
+  const disappearRef = useRef<number | null>(null)
+  disappearRef.current = disappearAfterMs
   const [conversationId, setConversationId] = useState<string | null>(null)
+  const [peerPresence, setPeerPresence] = useState<{ isOnline: boolean | null; lastActiveAt: string | null }>({
+    isOnline: userOnline ? true : null,
+    lastActiveAt: userLastActiveAt ?? null,
+  })
+  const [showSettings, setShowSettings] = useState(false)
+  const [viewer, setViewer] = useState<{ startPostId: string; postIds: string[] } | null>(null)
+  const [forwarding, setForwarding] = useState<DisplayMessage | null>(null)
+  const [reporting, setReporting] = useState<DisplayMessage | null>(null)
+  const [reactionsFor, setReactionsFor] = useState<DisplayMessage | null>(null)
+  const [seenByFor, setSeenByFor] = useState<string | null>(null)
+  const [seenByCount, setSeenByCount] = useState<number | null>(null)
+  const [threadSearch, setThreadSearch] = useState<string | null>(null)
+  const [searchIndex, setSearchIndex] = useState(0)
+  const [voiceBusy, setVoiceBusy] = useState(false)
+  const [recording, setRecording] = useState(false)
 
   const convIdRef = useRef<string | null>(null)
+  const scrollRef = useRef<HTMLDivElement | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
-  const inputRef = useRef<HTMLInputElement | null>(null)
+  const inputRef = useRef<HTMLTextAreaElement | null>(null)
   const editInputRef = useRef<HTMLInputElement | null>(null)
   const lastTypingSentRef = useRef(0)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-  // Attachments used to fail into console.error alone, which is why a dead
-  // upload route went unnoticed. The composer now says so.
+  /** Set before an older page is prepended, so the view does not jump. */
+  const preserveScrollRef = useRef<number | null>(null)
+  const lastBottomIdRef = useRef<string | null>(null)
   const toast = useGlobalToast()
+  const say = useCallback((text: string) => {
+    if (onToast) onToast(text)
+    else toast({ type: 'success', title: text })
+  }, [onToast, toast])
   const [attachError, setAttachError] = useState<string | null>(null)
-  // See where this is set: the thread is awaiting the other side's accept.
   const [isRequestThread, setIsRequestThread] = useState(false)
-  // Pulse kind messages (M13). Inert unless this is a Pulse match's chat.
+  /** A request I started that is still waiting (DM consent §5): one text message, no calls. */
+  const [requestOutgoing, setRequestOutgoing] = useState(false)
   const [chatSource, setChatSource] = useState<ChatSource | null>(null)
   const kindChat = useDatingKindChat({ conversationId: openConversationId, conversation: chatSource, myId, peerName: userName, messages })
+  const postCards = usePostCards(postCardIds(messages))
+  const stickerGif = useStickerGifAvailability()
 
-  // M1 conversation presence — enter/heartbeat/leave + 10s polled rollup.
   const { data: presence } = useConversationPresence(conversationId)
   const setTyping = useSetTyping(conversationId)
 
-  // Hydrate display names for "X is typing…" / active-now indicators.
-  // Self is filtered before passing to the batch hook to keep the payload
-  // tight (the batch endpoint is capped at 100 anyway) and to avoid
-  // requesting the viewer's own profile just to drop them later.
+  // Names: group members first, then profiles fetched for typing/active/profile cards.
+  const memberById = useMemo(() => new Map((group?.members ?? []).map((m) => [m.userId, m])), [group?.members])
   const remoteTypingIds = useMemo(
     () => (presence?.typing_users ?? []).filter((id) => id !== myId),
     [presence?.typing_users, myId]
   )
-  const remoteActiveIds = useMemo(
-    () => (presence?.active_users ?? []).filter((id) => id !== myId),
-    [presence?.active_users, myId]
+  const profileCardIds = useMemo(
+    () => messages.map((m) => m.extras?.profileUserId).filter((id): id is string => Boolean(id)),
+    [messages],
   )
-  const presenceUserIds = useMemo(
-    () => Array.from(new Set([...remoteTypingIds, ...remoteActiveIds])),
-    [remoteTypingIds, remoteActiveIds]
+  const groupSenderIds = useMemo(
+    () => (isGroup ? Array.from(new Set(messages.map((m) => m.senderId))).filter((id) => id && id !== myId && !memberById.get(id)?.displayName) : []),
+    [isGroup, messages, myId, memberById],
   )
-  const { data: presenceProfiles } = useBatchProfiles(presenceUserIds)
-
-  const formatNameList = useCallback(
-    (ids: string[]): string => {
-      const names = ids.map((id) => {
-        const profile = presenceProfiles?.get(id)
-        return (
-          profile?.display_name ||
-          profile?.username ||
-          // Fall back to the DM peer's name when the batch hook hasn't
-          // resolved yet — in a 1:1 chat that's the only "other" user.
-          (id === userId ? userName : 'Someone')
-        )
-      })
-      if (names.length === 0) return ''
-      if (names.length === 1) return names[0]
-      if (names.length === 2) return `${names[0]} and ${names[1]}`
-      return `${names[0]}, ${names[1]} and ${names.length - 2} more`
-    },
-    [presenceProfiles, userId, userName]
+  const profileIds = useMemo(
+    () => Array.from(new Set([
+      ...remoteTypingIds, ...Array.from(typingUsers), ...profileCardIds, ...groupSenderIds,
+      // The waiting-request banner names them by @handle.
+      ...(requestOutgoing && userId ? [userId] : []),
+    ])),
+    [remoteTypingIds, typingUsers, profileCardIds, groupSenderIds, requestOutgoing, userId]
   )
+  const { data: profiles } = useBatchProfiles(profileIds)
+  // Waiting request: who they are ("@asha"), and whether my one message is already in.
+  const requestTarget = who(profiles?.get(userId)?.username, userName)
+  const requestAlreadySent = requestOutgoing && messages.some((m) => m.senderId === myId && !m.isDeleted)
 
-  const scrollToBottom = useCallback(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [])
+  const nameOf = useCallback((id: string): string => {
+    if (id === myId) return 'You'
+    const member = memberById.get(id)
+    if (member?.displayName) return member.displayName
+    const p = profiles?.get(id)
+    if (p?.display_name || p?.username) return (p.display_name || p.username)!
+    if (!isGroup && id === userId) return userName
+    return 'Someone'
+  }, [myId, memberById, profiles, isGroup, userId, userName])
 
-  useEffect(() => { scrollToBottom() }, [messages, scrollToBottom])
+  const avatarOf = useCallback((id: string): string | null => {
+    const member = memberById.get(id)
+    if (member?.avatarMediaId) return `/v1/media/${member.avatarMediaId}/serve`
+    const p = profiles?.get(id)
+    if (p?.avatar_media_id) return `/v1/media/${p.avatar_media_id}/serve`
+    if (!isGroup && id === userId) return userAvatar && (userAvatar.startsWith('http') || userAvatar.startsWith('/')) ? userAvatar : null
+    return null
+  }, [memberById, profiles, isGroup, userId, userAvatar])
 
-  // Init conversation & load messages
+  // ---- Scrolling: stick to the bottom for new messages, hold still for older ones.
+  useLayoutEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    if (preserveScrollRef.current !== null) {
+      el.scrollTop = el.scrollHeight - preserveScrollRef.current
+      preserveScrollRef.current = null
+      return
+    }
+    const lastId = messages[messages.length - 1]?.id ?? null
+    if (lastId !== lastBottomIdRef.current) {
+      lastBottomIdRef.current = lastId
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    }
+  }, [messages])
+
+  const anyTyping = remoteTypingIds.length > 0 || typingUsers.size > 0
+  useEffect(() => {
+    if (anyTyping) bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }, [anyTyping])
+
+  // ---- Init conversation & first page
   useEffect(() => {
     let cancelled = false
     setConversationId(null)
     setChatSource(null)
+    setMessages([])
+    setOlderCursor(null)
+    setPins([])
+    setPinIndex(0)
+    setDisappearAfterMs(null)
+    lastBottomIdRef.current = null
     const init = async () => {
       try {
         setLoading(true)
         setError(false)
+        setErrorText(null)
         const convRes = openConversationId
           ? await getConversation(openConversationId)
           : await getOrCreateDirectConversation(userId)
         const conversationId: string =
-          convRes.data?.conversation_id ?? convRes.data?.id ?? convRes.conversation_id ?? convRes.id ?? ''
+          convRes.data?.conversation_id || convRes.data?.id || convRes.conversation_id || convRes.id || ''
         if (!conversationId) throw new Error('No conversation id returned')
         convIdRef.current = conversationId
-        /*
-          A conversation the server marks is_request is one the other person
-          has not accepted. The first message goes through as a REQUEST: text
-          only, one message, nothing more until they accept — and accepting is
-          what forms the connection (message-service calls
-          ensureGraphConnection on accept).
-
-          Worth saying out loud after the send. Nothing else on screen
-          distinguishes a request from an ordinary thread, so without it a
-          message that is sitting unaccepted looks exactly like one that was
-          delivered and ignored.
-        */
-        setIsRequestThread(
-          Boolean(convRes.data?.is_request ?? (convRes as { is_request?: boolean }).is_request),
-        )
-
-        // The peer's durable read watermark. The live `read_receipt` frame
-        // only arrives while this conversation is open, so without this a
-        // reload lost every "Seen" mark. The server withholds it when the
-        // reader has read receipts switched off, so rendering it is safe.
-        const convMembers = (convRes.data?.members ?? convRes.members ?? []) as Array<{
-          user_id?: string
-          last_read_at?: string
-        }>
+        // A request thread: the first message goes as a request, text only.
+        const created = readCreatedConversation(convRes)
+        setIsRequestThread(created.isRequest)
+        // Mine and still waiting: the one-message rule applies (a group never is one).
+        setRequestOutgoing(!group && isOutgoingPendingRequest(created, myId))
+        // The peer's durable read watermark (DM only), so "Seen" survives a reload.
+        const convMembers = (convRes.data?.members ?? convRes.members ?? []) as Array<{ user_id?: string; last_read_at?: string }>
         const peer = convMembers.find(m => m.user_id && m.user_id !== myId)
+        const peerRaw = (convRes.data?.peer ?? null) as { is_online?: boolean; last_active_at?: string } | null
         if (!cancelled) {
-          setPeerLastReadAt(peer?.last_read_at ? Date.parse(peer.last_read_at) : null)
-        }
-        if (!cancelled) {
+          // The shared disappearing timer rides on the conversation itself; the settings read below confirms it.
+          setDisappearAfterMs(decodeDisappearMs(convRes.data?.disappear_after_ms ?? (convRes as { disappear_after_ms?: unknown }).disappear_after_ms))
+          setPeerLastReadAt(!group && peer?.last_read_at ? Date.parse(peer.last_read_at) : null)
+          if (peerRaw) {
+            setPeerPresence((prev) => ({
+              isOnline: typeof peerRaw.is_online === 'boolean' ? peerRaw.is_online : prev.isOnline,
+              lastActiveAt: peerRaw.last_active_at || prev.lastActiveAt,
+            }))
+          }
           setConversationId(conversationId)
           setChatSource(toChatSource(convRes, conversationId))
           onConversationReady?.(conversationId)
-          // While this conversation is on screen, an arriving message is
-          // already read — it must not add to the badge.
           markConversationAsViewed(conversationId)
         }
-        const msgRes = await fetchMessages(conversationId)
-        const raw: BackendMessage[] = Array.isArray(msgRes.data) ? msgRes.data : []
+        const page = await fetchMessagePage(conversationId, null, 30)
         if (!cancelled) {
-          const displayed = raw.map(m => toDisplay(m)).reverse()
+          // Anything already past its expires_at is not shown at all.
+          const displayed = dropExpired(page.messages.map(m => toDisplay(m)).reverse(), Date.now())
           setMessages(displayed)
+          setOlderCursor(page.nextCursor)
           if (displayed.length > 0) {
             const last = displayed[displayed.length - 1]
             markConversationRead(conversationId, last.id).catch(() => { })
             clearUnreadBadge(conversationId, last.ts)
           } else {
-            // An empty conversation still clears a stale count.
             clearUnreadBadge(conversationId)
           }
-          getPinnedMessage(conversationId).then(pinned => {
-            if (!cancelled) setPinnedMessage(pinned)
+          listPinnedMessages(conversationId).then(list => {
+            if (!cancelled) { setPins(list); setPinIndex(0) }
+          }).catch(() => { })
+          getConversationPrefs(conversationId).then(prefs => {
+            if (!cancelled && prefs) setDisappearAfterMs(prefs.disappearAfterMs)
           }).catch(() => { })
         }
       } catch (err) {
         console.error('[DmChat] init failed:', err)
-        if (!cancelled) setError(true)
+        if (!cancelled) {
+          setError(true)
+          // Starting a chat the server refused: say why (DM consent §4), not "could not load".
+          const refused = !openConversationId && isConsentRefusal(err)
+          setErrorText(refused ? createConversationErrorText(err, who(null, userName)) : null)
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -348,28 +418,73 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
     init()
     return () => {
       cancelled = true
-      // Leaving the conversation: later arrivals count again.
-      if (convIdRef.current) unmarkConversationAsViewed(convIdRef.current)
+      if (convIdRef.current) {
+        unmarkConversationAsViewed(convIdRef.current)
+        sendTypingStop(convIdRef.current)
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, myId, openConversationId])
 
-  // Real-time subscriptions
+  // Presence for the DM peer: the detailed read once, then live frames.
+  useEffect(() => {
+    if (isGroup || !userId) return
+    let cancelled = false
+    void fetchPresenceDetail([userId]).then((map) => {
+      const p = map[userId]
+      if (!cancelled && p) setPeerPresence((prev) => ({ isOnline: p.isOnline ?? prev.isOnline, lastActiveAt: p.lastActiveAt ?? prev.lastActiveAt }))
+    })
+    const unsub = subscribeToPresenceUpdates((evt) => {
+      if (evt.user_id !== userId) return
+      setPeerPresence((prev) => ({ isOnline: evt.online, lastActiveAt: evt.last_active_at ?? (evt.online ? prev.lastActiveAt : new Date().toISOString()) }))
+    })
+    return () => { cancelled = true; unsub() }
+  }, [isGroup, userId])
+
+  // Message search jumped here.
+  useEffect(() => {
+    if (!focusMessageId || loading) return
+    const t = setTimeout(() => scrollToMessage(focusMessageId), 150)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusMessageId, loading])
+
+  const loadOlder = useCallback(async () => {
+    const id = convIdRef.current
+    if (!id || !olderCursor || loadingOlder) return
+    setLoadingOlder(true)
+    try {
+      const page = await fetchMessagePage(id, olderCursor, 30)
+      const el = scrollRef.current
+      preserveScrollRef.current = el ? el.scrollHeight - el.scrollTop : null
+      setMessages((prev) => prependOlder(prev, page.messages.map((m) => toDisplay(m))))
+      setOlderCursor(page.nextCursor)
+    } catch (err) {
+      console.error('[DmChat] older page failed:', err)
+    } finally {
+      setLoadingOlder(false)
+    }
+  }, [olderCursor, loadingOlder])
+
+  const onScroll = useCallback(() => {
+    const el = scrollRef.current
+    if (el && el.scrollTop < 120) void loadOlder()
+  }, [loadOlder])
+
+  /** Add a message we just sent (the socket may echo it too; ids dedupe). */
+  const appendSent = useCallback((msg: BackendMessage | undefined) => {
+    if (!msg?.id) return
+    setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, toDisplay(msg)]))
+  }, [])
+
+  // ---- Real-time subscriptions
   useEffect(() => {
     const unsub = subscribeToMessages((msg: BackendMessage) => {
       if (msg.conversation_id !== convIdRef.current) return
       setMessages(prev => {
         if (prev.some(m => m.id === msg.id)) return prev
-        // The server now delivers a message to the sender's OWN sessions
-        // too, so a second tab or the phone sees it. That means this tab
-        // gets its own message back while an optimistic copy is still on
-        // screen. Settle it in place rather than appending a twin — the
-        // send's own response settles the same entry, and whichever
-        // arrives first wins.
         if (msg.sender_id === myId) {
-          const pending = prev.findIndex(
-            m => m.id.startsWith('opt-') && m.text === msg.text,
-          )
+          const pending = prev.findIndex(m => m.id.startsWith('opt-') && m.text === msg.text)
           if (pending >= 0) {
             const next = [...prev]
             next[pending] = toDisplay(msg)
@@ -379,36 +494,37 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
         return [...prev, toDisplay(msg)]
       })
       if (msg.sender_id !== myId && convIdRef.current) {
+        // Their message ends their typing.
+        setTypingUsers(prev => { if (!prev.has(msg.sender_id)) return prev; const n = new Set(prev); n.delete(msg.sender_id); return n })
         markConversationRead(convIdRef.current, msg.id).catch(() => { })
-        // You are looking at it, so it is read on both sides of the app:
-        // the server cursor above and the badge here.
         clearUnreadBadge(convIdRef.current, msg.ts || msg.created_at)
       }
     })
     return unsub
   }, [myId, clearUnreadBadge])
 
-  useEffect(() => {
-    const unsub = subscribeToMessageEdits((evt: MessageEditedEvent) => {
-      if (evt.conversation_id !== convIdRef.current) return
-      setMessages(prev => prev.map(m =>
-        m.id === evt.msg_id ? { ...m, text: evt.new_text, isEdited: true, editedAt: evt.edited_at } : m
-      ))
+  useEffect(() => subscribeToMessageEdits((evt: MessageEditedEvent) => {
+    if (evt.conversation_id !== convIdRef.current) return
+    setMessages(prev => prev.map(m => m.id === evt.msg_id ? { ...m, text: evt.new_text, isEdited: true, editedAt: evt.edited_at } : m))
+  }), [])
+
+  useEffect(() => subscribeToMessageDeletes((evt: MessageDeletedEvent) => {
+    if (evt.conversation_id !== convIdRef.current) return
+    setMessages(prev => {
+      const target = prev.find(m => m.id === evt.msg_id)
+      // A disappearing message the server expired leaves no trace; an
+      // unsent one keeps its "deleted" placeholder.
+      if (isExpiryDelete(target, { reason: evt.reason, disappearAfterMs: disappearRef.current, now: Date.now() })) {
+        return prev.filter(m => m.id !== evt.msg_id)
+      }
+      return prev.map(m => m.id === evt.msg_id ? { ...m, isDeleted: true, text: '' } : m)
     })
-    return unsub
-  }, [])
+    // A pin on a message that is gone goes with it.
+    setPins(prev => prev.filter(p => p.message_id !== evt.msg_id))
+  }), [])
 
   useEffect(() => {
-    const unsub = subscribeToMessageDeletes((evt: MessageDeletedEvent) => {
-      if (evt.conversation_id !== convIdRef.current) return
-      setMessages(prev => prev.map(m =>
-        m.id === evt.msg_id ? { ...m, isDeleted: true, text: '' } : m
-      ))
-    })
-    return unsub
-  }, [])
-
-  useEffect(() => {
+    const timers = new Map<string, ReturnType<typeof setTimeout>>()
     const unsub = subscribeToTyping((evt: TypingEvent) => {
       if (evt.conversation_id !== convIdRef.current || evt.user_id === myId) return
       setTypingUsers(prev => {
@@ -417,63 +533,82 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
         else next.delete(evt.user_id)
         return next
       })
+      const old = timers.get(evt.user_id)
+      if (old) clearTimeout(old)
+      // The server sends stop on a 6 s timeout too; this is the local safety net.
       if (evt.is_typing) {
-        setTimeout(() => {
+        timers.set(evt.user_id, setTimeout(() => {
           setTypingUsers(prev => { const next = new Set(prev); next.delete(evt.user_id); return next })
-        }, 3000)
+        }, 6500))
       }
     })
-    return unsub
-  }, [myId, clearUnreadBadge])
+    return () => { unsub(); timers.forEach(clearTimeout) }
+  }, [myId])
 
-  useEffect(() => {
-    const unsub = subscribeToReadReceipts((evt: ReadReceiptEvent) => {
-      if (evt.conversation_id !== convIdRef.current || evt.user_id === myId) return
-      setReadReceipts(prev => {
-        const next = new Map(prev)
-        const readers = next.get(evt.message_id) || []
-        if (!readers.includes(evt.user_id)) next.set(evt.message_id, [...readers, evt.user_id])
-        return next
-      })
-      // Advance the watermark too, so every earlier message shows as seen —
-      // the peer reading message N means they read everything before it.
-      const at = Date.parse(evt.read_at)
-      if (!Number.isNaN(at)) setPeerLastReadAt(prev => (prev === null || at > prev ? at : prev))
+  useEffect(() => subscribeToReadReceipts((evt: ReadReceiptEvent) => {
+    if (evt.conversation_id !== convIdRef.current || evt.user_id === myId) return
+    setReadReceipts(prev => {
+      const next = new Map(prev)
+      const readers = next.get(evt.message_id) || []
+      if (!readers.includes(evt.user_id)) next.set(evt.message_id, [...readers, evt.user_id])
+      return next
     })
-    return unsub
-  }, [myId, clearUnreadBadge])
+    const at = Date.parse(evt.read_at)
+    if (!Number.isNaN(at)) setPeerLastReadAt(prev => (prev === null || at > prev ? at : prev))
+  }), [myId])
 
-  useEffect(() => {
-    const unsub = subscribeToReactions((evt: ReactionUpdate) => {
-      if (evt.conversation_id !== convIdRef.current) return
-      setMessages(prev => prev.map(m => {
-        if (m.id !== evt.message_id) return m
-        const reactions = [...(m.reactions || [])]
-        const idx = reactions.findIndex(r => r.emoji === evt.emoji)
-        if (evt.added) {
-          if (idx >= 0) {
-            if (!reactions[idx].user_ids.includes(evt.user_id))
-              reactions[idx] = { ...reactions[idx], user_ids: [...reactions[idx].user_ids, evt.user_id] }
-          } else reactions.push({ emoji: evt.emoji, user_ids: [evt.user_id] })
-        } else if (idx >= 0) {
-          const filtered = reactions[idx].user_ids.filter(id => id !== evt.user_id)
-          if (filtered.length === 0) reactions.splice(idx, 1)
-          else reactions[idx] = { ...reactions[idx], user_ids: filtered }
-        }
-        return { ...m, reactions }
-      }))
-    })
-    return unsub
-  }, [])
+  useEffect(() => subscribeToReactions((evt: ReactionUpdate) => {
+    if (evt.conversation_id !== convIdRef.current) return
+    setMessages(prev => prev.map(m => {
+      if (m.id !== evt.message_id) return m
+      const reactions = [...(m.reactions || [])]
+      const idx = reactions.findIndex(r => r.emoji === evt.emoji)
+      if (evt.added) {
+        if (idx >= 0) {
+          if (!reactions[idx].user_ids.includes(evt.user_id))
+            reactions[idx] = { ...reactions[idx], user_ids: [...reactions[idx].user_ids, evt.user_id] }
+        } else reactions.push({ emoji: evt.emoji, user_ids: [evt.user_id] })
+      } else if (idx >= 0) {
+        const filtered = reactions[idx].user_ids.filter(id => id !== evt.user_id)
+        if (filtered.length === 0) reactions.splice(idx, 1)
+        else reactions[idx] = { ...reactions[idx], user_ids: filtered }
+      }
+      return { ...m, reactions }
+    }))
+  }), [])
 
+  // pin_update {action: pinned|unpinned, pin_id, message_id, by, at}: applied in place.
+  // A pin frame without its pin id cannot be unpinned later, so that one re-reads the list.
+  useEffect(() => subscribeToPinUpdates((evt: PinUpdateEvent) => {
+    const id = convIdRef.current
+    if (!id || evt.conversation_id !== id) return
+    if (evt.action === 'pin' && !evt.pin_id) {
+      listPinnedMessages(id).then(list => { setPins(list); setPinIndex(0) }).catch(() => { })
+      return
+    }
+    setPins(prev => applyPinUpdate(prev, evt))
+    setPinIndex(0)
+  }), [])
+
+  // disappearing_timer_updated: the shared timer changed (by anyone, me included).
+  useEffect(() => subscribeToDisappearingTimer((evt: DisappearingTimerEvent) => {
+    if (evt.conversation_id !== convIdRef.current) return
+    setDisappearAfterMs(evt.disappear_after_ms)
+  }), [])
+
+  // Drop each bubble when its expires_at passes, even if the server's delete
+  // frame is late. One timer for the soonest; capped so a 90-day wait never
+  // overflows setTimeout (it re-arms).
+  const [expiryTick, setExpiryTick] = useState(0)
   useEffect(() => {
-    const unsub = subscribeToPinUpdates((evt: PinUpdateEvent) => {
-      if (evt.conversation_id !== convIdRef.current) return
-      if (evt.action === 'unpin') setPinnedMessage(null)
-      else if (convIdRef.current) getPinnedMessage(convIdRef.current).then(pinned => setPinnedMessage(pinned))
-    })
-    return unsub
-  }, [])
+    const delay = nextExpiryDelay(messages, Date.now())
+    if (delay === null) return
+    const t = setTimeout(() => {
+      setMessages(prev => dropExpired(prev, Date.now()))
+      setExpiryTick(n => n + 1)
+    }, Math.min(delay + 250, 6 * 60 * 60 * 1000))
+    return () => clearTimeout(t)
+  }, [messages, expiryTick])
 
   useEffect(() => {
     if (!contextMenu) return
@@ -482,7 +617,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
     return () => window.removeEventListener('click', handler)
   }, [contextMenu])
 
-  // Position the rail once it has been measured.
+  // Place the action menu beside the bubble, measured after render.
   useLayoutEffect(() => {
     if (!contextMenu?.visible) {
       setActionBarStyle({ visibility: 'hidden' })
@@ -494,34 +629,19 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
     const bar = el.getBoundingClientRect()
     const gap = 8
     const margin = 8
-
-    // Preferred side: opposite the bubble.
-    let left = mine ? rect.left - gap - bar.width : rect.right + gap
-    // If it does not fit there, try the other side before giving up.
-    if (left < margin) {
-      const flipped = rect.right + gap
-      left = flipped + bar.width <= window.innerWidth - margin ? flipped : margin
-    } else if (left + bar.width > window.innerWidth - margin) {
-      const flipped = rect.left - gap - bar.width
-      left = flipped >= margin ? flipped : window.innerWidth - margin - bar.width
-    }
-
-    // Vertically centred on the bubble, clamped into the viewport.
-    let top = rect.top + (rect.bottom - rect.top) / 2 - bar.height / 2
+    let left = mine ? rect.right - bar.width : rect.left
+    left = Math.max(margin, Math.min(left, window.innerWidth - margin - bar.width))
+    // Below the bubble when it fits, else above it.
+    let top = rect.bottom + gap
+    if (top + bar.height > window.innerHeight - margin) top = rect.top - gap - bar.height
     top = Math.max(margin, Math.min(top, window.innerHeight - margin - bar.height))
-
     setActionBarStyle({ left, top, visibility: 'visible' })
-    // The picker changes the element's height, so re-measure when it opens.
   }, [contextMenu, reactionPickerFor])
 
-  // The composer's emoji panel closes on a click anywhere outside it, and
-  // on Escape — same rule ChatWindow's picker follows.
   useEffect(() => {
     if (!showEmojiPicker) return
     const onDown = (e: MouseEvent) => {
-      if (emojiPanelRef.current && !emojiPanelRef.current.contains(e.target as Node)) {
-        setShowEmojiPicker(false)
-      }
+      if (emojiPanelRef.current && !emojiPanelRef.current.contains(e.target as Node)) setShowEmojiPicker(false)
     }
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowEmojiPicker(false) }
     document.addEventListener('mousedown', onDown)
@@ -536,23 +656,40 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
     if (editingMsgId && editInputRef.current) editInputRef.current.focus()
   }, [editingMsgId])
 
-  // Handlers
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  // Multi-line composer grows with its text, up to a few lines.
+  useLayoutEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(el.scrollHeight, 140)}px`
+  }, [input])
+
+  // ---- Handlers
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value)
     const now = Date.now()
-    if (convIdRef.current && now - lastTypingSentRef.current > 2000) {
+    if (convIdRef.current && e.target.value && now - lastTypingSentRef.current > 2000) {
       lastTypingSentRef.current = now
       sendTypingIndicator(convIdRef.current).catch(() => { })
     }
-    // M1: also push a `typing.start` over the persistent WS so other
-    // participants see the indicator instantly (the legacy HTTP POST
-    // above stays for back-compat). useSetTyping throttles to 3s.
-    setTyping()
+    if (e.target.value) setTyping()
+    else if (convIdRef.current) sendTypingStop(convIdRef.current)
   }, [setTyping])
+
+  const replyRef = (m: DisplayMessage | null): ReplyRef | undefined =>
+    m ? { reply_to_id: m.id, reply_to_preview: m.text || undefined, reply_to_sender_id: m.senderId } : undefined
 
   const handleSend = useCallback(async (opts?: { kindChecked?: boolean }) => {
     const text = input.trim()
     if (!text || !convIdRef.current) return
+    if (requestOutgoing) {
+      // The server refuses these too; saying so here saves a round trip.
+      const guard = requestComposerGuard(text, requestAlreadySent)
+      if (!guard.ok) {
+        setAttachError(requestComposerProblemText(guard.problem, requestTarget))
+        return
+      }
+    }
     if (kindChat.active && !opts?.kindChecked && !(await kindChat.okToSend(text))) return
     const optimisticId = `opt-${Date.now()}`
     const optimistic: DisplayMessage = {
@@ -564,6 +701,8 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
     setMessages(prev => [...prev, optimistic])
     setInput('')
     setReplyingTo(null)
+    sendTypingStop(convIdRef.current)
+    lastTypingSentRef.current = 0
     try {
       let res
       if (replyingTo) res = await replyToMessage(convIdRef.current!, replyingTo.id, text, {
@@ -572,23 +711,32 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       })
       else res = await sendMessage(convIdRef.current!, text)
       const real = res.data as BackendMessage
-      setMessages(prev => prev.map(m => (m.id === optimisticId ? toDisplay(real) : m)))
-      // Only the FIRST message of a request needs saying; after that the
-      // banner above the thread carries it.
-      if (isRequestThread && messages.length === 0) {
+      setMessages(prev => {
+        // The socket echo may have landed first; then just drop the optimistic copy.
+        if (prev.some(m => m.id === real.id)) return prev.filter(m => m.id !== optimisticId)
+        return prev.map(m => (m.id === optimisticId ? toDisplay(real) : m))
+      })
+      if (requestOutgoing) {
         toast({
           type: 'success',
           title: 'Message request sent',
-          description: 'They will see it once they accept. Accepting connects you.',
+          description: `${requestTarget} will see it in their requests. You can chat freely once they accept.`,
         })
       }
-    } catch (err) { console.error('[DmChat] send failed:', err) }
-  }, [input, myId, replyingTo, isRequestThread, messages.length, toast, kindChat.active, kindChat.okToSend])
+    } catch (err) {
+      console.error('[DmChat] send failed:', err)
+      setMessages(prev => prev.filter(m => m.id !== optimisticId))
+      setInput(text)
+      const requestText = isRequestThread ? requestSendErrorText(err, requestTarget) : null
+      setAttachError(requestText || (err as Error)?.message || "Couldn't send that message.")
+    }
+  }, [input, myId, replyingTo, isRequestThread, requestOutgoing, requestAlreadySent, requestTarget, toast, kindChat])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !(e.nativeEvent as KeyboardEvent).isComposing) {
       e.preventDefault()
-      editingMsgId ? handleSaveEdit() : handleSend()
+      if (editingMsgId) void handleSaveEdit()
+      else void handleSend()
     }
     if (e.key === 'Escape') {
       if (editingMsgId) { setEditingMsgId(null); setEditText('') }
@@ -613,21 +761,25 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       setMessages(prev => prev.map(m =>
         m.id === editingMsgId ? { ...m, text: newText, isEdited: true, editedAt: new Date().toISOString() } : m
       ))
-    } catch (err) { console.error('[DmChat] edit failed:', err) }
+    } catch (err) { console.error('[DmChat] edit failed:', err); say("Couldn't edit that message") }
     setEditingMsgId(null)
     setEditText('')
-  }, [editingMsgId, editText, messages])
+  }, [editingMsgId, editText, messages, say])
 
-  const handleDelete = useCallback(async (msgId: string) => {
+  const handleDelete = useCallback(async (msg: DisplayMessage, scope: 'everyone' | 'me') => {
     if (!convIdRef.current) return
-    const msg = messages.find(m => m.id === msgId)
-    if (!msg) return
-    try {
-      await deleteMessage(convIdRef.current, msgId, msg.ts)
-      setMessages(prev => prev.map(m => (m.id === msgId ? { ...m, isDeleted: true, text: '' } : m)))
-    } catch (err) { console.error('[DmChat] delete failed:', err) }
     setContextMenu(null)
-  }, [messages])
+    try {
+      await deleteMessageScoped(convIdRef.current, msg.id, msg.ts, scope)
+      setMessages(prev => scope === 'me'
+        ? prev.filter(m => m.id !== msg.id)
+        : prev.map(m => (m.id === msg.id ? { ...m, isDeleted: true, text: '' } : m)))
+      if (scope === 'me') say('Deleted for you')
+    } catch (err) {
+      console.error('[DmChat] delete failed:', err)
+      say(scope === 'me' ? "Couldn't delete that message" : "Couldn't unsend that message")
+    }
+  }, [say])
 
   const handleToggleReaction = useCallback(async (msgId: string, emoji: string) => {
     if (!convIdRef.current) return
@@ -642,7 +794,63 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
     inputRef.current?.focus()
   }, [])
 
-  /** Composer picker: insert at the caret, keep focus, leave the panel open. */
+  // POST /conversations/:id/pins {message_id}; the answer is the pin row.
+  const handlePinMessage = useCallback(async (msg: DisplayMessage) => {
+    const id = convIdRef.current
+    if (!id) return
+    if (pins.length >= MAX_PINS_PER_CONVERSATION) {
+      say(`You can pin up to ${MAX_PINS_PER_CONVERSATION} messages. Unpin one first.`)
+      return
+    }
+    try {
+      const pin = await pinMessage(id, msg.id)
+      const list = pin ? [pin, ...pins.filter(p => p.id !== pin.id)] : await listPinnedMessages(id)
+      setPins(list)
+      setPinIndex(0)
+      say('Message pinned')
+    } catch (err) {
+      console.error('[DmChat] pin failed:', err)
+      say("Couldn't pin that message")
+    }
+  }, [pins, say])
+
+  // DELETE /conversations/:id/pins/:pinId — by the pin's own id.
+  const handleUnpinMessage = useCallback(async (pin: PinnedMessage) => {
+    const id = convIdRef.current
+    if (!id) return
+    const before = pins
+    setPins(prev => prev.filter(p => p.id !== pin.id))
+    setPinIndex(0)
+    try {
+      await unpinMessage(id, pin.id)
+    } catch (err) {
+      console.error('[DmChat] unpin failed:', err)
+      setPins(before)
+      say("Couldn't unpin that message")
+    }
+  }, [pins, say])
+
+  const runAction = useCallback((action: MessageAction, msg: DisplayMessage) => {
+    setContextMenu(null)
+    switch (action) {
+      case 'reply': return handleReply(msg)
+      case 'copy':
+        void navigator.clipboard?.writeText(msg.text).then(() => say('Copied'), () => say("Couldn't copy"))
+        return
+      case 'forward': return setForwarding(msg)
+      case 'pin': return void handlePinMessage(msg)
+      case 'unpin': {
+        const pin = pins.find(p => p.message_id === msg.id)
+        return pin ? void handleUnpinMessage(pin) : undefined
+      }
+      case 'edit': return handleEditStart(msg)
+      case 'deleteForMe': return void handleDelete(msg, 'me')
+      case 'unsend': return void handleDelete(msg, 'everyone')
+      case 'report': return setReporting(msg)
+      default: return
+    }
+  }, [handleReply, handleEditStart, handleDelete, handlePinMessage, handleUnpinMessage, pins, say])
+
   const handleEmojiSelect = useCallback((emoji: { native: string }) => {
     const el = inputRef.current
     const start = el?.selectionStart ?? input.length
@@ -657,28 +865,12 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
     })
   }, [input])
 
-  /** Message action bar "+": react with any emoji, not just the quick six. */
   const handleReactionEmojiSelect = useCallback((emoji: { native: string }) => {
     if (!reactionPickerFor) return
     handleToggleReaction(reactionPickerFor, emoji.native)
     setReactionPickerFor(null)
   }, [reactionPickerFor, handleToggleReaction])
 
-  const handlePinMessage = useCallback(async (msgId: string) => {
-    if (!convIdRef.current) return
-    try {
-      await pinMessage(convIdRef.current, msgId)
-      const pinned = await getPinnedMessage(convIdRef.current)
-      setPinnedMessage(pinned)
-    } catch (err) { console.error('[DmChat] pin failed:', err) }
-    setContextMenu(null)
-  }, [])
-
-  const handleUnpinMessage = useCallback(async () => {
-    if (!convIdRef.current) return
-    try { await unpinMessage(convIdRef.current); setPinnedMessage(null) }
-    catch (err) { console.error('[DmChat] unpin failed:', err) }
-  }, [])
 
   const scrollToMessage = useCallback((msgId: string) => {
     const el = document.getElementById(`msg-${msgId}`)
@@ -689,16 +881,8 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
     }
   }, [])
 
-  /**
-   * Open the action bar for a message, anchored just above its bubble.
-   *
-   * This used to be a right-click-only menu placed at the mouse position —
-   * which on a phone does not exist. A tap on the bubble now opens it, and
-   * it sits above the message the way WhatsApp's does, so the thing you are
-   * reacting to stays in view under it.
-   */
   const openActionsFor = useCallback((bubble: HTMLElement, msg: DisplayMessage) => {
-    if (msg.isDeleted) return
+    if (msg.isDeleted || msg.id.startsWith('opt-')) return
     const r = bubble.getBoundingClientRect()
     setReactionPickerFor(null)
     setContextMenu({
@@ -706,8 +890,6 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       rect: { left: r.left, right: r.right, top: r.top, bottom: r.bottom },
       mine: msg.senderId === myId,
       messageId: msg.id,
-      senderId: msg.senderId,
-      ts: msg.ts,
     })
   }, [myId])
 
@@ -722,70 +904,76 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
     if (!file || !convIdRef.current) return
     setAttachError(null)
     try {
-      // media-service's three-step flow, the same one the composer and avatar
-      // pickers use. The old code POSTed a FormData to /api/media/upload,
-      // which is not a route in this app at all — it 404'd, the JSON parse
-      // threw, and the catch below swallowed it. Every chat attachment has
-      // failed silently.
-      const kind = file.type.startsWith('image/') ? 'image'
-        : file.type.startsWith('video/') ? 'video'
-        : file.type.startsWith('audio/') ? 'audio'
-        : null
-      if (!kind) throw new Error(`Unsupported attachment type: ${file.type || 'unknown'}`)
+      const kind = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : null
+      if (!kind) throw new Error('Pick a photo or a video.')
       const mediaId = await uploadMedia(file, kind, 'chat')
-      await sendMediaMessage(convIdRef.current, mediaId, kind)
+      const sent = await sendMediaKindMessage(convIdRef.current, mediaId, replyRef(replyingTo))
+      setReplyingTo(null)
+      appendSent(sent)
     } catch (err) {
       console.error('[DmChat] media upload failed:', err)
       setAttachError(err instanceof Error ? err.message : 'Could not send that attachment.')
     }
     if (fileInputRef.current) fileInputRef.current.value = ''
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [replyingTo, appendSent])
 
+  const handleVoice = useCallback(async (rec: { file: File; durationMs: number; waveform: number[] }) => {
+    if (!convIdRef.current) return
+    setVoiceBusy(true)
+    setAttachError(null)
+    try {
+      const mediaId = await uploadMedia(rec.file, 'audio', 'chat')
+      const sent = await sendVoiceMessage(convIdRef.current, mediaId, rec.durationMs, rec.waveform, replyRef(replyingTo))
+      setReplyingTo(null)
+      appendSent(sent)
+    } catch (err) {
+      console.error('[DmChat] voice failed:', err)
+      setAttachError("Couldn't send the voice message.")
+    } finally {
+      setVoiceBusy(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [replyingTo, appendSent])
+
+  const sendSticker = useCallback(async (stickerId: string) => {
+    if (!convIdRef.current) return
+    setShowStickers(false)
+    try { appendSent(await sendStickerMessage(convIdRef.current, stickerId)) }
+    catch { setAttachError("Couldn't send the sticker.") }
+  }, [appendSent])
+
+  const sendGif = useCallback(async (gif: GifSendPayload) => {
+    if (!convIdRef.current) return
+    setShowStickers(false)
+    try { appendSent(await sendGifMessage(convIdRef.current, gif)) }
+    catch { setAttachError(gif.is_sticker ? "Couldn't send the sticker." : "Couldn't send the GIF.") }
+  }, [appendSent])
+
+  // ---- Header line
+  const peerPresenceText = isGroup ? null : presenceLabel(peerPresence)
   const statusText = useMemo(() => {
-    // Prefer the M1 polled rollup for typing — it's authoritative across
-    // tabs/devices — and fall back to the legacy local set for snappier
-    // first-keystroke feedback.
-    const anyTyping = remoteTypingIds.length > 0 || typingUsers.size > 0
     if (anyTyping) {
-      if (presence?.is_big_group) return 'Someone is typing...'
-      const label = formatNameList(remoteTypingIds)
-      return label ? `${label} is typing...` : 'typing...'
+      if (presence?.is_big_group) return 'Someone is typing…'
+      const ids = Array.from(new Set([...remoteTypingIds, ...Array.from(typingUsers)]))
+      if (!isGroup) return 'Typing…'
+      const names = ids.map(nameOf)
+      return names.length === 1 ? `${names[0]} is typing…` : `${names.length} people are typing…`
     }
-    if (presence && presence.active_count > 1) {
-      // The viewer themselves count toward active_count, so >1 means at
-      // least one peer is in the chat right now. For 1:1 chats this is a
-      // stronger signal than the global online dot.
-      return 'Active in chat'
+    if (isGroup) {
+      const n = group?.members.length ?? 0
+      return n ? `${n} members` : 'Group'
     }
-    if (userOnline) return 'Active now'
+    if (peerPresenceText) return peerPresenceText
     if (userLastSeen) return `Last seen ${userLastSeen}`
-    return 'Offline'
-  }, [
-    userOnline,
-    userLastSeen,
-    typingUsers,
-    remoteTypingIds,
-    presence,
-    formatNameList,
-  ])
+    return null
+  }, [anyTyping, presence?.is_big_group, remoteTypingIds, typingUsers, isGroup, nameOf, group?.members.length, peerPresenceText, userLastSeen])
 
   const isGroupStart = (i: number) => i === 0 || messages[i].senderId !== messages[i - 1].senderId
   const isGroupEnd = (i: number) => i === messages.length - 1 || messages[i].senderId !== messages[i + 1].senderId
 
-  const lastSentMsgId = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].senderId === myId && !messages[i].isDeleted) return messages[i].id
-    }
-    return null
-  }, [messages, myId])
+  const lastOwnId = useMemo(() => lastOwnMessageId(messages, myId), [messages, myId])
 
-  /**
-   * Has the peer seen this message of mine?
-   *
-   * Two sources, because either alone is incomplete: the live receipt frame
-   * (exact, but only while the conversation is open) and the peer's durable
-   * watermark (survives a reload, and covers every message before it).
-   */
   const isSeenByPeer = useCallback((msg: DisplayMessage): boolean => {
     if (readReceipts.has(msg.id)) return true
     if (peerLastReadAt === null) return false
@@ -793,98 +981,100 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
     return !Number.isNaN(sentAt) && sentAt <= peerLastReadAt
   }, [readReceipts, peerLastReadAt])
 
+  // Group "Seen by N" for my last message.
+  useEffect(() => {
+    if (!isGroup || !lastOwnId || !convIdRef.current) { setSeenByCount(null); return }
+    let cancelled = false
+    const t = setTimeout(() => {
+      void fetchReadSummary(convIdRef.current!, lastOwnId).then((s) => { if (!cancelled) setSeenByCount(s ? s.count : null) }).catch(() => undefined)
+    }, 400)
+    return () => { cancelled = true; clearTimeout(t) }
+  }, [isGroup, lastOwnId, readReceipts])
+
   const findMessage = useCallback((msgId: string) => messages.find(m => m.id === msgId), [messages])
-  // The wire says only "media"; media-service says what it is.
   const mediaKinds = useMediaKinds(
-    useMemo(() => messages.map(m => m.mediaId).filter((id): id is string => Boolean(id)), [messages]),
+    useMemo(() => messages.filter(m => m.mediaId && !m.extras?.media?.kind && m.type !== 'voice').map(m => m.mediaId!), [messages]),
   )
   const hasText = input.trim().length > 0
+  // A waiting request of mine: what is wrong with the draft, shown as it is typed.
+  const requestGuard = requestOutgoing && hasText ? requestComposerGuard(input.trim(), requestAlreadySent) : null
+  const requestInputProblem = requestGuard && !requestGuard.ok ? requestGuard.problem : null
+  const canSendText = hasText && !requestInputProblem
+  const searchHits = useMemo(() => (threadSearch === null ? [] : searchThread(messages, threadSearch)), [messages, threadSearch])
+  useEffect(() => {
+    if (searchHits.length === 0) return
+    const idx = Math.min(searchIndex, searchHits.length - 1)
+    scrollToMessage(searchHits[searchHits.length - 1 - idx])
+  }, [searchHits, searchIndex, scrollToMessage])
+
+  const contextMsg = contextMenu ? messages.find(m => m.id === contextMenu.messageId) ?? null : null
+  const shownPin = pins.length > 0 ? pins[pinIndex % pins.length] : null
+  // A pin row carries no text; it comes from the loaded messages.
+  const shownPinMsg = shownPin ? findMessage(shownPin.message_id) : undefined
+  const shownPinText = shownPinMsg
+    ? (shownPinMsg.isDeleted ? 'This message was deleted' : shownPinMsg.text || 'Attachment')
+    : shownPin?.message?.text || 'Tap to see the message'
+  const disappearNotice = disappearingNotice(disappearAfterMs)
+  const headerAvatar = isGroup ? group?.avatarUrl ?? null : (userAvatar && (userAvatar.startsWith('http') || userAvatar.startsWith('/')) ? userAvatar : null)
+  const sharedPostIds = useMemo(() => postCardIds(messages), [messages])
+  const settingsPeer = isGroup ? null : { userId, displayName: userName, username: null, avatarUrl: headerAvatar }
 
   // ========================================================================
   // Render
   // ========================================================================
   return (
     <div className="flex flex-col h-full bg-brand-card relative">
-      {/* Header */}
-      <div className="flex shrink-0 items-center justify-between border-b border-brand-divider bg-brand-card/80 px-6 py-4 backdrop-blur-md">
-        <div className="flex items-center gap-4">
+      {/* Header: avatar · name · presence · voice · video · ⋯ */}
+      <div className="flex shrink-0 items-center justify-between border-b border-brand-divider bg-brand-card/80 px-4 py-3 backdrop-blur-md">
+        <div className="flex min-w-0 items-center gap-3">
           <button
             onClick={onBack}
-            className="group flex h-9 w-9 items-center justify-center rounded-full bg-brand-secondary text-brand-text/60 transition-all hover:bg-brand-secondary hover:text-brand-text active:scale-95"
+            aria-label="Back"
+            className="group flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-brand-text/60 transition-all hover:bg-brand-secondary hover:text-brand-text active:scale-95"
           >
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
           </button>
-
-          <div className="relative">
-            <Avatar
-              user={{ id: userId, name: userName, avatar: userAvatar, isOnline: userOnline }}
-              size={44}
-              showStatus
-              avatarUrl={userAvatar && (userAvatar.startsWith('http') || userAvatar.startsWith('/')) ? userAvatar : null}
-            />
-          </div>
-
-          <div className="flex shrink-0 flex-col">
-            <h3 className="text-[16px] font-extrabold tracking-tight text-brand-text">{userName}</h3>
-            <p className={`text-[12px] font-semibold tracking-wide ${(remoteTypingIds.length > 0 || typingUsers.size > 0) ? 'text-brand-text/60' : userOnline ? 'text-success' : 'text-brand-text/60'
-              }`}>
-              {statusText}
-            </p>
-          </div>
-
-          {/* M1 presence pill — count for big groups, avatar names
-              otherwise. Hidden when the only active user is the viewer. */}
-          {presence && remoteActiveIds.length > 0 && (
-            <div
-              className="hidden md:flex items-center gap-1.5 ml-2 px-2.5 py-1 rounded-full bg-brand-secondary border border-brand-divider"
-              title={
-                presence.is_big_group
-                  ? `${presence.active_count} active in this conversation`
-                  : `Active now: ${formatNameList(remoteActiveIds)}`
-              }
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-success" />
-              <span className="text-[11px] font-bold text-success">
-                {presence.is_big_group
-                  ? `${presence.active_count} active`
-                  : remoteActiveIds.length === 1
-                    ? `${formatNameList(remoteActiveIds)} active`
-                    : `${remoteActiveIds.length} active`}
+          <button type="button" onClick={() => setShowSettings(true)} className="flex min-w-0 items-center gap-3 text-left">
+            <InboxAvatar name={userName} src={headerAvatar} size={40} online={!isGroup && peerPresence.isOnline === true} group={isGroup} />
+            <span className="flex min-w-0 flex-col">
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span className="truncate text-[15px] font-bold tracking-tight text-brand-text">{userName}</span>
+                {disappearAfterMs ? (
+                  <span title={`Disappearing messages: ${disappearLabel(disappearAfterMs)}`} className="shrink-0 text-brand-text/60">
+                    <Timer className="h-3.5 w-3.5" strokeWidth={2} aria-label={`Disappearing messages: ${disappearLabel(disappearAfterMs)}`} />
+                  </span>
+                ) : null}
               </span>
-            </div>
-          )}
+              {statusText && (
+                <span className={`truncate text-[12px] ${anyTyping ? 'text-primary-ink' : peerPresence.isOnline && !isGroup ? 'text-success' : 'text-brand-text/60'}`}>
+                  {statusText}
+                </span>
+              )}
+            </span>
+          </button>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          {/* These had no onClick at all — the only wired call buttons lived
-              in the floating ChatWindow, which is rendered nowhere. So on the
-              messenger, the page people actually use, Phone and Video were
-              decorative and "calls do nothing" was exactly true. */}
-          {[
-            {
-              icon: <Phone className="h-4 w-4" />,
-              title: 'Voice call',
-              onClick: () => initiateCall(peerAsUser, 'audio'),
-            },
-            {
-              icon: <Video className="h-4 w-4" />,
-              title: 'Video call',
-              onClick: () => initiateCall(peerAsUser, 'video'),
-            },
-            { icon: <MoreVertical className="h-4 w-4" />, title: 'More', onClick: undefined },
-          ].map((btn, i) => (
-            <button
-              key={i}
-              title={btn.title}
-              aria-label={btn.title}
-              onClick={btn.onClick}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-brand-text/60 transition-colors duration-200 hover:bg-brand-secondary hover:text-brand-text active:scale-95"
-            >
-              {btn.icon}
-            </button>
-          ))}
-          {/* Thread details. Only rendered when the parent offers the panel,
-              so DmChat used anywhere else is unchanged. */}
+        <div className="flex shrink-0 items-center gap-0.5">
+          {/* No calls before a request I sent is accepted (DM consent §5). */}
+          {!isGroup && !requestOutgoing && (
+            <>
+              <button title="Voice call" aria-label="Voice call" onClick={() => initiateCall(peerAsUser, 'audio')} className="flex h-10 w-10 items-center justify-center rounded-full text-brand-text/60 transition-colors hover:bg-brand-secondary hover:text-brand-text active:scale-95">
+                <Phone className="h-[18px] w-[18px]" strokeWidth={1.75} />
+              </button>
+              <button title="Video call" aria-label="Video call" onClick={() => initiateCall(peerAsUser, 'video')} className="flex h-10 w-10 items-center justify-center rounded-full text-brand-text/60 transition-colors hover:bg-brand-secondary hover:text-brand-text active:scale-95">
+                <Video className="h-[18px] w-[18px]" strokeWidth={1.75} />
+              </button>
+            </>
+          )}
+          <button
+            title="Chat settings"
+            aria-label="Chat settings"
+            onClick={() => setShowSettings(true)}
+            disabled={!conversationId}
+            className="flex h-10 w-10 items-center justify-center rounded-full text-brand-text/60 transition-colors hover:bg-brand-secondary hover:text-brand-text active:scale-95 disabled:opacity-40"
+          >
+            <MoreHorizontal className="h-[18px] w-[18px]" strokeWidth={1.75} />
+          </button>
           {onToggleDetails && (
             <button
               onClick={onToggleDetails}
@@ -898,19 +1088,47 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
         </div>
       </div>
 
-      {/* Pinned message banner */}
-      {pinnedMessage && (
+      {/* Search in chat (from Chat settings): matches in the loaded history. */}
+      {threadSearch !== null && (
+        <div className="flex shrink-0 items-center gap-2 border-b border-brand-divider bg-brand-card px-4 py-2">
+          <Search className="h-4 w-4 text-brand-text/40" />
+          <input
+            autoFocus
+            value={threadSearch}
+            onChange={(e) => { setThreadSearch(e.target.value); setSearchIndex(0) }}
+            placeholder="Search in this chat"
+            className="min-w-0 flex-1 bg-transparent py-1 text-[13px] text-brand-text outline-hidden placeholder:text-brand-text/40"
+          />
+          <span className="text-[11px] tabular-nums text-brand-text/50">
+            {searchHits.length ? `${Math.min(searchIndex, searchHits.length - 1) + 1}/${searchHits.length}` : threadSearch.trim().length >= 2 ? '0' : ''}
+          </span>
+          <button type="button" aria-label="Older match" disabled={searchHits.length < 2} onClick={() => setSearchIndex((i) => Math.min(i + 1, searchHits.length - 1))} className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 hover:bg-brand-secondary disabled:opacity-30"><ChevronUp className="h-4 w-4" /></button>
+          <button type="button" aria-label="Newer match" disabled={searchIndex === 0} onClick={() => setSearchIndex((i) => Math.max(0, i - 1))} className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 hover:bg-brand-secondary disabled:opacity-30"><ChevronDown className="h-4 w-4" /></button>
+          <button type="button" aria-label="Close search" onClick={() => setThreadSearch(null)} className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 hover:bg-brand-secondary"><X className="h-4 w-4" /></button>
+        </div>
+      )}
+
+      {/* Pinned message bar: one pin at a time; a tap jumps to it and steps to the next. */}
+      {shownPin && (
         <div
-          onClick={() => scrollToMessage(pinnedMessage.message_id)}
+          role="button"
+          tabIndex={0}
+          onClick={() => { scrollToMessage(shownPin.message_id); setPinIndex(i => nextPinIndex(i, pins.length)) }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); scrollToMessage(shownPin.message_id); setPinIndex(i => nextPinIndex(i, pins.length)) }
+          }}
           className="flex items-center gap-3 px-5 py-2.5 bg-brand-secondary border-b border-brand-divider cursor-pointer shrink-0 hover:bg-brand-secondary/80 transition-colors"
         >
           <Pin className="w-4 h-4 text-brand-text/50 shrink-0 rotate-45" />
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold text-brand-text/60 tracking-wider">Pinned Message</p>
-            <p className="text-[12px] text-brand-highlight truncate">{pinnedMessage.message?.text || 'Click to view'}</p>
+            <p className="text-[10px] font-bold text-brand-text/60 tracking-wider">
+              {pins.length > 1 ? `Pinned message ${pinIndex % pins.length + 1} of ${pins.length}` : 'Pinned message'}
+            </p>
+            <p className="text-[12px] text-brand-highlight truncate">{shownPinText}</p>
           </div>
           <button
-            onClick={(e) => { e.stopPropagation(); handleUnpinMessage() }}
+            onClick={(e) => { e.stopPropagation(); void handleUnpinMessage(shownPin) }}
+            aria-label="Unpin"
             className="w-6 h-6 rounded-md hover:bg-brand-secondary flex items-center justify-center text-brand-text/40 hover:text-brand-text/60 transition-all shrink-0"
           >
             <X className="w-3.5 h-3.5" />
@@ -919,7 +1137,13 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       )}
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-0.5 bg-brand-secondary/50">
+      <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto px-4 py-4 space-y-0.5 bg-brand-secondary/50">
+        {loadingOlder && (
+          <div className="flex justify-center py-2 text-brand-text/40"><Loader2 className="h-4 w-4 animate-spin" /></div>
+        )}
+        {!loading && !olderCursor && messages.length > 0 && !isGroup && (
+          <ThreadIntro userId={userId} fallbackName={userName} fallbackAvatar={headerAvatar} />
+        )}
         {loading && (
           <div className="flex items-center justify-center flex-1 h-full">
             <div className="flex items-center gap-2 text-brand-text/60 text-[13px]">
@@ -930,8 +1154,30 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
         )}
 
         {error && !loading && (
-          <div className="flex items-center justify-center flex-1 h-full text-danger/70 text-[12px]">
-            Could not load messages
+          <div className="flex items-center justify-center flex-1 h-full px-6 text-center text-danger/70 text-[12px]">
+            {errorText ?? 'Could not load messages'}
+          </div>
+        )}
+
+        {!loading && !error && messages.length === 0 && (
+          isGroup ? (
+            <div className="mx-auto my-10 flex max-w-xs flex-col items-center text-center">
+              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-tint text-primary-ink"><Users className="h-7 w-7" /></span>
+              <p className="mt-3 text-[15px] font-bold text-brand-text">{userName}</p>
+              <p className="text-[12px] text-brand-text/60">Say hello to the group.</p>
+            </div>
+          ) : (
+            <ThreadIntro userId={userId} fallbackName={userName} fallbackAvatar={headerAvatar} />
+          )
+        )}
+
+        {/* Same look as a server system line; ours, so it is not in the history. */}
+        {!loading && !error && disappearNotice && (
+          <div className="flex justify-center py-3">
+            <span className="flex items-center gap-1.5 text-[11px] text-brand-text/60 bg-brand-card px-4 py-1.5 rounded-full shadow-xs border border-brand-divider italic">
+              <Timer className="h-3 w-3" aria-hidden />
+              {disappearNotice}
+            </span>
           </div>
         )}
 
@@ -949,26 +1195,20 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
           const isMe = msg.senderId === myId
           const groupStart = isGroupStart(i)
           const groupEnd = isGroupEnd(i)
+          const kind = bubbleKind(msg, msg.mediaId ? mediaKinds[msg.mediaId] : undefined)
+          const bare = isBareBubble(kind) && !msg.replyToId
           const replyTarget = msg.replyToId ? findMessage(msg.replyToId) : null
-          // A just-sent message still carries the kind the picker knew;
-          // everything read back from the server says only 'media'.
-          const mediaKind = msg.mediaId
-            ? (['image', 'video', 'audio'].includes(msg.type) ? msg.type : mediaKinds[msg.mediaId])
-            : undefined
-          // The live message wins, because it reflects a later edit or delete.
-          // The server's send-time snapshot is all that is left when the
-          // original is not in this page â the usual case for an older
-          // message, since this view loads exactly one page and never pages
-          // back. Navigation is offered only when the original is on screen.
-          const quote = msg.replyToId
+          const quote = msg.replyToId || msg.extras?.replyKind === 'note'
             ? {
                 text: replyTarget
-                  ? (replyTarget.isDeleted ? 'This message was deleted' : replyTarget.text)
+                  ? (replyTarget.isDeleted ? 'This message was deleted' : replyTarget.text || 'Attachment')
                   : (msg.replyToPreview || 'Original message'),
                 senderId: replyTarget?.senderId ?? msg.replyToSenderId,
                 canNavigate: Boolean(replyTarget),
               }
             : null
+          const isHit = threadSearch !== null && searchHits.includes(msg.id)
+          const outgoing = bubbleStyle === 'default' ? 'bg-primary-ink text-white' : bubbleClass(bubbleStyle)
 
           return (
             <div
@@ -977,53 +1217,42 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
               className={`flex items-end gap-2 transition-colors rounded-lg ${isMe ? 'flex-row-reverse' : ''} ${groupStart ? 'mt-3' : 'mt-0.5'}`}
               onContextMenu={(e) => handleContextMenu(e, msg)}
             >
-              {/* Avatar */}
               {!isMe ? (
                 groupEnd ? (
-                  <Avatar
-                    user={{ id: userId, name: userName, avatar: userAvatar }}
-                    size={28}
-                    avatarUrl={userAvatar && (userAvatar.startsWith('http') || userAvatar.startsWith('/')) ? userAvatar : null}
-                  />
+                  <InboxAvatar name={nameOf(msg.senderId)} src={avatarOf(msg.senderId)} size={28} />
                 ) : <div className="w-7 shrink-0" />
               ) : null}
 
-              {/* Bubble */}
-              <div className={`max-w-[70%] flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                {/* Forwarded label */}
-                {msg.forwardedFromId && !msg.isDeleted && (
-                  <p className="text-[10px] text-brand-text/60 italic mb-0.5">Forwarded</p>
+              <div className={`max-w-[72%] flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                {isGroup && !isMe && groupStart && (
+                  <p className="mb-0.5 px-1 text-[11px] font-semibold text-brand-text/60">{msg.extras?.senderDisplayName || nameOf(msg.senderId)}</p>
+                )}
+                {msg.extras?.forwarded && !msg.isDeleted && (
+                  <p className="mb-0.5 flex items-center gap-1 px-1 text-[11px] text-brand-text/50"><Forward className="h-3 w-3" /> Forwarded</p>
                 )}
 
-                {/* Message bubble */}
                 <div
                   data-bubble
                   role={msg.isDeleted ? undefined : 'button'}
                   tabIndex={msg.isDeleted ? undefined : 0}
                   onClick={(e) => {
-                    // A tap opens the action bar above this bubble. Media
-                    // controls inside the bubble keep their own clicks.
-                    if ((e.target as HTMLElement).closest('video, audio, a')) return
+                    if ((e.target as HTMLElement).closest('video, audio, a, button')) return
                     e.stopPropagation()
                     openActionsFor(e.currentTarget, msg)
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openActionsFor(e.currentTarget, msg) }
                   }}
-                  className={`group/bubble relative max-w-full wrap-break-word px-4 py-2.5 text-[14px] leading-relaxed shadow-xs transition-all ${msg.isDeleted ? '' : 'cursor-pointer'} ${msg.isDeleted
-                      ? 'rounded-2xl bg-brand-secondary text-brand-text/60 italic'
-                      : isMe
-                        ? `bg-primary-ink text-white ${groupEnd ? 'rounded-2xl rounded-br-sm' : 'rounded-2xl'}`
-                        : `border border-brand-divider bg-brand-card text-brand-text ${groupEnd ? 'rounded-2xl rounded-bl-sm' : 'rounded-2xl'}`
-                    }`}
+                  className={`group/bubble relative max-w-full wrap-break-word text-[14px] leading-relaxed transition-all ${msg.isDeleted ? '' : 'cursor-pointer'} ${isHit ? 'ring-2 ring-brand-accent' : ''} ${
+                    msg.isDeleted
+                      ? 'rounded-2xl bg-brand-secondary px-4 py-2.5 text-brand-text/60 italic'
+                      : bare
+                        ? 'rounded-2xl'
+                        : isMe
+                          ? `${outgoing} px-4 py-2.5 shadow-xs ${groupEnd ? 'rounded-2xl rounded-br-sm' : 'rounded-2xl'}`
+                          : `border border-brand-divider bg-brand-card px-4 py-2.5 text-brand-text shadow-xs ${groupEnd ? 'rounded-2xl rounded-bl-sm' : 'rounded-2xl'}`
+                  }`}
                 >
-                  {/*
-                    The quoted message: a card INSIDE the reply, one step
-                    quieter than the body above it, so the reply reads as the
-                    message and the quote as its context. It used to render as
-                    a sibling before the bubble, which made every reply look
-                    like two messages.
-                  */}
                   {quote && !msg.isDeleted && (
                     <div
                       role={quote.canNavigate ? 'button' : undefined}
@@ -1031,116 +1260,100 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
                       aria-label={quote.canNavigate ? 'Go to the quoted message' : undefined}
                       onClick={(e) => {
                         if (!quote.canNavigate) return
-                        // Without this the tap also opens the action rail.
                         e.stopPropagation()
                         scrollToMessage(msg.replyToId!)
                       }}
-                      onKeyDown={(e) => {
-                        if (!quote.canNavigate) return
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          scrollToMessage(msg.replyToId!)
-                        }
-                      }}
-                      className={`mb-2 flex gap-2 rounded-lg px-2 py-1.5 text-left transition-colors ${quote.canNavigate ? 'cursor-pointer' : ''} ${isMe
-                          ? `bg-brand-bg/15 ${quote.canNavigate ? 'hover:bg-brand-bg/25' : ''}`
-                          : `bg-brand-text/[0.06] ${quote.canNavigate ? 'hover:bg-brand-text/10' : ''}`
-                        }`}
+                      className={`mb-2 flex gap-2 rounded-lg px-2 py-1.5 text-left transition-colors ${quote.canNavigate ? 'cursor-pointer' : ''} ${isMe ? 'bg-brand-bg/15' : 'bg-brand-text/[0.06]'}`}
                     >
                       <span className={`w-[3px] shrink-0 self-stretch rounded-full ${isMe ? 'bg-brand-bg/70' : 'bg-brand-accent'}`} />
                       <span className="min-w-0">
-                        {quote.senderId && (
-                          <span className={`block text-[11px] font-semibold leading-tight ${isMe ? 'text-brand-bg/80' : 'text-primary'}`}>
-                            {quote.senderId === myId ? 'You' : userName}
+                        {(quote.senderId || msg.extras?.replyKind === 'note') && (
+                          <span className={`block text-[11px] font-semibold leading-tight ${isMe ? 'opacity-80' : 'text-primary'}`}>
+                            {quoteLabel(msg, quote.senderId ? (quote.senderId === myId ? 'You' : nameOf(quote.senderId)) : nameOf(msg.senderId === myId ? userId : msg.senderId))}
                           </span>
                         )}
-                        <span className={`block line-clamp-2 text-[12px] leading-snug ${isMe ? 'text-brand-bg/70' : 'text-brand-text/60'}`}>
+                        <span className={`block line-clamp-2 text-[12px] leading-snug ${isMe ? 'opacity-70' : 'text-brand-text/60'}`}>
                           {quote.text}
                         </span>
                       </span>
                     </div>
                   )}
 
-                  {msg.isDeleted ? (
-                    'This message was deleted'
-                  ) : mediaKind === 'image' && msg.mediaId ? (
-                    <img src={`/v1/media/${msg.mediaId}/serve`} alt="Image" className="max-w-full rounded-xl" />
-                  ) : mediaKind === 'video' && msg.mediaId ? (
-                    <video src={`/v1/media/${msg.mediaId}/serve`} controls className="max-w-full rounded-xl" />
-                  ) : mediaKind === 'audio' && msg.mediaId ? (
-                    <audio src={`/v1/media/${msg.mediaId}/serve`} controls className="max-w-full" />
-                  ) : msg.mediaId ? (
-                    // Kind not resolved yet, or media-service would not say.
-                    // A link always works; guessing <img> would draw a broken
-                    // image for every clip.
-                    <a href={`/v1/media/${msg.mediaId}/serve`} target="_blank" rel="noopener noreferrer"
-                      className={`font-semibold underline underline-offset-2 ${isMe ? 'text-white/90 hover:text-white' : 'text-brand-text/60 hover:text-brand-text/60'}`}>
-                      Attachment
-                    </a>
-                  ) : kindChat.bubbleText(msg, msg.text)}
+                  <MessageBody
+                    msg={msg}
+                    kind={kind}
+                    mine={isMe}
+                    blur={shouldBlurMedia(msg, myId, { filterOn: sensitiveFilterOn, isRequestThread })}
+                    postView={msg.postId ? postCardView(msg.postId, { status: postCards.status, posts: postCards.data }) : undefined}
+                    onRetryPost={() => void postCards.refetch()}
+                    onOpenPost={(postId) => setViewer({ startPostId: postId, postIds: sharedPostIds })}
+                    profile={(() => {
+                      const id = msg.extras?.profileUserId
+                      const p = id ? profiles?.get(id) : null
+                      return p ? { name: p.display_name || p.username || 'Profile', username: p.username || null, avatarUrl: p.avatar_media_id ? `/v1/media/${p.avatar_media_id}/serve` : null } : null
+                    })()}
+                    renderText={(t) => kindChat.bubbleText(msg, t)}
+                  />
                 </div>
                 {kindChat.afterBubble(msg)}
 
-                {/* Edited indicator */}
                 {msg.isEdited && !msg.isDeleted && (
-                  <p className="text-[10px] text-brand-text/30 mt-0.5">(edited)</p>
+                  <p className="text-[10px] text-brand-text/40 mt-0.5 px-1">Edited</p>
                 )}
 
-                {/* Reactions */}
+                {/* Reactions: tap a chip to see who reacted. */}
                 {msg.reactions && msg.reactions.length > 0 && !msg.isDeleted && (
-                  <div className={`mt-1 flex flex-wrap gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    {msg.reactions.map(r => (
-                      <button
-                        key={r.emoji}
-                        onClick={() => handleToggleReaction(msg.id, r.emoji)}
-                        className={`flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold shadow-xs transition-all hover:scale-105 active:scale-95 ${r.user_ids.includes(myId)
-                            ? 'border border-brand-divider bg-brand-secondary text-brand-text/60'
-                            : 'border border-brand-divider bg-brand-card text-brand-highlight hover:bg-brand-secondary'
-                          }`}
-                      >
-                        <span>{r.emoji}</span>
-                        {r.user_ids.length > 1 && <span className="text-[10px] opacity-70">{r.user_ids.length}</span>}
-                      </button>
-                    ))}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setReactionsFor(msg)}
+                    aria-label="See who reacted"
+                    className={`-mt-1.5 flex items-center gap-1 rounded-full border border-brand-divider bg-brand-card px-1.5 py-0.5 text-[12px] shadow-xs hover:bg-brand-secondary ${isMe ? 'mr-2 self-end' : 'ml-2 self-start'}`}
+                  >
+                    {msg.reactions.slice(0, 3).map(r => <span key={r.emoji}>{r.emoji}</span>)}
+                    {(() => {
+                      const total = msg.reactions.reduce((n, r) => n + r.user_ids.length, 0)
+                      return total > 1 ? <span className="text-[11px] tabular-nums text-brand-text/60">{total}</span> : null
+                    })()}
+                  </button>
                 )}
 
-                {/* Time + delivery state.
-                    Ticks on EVERY message of mine, not only the last, and
-                    the seen state is a colour change rather than the word
-                    "Seen" — the WhatsApp convention the founder asked for.
-                    A single grey tick is sent; double blue is read. Nothing
-                    renders for the peer's messages. */}
                 {groupEnd && (
-                  <div className="mt-1.5 flex items-center gap-1.5 px-0.5 text-[11px] font-medium text-brand-text/60">
+                  <div className="mt-1 flex items-center gap-1.5 px-0.5 text-[11px] font-medium text-brand-text/50">
                     {msg.time}
-                    {isMe && !msg.isDeleted && (
-                      isSeenByPeer(msg) ? (
-                        <span className="flex items-center text-receipt-seen" title="Seen">
-                          <CheckCheck className="h-4 w-4" strokeWidth={2.25} />
-                        </span>
+                    {isMe && !msg.isDeleted && !isGroup && (
+                      msg.id.startsWith('opt-') ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : isSeenByPeer(msg) ? (
+                        <span className="flex items-center text-receipt-seen" title="Seen"><CheckCheck className="h-4 w-4" strokeWidth={2.25} /></span>
                       ) : (
-                        <span className="flex items-center text-brand-text/40" title="Sent">
-                          <Check className="h-3.5 w-3.5" strokeWidth={2.25} />
-                        </span>
+                        <span className="flex items-center text-brand-text/40" title="Sent"><Check className="h-3.5 w-3.5" strokeWidth={2.25} /></span>
                       )
                     )}
                   </div>
+                )}
+                {/* "Seen" under my last message (DM), "Seen by N" in a group. */}
+                {msg.id === lastOwnId && !isGroup && isSeenByPeer(msg) && (
+                  <p className="px-1 text-[11px] font-medium text-brand-text/50">Seen</p>
+                )}
+                {msg.id === lastOwnId && isGroup && seenByCount !== null && seenByCount > 0 && (
+                  <button type="button" onClick={() => setSeenByFor(msg.id)} className="px-1 text-[11px] font-medium text-brand-text/50 hover:text-brand-text hover:underline">
+                    Seen by {seenByCount}
+                  </button>
                 )}
               </div>
             </div>
           )
         })}
 
+        {anyTyping && !loading && (
+          <TypingBubble label={statusText ?? 'Typing…'} />
+        )}
+
         <div ref={bottomRef} />
       </div>
 
-      {/* Message action bar — sits just above the tapped bubble, the way
-          WhatsApp's does: a row of quick reactions with a "+" for the full
-          picker, and a row of actions under it. Opened by tap or by
-          right-click. */}
-      {contextMenu?.visible && (
+      {/* Message menu: quick reactions + full picker, then the actions. */}
+      {contextMenu?.visible && contextMsg && (
         <div
           role="menu"
           ref={actionBarRef}
@@ -1148,12 +1361,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
           style={actionBarStyle}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* ONE row: quick reactions, "+" for the full picker, then the
-              actions. It sits BESIDE the bubble on the side the bubble is
-              not on — my messages are on the right, so the rail is on the
-              left, and the other way round for theirs. Pin was removed at
-              the founder's request. */}
-          <div className="flex items-center gap-0.5 rounded-full border border-brand-divider bg-brand-card px-1.5 py-1 shadow-xl">
+          <div className="flex items-center gap-0.5 self-start rounded-full border border-brand-divider bg-brand-card px-1.5 py-1 shadow-xl">
             {QUICK_EMOJIS.map(emoji => (
               <button
                 key={emoji}
@@ -1172,42 +1380,10 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
             >
               <SmilePlus className="h-[18px] w-[18px]" strokeWidth={1.75} />
             </button>
-
-            <span className="mx-0.5 h-5 w-px shrink-0 bg-brand-divider" aria-hidden="true" />
-
-            <button
-              onClick={() => { const msg = messages.find(m => m.id === contextMenu.messageId); if (msg) handleReply(msg) }}
-              aria-label="Reply"
-              title="Reply"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-brand-text/70 transition-colors hover:bg-brand-secondary hover:text-brand-text"
-            >
-              <Reply className="h-[18px] w-[18px]" strokeWidth={1.75} />
-            </button>
-            {contextMenu.senderId === myId && (
-              <>
-                <button
-                  onClick={() => { const msg = messages.find(m => m.id === contextMenu.messageId); if (msg) handleEditStart(msg) }}
-                  aria-label="Edit"
-                  title="Edit"
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-brand-text/70 transition-colors hover:bg-brand-secondary hover:text-brand-text"
-                >
-                  <Pencil className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                </button>
-                <button
-                  onClick={() => handleDelete(contextMenu.messageId)}
-                  aria-label="Delete"
-                  title="Delete"
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-danger transition-colors hover:bg-danger/10"
-                >
-                  <Trash2 className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                </button>
-              </>
-            )}
           </div>
 
-          {/* Full picker, under the rail so it never covers the message */}
-          {reactionPickerFor === contextMenu.messageId && (
-            <div className={`overflow-hidden rounded-2xl border border-brand-divider shadow-xl ${contextMenu.mine ? 'self-end' : 'self-start'}`}>
+          {reactionPickerFor === contextMenu.messageId ? (
+            <div className="overflow-hidden rounded-2xl border border-brand-divider shadow-xl">
               <Suspense fallback={
                 <div className="flex h-[320px] w-[320px] items-center justify-center bg-brand-card">
                   <span className="text-xs font-medium text-brand-text/40">Loading emojis…</span>
@@ -1216,7 +1392,7 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
                 <EmojiPicker
                   data={data}
                   onEmojiSelect={handleReactionEmojiSelect}
-                  theme="light"
+                  theme="auto"
                   previewPosition="none"
                   skinTonePosition="none"
                   perLine={8}
@@ -1224,40 +1400,57 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
                 />
               </Suspense>
             </div>
+          ) : (
+            <div className="w-[200px] overflow-hidden rounded-xl border border-brand-divider bg-brand-card py-1 shadow-xl">
+              {messageActions(contextMsg, myId, { pinned: pins.some(p => p.message_id === contextMsg.id) }).map((action) => {
+                const Icon = ACTION_ICONS[action]
+                const danger = action === 'unsend' || action === 'deleteForMe' || action === 'report'
+                return (
+                  <button
+                    key={action}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => runAction(action, contextMsg)}
+                    className={`flex w-full items-center justify-between gap-3 px-3.5 py-2 text-left text-[13px] font-medium hover:bg-brand-secondary ${danger ? 'text-danger' : 'text-brand-text'}`}
+                  >
+                    {MESSAGE_ACTION_LABELS[action]}
+                    <Icon className="h-4 w-4" strokeWidth={1.75} />
+                  </button>
+                )
+              })}
+            </div>
           )}
         </div>
       )}
 
-      {/* A failed attachment is said out loud. It used to be a console.error
-          only, which is how a dead upload route survived this long. */}
-      {attachError && (
-        <div
-          role="alert"
-          className="flex shrink-0 items-center justify-between gap-3 border-t border-brand-divider bg-danger/10 px-6 py-2.5 text-[12px] text-danger"
-        >
-          <span>{attachError}</span>
-          <button
-            onClick={() => setAttachError(null)}
-            className="shrink-0 font-semibold underline underline-offset-2"
-          >
-            Dismiss
-          </button>
+      {/* A request I sent, still waiting: one text message, no links, until they accept. */}
+      {requestOutgoing && (
+        <div role="status" className="flex shrink-0 items-start gap-2 border-t border-brand-divider bg-primary-tint px-5 py-2.5 text-[12px] text-primary-ink">
+          <Clock className="mt-px h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
+          <span>
+            {requestAlreadySent
+              ? requestComposerProblemText('already_sent', requestTarget)
+              : requestWaitingBanner(requestTarget)}
+          </span>
         </div>
       )}
 
-      {/* Reply bar */}
-      {replyingTo && (
+      {attachError && (
+        <div role="alert" className="flex shrink-0 items-center justify-between gap-3 border-t border-brand-divider bg-danger/10 px-5 py-2.5 text-[12px] text-danger">
+          <span>{attachError}</span>
+          <button onClick={() => setAttachError(null)} className="shrink-0 font-semibold underline underline-offset-2">Dismiss</button>
+        </div>
+      )}
 
-        <div className="flex shrink-0 items-center justify-between border-t border-brand-divider bg-brand-secondary/80 px-6 py-3 backdrop-blur-md">
-          <div className="flex flex-1 flex-col border-l-[3px] border-brand-accent pl-3">
+      {replyingTo && (
+        <div className="flex shrink-0 items-center justify-between border-t border-brand-divider bg-brand-secondary/80 px-5 py-2.5 backdrop-blur-md">
+          <div className="flex min-w-0 flex-1 flex-col border-l-[3px] border-brand-accent pl-3">
             <span className="text-[12px] font-bold text-brand-text/60">
-              Replying to {replyingTo.senderId === myId ? 'yourself' : userName}
+              Replying to {replyingTo.senderId === myId ? 'yourself' : nameOf(replyingTo.senderId)}
             </span>
-            <span className="truncate text-[13px] text-brand-highlight">
-              {replyingTo.text}
-            </span>
+            <span className="truncate text-[13px] text-brand-highlight">{replyingTo.text || 'Attachment'}</span>
           </div>
-          <button onClick={() => setReplyingTo(null)} className="flex h-8 w-8 items-center justify-center rounded-full text-brand-text/60 transition-all hover:bg-brand-secondary/80 hover:text-brand-highlight">
+          <button onClick={() => setReplyingTo(null)} aria-label="Cancel reply" className="flex h-8 w-8 items-center justify-center rounded-full text-brand-text/60 transition-all hover:bg-brand-secondary/80 hover:text-brand-highlight">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -1266,96 +1459,181 @@ export default function DmChat({ userId, userName, userAvatar, userOnline, userL
       {kindChat.nudge(input, { onEdit: () => inputRef.current?.focus(), onSendAnyway: () => void handleSend({ kindChecked: true }) })}
       {kindChat.dialogs}
 
-      {/* Edit bar */}
       {editingMsgId ? (
-        <div className="flex shrink-0 items-center gap-3 border-t border-brand-divider bg-brand-card px-6 py-4">
+        <div className="flex shrink-0 items-center gap-3 border-t border-brand-divider bg-brand-card px-5 py-3">
           <input
             ref={editInputRef}
             value={editText}
             onChange={e => setEditText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Edit message..."
-            className="flex-1 rounded-2xl border border-transparent bg-brand-secondary px-5 py-3 text-[14px] text-brand-text outline-hidden transition-all placeholder:text-brand-text/60 focus:border-brand-divider focus:bg-brand-card focus:ring-4 focus:ring-brand-divider/50"
+            className="flex-1 rounded-2xl border border-transparent bg-brand-secondary px-4 py-2.5 text-[14px] text-brand-text outline-hidden transition-all placeholder:text-brand-text/60 focus:border-brand-divider focus:bg-brand-card"
           />
-          <button onClick={handleSaveEdit} className="flex h-11 items-center justify-center rounded-2xl bg-brand-text px-6 font-bold text-white transition-all hover:bg-brand-text/85 active:scale-95">
-            Save
-          </button>
-          <button onClick={() => { setEditingMsgId(null); setEditText('') }} className="flex h-11 items-center justify-center rounded-2xl bg-brand-secondary px-5 font-bold text-brand-highlight transition-all hover:bg-brand-secondary/80 active:scale-95">
-            Cancel
-          </button>
+          <button onClick={() => void handleSaveEdit()} className="flex h-10 items-center justify-center rounded-2xl bg-primary-ink px-5 text-[13px] font-bold text-white transition-all active:scale-95">Save</button>
+          <button onClick={() => { setEditingMsgId(null); setEditText('') }} className="flex h-10 items-center justify-center rounded-2xl bg-brand-secondary px-4 text-[13px] font-bold text-brand-highlight transition-all active:scale-95">Cancel</button>
         </div>
       ) : (
-        /* Composer — one horizontal bar: attach on the left, field in the
-           middle, send on the right, all inside the same rounded box so the
-           send control can never be clipped by the panel edge. */
-        <div className="relative shrink-0 border-t border-brand-divider bg-brand-card px-4 py-3">
-          {/* Emoji picker, floated above the bar */}
+        /* Composer: emoji · stickers/GIFs · text (multi-line) · gallery · voice · send */
+        <div className="relative shrink-0 border-t border-brand-divider bg-brand-card px-3 py-2.5">
           {showEmojiPicker && (
-            <div ref={emojiPanelRef} className="absolute bottom-full left-4 mb-2 overflow-hidden rounded-2xl border border-brand-divider shadow-xl">
+            <div ref={emojiPanelRef} className="absolute bottom-full left-3 mb-2 overflow-hidden rounded-2xl border border-brand-divider shadow-xl">
               <Suspense fallback={
                 <div className="flex h-[380px] w-[352px] items-center justify-center bg-brand-card">
                   <span className="text-xs font-medium text-brand-text/40">Loading emojis…</span>
                 </div>
               }>
-                <EmojiPicker
-                  data={data}
-                  onEmojiSelect={handleEmojiSelect}
-                  theme="light"
-                  previewPosition="none"
-                  skinTonePosition="none"
-                  perLine={9}
-                  maxFrequentRows={2}
-                />
+                <EmojiPicker data={data} onEmojiSelect={handleEmojiSelect} theme="auto" previewPosition="none" skinTonePosition="none" perLine={9} maxFrequentRows={2} />
               </Suspense>
             </div>
           )}
+          {showStickers && (
+            <div className="absolute bottom-full left-3 mb-2 z-20">
+              <StickerGifPanel
+                onPickSticker={(s) => void sendSticker(s.id)}
+                onPickGif={(g) => void sendGif(g)}
+                onClose={() => setShowStickers(false)}
+              />
+            </div>
+          )}
 
-          <div className="flex items-center gap-1 rounded-full bg-brand-secondary px-1.5 ring-1 ring-transparent transition-colors focus-within:ring-brand-divider">
-            <button
-              onClick={() => setShowEmojiPicker(v => !v)}
-              aria-label="Emoji"
-              aria-pressed={showEmojiPicker}
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${showEmojiPicker ? 'text-brand-text' : 'text-brand-text/50 hover:text-brand-text'}`}
-            >
-              <Smile className="h-[18px] w-[18px]" strokeWidth={1.75} />
-            </button>
-            {/* A photo icon, not a paperclip: what people attach in a chat
-                is a picture or a clip, and the paperclip read as "document". */}
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              aria-label="Add photo or video"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-brand-text/50 transition-colors hover:text-brand-text"
-            >
-              <ImagePlus className="h-[18px] w-[18px]" strokeWidth={1.75} />
-            </button>
-            <input ref={fileInputRef} type="file" accept="image/*,video/*,audio/*"
-              onChange={handleMediaUpload} className="hidden" />
+          <div className="flex items-end gap-1 rounded-3xl bg-brand-secondary px-1.5 ring-1 ring-transparent transition-colors focus-within:ring-brand-divider">
+            {!recording && (
+              <>
+                <button
+                  onClick={() => { setShowEmojiPicker(v => !v); setShowStickers(false) }}
+                  aria-label="Emoji"
+                  aria-pressed={showEmojiPicker}
+                  className={`mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${showEmojiPicker ? 'text-brand-text' : 'text-brand-text/50 hover:text-brand-text'}`}
+                >
+                  <Smile className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                </button>
+                {stickerGif.available && !isRequestThread && (
+                  <button
+                    onClick={() => { setShowStickers(v => !v); setShowEmojiPicker(false) }}
+                    aria-label="Stickers and GIFs"
+                    data-sticker-gif-toggle
+                    aria-pressed={showStickers}
+                    className={`mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${showStickers ? 'text-brand-text' : 'text-brand-text/50 hover:text-brand-text'}`}
+                  >
+                    <Sticker className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                  </button>
+                )}
+                <textarea
+                  ref={inputRef}
+                  rows={1}
+                  value={input}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  onBlur={() => { if (convIdRef.current && input) sendTypingStop(convIdRef.current) }}
+                  placeholder={requestAlreadySent ? 'Waiting for them to accept' : isRequestThread ? 'Write a message request' : 'Message…'}
+                  disabled={requestAlreadySent}
+                  aria-label="Message"
+                  className="min-w-0 flex-1 resize-none bg-transparent px-1 py-2.5 text-[14px] leading-5 text-brand-text outline-hidden placeholder:text-brand-text/40"
+                />
+              </>
+            )}
+            {!hasText && !isRequestThread && (
+              <>
+                {!recording && (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    aria-label="Add photo or video"
+                    className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-brand-text/50 transition-colors hover:text-brand-text"
+                  >
+                    <ImagePlus className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                  </button>
+                )}
+                <div className={`mb-0.5 ${recording ? 'flex-1' : ''}`}>
+                  {voiceBusy ? (
+                    <span className="flex h-9 w-9 items-center justify-center text-brand-text/50"><Loader2 className="h-4 w-4 animate-spin" /></span>
+                  ) : (
+                    <VoiceRecorder
+                      disabled={!conversationId}
+                      onRecorded={(r) => void handleVoice(r)}
+                      onError={(m) => setAttachError(m)}
+                      onRecordingChange={setRecording}
+                    />
+                  )}
+                </div>
+              </>
+            )}
+            <input ref={fileInputRef} type="file" accept="image/*,video/*" onChange={handleMediaUpload} className="hidden" />
 
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Write a message"
-              className="min-w-0 flex-1 bg-transparent px-1 py-2.5 text-sm text-brand-text outline-hidden placeholder:text-brand-text/40"
-            />
-
-            {/* The one coloured thing here: the founder's sampled #b36077,
-                4.32:1 on white, which clears the 3.00:1 bar for an icon. It
-                only takes colour once there is something to send. */}
-            <button
-              onClick={() => void handleSend()}
-              disabled={!hasText}
-              aria-label="Send message"
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors duration-200 active:scale-90 ${hasText
-                  ? 'bg-send text-white hover:bg-send-hover'
-                  : 'text-brand-text/30'
-                }`}
-            >
-              <Send className="h-[18px] w-[18px] -ml-px" strokeWidth={1.75} />
-            </button>
+            {(hasText || isRequestThread) && !recording && (
+              <button
+                onClick={() => void handleSend()}
+                disabled={!canSendText}
+                aria-label="Send message"
+                className={`mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors duration-200 active:scale-90 ${canSendText ? 'bg-send text-white hover:bg-send-hover' : 'text-brand-text/30'}`}
+              >
+                <Send className="h-[18px] w-[18px] -ml-px" strokeWidth={1.75} />
+              </button>
+            )}
           </div>
+          {requestOutgoing && !requestAlreadySent && hasText && (
+            <div className="flex items-center justify-between gap-3 px-3 pt-1.5 text-[11px]">
+              <span className={requestInputProblem ? 'text-danger' : 'text-brand-text/50'}>
+                {requestInputProblem ? requestComposerProblemText(requestInputProblem, requestTarget) : 'Text only, no links.'}
+              </span>
+              <span className={`tabular-nums ${requestCharsLeft(input.trim()) < 0 ? 'text-danger' : 'text-brand-text/50'}`}>
+                {requestCharsLeft(input.trim())}
+              </span>
+            </div>
+          )}
         </div>
+      )}
+
+      {/* Chat settings: a page over the thread. */}
+      {showSettings && conversationId && (
+        <div className="absolute inset-0 z-30 flex">
+          <ChatSettingsPanel
+            conversationId={conversationId}
+            isGroup={isGroup}
+            title={userName}
+            peer={settingsPeer}
+            members={(group?.members ?? []).map((m) => ({ userId: m.userId, displayName: m.displayName, avatarUrl: m.avatarMediaId ? `/v1/media/${m.avatarMediaId}/serve` : null, role: m.role }))}
+            onClose={() => setShowSettings(false)}
+            onSearchInChat={() => { setShowSettings(false); setThreadSearch(''); setSearchIndex(0) }}
+            onOpenSharedPost={(postId, postIds) => setViewer({ startPostId: postId, postIds })}
+            onCleared={() => { setMessages([]); setOlderCursor(null); setShowSettings(false); say('Chat cleared') }}
+            onDeleted={() => { setShowSettings(false); onChatRemoved?.() }}
+            onLeft={() => { setShowSettings(false); onChatRemoved?.() }}
+            onPrefsChange={(prefs) => setDisappearAfterMs(prefs.disappearAfterMs)}
+          />
+        </div>
+      )}
+
+      {viewer && conversationId && (
+        <SharedReelsViewer conversationId={conversationId} startPostId={viewer.startPostId} postIds={viewer.postIds} onClose={() => setViewer(null)} />
+      )}
+      {forwarding && conversationId && (
+        <ForwardSheet
+          sourceConversationId={conversationId}
+          message={{ id: forwarding.id, text: forwarding.text, type: forwarding.type }}
+          onClose={() => setForwarding(null)}
+          onDone={(summary) => { setForwarding(null); say(summary) }}
+        />
+      )}
+      {reporting && conversationId && (
+        <ReportMessageSheet
+          conversationId={conversationId}
+          messageId={reporting.id}
+          onClose={() => setReporting(null)}
+          onDone={(text) => { setReporting(null); say(text) }}
+        />
+      )}
+      {reactionsFor && conversationId && (
+        <ReactionsSheet
+          conversationId={conversationId}
+          messageId={reactionsFor.id}
+          fallback={reactionsFor.reactions ?? []}
+          nameOf={nameOf}
+          avatarOf={avatarOf}
+          onClose={() => setReactionsFor(null)}
+        />
+      )}
+      {seenByFor && conversationId && (
+        <SeenBySheet conversationId={conversationId} messageId={seenByFor} onClose={() => setSeenByFor(null)} />
       )}
     </div>
   )

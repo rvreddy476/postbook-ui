@@ -4,6 +4,7 @@ import { useInfiniteQuery, type InfiniteData, type QueryClient } from "@tanstack
 
 import { fetchReelsPage, REEL_PAGE_SIZE, type ReelPage } from "@/features/reels/data/reelFeedApi";
 import type { ReelItem } from "@/features/reels/model";
+import { pollWhileEmpty } from "@/lib/pollWhileEmpty";
 
 export const REEL_FEED_KEY = ["reels", "feed"] as const;
 
@@ -20,6 +21,8 @@ export function useReelFeed(following: boolean) {
     getNextPageParam: (last) => last.nextCursor,
     refetchOnWindowFocus: false,
     staleTime: 60_000,
+    // Nothing yet: look again every 30 s until the first reel arrives.
+    refetchInterval: pollWhileEmpty,
   });
 }
 

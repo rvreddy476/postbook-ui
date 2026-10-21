@@ -36,6 +36,8 @@ export interface IdentityProps {
   bannerUrl?: string;
   uploading: { avatar: boolean; banner: boolean };
   availability: HandleAvailability;
+  /** Channel names are unique, ignoring case (same states as the handle's). */
+  nameAvailability: HandleAvailability;
   onChange: (field: "name" | "handle" | "about", value: string) => void;
   onPickAvatar: (file: File) => void;
   onRemoveAvatar: () => void;
@@ -95,6 +97,7 @@ export interface NoChannelProps {
   name: string;
   handle: string;
   availability: HandleAvailability;
+  nameAvailability: HandleAvailability;
   errors: FieldErrors;
   creating: boolean;
   pageMessage?: string;

@@ -97,11 +97,14 @@ describe("the worker leaves the rest of the site alone", () => {
     expect(sw.cache.size).toBe(0);
   });
 
-  test("it is registered for the Offline page only, from a hand-written file — no service worker library, no other worker", () => {
+  test("it is registered for the Offline page only, from a hand-written file — no service worker library, no other caching worker", () => {
     expect(OFFLINE_SW_URL).toBe("/offline-sw.js");
     expect(OFFLINE_SW_SCOPE).toBe("/posttube/offline");
     expect(SW_SOURCE).not.toMatch(/importScripts|workbox|precache-manifest/i);
-    expect(readdirSync(join(ROOT, "public")).filter((f) => /sw|worker/i.test(f))).toEqual(["offline-sw.js"]);
+    // The only other worker is web push's (src/features/webPush): no fetch handler, no cache.
+    expect(readdirSync(join(ROOT, "public")).filter((f) => /sw|worker/i.test(f)).sort()).toEqual(["offline-sw.js", "push-sw.js"]);
+    const PUSH_SOURCE = readFileSync(join(ROOT, "public", "push-sw.js"), "utf8");
+    expect(PUSH_SOURCE).not.toMatch(/addEventListener\(\s*["']fetch["']|caches\.|importScripts/);
     const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
     expect(Object.keys({ ...pkg.dependencies, ...pkg.devDependencies }).filter((d) => /pwa|workbox|serwist/i.test(d))).toEqual([]);
     expect(existsSync(join(ROOT, "public", "sw.js"))).toBe(false);

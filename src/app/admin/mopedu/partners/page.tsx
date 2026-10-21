@@ -120,7 +120,7 @@ function MopeduPartnersContent() {
             className="ml-auto flex w-full max-w-xs items-center gap-2"
           >
             <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -156,7 +156,7 @@ function MopeduPartnersContent() {
           />
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
+            <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Partner</th>
                 <th className="px-4 py-3">Phone</th>
@@ -286,7 +286,7 @@ export default function MopeduPartnersPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center gap-2 text-sm text-text-muted">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading partners…
         </div>
       }

@@ -2,10 +2,13 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
+import { SETTINGS_GROUPS } from "@/app/settings/_lib/settingsHub";
+
 import {
   isNavItemCurrent,
   videoNav,
   REELS_MORE_PANEL,
+  REELS_MORE_SETTINGS,
   REELS_NAV_APPS,
   REELS_NAV_MORE,
   REELS_NAV_TOP,
@@ -86,11 +89,11 @@ describe("videoNav (tube)", () => {
     expect(css).toContain(".video-nav.is-rail .video-nav__tag { display: none; }");
   });
 
-  test("the footer has Settings, Help, Terms, Privacy and is not in the rail", () => {
+  test("the footer has Settings, Terms, Privacy and is not in the rail (no Help until a page exists)", () => {
     const footer = videoNav("tube").find((s) => s.key === "footer")!;
     expect(footer.rail).toBe(false);
     expect(footer.items.map((i) => [i.label, i.href])).toEqual([
-      ["Settings", "/settings"], ["Help", "/help"], ["Terms", "/terms"], ["Privacy", "/privacy"],
+      ["Settings", "/settings"], ["Terms", "/terms"], ["Privacy", "/privacy"],
     ]);
     expect(videoNav("tube").filter((s) => s.rail).map((s) => s.key)).toEqual(["top", "you"]);
   });
@@ -136,18 +139,18 @@ describe("videoNav (reels, header chrome)", () => {
     const sections = videoNav("reels");
     expect(sections.map((s) => s.key)).toEqual(["top", "apps", "footer"]);
     const top = sections[0];
-    expect(top.items.map((i) => i.label)).toEqual(["For You", "Explore", "Following", "Friends", "LIVE", "Messages", "Activity", "Upload", "Profile"]);
+    expect(top.items.map((i) => i.label)).toEqual(["For You", "Explore", "Following", "Friends", "LIVE", "Shop", "Messages", "Activity", "Upload", "Profile"]);
     expect(top.items.map((i) => i.href ?? i.action)).toEqual([
-      "/reels", "explore", "/reels?feed=following", "/connections", "/reels/live", "/messenger", "/notifications", "/reels/create", "/profile",
+      "/reels", "explore", "/reels?feed=following", "/connections", "/reels/live", "/shop", "/messenger", "/notifications", "/reels/create", "/profile",
     ]);
     expect(sections[1].items.map((i) => [i.label, i.href])).toEqual([["Home", "/"], ["PostTube", "/posttube"], ["Liked reels", "/reels/liked"], ["Offline", "/posttube/offline"]]);
     expect(sections[2].items).toEqual([...VIDEO_NAV_FOOTER]);
   });
 
-  test("only the first nine are in the rail; nothing is app-highlighted", () => {
+  test("only the first ten are in the rail; nothing is app-highlighted", () => {
     const sections = videoNav("reels");
     expect(sections.filter((s) => s.rail).map((s) => s.key)).toEqual(["top"]);
-    expect(sections[0].items.length).toBe(9);
+    expect(sections[0].items.length).toBe(10);
     for (const s of sections) for (const i of s.items) expect(Boolean(i.active)).toBe(false);
   });
 });
@@ -161,10 +164,10 @@ describe("videoNav (reels, sidebar chrome)", () => {
     const top = sections[0];
     expect(top.rail).toBe(true);
     expect(top.items.map((i) => i.label)).toEqual([
-      "For You", "Explore", "Following", "Friends", "LIVE", "Messages", "Activity", "Upload", "Profile", "More",
+      "For You", "Explore", "Following", "Friends", "LIVE", "Shop", "Messages", "Activity", "Upload", "Profile", "More",
     ]);
     expect(top.items.map((i) => i.href ?? i.action)).toEqual([
-      "/reels", "explore", "/reels?feed=following", "/connections", "/reels/live", "/messenger", "/notifications", "/reels/create", "/profile", "more",
+      "/reels", "explore", "/reels?feed=following", "/connections", "/reels/live", "/shop", "/messenger", "/notifications", "/reels/create", "/profile", "more",
     ]);
   });
 
@@ -180,15 +183,15 @@ describe("videoNav (reels, sidebar chrome)", () => {
     expect(hrefs).not.toContain("/");
     expect(hrefs).not.toContain("/posttube");
     expect(hrefs).not.toContain("/reels/liked");
-    const apps = REELS_MORE_PANEL.find((s) => s.key === "apps")!;
-    expect(apps.items.map((i) => i.href ?? i.action)).toEqual(["/", "/posttube", "/reels/liked", "/posttube/offline", "explore"]);
+    const panel = REELS_MORE_PANEL.flatMap((s) => s.items.map((i) => i.href ?? i.action));
+    for (const href of ["/", "/posttube", "/reels/liked", "/posttube/offline", "explore"]) expect(panel).toContain(href);
   });
 
-  test("the footer reads About · Help / Terms & Policies · Privacy, then © 2026 VChat, and stays out of the rail", () => {
+  test("the footer reads Terms & Policies · Privacy, then © 2026 VChat, and stays out of the rail", () => {
     const footer = sections[1];
     expect(footer.rail).toBe(false);
     expect(footer.items.map((i) => [i.label, i.href])).toEqual([
-      ["About", "/about"], ["Help", "/help"], ["Terms & Policies", "/terms"], ["Privacy", "/privacy"],
+      ["Terms & Policies", "/terms"], ["Privacy", "/privacy"],
     ]);
     expect(REELS_SIDEBAR_COPYRIGHT).toBe("© 2026 VChat");
   });
@@ -205,25 +208,22 @@ describe("videoNav (reels, sidebar chrome)", () => {
       listTop: 128,
       rowHeight: 40,
       rowGap: 4,
-      moreRowHeight: 48,
-      themeRowHeight: 60,
-      segmentWidth: 32,
-      segmentHeight: 25,
+      moreRowHeight: 44,
       footerPadding: 24,
     });
     const m = REELS_SIDEBAR_METRICS;
     // The pill sits 16px under the 28px logo row that starts at 20; the list 24px under the pill.
     expect(m.logoTop + m.logoHeight + 16).toBe(m.searchTop);
     expect(m.searchTop + m.searchHeight + 24).toBe(m.listTop);
-    // Ten rows (For You … Profile, More) on a 44px pitch from 128: TikTok's rows are not on one pitch
-    // (133, 177, 216, 265, 292, 336, 380, 443, 485, 512), so this is the agreed approximation — the
-    // first row is within 5px of For You and the last within 12px of More.
+    // Eleven rows (For You … LIVE, Shop, … Profile, More) on a 44px pitch from 128: TikTok's rows are
+    // not on one pitch, so this is the agreed approximation — the first row is within 5px of For You.
+    // Shop (audit T-33) adds one row, so More now starts at 568.
     const rowTop = (i: number) => m.listTop + i * (m.rowHeight + m.rowGap);
     expect(rowTop(0)).toBe(128);
     expect(rowTop(1) - rowTop(0)).toBe(44);
     expect(Math.abs(rowTop(0) - 133)).toBeLessThanOrEqual(5);
-    expect(rowTop(9)).toBe(524);
-    expect(Math.abs(rowTop(9) - 512)).toBeLessThanOrEqual(12);
+    expect(videoNav("reels", "sidebar")[0].items).toHaveLength(11);
+    expect(rowTop(10)).toBe(568);
     expect(m.railWidth + m.morePanelWidth).toBe(392);
 
     const css = readFileSync(resolve(import.meta.dir, "../video-shell.css"), "utf8");
@@ -241,33 +241,74 @@ describe("videoNav (reels, sidebar chrome)", () => {
     expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-nav__footer-links a { font-size: 12px; font-weight: 600; color: rgb(var(--brand-text) / .5); }');
     expect(css).toContain(".video-nav__column { display: flex; flex: 0 0 72px; width: 72px;");
     expect(css).toContain(".video-nav.is-more .video-more { flex: 0 0 320px; width: 320px;");
-    expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-more .video-nav__item { height: 48px; padding: 0 16px; gap: 12px; border-radius: 0; font-size: 15px; font-weight: 500;');
-    expect(css).toContain('.video-nav[data-chrome="sidebar"] .video-more .video-nav__heading { margin: 0; padding: 8px 16px 4px; font-size: 14px; font-weight: 400;');
-    expect(css).toContain("height: 60px; padding: 0 16px; }");
-    expect(css).toContain("grid-template-columns: repeat(3, 32px)");
-    expect(css).toContain("width: 32px; height: 25px;");
+    expect(css).toContain(".video-more__row { display: flex; width: 100%; height: 44px;");
+    expect(css).toContain(".video-more__tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));");
+    // The appearance switch and Log out moved to /settings (17 Oct): their rules went with them.
+    expect(css).not.toContain(".video-more__segment");
+    expect(css).not.toContain(".video-more__logout");
   });
 });
 
 describe("REELS_MORE_PANEL", () => {
-  test("Settings / Tools / Apps / Other, in that order, with the rows the screenshot shows", () => {
-    expect(REELS_MORE_PANEL.map((s) => [s.key, s.title])).toEqual([
-      ["settings", "Settings"], ["tools", "Tools"], ["apps", "Apps"], ["other", "Other"],
+  test("the short first level: Apps as tiles, then Your activity and Creator tools as lists", () => {
+    expect(REELS_MORE_PANEL.map((s) => [s.key, s.title, s.layout])).toEqual([
+      ["apps", "Apps", "tiles"], ["activity", "Your activity", "list"], ["creator", "Creator tools", "list"],
     ]);
     const rows = Object.fromEntries(REELS_MORE_PANEL.map((s) => [s.key, s.items.map((i) => [i.label, i.href ?? i.action])]));
-    expect(rows.settings).toEqual([["General", "/settings"], ["Dark mode", "theme"]]);
-    expect(rows.tools).toEqual([["Upload", "/reels/create"], ["Your channel", "/posttube/channel"], ["LIVE tools", "/live"]]);
-    expect(rows.apps).toEqual([["Home", "/"], ["PostTube", "/posttube"], ["Liked reels", "/reels/liked"], ["Offline", "/posttube/offline"], ["Explore", "explore"]]);
-    expect(rows.other).toEqual([["Help Center", "/help"], ["Log out", "logout"]]);
+    expect(rows.apps).toEqual([["Home", "/"], ["PostTube", "/posttube"], ["Explore", "explore"], ["Groups", "/groups"]]);
+    expect(rows.activity).toEqual([["Liked reels", "/reels/liked"], ["Saved", "/saved"], ["Watch history", "/posttube/history"], ["Offline", "/posttube/offline"]]);
+    expect(rows.creator).toEqual([["Creator Hub", "/posttube/hub"], ["Upload", "/reels/create"], ["LIVE tools", "/live"], ["Your channel", "/posttube/channel"]]);
+  });
+
+  test("then ONE Settings & privacy row to the settings page; no settings list, theme switch or Log out in the panel", () => {
+    expect([REELS_MORE_SETTINGS.label, REELS_MORE_SETTINGS.href, REELS_MORE_SETTINGS.action]).toEqual(["Settings & privacy", "/settings", undefined]);
+    const hrefs = REELS_MORE_PANEL.flatMap((s) => s.items.map((i) => i.href)).filter(Boolean) as string[];
+    expect(hrefs.filter((h) => h.startsWith("/settings"))).toEqual([]);
+    const src = readFileSync(resolve(import.meta.dir, "../VideoMorePanel.tsx"), "utf8");
+    expect(src).toContain("REELS_MORE_SETTINGS");
+    for (const gone of ["logoutUser", "chooseTheme", "radiogroup", "/api/auth/logout"]) expect(src).not.toContain(gone);
+    // Order in the drawing: profile, the sections, the settings row, the legal line.
+    const order = ["<ProfileRow", "REELS_MORE_PANEL.map", "row(REELS_MORE_SETTINGS)", "video-more__legal"].map((needle) => src.indexOf(needle));
+    for (const i of order) expect(i).toBeGreaterThan(-1);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+  });
+
+  test("the panel draws only its own classes, so the rail's hidden-label rule cannot reach it (founder screenshot, 17 Oct)", () => {
+    const src = readFileSync(resolve(import.meta.dir, "../VideoMorePanel.tsx"), "utf8");
+    // Beside the 72px rail, ".is-rail .video-nav__label { display: none }" hid every label.
+    expect(src).not.toMatch(/["'`\s]video-nav__(label|item|list|section|heading)/);
+    const css = readFileSync(resolve(import.meta.dir, "../video-shell.css"), "utf8");
+    expect(css).not.toMatch(/is-rail[^{]*\.video-more/);
+    expect(css).toContain(".video-more__label { flex: 1 1 auto;");
+  });
+
+  test("every footer, More-panel and settings-page link resolves to a page under src/app — no dead Help or About", () => {
+    const pathOf = (href: string) => href.split("?")[0];
+    const links = [
+      ...VIDEO_NAV_FOOTER,
+      ...REELS_SIDEBAR_FOOTER,
+      ...REELS_MORE_PANEL.flatMap((s) => s.items),
+      REELS_MORE_SETTINGS,
+      // The /settings page's rows (src/app/settings/_lib/settingsHub.ts).
+      ...SETTINGS_GROUPS.flatMap((g) => g.rows),
+      // And every other menu row, under every app and chrome.
+      ...videoNav("tube").flatMap((s) => s.items),
+      ...videoNav("reels").flatMap((s) => s.items),
+      ...videoNav("reels", "sidebar").flatMap((s) => s.items),
+    ].filter((i) => i.href && !("comingSoon" in i && i.comingSoon));
+    expect(links.length).toBeGreaterThan(0);
+    const dead = links.map((i) => pathOf(i.href!)).filter((path) => !routeExists(path));
+    // /help and /about 404'd here before (audit T-24).
+    expect(dead).toEqual([]);
   });
 
   test("every row has an icon, a unique key, and exactly one of href or action", () => {
-    const all = REELS_MORE_PANEL.flatMap((s) => s.items);
+    const all = [...REELS_MORE_PANEL.flatMap((s) => s.items), REELS_MORE_SETTINGS];
     expect(new Set(all.map((i) => i.key)).size).toBe(all.length);
     for (const item of all) {
       expect(typeof item.icon).not.toBe("undefined");
       const hasHref = typeof item.href === "string" && item.href.startsWith("/");
-      const hasAction = item.action === "explore" || item.action === "theme" || item.action === "logout";
+      const hasAction = item.action === "explore";
       expect(hasHref !== hasAction).toBe(true);
     }
   });
@@ -314,5 +355,35 @@ describe("isNavItemCurrent", () => {
     expect(isNavItemCurrent(upload, "/reels/create", "")).toBe(true);
     expect(isNavItemCurrent(liked, "/reels/liked", "")).toBe(true);
     expect(isNavItemCurrent(upload, "/reels", "")).toBe(false);
+  });
+});
+
+describe("shell parity (audit T-33)", () => {
+  test("Shop (MStore) sits after LIVE in the reels menu under both chromes, and /shop is a real page", () => {
+    for (const chrome of ["header", "sidebar"] as const) {
+      const top = videoNav("reels", chrome)[0].items;
+      const keys = top.map((i) => i.key);
+      expect(keys.indexOf("shop")).toBe(keys.indexOf("live") + 1);
+      const shop = top.find((i) => i.key === "shop")!;
+      expect([shop.label, shop.href, Boolean(shop.comingSoon)]).toEqual(["Shop", "/shop", false]);
+    }
+    expect(routeExists("/shop")).toBe(true);
+  });
+
+  test("Creator Hub is in the More panel's Creator tools list, linking to the PostTube hub page", () => {
+    const tools = REELS_MORE_PANEL.find((s) => s.key === "creator")!.items;
+    const hub = tools.find((i) => i.key === "hub")!;
+    expect([hub.label, hub.href]).toEqual(["Creator Hub", "/posttube/hub"]);
+    expect(routeExists("/posttube/hub")).toBe(true);
+    // The same destination the PostTube menu already uses.
+    expect(VIDEO_NAV_YOU.find((i) => i.key === "hub")!.href).toBe(hub.href);
+  });
+
+  test("Shop is current on /shop and pages under it, and nowhere in the reels app", () => {
+    const shop = REELS_NAV_TOP.find((i) => i.key === "shop")!;
+    expect(isNavItemCurrent(shop, "/shop", "")).toBe(true);
+    expect(isNavItemCurrent(shop, "/shop/bag", "")).toBe(true);
+    expect(isNavItemCurrent(shop, "/reels", "")).toBe(false);
+    expect(isNavItemCurrent(shop, "/shopping", "")).toBe(false);
   });
 });

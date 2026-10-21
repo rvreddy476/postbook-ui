@@ -122,7 +122,7 @@ function MopeduVehiclesQueueContent() {
             />
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
+              <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3">Vehicle</th>
                   <th className="px-4 py-3">Partner</th>
@@ -157,7 +157,7 @@ function MopeduVehiclesQueueContent() {
                             className="h-12 w-16 rounded-md object-cover"
                           />
                         ) : (
-                          <div className="flex h-12 w-16 items-center justify-center rounded-md bg-brand-secondary text-[10px] text-text-muted">
+                          <div className="flex h-12 w-16 items-center justify-center rounded-md bg-brand-secondary text-[10px] text-muted-foreground">
                             No photo
                           </div>
                         )}
@@ -241,7 +241,7 @@ function MopeduVehiclesQueueContent() {
                     className="max-h-64 w-full object-contain"
                   />
                 ) : (
-                  <div className="flex h-40 items-center justify-center text-xs text-text-muted">
+                  <div className="flex h-40 items-center justify-center text-xs text-muted-foreground">
                     No photo
                   </div>
                 )}
@@ -359,7 +359,7 @@ export default function MopeduVehiclesQueuePage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center gap-2 text-sm text-text-muted">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading vehicles queue…
         </div>
       }

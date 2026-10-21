@@ -18,6 +18,7 @@ export function PosttubeFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   if (pathname?.startsWith("/posttube/upload")) return <>{children}</>;
   return (
-    <VideoShell app="tube" navigation={pathname === "/posttube/hub" || pathname?.startsWith("/posttube/hub/") ? (props) => <HubNavigation {...props} /> : undefined}>{children}</VideoShell>
+    // The watch page gives the video the width: the menu is hidden and opens over the page from the burger (YouTube's watch page).
+    <VideoShell app="tube" overlayNav={pathname?.startsWith("/posttube/watch") ?? false} navigation={pathname === "/posttube/hub" || pathname?.startsWith("/posttube/hub/") ? (props) => <HubNavigation {...props} /> : undefined}>{children}</VideoShell>
   );
 }

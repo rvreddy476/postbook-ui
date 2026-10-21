@@ -223,11 +223,12 @@ describe("the Audio section", () => {
     expect(html).not.toContain("Original audio will be used");
   });
 
-  test("none chosen: the reel uses its own audio, one level, nothing to remove or preview", () => {
+  test("none chosen: the reel uses its own audio as it is — no levels, nothing to remove or preview", () => {
     const html = renderToStaticMarkup(<StudioSoundView {...base} form={form()} />);
     expect(html).toContain('data-studio-sound="none"');
     expect(html).toContain("Original audio will be used");
-    expect(html).toContain('aria-label="Original audio volume"');
+    // The original-audio level only matters when there is a sound to mix it with (2026-10-21).
+    expect(html).not.toContain('aria-label="Original audio volume"');
     expect(html).not.toContain('aria-label="Sound volume"');
     expect(html).not.toContain("Remove");
     expect(html).not.toContain("data-preview");

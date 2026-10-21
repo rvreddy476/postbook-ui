@@ -1,4 +1,5 @@
 import api from "@/lib/api";
+import { RESUMABLE_UPLOAD_THRESHOLD, isUseResumableUpload, uploadResumable } from "@/lib/resumableUpload";
 
 import type { PostDetail } from "@/types/profile";
 import type {
@@ -156,11 +157,22 @@ export async function confirmUpload(mediaId: string): Promise<void> {
   await api.post("/v1/media/confirm", { media_id: mediaId });
 }
 
+/**
+ * The single-shot path (init → presigned PUT → confirm). A video the server
+ * would rather take in parts (413 USE_RESUMABLE_UPLOAD on init) goes up
+ * resumably instead, so no size is ever refused here.
+ */
 export async function uploadMedia(
   file: File,
   onProgress?: (pct: number) => void
 ): Promise<string> {
-  const init = await initMediaUpload(file);
+  let init: InitUploadResult;
+  try {
+    init = await initMediaUpload(file);
+  } catch (err) {
+    if (file.type.startsWith("video/") && isUseResumableUpload(err)) return uploadMediaResumable(file, onProgress);
+    throw err;
+  }
   await uploadToPresignedUrl(init.upload_url, file, onProgress);
   await confirmUpload(init.media_id);
   return init.media_id;
@@ -168,68 +180,22 @@ export async function uploadMedia(
 
 /* ── Resumable (chunked) upload ───────────────────────────── */
 
-// Files at or above this size use the resumable multipart path; smaller
-// ones use the single-shot presigned PUT (one round trip, no overhead).
-export const RESUMABLE_UPLOAD_THRESHOLD = 20 * 1024 * 1024; // 20 MB
-
-interface ResumableInitResult {
-  upload_id: string;
-  media_id: string;
-  chunk_size: number;
-  total_parts: number;
-}
-
-// POSTs one part's bytes, retrying a few times so a dropped connection
-// costs a single part's re-send rather than the whole upload.
-async function uploadPartWithRetry(
-  uploadId: string,
-  partNumber: number,
-  chunk: Blob,
-  maxAttempts = 3
-): Promise<void> {
-  let lastErr: unknown;
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      await api.post(`/v1/media/upload/resumable/${uploadId}/chunk`, chunk, {
-        params: { part_number: partNumber },
-        headers: { "Content-Type": "application/octet-stream" },
-      });
-      return;
-    } catch (err) {
-      lastErr = err;
-      if (attempt < maxAttempts) {
-        await new Promise((r) => setTimeout(r, 500 * attempt));
-      }
-    }
-  }
-  throw lastErr;
-}
+// Files at or above RESUMABLE_UPLOAD_THRESHOLD use the resumable multipart
+// path; smaller ones the single-shot presigned PUT (one round trip). The
+// loop itself — server-sized parts, per-part retry with backoff, byte
+// progress, no buffering — lives in lib/resumableUpload.ts.
+export { RESUMABLE_UPLOAD_THRESHOLD };
 
 /**
  * Uploads a file via the resumable multipart API: init → upload each
  * part (with per-part retry) → complete. Resilient to dropped
  * connections — only the failed part is re-sent, not the whole file.
  */
-export async function uploadMediaResumable(
+export function uploadMediaResumable(
   file: File,
   onProgress?: (pct: number) => void
 ): Promise<string> {
-  const fileType = file.type.startsWith("video/") ? "video" : "image";
-  const initRes = await api.post<ApiResponse<ResumableInitResult>>(
-    "/v1/media/upload/resumable/init",
-    { file_type: fileType, mime_type: file.type, total_bytes: file.size }
-  );
-  const { upload_id, media_id, chunk_size, total_parts } = initRes.data.data;
-
-  for (let part = 1; part <= total_parts; part++) {
-    const start = (part - 1) * chunk_size;
-    const slice = file.slice(start, Math.min(start + chunk_size, file.size));
-    await uploadPartWithRetry(upload_id, part, slice);
-    onProgress?.(Math.round((part / total_parts) * 100));
-  }
-
-  await api.post(`/v1/media/upload/resumable/${upload_id}/complete`);
-  return media_id;
+  return uploadResumable(file, { onProgress });
 }
 
 /** Upload a data URL (e.g. canvas-extracted cover frame) as an image and return the media ID. */
@@ -297,6 +263,9 @@ export async function updateDraft(
     is_made_for_kids: boolean;
     paid_promotion: boolean;
     altered_content: boolean;
+    ai_generated: boolean;
+    location_name: string;
+    location_place_id: string;
     auto_chapters: boolean;
     featured_places: boolean;
     auto_concepts: boolean;

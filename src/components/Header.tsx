@@ -29,6 +29,8 @@ import './header.css';
 import { resolveAppBrand } from '@/lib/appBrand';
 import { RoleMenuLink } from '@/components/auth/RoleMenuLink';
 import { useFeedSearchAlignment } from './feed/useFeedSearchAlignment';
+import { bellRow, notificationActorId } from '@/lib/notificationPresentation';
+import { NotificationGlyph } from '@/components/notifications/NotificationGlyph';
 
 /**
  * The sentence shown beside the actor's name.
@@ -37,10 +39,13 @@ import { useFeedSearchAlignment } from './feed/useFeedSearchAlignment';
  * follow, reaction, comment, comment_reaction, friend_request and
  * friend_accepted — and nothing else. A `dm` notification, which is most of
  * a real inbox, matched none of them and rendered a name followed by
- * NOTHING: a count in the badge and rows that said nothing. Anything
- * unrecognised now falls back to a sentence rather than to emptiness.
+ * NOTHING: a count in the badge and rows that said nothing.
+ *
+ * null for any other type: the row then shows the server's own sentence
+ * (`title`), and only an older server without one falls back to the
+ * generic line (bellRow in lib/notificationPresentation).
  */
-function describeNotification(type: string): string {
+function describeNotification(type: string): string | null {
   switch (type) {
     case 'friend_request':
       return 'sent you a connection request'
@@ -73,7 +78,7 @@ function describeNotification(type: string): string {
     case 'missed_call':
       return 'tried to call you'
     default:
-      return 'sent you a notification'
+      return null
   }
 }
 
@@ -234,13 +239,9 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
   const [dismissingIds, setDismissingIds] = useState<Set<string>>(new Set());
 
   // Actor profiles for display names
-  const actorIds = activityNotifs.map(n => n.actor_user_id);
+  // No lookup for a row with no actor (the zero UUID): there is no one to fetch.
+  const actorIds = activityNotifs.map(n => n.actor_user_id).filter(id => !!notificationActorId(id));
   const actorProfiles = useActorProfiles(actorIds);
-
-  const getActorName = (id: string) => {
-    const p = actorProfiles.get(id);
-    return p?.display_name || id.slice(0, 8);
-  };
 
   const getActorAvatar = (id: string) => {
     const p = actorProfiles.get(id);
@@ -653,9 +654,10 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                       {activityNotifs.filter(n => !dismissingIds.has(n.notification_id)).map(notif => {
                         const isHandled = handledIds.has(notif.notification_id);
                         const isFriendReq = notif.type === 'friend_request' && !isHandled;
-                        const actorName = getActorName(notif.actor_user_id);
+                        const row = bellRow(notif, describeNotification(notif.type), actorProfiles.get(notif.actor_user_id)?.display_name);
+                        const actorName = row.name;
                         const actorAvatar = getActorAvatar(notif.actor_user_id);
-                        const actorUsername = actorProfiles.get(notif.actor_user_id)?.username;
+                        const actorUsername = actorProfiles.get(notif.actor_user_id)?.username || notif.actor?.username;
 
                         return (
                           <motion.div
@@ -665,7 +667,10 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                             transition={{ duration: 0.3 }}
                             className={`group/notif flex items-start gap-3 px-4 py-3 hover:bg-brand-secondary/60 transition-colors ${!notif.is_read || justReadIds.has(notif.notification_id) ? "bg-brand-text/30" : ""}`}
                           >
-                            {/* Avatar — click to go to profile */}
+                            {/* Avatar — click to go to profile; a row with no actor shows its category glyph */}
+                            {row.glyph ? (
+                              <NotificationGlyph icon={row.glyph} className="w-10 h-10 mt-0.5" />
+                            ) : (
                             <button
                               onClick={() => {
                                 router.push(`/u/${actorUsername || notif.actor_user_id}`);
@@ -675,6 +680,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                             >
                               <img src={actorAvatar} alt={actorName} className="w-full h-full object-cover" />
                             </button>
+                            )}
 
                             {/* Content */}
                             <div className="flex-1 min-w-0">
@@ -683,9 +689,15 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                                 className="text-left w-full"
                               >
                                 <p className="text-[11px] font-bold text-brand-text/80 leading-snug">
-                                  <span className="font-black text-brand-text">{actorName}</span>
-                                  {' '}
-                                  {describeNotification(notif.type)}
+                                  {row.line.kind === 'title' ? (
+                                    row.line.title
+                                  ) : (
+                                    <>
+                                      <span className="font-black text-brand-text">{actorName}</span>
+                                      {' '}
+                                      {row.line.sentence}
+                                    </>
+                                  )}
                                 </p>
                                 <p className="text-[9px] text-brand-text/60 font-bold tracking-widest mt-0.5">
                                   {formatTimeAgo(notif.created_at)}

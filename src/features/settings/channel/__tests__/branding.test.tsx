@@ -46,6 +46,7 @@ function loaded(overrides: Partial<Extract<BrandingScreenProps, { kind: "loaded"
       bannerUrl: "https://cdn.example.com/b1.jpg",
       uploading: { avatar: false, banner: false },
       availability: { state: "idle" },
+      nameAvailability: { state: "idle" },
       onChange: noop,
       onPickAvatar: noop,
       onRemoveAvatar: noop,
@@ -94,6 +95,7 @@ describe("Branding page, no channel yet", () => {
           name: "Raghu makes things",
           handle: "raghu.makes",
           availability: { state: "available" },
+          nameAvailability: { state: "idle" },
           errors: {},
           creating: false,
           onChange: noop,
@@ -115,7 +117,7 @@ describe("Branding page, no channel yet", () => {
     const html = renderToStaticMarkup(
       <BrandingScreen
         kind="no-channel"
-        create={{ name: "N", handle: "taken.one", availability: { state: "taken", suggestion: "taken.one2" }, errors: {}, creating: false, onChange: noop, onCreate: noop }}
+        create={{ name: "N", handle: "taken.one", availability: { state: "taken", suggestion: "taken.one2" }, nameAvailability: { state: "idle" }, errors: {}, creating: false, onChange: noop, onCreate: noop }}
       />,
     );
     expect(html).toContain("@taken.one is taken");
@@ -248,7 +250,7 @@ describe("Branding page, RSS feed", () => {
 
   test("the section is not offered before there is a channel", () => {
     const html = renderToStaticMarkup(
-      <BrandingScreen kind="no-channel" create={{ name: "N", handle: "n.one", availability: { state: "idle" }, errors: {}, creating: false, onChange: noop, onCreate: noop }} />,
+      <BrandingScreen kind="no-channel" create={{ name: "N", handle: "n.one", availability: { state: "idle" }, nameAvailability: { state: "idle" }, errors: {}, creating: false, onChange: noop, onCreate: noop }} />,
     );
     expect(html).not.toContain('id="feed"');
   });
@@ -262,5 +264,26 @@ describe("Branding page, RSS feed", () => {
     for (const m of src.matchAll(/text-\[(\d+)px\]/g)) expect(Number(m[1])).toBeLessThanOrEqual(13);
     const feed = section(renderToStaticMarkup(<BrandingScreen {...loaded()} />));
     expect(feed).not.toMatch(/[Pp]laylist|Studio|Dashboard/);
+  });
+});
+
+describe("channel names are unique", () => {
+  const create = { name: "Raghu Studio", handle: "raghu.studio", availability: { state: "available" as const }, errors: {}, creating: false, onChange: noop, onCreate: noop };
+
+  test("a taken name is flagged, offers the free variant, and blocks Create", () => {
+    const html = renderToStaticMarkup(
+      <BrandingScreen kind="no-channel" create={{ ...create, nameAvailability: { state: "taken", suggestion: "Raghu Studio 2" } }} />,
+    );
+    expect(html).toContain("That channel name is taken. Names are unique.");
+    expect(html).toContain("data-name-taken");
+    expect(html).toContain("use “Raghu Studio 2”");
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>[^<]*Create channel/);
+  });
+
+  test("a free name says so and leaves Create enabled", () => {
+    const html = renderToStaticMarkup(<BrandingScreen kind="no-channel" create={{ ...create, nameAvailability: { state: "available" } }} />);
+    expect(html).toContain("Available");
+    expect(html).not.toContain("That channel name is taken");
+    expect(html).not.toMatch(/<button[^>]*disabled=""[^>]*>[^<]*Create channel/);
   });
 });

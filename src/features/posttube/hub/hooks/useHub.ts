@@ -8,7 +8,17 @@ import {
   bulkDelete,
   bulkEdit,
   bulkSetVisibility,
+  deleteDraft,
   deleteUpload,
+  getDraft,
+  listDrafts,
+  listSoundLibrary,
+  requestLibrarySoundUse,
+  type HubLibrarySoundUse,
+  type HubDraft,
+  type HubDraftPage,
+  type HubLibrarySound,
+  type HubSoundPage,
   getPrivateShares,
   setPrivateShares,
   type HubBulkPatch,
@@ -80,6 +90,9 @@ export const HUB_KEYS = {
   privateShares: (id: string) => ["hub", "private-shares", id] as const,
   publicCollections: (creatorId: string) => ["hub", "public-collections", creatorId] as const,
   channelSearch: (q: string) => ["hub", "channel-search", q] as const,
+  drafts: ["hub", "drafts"] as const,
+  draft: (id: string) => ["hub", "draft", id] as const,
+  sounds: (genre: string) => ["hub", "sounds", genre] as const,
 };
 
 /** The end-screen / card collection picker: the creator's public collections. */
@@ -121,6 +134,94 @@ export function useHubLibrary(kind: HubLibraryKind, limit = 30) {
 
 export function useHubCounts() {
   return useQuery({ queryKey: HUB_KEYS.counts, queryFn: getUploadCounts, staleTime: 30_000 });
+}
+
+/* ── Drafts ─────────────────────────────────────────────── */
+
+export function useHubDrafts(enabled = true) {
+  const query = useInfiniteQuery<HubDraftPage, Error, InfiniteData<HubDraftPage, string>, typeof HUB_KEYS.drafts, string>({
+    queryKey: HUB_KEYS.drafts,
+    queryFn: ({ pageParam }) => listDrafts({ cursor: pageParam || undefined }),
+    initialPageParam: "",
+    getNextPageParam: (last) => last.next_cursor ?? undefined,
+    staleTime: 15_000,
+    enabled,
+  });
+  const rows = useMemo(() => {
+    const seen = new Set<string>();
+    const out: HubDraft[] = [];
+    for (const d of query.data?.pages.flatMap((p) => p.items) ?? []) {
+      if (seen.has(d.id)) continue;
+      seen.add(d.id);
+      out.push(d);
+    }
+    return out;
+  }, [query.data]);
+  return { ...query, rows };
+}
+
+export function useHubDraft(draftId: string | null | undefined) {
+  return useQuery({ queryKey: HUB_KEYS.draft(draftId ?? ""), queryFn: () => getDraft(draftId as string), enabled: !!draftId, retry: false });
+}
+
+export function useDeleteDraft() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ draftId }: { draftId: string }) => deleteDraft(draftId),
+    onSuccess: (_v, { draftId }) => {
+      qc.setQueryData<InfiniteData<HubDraftPage, string>>(HUB_KEYS.drafts, (old) =>
+        old ? { ...old, pages: old.pages.map((p) => ({ ...p, items: p.items.filter((d) => d.id !== draftId) })) } : old,
+      );
+      qc.removeQueries({ queryKey: HUB_KEYS.draft(draftId) });
+      void qc.invalidateQueries({ queryKey: HUB_KEYS.drafts });
+    },
+  });
+}
+
+/* ── Sound library ──────────────────────────────────────── */
+
+export function useSoundLibrary(genre: string) {
+  const g = genre.trim();
+  const query = useInfiniteQuery<HubSoundPage, Error, InfiniteData<HubSoundPage, number>, ReturnType<typeof HUB_KEYS.sounds>, number>({
+    queryKey: HUB_KEYS.sounds(g),
+    queryFn: ({ pageParam }) => listSoundLibrary({ genre: g || undefined, offset: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (last) => last.next_offset,
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+  const rows = useMemo(() => {
+    const seen = new Set<string>();
+    const out: HubLibrarySound[] = [];
+    for (const s of query.data?.pages.flatMap((p) => p.items) ?? []) {
+      if (seen.has(s.id)) continue;
+      seen.add(s.id);
+      out.push(s);
+    }
+    return out;
+  }, [query.data]);
+  return { ...query, rows };
+}
+
+/**
+  "Use this sound": POST /v1/audio-library/:id/use. On success the cached
+  library rows learn their audio_track_id, so "See reels" shows on return.
+*/
+export function useLibrarySoundUse() {
+  const qc = useQueryClient();
+  return useMutation<HubLibrarySoundUse, unknown, string>({
+    mutationFn: (libraryId) => requestLibrarySoundUse(libraryId),
+    onSuccess: (use, libraryId) => {
+      qc.setQueriesData<InfiniteData<HubSoundPage, number>>({ queryKey: ["hub", "sounds"] }, (old) =>
+        old
+          ? {
+              ...old,
+              pages: old.pages.map((p) => ({ ...p, items: p.items.map((s) => (s.id === libraryId ? { ...s, audio_track_id: use.audio_track_id } : s)) })),
+            }
+          : old,
+      );
+    },
+  });
 }
 
 export function useHubSummary() {

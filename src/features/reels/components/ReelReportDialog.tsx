@@ -7,13 +7,19 @@ import { Flag, X } from "lucide-react";
 import { REPORT_REASONS, useSubmitReport } from "@/hooks/useReport";
 import { useGlobalToast } from "@/contexts/ToastContext";
 
+/** What is being reported. Both go to trust-safety as entity_type "post". */
+export type ReportDialogTarget = "reel" | "post";
+
 interface ReelReportDialogProps {
   open: boolean;
-  reelId: string;
+  /** The post id (a reel is a post). */
+  targetId: string;
+  /** The wording; either way the report is filed as entity_type "post". Defaults to "reel". */
+  targetType?: ReportDialogTarget;
   onClose: () => void;
 }
 
-export function ReelReportDialog({ open, reelId, onClose }: ReelReportDialogProps) {
+export function ReelReportDialog({ open, targetId, targetType = "reel", onClose }: ReelReportDialogProps) {
   const toast = useGlobalToast();
   const report = useSubmitReport();
   const [reason, setReason] = useState<(typeof REPORT_REASONS)[number]["value"] | "">("");
@@ -28,7 +34,7 @@ export function ReelReportDialog({ open, reelId, onClose }: ReelReportDialogProp
   const submit = async () => {
     if (!reason) return;
     try {
-      await report.mutateAsync({ targetType: "reel", targetId: reelId, reason, description: details });
+      await report.mutateAsync({ targetType, targetId, reason, description: details });
       toast({ type: "success", title: "Report sent", description: "Thanks — our team will review it." });
       close();
     } catch (err) {
@@ -36,7 +42,7 @@ export function ReelReportDialog({ open, reelId, onClose }: ReelReportDialogProp
       toast({
         type: status === 409 ? "info" : "error",
         title: status === 409 ? "Already reported" : "Could not send the report",
-        description: status === 409 ? "You have an open report on this reel." : "Please try again.",
+        description: status === 409 ? `You have an open report on this ${targetType}.` : "Please try again.",
       });
     }
   };
@@ -57,7 +63,7 @@ export function ReelReportDialog({ open, reelId, onClose }: ReelReportDialogProp
           <motion.div
             role="dialog"
             aria-modal
-            aria-label="Report reel"
+            aria-label={`Report ${targetType}`}
             initial={{ y: 24, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 24, opacity: 0 }}
@@ -66,7 +72,7 @@ export function ReelReportDialog({ open, reelId, onClose }: ReelReportDialogProp
           >
             <div className="mb-3 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-[15px] font-bold">
-                <Flag className="h-4 w-4 text-danger" /> Report this reel
+                <Flag className="h-4 w-4 text-danger" /> Report this {targetType}
               </h2>
               <button type="button" aria-label="Close" onClick={close} className="rounded-full p-1 hover:bg-brand-secondary">
                 <X className="h-4 w-4" />
@@ -75,7 +81,7 @@ export function ReelReportDialog({ open, reelId, onClose }: ReelReportDialogProp
             <div className="space-y-1">
               {REPORT_REASONS.map((r) => (
                 <label key={r.value} className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-[13px] hover:bg-brand-secondary">
-                  <input type="radio" name="reel-report-reason" value={r.value} checked={reason === r.value} onChange={() => setReason(r.value)} className="accent-[rgb(var(--theme-brand-accent))]" />
+                  <input type="radio" name={`${targetType}-report-reason`} value={r.value} checked={reason === r.value} onChange={() => setReason(r.value)} className="accent-[rgb(var(--theme-brand-accent))]" />
                   {r.label}
                 </label>
               ))}

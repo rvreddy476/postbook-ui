@@ -22,7 +22,15 @@
 .tube-stage__note:hover { color: rgb(var(--reel-on-stage)); }
 /* Theater: a dark band across the main padding, the player at most 80vh tall. */
 .tube-watch[data-theater] .tube-watch__player { margin: -24px -24px 0; padding: 0 24px; background: rgb(var(--reel-stage)); }
-.tube-watch[data-theater] .tube-stage { max-height: 80vh; margin: 0 auto; border-radius: 0; }
+/*
+  The theater stage fits the window (2026-10-19): at most 80vh, and never
+  taller than the space under the header, so the controls at the frame's
+  foot stay on screen. It narrows to keep 16:9, centred in the dark band —
+  YouTube's theater. A max-height on a 16:9 box alone let the frame inside
+  run 110px past the window, controls and all.
+*/
+.tube-watch[data-theater] { --tube-theater-h: min(80vh, calc(100dvh - 88px)); }
+.tube-watch[data-theater] .tube-stage { width: min(100%, calc(var(--tube-theater-h) * 16 / 9)); max-height: none; margin: 0 auto; border-radius: 0; }
 .tube-watch[data-theater] .tube-player__frame { border-radius: 0; }
 @media (max-width: 767px) {
   .tube-watch[data-theater] .tube-watch__player { margin: -12px -12px 0; padding: 0; }
@@ -32,28 +40,36 @@
 .tube-details { display: flex; flex-direction: column; gap: 12px; }
 .tube-details__title { margin: 0; font-size: 20px; font-weight: 700; line-height: 1.3; letter-spacing: -.01em; color: rgb(var(--brand-text)); overflow-wrap: anywhere; }
 @media (max-width: 767px) { .tube-details__title { font-size: 17px; } }
-.tube-creator { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+/*
+  RUTUBE's line under the title (2026-10-19): the channel at the left — a
+  rounded-square picture, the name over the subscriber count, Subscribe —
+  and the buttons at the right, all 36px with 8px corners.
+*/
+.tube-meta-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.tube-creator { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; min-width: 0; }
 .tube-creator__link { display: flex; min-width: 0; align-items: center; gap: 10px; color: inherit; text-decoration: none; }
-.tube-creator__avatar > * { width: 40px; height: 40px; }
+.tube-creator__avatar > * { width: 36px; height: 36px; }
+.tube-creator__avatar :is(img, span, div) { border-radius: 8px !important; }
+.tube-creator__buttons button { border-radius: 8px !important; }
 .tube-creator__name { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tube-creator__name:hover { text-decoration: underline; }
 .tube-creator__followers { margin: 2px 0 0; font-size: 12px; color: rgb(var(--text-muted)); }
 .tube-creator__buttons { display: inline-flex; align-items: center; gap: 8px; }
-.tube-creator__thanks { display: inline-flex; height: 36px; align-items: center; gap: 6px; padding: 0 14px; border: 0; border-radius: 999px; font-size: 13px; font-weight: 600; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); cursor: pointer; }
+.tube-creator__thanks { display: inline-flex; height: 36px; align-items: center; gap: 6px; padding: 0 14px; border: 0; border-radius: 8px; font-size: 13px; font-weight: 600; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); cursor: pointer; }
 .tube-creator__thanks:hover { background: rgb(var(--brand-text) / .12); }
 
 /* ---- action row --------------------------------------------------------- */
-.tube-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.tube-actions__vote { display: inline-flex; height: 36px; align-items: center; border-radius: 10px; background: rgb(var(--brand-text) / .06); }
-.tube-actions__btn { display: inline-flex; height: 36px; align-items: center; gap: 6px; padding: 0 12px; border: 0; border-radius: 10px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; background: transparent; color: rgb(var(--brand-text)); cursor: pointer; }
+.tube-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.tube-actions__vote { display: inline-flex; height: 36px; align-items: center; border-radius: 8px; background: rgb(var(--brand-text) / .06); }
+.tube-actions__btn { display: inline-flex; height: 36px; align-items: center; gap: 6px; padding: 0 10px; border: 0; border-radius: 8px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; background: transparent; color: rgb(var(--brand-text)); cursor: pointer; }
 .tube-actions__btn:hover { background: rgb(var(--brand-text) / .08); }
 .tube-actions__btn.is-love.is-on { color: rgb(var(--danger)); }
 .tube-actions__btn.is-pass.is-on { color: rgb(var(--brand-text)); background: rgb(var(--brand-text) / .1); }
 .tube-actions__count { color: rgb(var(--brand-text)); }
 .tube-actions__divider { width: 1px; height: 18px; background: rgb(var(--brand-text) / .2); }
-.tube-actions__pill { display: inline-flex; height: 36px; align-items: center; gap: 7px; padding: 0 14px; border: 0; border-radius: 10px; font-size: 13px; font-weight: 600; white-space: nowrap; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); cursor: pointer; transition: background-color 120ms ease; }
+.tube-actions__pill { display: inline-flex; height: 36px; align-items: center; gap: 7px; padding: 0 14px; border: 0; border-radius: 8px; font-size: 13px; font-weight: 600; white-space: nowrap; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); cursor: pointer; transition: background-color 120ms ease; }
 .tube-actions__pill:hover, .tube-actions__pill.is-on { background: rgb(var(--brand-text) / .12); }
-.tube-actions__pill.is-icon { width: 42px; justify-content: center; padding: 0; }
+.tube-actions__pill.is-icon { width: 36px; justify-content: center; padding: 0; }
 .tube-actions__btn:focus-visible, .tube-actions__pill:focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 2px; }
 .tube-actions__more { position: relative; display: inline-flex; }
 @media (max-width: 767px) {

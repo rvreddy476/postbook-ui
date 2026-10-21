@@ -2,20 +2,20 @@
 
 import React, { useState } from 'react'
 import {
-    Check,
-    ChevronDown,
-    ChevronUp,
-    Clock,
-    Globe,
-    Lock,
-    Share2,
-    Shield,
-    UserPlus,
-    Users,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Globe,
+  Lock,
+  Shield,
+  UserPlus,
+  Users,
 } from 'lucide-react'
 import type { Group } from '@/types/groups'
 import { useJoinGroup } from '@/hooks/useGroups'
 import GroupJoinedMenu from './GroupJoinedMenu'
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
 /**
  * A group's masthead: its cover, and the three facts that identify it.
@@ -252,7 +252,7 @@ function GroupActions({
                     onClick={onShare}
                     className="flex items-center gap-1.5 rounded-full bg-white/15 px-4 py-2 text-[13px] font-semibold text-white backdrop-blur-xs transition-colors hover:bg-white/25 sm:bg-white/15"
                 >
-                    <Share2 className="h-3.5 w-3.5" strokeWidth={2} />
+                    <ShareIcon className="h-3.5 w-3.5" strokeWidth={2} />
                     Share
                 </button>
                 <GroupJoinedMenu group={group} />

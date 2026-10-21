@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSS
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ChevronDown, ChevronUp, Clapperboard, Maximize, MoreHorizontal, RefreshCw, Undo2, UserRoundCheck, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Clapperboard, Maximize, MoreVertical, RefreshCw, Undo2, UserRoundCheck, X } from "lucide-react";
 import Link from "next/link";
 
 import { VideoShell } from "@/features/video-shell";
@@ -32,7 +32,9 @@ import { fetchReel, fetchSubtitles } from "@/features/reels/data/reelFeedApi";
 import { hasPlayableSubtitle } from "@/features/reels/playback/useSubtitleTrack";
 import { OfflineBadge, useOfflineRow, useOfflineSource, type OfflineNotice } from "@/features/offline";
 import { feedFromSearch } from "@/features/reels/feed";
-import { patchReelEverywhere, useReelFeed } from "@/features/reels/hooks/useReelFeed";
+import { patchReelEverywhere, reelFeedKey, useReelFeed } from "@/features/reels/hooks/useReelFeed";
+import { useReselect } from "@/lib/reselect";
+import { FollowingEmpty } from "@/features/reels/explore/FollowingEmpty";
 import {
   useBlockAuthor,
   useDeleteReel,
@@ -180,6 +182,24 @@ export function ReelsScreen() {
     setIndex(0);
     setDirection(1);
   }, [feedKind]);
+
+  // Refresh only when the viewer asks (founder, 21 Oct: never under someone
+  // watching): the button, or clicking Reels / For You while already here.
+  // The current reels stay on screen until the fresh list arrives, then the
+  // stage goes back to the first (newest) reel.
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshFeed = useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await feed.refetch();
+      setDirection(1);
+      setIndex(0);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [feed, refreshing]);
+  useReselect("/reels", () => void refreshFeed());
 
   // Load ahead so the last swipe never lands on a spinner.
   useEffect(() => {
@@ -411,6 +431,28 @@ export function ReelsScreen() {
     dispatchClear({ type: "enter" });
   };
 
+  /*
+    A phone's full-screen button (founder, 19 Oct: "like the mobile app"):
+    the video alone — clear screen — and the browser's own full screen so
+    its address bar goes too. A tap brings the controls back and leaves
+    full screen; so does the browser's back gesture.
+  */
+  const enterPhoneFullscreen = () => {
+    enterClearScreen();
+    const root = document.documentElement;
+    if (!document.fullscreenElement && typeof root.requestFullscreen === "function") {
+      root.requestFullscreen().catch(() => {
+        /* refused (iOS Safari): clear screen alone */
+      });
+    }
+  };
+  useEffect(() => {
+    if (clear.on || theaterRef.current || !document.fullscreenElement) return;
+    document.exitFullscreen().catch(() => {
+      /* ignore */
+    });
+  }, [clear.on]);
+
   /* ── theater ───────────────────────────────────────────── */
   const enterTheater = useCallback(async () => {
     setTheater(true);
@@ -442,7 +484,10 @@ export function ReelsScreen() {
   // Leaving the browser's fullscreen (its own Escape, the OS) leaves the theater too.
   useEffect(() => {
     const onChange = () => {
-      if (!document.fullscreenElement) setTheater(false);
+      if (document.fullscreenElement) return;
+      setTheater(false);
+      // The phone's full screen is clear screen too: leaving one leaves both.
+      dispatchClear({ type: "exit" });
     };
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
@@ -575,7 +620,14 @@ export function ReelsScreen() {
     playerRef.current?.setVolume(volume);
     updatePrefs({ volume, sound: volume > 0 });
   };
+  // The browser held sound back on a cold page: the reel plays muted and the top
+  // speaker shows it (no second control, founder 21 Oct); its tap lets sound in.
+  const [forcedMuted, setForcedMuted] = useState(false);
   const onToggleSound = () => {
+    if (forcedMuted) {
+      playerRef.current?.unmute();
+      return;
+    }
     const sound = !prefs.sound;
     const volume = prefs.volume || 1;
     playerRef.current?.setVolume(sound ? volume : 0);
@@ -670,6 +722,9 @@ export function ReelsScreen() {
                 }
               />
             </StateLayout>
+          ) : empty && feedKind === "following" && viewerId ? (
+            // Empty Following (T-19): suggested creators with Follow; a follow refetches this feed.
+            <FollowingEmpty viewerId={viewerId} onFollowChange={() => void qc.invalidateQueries({ queryKey: reelFeedKey(true) })} />
           ) : empty ? (
             <StateLayout stageRef={stageRef}>
               {feedKind === "following" ? (
@@ -686,11 +741,13 @@ export function ReelsScreen() {
               ) : (
                 <StateCard
                   title="No reels yet"
-                  hint="Be the first — reels are short videos up to 5 minutes."
+                  hint="Be the first — reels are short videos up to 5 minutes. New ones show up here by themselves."
                   action={
-                    <Link href="/reels/create" className="reel-state-action">
-                      <Clapperboard className="h-4 w-4" /> Create a reel
-                    </Link>
+                    <span className="flex flex-wrap justify-center gap-2">
+                      <Link href="/reels/create" className="reel-state-action">
+                        <Clapperboard className="h-4 w-4" /> Create a reel
+                      </Link>
+                    </span>
                   }
                 />
               )}
@@ -739,6 +796,7 @@ export function ReelsScreen() {
                           position={index}
                           prefs={prefs}
                           onPrefsChange={updatePrefs}
+                          onForcedMutedChange={setForcedMuted}
                           onEnded={onEnded}
                           onDoubleTap={onDoubleTapLike}
                           onQualityLevels={setQualityHeights}
@@ -758,7 +816,7 @@ export function ReelsScreen() {
                         {theater ? null : (
                           <ReelOverlay
                             reel={active}
-                            sound={prefs.sound}
+                            sound={prefs.sound && !forcedMuted}
                             volume={prefs.volume}
                             onVolumeChange={onVolumeChange}
                             onToggleSound={onToggleSound}
@@ -785,19 +843,21 @@ export function ReelsScreen() {
                         )}
                       </motion.div>
                     </AnimatePresence>
-                    {/* frame top-right: the three dots, on hover only (the phone rail has its own More).
+                    {/* frame top-right: full screen, then the vertical dots in the corner, on hover only (the phone rail has its own More).
                         The one menu — playback rows and the mapped rows — hangs from this corner. */}
                     {theater ? null : (
                       <div className="reel-frame-actions" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" aria-label={desktop ? "Theater mode" : "Full screen"} onClick={() => (desktop ? void enterTheater() : enterPhoneFullscreen())} className="reel-frame-action">
+                          <Maximize size={24} aria-hidden />
+                        </button>
+                        {/* Vertical dots in the very corner (founder, 21 Oct). No refresh button here:
+                            clicking Reels again in the menu refreshes (useReselect). */}
                         <div className="reel-frame-action-wrap is-more">
                           <button type="button" aria-label="More" aria-expanded={moreOpen} onClick={() => setMoreOpen((v) => !v)} className="reel-frame-action">
-                            <MoreHorizontal size={24} aria-hidden />
+                            <MoreVertical size={24} aria-hidden />
                           </button>
                           {desktop ? moreMenuFor("below") : null}
                         </div>
-                        <button type="button" aria-label="Theater mode" onClick={() => void enterTheater()} className="reel-frame-action">
-                          <Maximize size={24} aria-hidden />
-                        </button>
                       </div>
                     )}
                     <AnimatePresence>
@@ -815,7 +875,6 @@ export function ReelsScreen() {
                   ) : (
                     <div className="reel-desktop-rail">
                       <ReelRail
-                        playing={!paused}
                         reel={active}
                         {...railFollow}
                         onLike={onLike}
@@ -870,8 +929,8 @@ export function ReelsScreen() {
 
         {active ? (
           <>
-            <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} url={reelPermalink(active.id)} title={active.title || `Reel by ${active.authorName}`} />
-            <ReelReportDialog open={reportOpen} reelId={active.id} onClose={() => setReportOpen(false)} />
+            <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} url={reelPermalink(active.id)} title={active.title || `Reel by ${active.authorName}`} postId={active.id} />
+            <ReelReportDialog open={reportOpen} targetId={active.id} onClose={() => setReportOpen(false)} />
             {active ? <ReelAudioTracksDialog open={audioOpen} mediaId={active.media.mediaId} onClose={() => setAudioOpen(false)} /> : null}
             <ReelConfirmDialog
               open={blockOpen}

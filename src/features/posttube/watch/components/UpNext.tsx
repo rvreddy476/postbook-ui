@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { formatCount, formatDuration, timeAgo } from "../../model";
+import { formatCount, formatDuration, timeAgo, viewsLabel } from "../../model";
 import type { PostTubeVideo } from "../../types";
 import { collectionWatchHref } from "../collectionNav";
 import type { UpNextChip, UpNextPill } from "../upNext";
@@ -111,7 +111,7 @@ export function UpNext({ rows, loading = false, hasMore = false, fetchingMore = 
                   <p className="tube-upnext__name">{r.video.title}</p>
                   <p className="tube-upnext__meta">{r.video.channel_name}</p>
                   <p className="tube-upnext__meta">
-                    {[r.video.view_count > 0 ? `${formatCount(r.video.view_count)} views` : "", r.video.published_at ? timeAgo(r.video.published_at) : ""].filter(Boolean).join(" · ")}
+                    {[r.video.view_count > 0 ? viewsLabel(r.video.view_count) : "", r.video.published_at ? timeAgo(r.video.published_at) : ""].filter(Boolean).join(" · ")}
                   </p>
                 </span>
               </Link>

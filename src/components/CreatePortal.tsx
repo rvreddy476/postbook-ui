@@ -7,13 +7,11 @@ import {
   AlertCircle,
   BarChart3,
   BookOpen,
-  ChevronDown,
-  Globe,
+  FileText,
   Hash,
   Image as ImageIcon,
   ImagePlus,
   Loader2,
-  Lock,
   MapPin,
   AlignCenter,
   AlignCenterVertical,
@@ -22,7 +20,6 @@ import {
   MoreHorizontal,
   Plus,
   Send,
-  ShieldCheck,
   Smile,
   Type,
   UserRoundX,
@@ -62,7 +59,6 @@ const FlowerPaletteIcon: React.FC<{ size?: number; className?: string }> = ({ si
 
 import { useMyProfile } from '@/hooks/useEditProfile';
 import { useGlobalToast } from '@/contexts/ToastContext';
-import { useCreatePost } from '@/hooks/useFeedPosts';
 import { useCreateGroupPost, useGroupDetails } from '@/hooks/useGroups';
 import { useIdempotencyKey } from '@/lib/idempotency';
 import { uploadMedia } from '@/lib/mediaUpload';
@@ -82,13 +78,30 @@ import PollEditor, { type PollState } from '@/components/studio/PollEditor';
 import RichTextEditor from '@/components/studio/RichTextEditor';
 import type { PostRichText, RichNode } from '@/components/studio/postStyle';
 import MoodActivityPicker from '@/components/studio/MoodActivityPicker';
+import { useRouter } from 'next/navigation';
+import { serverCode, serverMessage } from '@/features/post-compose/api';
+import { useComposeSubmit } from '@/features/post-compose/hooks';
+import { useComposeMedia } from '@/features/post-compose/useComposeMedia';
+import {
+  coverAfterRemove,
+  detailsProblem,
+  draftBlockReason,
+  emptyDetails,
+  insertHashMark,
+  insertMention,
+  refusalCopy,
+  type CaretEdit,
+  type ComposeExtras,
+  type PostDetailsForm,
+} from '@/features/post-compose/model';
+import { MediaStrip } from '@/features/post-compose/components/MediaStrip';
+import { CaptionHelpers, DetailRows, TitleField, type DetailsPatch } from '@/features/post-compose/components/PostDetailsFields';
+import { ComposeActions } from '@/features/post-compose/components/ComposeActions';
 
 interface CreatePortalProps {
   onClose: () => void;
   groupId?: string;
 }
-
-type PostVisibility = 'public' | 'followers' | 'trusted' | 'private';
 
 // Rainbow palette, ROYGBIV-ordered so the picker can lay them out as
 // a half-circle. No black/dark-near-black swatches by request — the
@@ -106,19 +119,10 @@ const BACKGROUNDS: { value: string | null; label: string; dark?: boolean }[] = [
   { value: '#FF4F8B', label: 'Pink', dark: true },
 ];
 
-const VIS_OPTIONS: { value: PostVisibility; label: string; Icon: typeof Globe }[] = [
-  { value: 'public', label: 'Everyone', Icon: Globe },
-  { value: 'followers', label: 'Followers', Icon: Users },
-  { value: 'trusted', label: 'Trusted', Icon: ShieldCheck },
-  { value: 'private', label: 'Only me', Icon: Lock },
-];
-
 const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   const [text, setText] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
-  const [visibility, setVisibility] = useState<PostVisibility>('public');
-  const [showVisMenu, setShowVisMenu] = useState(false);
   const [mood, setMood] = useState<string | null>(null);
   const [showMood, setShowMood] = useState(false);
   const [moodTab, setMoodTab] = useState<'feeling' | 'activity'>('feeling');
@@ -165,6 +169,19 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /*
+    Feed mode's details (post screens parity, 2026-10-19): the photos with
+    their cover and alt texts, a title, the place, a link, the audience and
+    More options — the same form as the full-page composer, from
+    src/features/post-compose. A group post keeps the fields above: group-
+    service decides its audience and takes none of these.
+  */
+  const router = useRouter();
+  const feedMedia = useComposeMedia(10);
+  const [details, setDetails] = useState<PostDetailsForm>(() => emptyDetails());
+  const patchDetails = useCallback((patch: DetailsPatch) => setDetails((d) => ({ ...d, ...patch })), []);
+  const compose = useComposeSubmit(feedMedia.markUploaded);
+
   const [isDark, setIsDark] = useState(false);
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains('dark'));
@@ -182,7 +199,6 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profile } = useMyProfile();
-  const createPost = useCreatePost();
   const toast = useGlobalToast();
   const createGroupPost = useCreateGroupPost();
   // Enabled only when there is a groupId, so the ordinary composer fetches
@@ -217,7 +233,12 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
 
   const bgSwatch = BACKGROUNDS.find((b) => b.value === background) ?? BACKGROUNDS[0];
   const onDark = !!bgSwatch.dark;
-  const isTextOnly = files.length === 0 && !showPoll;
+  // Group mode holds Files; feed mode holds the details form's media.
+  const mediaCount = isGroupMode ? files.length : feedMedia.media.length;
+  const hasVideoFile = isGroupMode
+    ? files.some((f) => f.type.startsWith('video'))
+    : feedMedia.media.some((m) => m.kind === 'video');
+  const isTextOnly = mediaCount === 0 && !showPoll;
   const hasColorBg = background !== null && isTextOnly;
   // Templates were removed at the founder's request (23 Sep): the strip, the
   // alignment and size controls, the colour pickers and the uploaded
@@ -227,7 +248,9 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   const styleOnDark = hasColorBg && onDark;
 
   const validPollOptions = poll.options.filter((o) => o.trim()).length >= 2;
-  const canPost = Boolean(text.trim() || journalTitle.trim() || files.length > 0 || (showPoll && validPollOptions));
+  const detailsIssue = isGroupMode ? null : detailsProblem(details);
+  const canPost = Boolean(text.trim() || journalTitle.trim() || mediaCount > 0 || (showPoll && validPollOptions)) && !detailsIssue;
+  const draftBlocked = isGroupMode ? null : draftBlockReason(feedMedia.media, { journal: showJournal });
   const charCount = text.length;
   const maxChars = 2000;
 
@@ -262,11 +285,11 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   // Drop background when media or poll is added — colored backgrounds are
   // text-only by design.
   useEffect(() => {
-    if (files.length > 0 || showPoll) {
+    if (mediaCount > 0 || showPoll) {
       setBackground(null);
       setShowBackgroundPicker(false);
     }
-  }, [files.length, showPoll]);
+  }, [mediaCount, showPoll]);
 
   // Normalize: strip leading #, trim, drop spaces/punct that aren't word chars,
   // lowercase. "  #Design ! " → "design".
@@ -302,7 +325,8 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
 
   const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFiles = Array.from(e.target.files || []);
-    setFiles((prev) => [...prev, ...newFiles].slice(0, 10));
+    if (isGroupMode) setFiles((prev) => [...prev, ...newFiles].slice(0, 10));
+    else feedMedia.addFiles(newFiles);
     e.target.value = '';
   };
 
@@ -310,82 +334,137 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
     setFiles((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const removeFeedMedia = (idx: number) => {
+    feedMedia.removeAt(idx);
+    setDetails((d) => ({ ...d, coverIndex: coverAfterRemove(d.coverIndex, idx) }));
+  };
+
   // Leaving a media post drops what it had collected, so an attachment cannot
   // ride along invisibly on a poll or a journal entry.
-  const clearFiles = () => setFiles([]);
+  const clearFiles = () => {
+    setFiles([]);
+    feedMedia.clear();
+  };
 
-  const handleSubmit = useCallback(async () => {
-    if (!canPost || isSubmitting) return;
-    if (isGroupMode && isAnonymous && group?.allow_anonymous_posts !== true) {
-      setError('Anonymous posting is unavailable in this group. Turn it off only if you want to post with your profile.');
-      return;
-    }
+  /** "# Hashtags" and "@ Mention" edit the description at the caret. */
+  const editCaption = (change: (current: string, caret: number) => CaretEdit) => {
+    const ta = textareaRef.current;
+    const next = change(text, ta?.selectionStart ?? text.length);
+    setText(next.text);
+    window.requestAnimationFrame(() => {
+      ta?.focus();
+      ta?.setSelectionRange(next.caret, next.caret);
+    });
+  };
 
-    // Frontend poll validation — never let an invalid poll hit the backend.
-    if (showPoll) {
-      const optionErrors: Record<number, string> = {};
-      const trimmedOptions = poll.options.map((o) => o.trim());
-      const seen = new Map<string, number>();
-      trimmedOptions.forEach((o, idx) => {
-        if (!o) {
-          optionErrors[idx] = 'Please enter this option.';
-        } else {
-          const lower = o.toLowerCase();
-          if (seen.has(lower)) {
-            optionErrors[idx] = 'Duplicate option — please change or remove.';
-            optionErrors[seen.get(lower)!] = 'Duplicate option — please change or remove.';
-          } else {
-            seen.set(lower, idx);
-          }
-        }
-      });
-      const validCount = trimmedOptions.filter((o) => o && Object.keys(optionErrors).every((k) => Number(k) !== trimmedOptions.indexOf(o))).length;
-      const hasQuestion = text.trim().length > 0;
-
-      const issues: string[] = [];
-      if (!hasQuestion) {
-        setPollQuestionError('Please enter poll question.');
-        issues.push('question');
+  /*
+    The poll check, shared by Post and Drafts: post-service refuses a poll
+    draft without its question and two options too, so neither may send one.
+  */
+  const checkPoll = (): boolean => {
+    if (!showPoll) return true;
+    const optionErrors: Record<number, string> = {};
+    const trimmedOptions = poll.options.map((o) => o.trim());
+    const seen = new Map<string, number>();
+    trimmedOptions.forEach((o, idx) => {
+      if (!o) {
+        optionErrors[idx] = 'Please enter this option.';
       } else {
-        setPollQuestionError(null);
+        const lower = o.toLowerCase();
+        if (seen.has(lower)) {
+          optionErrors[idx] = 'Duplicate option — please change or remove.';
+          optionErrors[seen.get(lower)!] = 'Duplicate option — please change or remove.';
+        } else {
+          seen.set(lower, idx);
+        }
       }
-      if (validCount < 2) issues.push('options');
+    });
+    const validCount = trimmedOptions.filter((o) => o && Object.keys(optionErrors).every((k) => Number(k) !== trimmedOptions.indexOf(o))).length;
+    const hasQuestion = text.trim().length > 0;
 
-      if (issues.length > 0 || Object.keys(optionErrors).length > 0) {
-        setPollOptionErrors(optionErrors);
-        const msg =
-          issues.length === 2
-            ? 'Please provide the poll question and at least two poll options.'
-            : !hasQuestion
-              ? 'Please enter poll question.'
-              : validCount < 2
-                ? 'Please provide at least two poll options.'
-                : 'Please fix the highlighted poll fields.';
-        setError(msg);
-        return;
+    const issues: string[] = [];
+    if (!hasQuestion) {
+      setPollQuestionError('Please enter poll question.');
+      issues.push('question');
+    } else {
+      setPollQuestionError(null);
+    }
+    if (validCount < 2) issues.push('options');
+
+    if (issues.length > 0 || Object.keys(optionErrors).length > 0) {
+      setPollOptionErrors(optionErrors);
+      const msg =
+        issues.length === 2
+          ? 'Please provide the poll question and at least two poll options.'
+          : !hasQuestion
+            ? 'Please enter poll question.'
+            : validCount < 2
+              ? 'Please provide at least two poll options.'
+              : 'Please fix the highlighted poll fields.';
+      setError(msg);
+      return false;
+    }
+    setPollOptionErrors({});
+    return true;
+  };
+
+  /*
+    What the post carries besides the details: its kind, the mood, the poll
+    and the styled card. Shared by Post (both modes) and Drafts.
+  */
+  const buildExtras = (): ComposeExtras => {
+    let feeling: string | null = null;
+    let activity: string | null = null;
+    let activityDetail: string | null = null;
+    if (mood) {
+      const activityLabels = ['Listening to', 'Watching', 'Playing', 'Reading', 'Travelling to', 'Eating at', 'Working on', 'Creating'];
+      const match = activityLabels.find((l) => mood.includes(l));
+      if (match) {
+        activity = match;
+        activityDetail = mood.split(match)[1]?.trim() || null;
+      } else {
+        feeling = mood;
       }
-      setPollOptionErrors({});
     }
 
-    setIsSubmitting(true);
-    setError(null);
+    const durationMap: Record<string, number> = { '1d': 24, '3d': 72, '7d': 168 };
+    const pollPayload = showPoll
+      ? {
+          question: text.trim() || 'Untitled Poll',
+          options: poll.options.filter((o) => o.trim()),
+          allows_multiple: poll.allowMultiple,
+          duration_hours: durationMap[poll.duration] || 24,
+        }
+      : null;
 
-    try {
-      let mediaIds: string[] | undefined;
-      // Kept beside the ids: the create response carries no media, so this is
-      // what lets the card render its picture before fan-out hydrates it.
-      let mediaWithKinds: { media_id: string; kind: string }[] | undefined;
-      if (files.length > 0) {
-        const uploaded = await Promise.all(
-          files.map(async (file) => {
-            const fileType: 'image' | 'video' = file.type.startsWith('video') ? 'video' : 'image';
-            return { media_id: await uploadMedia(file, fileType, 'general'), kind: fileType };
-          }),
-        );
-        mediaWithKinds = uploaded;
-        mediaIds = uploaded.map((m) => m.media_id);
+    /*
+      How the post looks, and its rich body, in one JSON object.
+      post-service stores rich_text as arbitrary JSON and hands it back on
+      read, so both survive the round trip with no backend change.
+
+      Null when there is nothing to say: an ordinary text post should not
+      carry a style object at all.
+    */
+    const richText: PostRichText | null = (() => {
+      const styled = hasColorBg && background;
+      if (!styled && !richDoc) return null;
+      const value: PostRichText = {};
+      if (styled) {
+        value.background = background;
+        value.text_color = onDark ? '#ffffff' : '#111111';
       }
+      if (richDoc) {
+        value.format = 'tiptap';
+        value.doc = richDoc;
+        // The heading is typed outside the editor, so the document does not
+        // contain it. Carried here, it is what the card draws above the body.
+        const heading = journalTitle.trim();
+        if (showJournal && heading) value.title = heading;
+      }
+      return value;
+    })();
 
+    return {
       /*
         A feed post with a video attached is still a post. This used to send
         "video" whenever a file was a video, and post-service folds "video"
@@ -396,59 +475,82 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         "post" or "poll" and nothing else (Android's feed composer already
         sends "post").
       */
-      const contentType: string = chooseContentType({ showPoll, files });
+      contentType: chooseContentType({ showPoll, files }),
+      feeling,
+      activity,
+      activityDetail,
+      poll: pollPayload,
+      richText,
+    };
+  };
 
-      let feeling: string | null = null;
-      let activity: string | null = null;
-      let activityDetail: string | null = null;
+  /*
+    A journal title becomes the first line of the body for a FEED post (a
+    journal's heading is presentation, not the post's title field — see the
+    note beside the showJournal state); a group post sends it as its title.
+  */
+  const feedWireText = () => {
+    const titlePrefix = showJournal && journalTitle.trim() ? journalTitle.trim() + '\n\n' : '';
+    return (titlePrefix + text.trim()).trim();
+  };
 
-      if (mood) {
-        const activityLabels = ['Listening to', 'Watching', 'Playing', 'Reading', 'Travelling to', 'Eating at', 'Working on', 'Creating'];
-        const match = activityLabels.find((l) => mood.includes(l));
-        if (match) {
-          activity = match;
-          activityDetail = mood.split(match)[1]?.trim() || null;
-        } else {
-          feeling = mood;
-        }
+  /** The details as this post sends them: a journal's heading is its own, so the title field is not. */
+  const feedDetails = (): PostDetailsForm => (showJournal || showPoll ? { ...details, title: '' } : details);
+
+  const handleSaveDraft = useCallback(async () => {
+    if (isGroupMode || !canPost || isSubmitting || compose.savingDraft || draftBlocked) return;
+    if (!checkPoll()) return;
+    setError(null);
+    try {
+      await compose.saveDraft({ text: feedWireText(), details: feedDetails(), media: feedMedia.media, extras: buildExtras() });
+      toast({ type: 'success', title: 'Saved to drafts', description: 'Open Drafts from the create page to finish it.' });
+      onClose();
+    } catch (err: unknown) {
+      setError(refusalCopy(serverCode(err), serverMessage(err), "The draft couldn't be saved. Try again."));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [background, canPost, compose, details, draftBlocked, feedMedia.media, isGroupMode, isSubmitting, journalTitle, mood, onClose, poll, richDoc, showJournal, showPoll, text, toast]);
+
+  const handleSubmit = useCallback(async () => {
+    if (!canPost || isSubmitting || compose.savingDraft) return;
+    if (isGroupMode && isAnonymous && group?.allow_anonymous_posts !== true) {
+      setError('Anonymous posting is unavailable in this group. Turn it off only if you want to post with your profile.');
+      return;
+    }
+
+    // Frontend poll validation — never let an invalid poll hit the backend.
+    if (!checkPoll()) return;
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const extras = buildExtras();
+
+      if (!groupId) {
+        /*
+          A feed post: the details form's media (uploaded once, ids kept for a
+          retry), its alt texts, and one Idempotency-Key per attempt — all in
+          useComposeSubmit, the same path as the full-page composer.
+        */
+        await compose.publish({ text: feedWireText(), details: feedDetails(), media: feedMedia.media, extras });
+        // Says the write landed even when the reader has scrolled away from the
+        // top of the feed, where the new card is.
+        toast({ type: 'success', title: 'Posted' });
+        onClose();
+        return;
       }
 
-      const durationMap: Record<string, number> = { '1d': 24, '3d': 72, '7d': 168 };
-      const pollPayload = showPoll
-        ? {
-            question: text.trim() || 'Untitled Poll',
-            options: poll.options.filter((o) => o.trim()),
-            allows_multiple: poll.allowMultiple,
-            duration_hours: durationMap[poll.duration] || 24,
-          }
-        : null;
-
-      /*
-        How the post looks, and its rich body, in one JSON object.
-        post-service stores rich_text as arbitrary JSON and hands it back on
-        read, so both survive the round trip with no backend change.
-
-        Null when there is nothing to say: an ordinary text post should not
-        carry a style object at all.
-      */
-      const richText: PostRichText | null = (() => {
-        const styled = hasColorBg && background;
-        if (!styled && !richDoc) return null;
-        const value: PostRichText = {};
-        if (styled) {
-          value.background = background;
-          value.text_color = onDark ? '#ffffff' : '#111111';
-        }
-        if (richDoc) {
-          value.format = 'tiptap';
-          value.doc = richDoc;
-          // The heading is typed outside the editor, so the document does not
-          // contain it. Carried here, it is what the card draws above the body.
-          const heading = journalTitle.trim();
-          if (showJournal && heading) value.title = heading;
-        }
-        return value;
-      })();
+      let mediaIds: string[] | undefined;
+      if (files.length > 0) {
+        const uploaded = await Promise.all(
+          files.map(async (file) => {
+            const fileType: 'image' | 'video' = file.type.startsWith('video') ? 'video' : 'image';
+            return { media_id: await uploadMedia(file, fileType, 'general'), kind: fileType };
+          }),
+        );
+        mediaIds = uploaded.map((m) => m.media_id);
+      }
 
       // Merge any pending hashtag draft so users who type then click POST
       // without pressing Enter don't lose their tag.
@@ -467,122 +569,72 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
       })();
 
       /*
-        post-service extracts hashtags from the post body via regex, so the
-        chip-entered tags are appended to the wire text for a feed post. The
-        user's typing surface stays free of stray "#" characters; only the
-        persisted body carries them.
+        THE DEFECT THIS BRANCH CLOSES.
 
-        NOT for a group post. group-service has no hashtag extraction at all —
-        there is no such code in the service — so the suffix would be dead text
-        that duplicates the chips the card draws from type_payload. The tags go
-        in type_payload for a group post, and nowhere else.
+        The group path used to forward body / title / content_type /
+        attachments and nothing else, so a place, a feeling, an activity and
+        hashtags were collected by this dialog, dropped by the mutation, and
+        confirmed with a success toast. group-service takes an opaque
+        `type_payload`, so they survive with no backend change — and the card
+        draws them back, which is the only way this fix is visible rather than
+        merely present.
+
+        group-service has no hashtag extraction at all, so the tags go in
+        type_payload and nowhere else. A group post has a real `title` field,
+        which both group cards render as a heading, so a journal's heading is
+        sent as the title and not prefixed to the body as well.
       */
-      const tagSuffix = finalHashtags.length > 0 && !isGroupMode
-        ? ' ' + finalHashtags.map((t) => `#${t}`).join(' ')
-        : '';
-      /*
-        A journal title becomes the first line of the body for a FEED post:
-        post-service has no title column for a post, so this is presentation,
-        not a new object — see the note beside the showJournal state.
+      const typePayload = buildGroupTypePayload({
+        feeling: extras.feeling ?? null,
+        activity: extras.activity ?? null,
+        activityDetail: extras.activityDetail ?? null,
+        location: location.trim(),
+        hashtags: finalHashtags,
+      });
 
-        A group post has a real `title` field, which both group cards render as
-        a heading, so in group mode the title is sent as a title. Prefixing it
-        as well would print the heading twice.
-      */
-      const titlePrefix = showJournal && journalTitle.trim() && !isGroupMode
-        ? journalTitle.trim() + '\n\n'
-        : '';
-      const wireText = (titlePrefix + text.trim() + tagSuffix).trim();
+      // Deduped, minus this group, capped — computed the way the server
+      // computes it, so the cap is never learned from a 400.
+      const alsoPostTo = normalizeCrossPostTargets(
+        crossPostTo.map((c) => c.id),
+        groupId,
+      );
 
-      if (groupId) {
-        /*
-          THE DEFECT THIS BRANCH CLOSES.
+      const outcome = await createGroupPost.mutateAsync({
+        groupId,
+        body: text.trim(),
+        content_type: extras.contentType,
+        title: showJournal && journalTitle.trim() ? journalTitle.trim() : undefined,
+        type_payload: typePayload,
+        attachments: mediaIds,
+        is_anonymous: effectiveIsAnonymous(isAnonymous, group?.allow_anonymous_posts),
+        also_post_to: alsoPostTo,
+        // Always sent, not only when cross-posting: it costs nothing and it
+        // is REQUIRED the moment alsoPostTo is non-empty.
+        idempotency_key: createKey.current(),
+      });
 
-          The group path used to forward body / title / content_type /
-          attachments and nothing else, so a place, a feeling, an activity and
-          hashtags were collected by this dialog, dropped by the mutation, and
-          confirmed with a success toast. group-service takes an opaque
-          `type_payload`, so they survive with no backend change — and the card
-          draws them back, which is the only way this fix is visible rather than
-          merely present.
-        */
-        const typePayload = buildGroupTypePayload({
-          feeling,
-          activity,
-          activityDetail,
-          location: location.trim(),
-          hashtags: finalHashtags,
-        });
-
-        // Deduped, minus this group, capped — computed the way the server
-        // computes it, so the cap is never learned from a 400.
-        const alsoPostTo = normalizeCrossPostTargets(
-          crossPostTo.map((c) => c.id),
-          groupId,
-        );
-
-        const outcome = await createGroupPost.mutateAsync({
-          groupId,
-          body: wireText,
-          content_type: contentType,
-          title: showJournal && journalTitle.trim() ? journalTitle.trim() : undefined,
-          type_payload: typePayload,
-          attachments: mediaIds,
-          is_anonymous: effectiveIsAnonymous(isAnonymous, group?.allow_anonymous_posts),
-          also_post_to: alsoPostTo,
-          // Always sent, not only when cross-posting: it costs nothing and it
-          // is REQUIRED the moment alsoPostTo is non-empty.
-          idempotency_key: createKey.current(),
-        });
-
-        createKey.reset();
-
-        if (outcome.kind === 'batch') {
-          /*
-            A partial success must be visible, and the spaces that refused are
-            named. That is right here and wrong for the invite batch: an invite
-            refusal identifies a PERSON who blocked you, while these are spaces
-            the author picked themselves.
-          */
-          const byId = new Map<string, string>([
-            [groupId, group?.name || 'This space'],
-            ...crossPostTo.map((c) => [c.id, c.name] as const),
-          ]);
-          const summary = summariseCrossPost(outcome.result, (id) => byId.get(id));
-          toast({
-            type: summary.ok ? 'success' : 'warning',
-            title: summary.title,
-            description: summary.description || undefined,
-          });
-        } else {
-          toast({ type: 'success', title: 'Posted' });
-        }
-        onClose();
-        return;
-      }
-
-      const payload = {
-        text: wireText,
-        visibility,
-        content_type: contentType,
-        media_ids: mediaIds,
-        feeling,
-        activity,
-        activity_detail: activityDetail,
-        location: location.trim() || null,
-        poll: pollPayload,
-        rich_text: richText,
-        hashtags: finalHashtags.length > 0 ? finalHashtags : undefined,
-        idempotencyKey: createKey.current(),
-        media: mediaWithKinds,
-      };
-
-      await createPost.mutateAsync(payload);
-      // The intent is done; the next composer session gets its own key.
       createKey.reset();
-      // Says the write landed even when the reader has scrolled away from the
-      // top of the feed, where the new card is.
-      toast({ type: 'success', title: 'Posted' });
+
+      if (outcome.kind === 'batch') {
+        /*
+          A partial success must be visible, and the spaces that refused are
+          named. That is right here and wrong for the invite batch: an invite
+          refusal identifies a PERSON who blocked you, while these are spaces
+          the author picked themselves.
+        */
+        const byId = new Map<string, string>([
+          [groupId, group?.name || 'This space'],
+          ...crossPostTo.map((c) => [c.id, c.name] as const),
+        ]);
+        const summary = summariseCrossPost(outcome.result, (id) => byId.get(id));
+        toast({
+          type: summary.ok ? 'success' : 'warning',
+          title: summary.title,
+          description: summary.description || undefined,
+        });
+      } else {
+        toast({ type: 'success', title: 'Posted' });
+      }
       onClose();
     } catch (err: unknown) {
       if (isGroupMode && anonymousAttachmentRefusal(err)) {
@@ -591,16 +643,12 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         toast({ type: 'error', title: 'Try again', description: message });
         return;
       }
-      let message = 'Failed to create post. Try again.';
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosErr = err as { response?: { data?: { error?: { message?: string } } } };
-        if (axiosErr.response?.data?.error?.message) message = axiosErr.response.data.error.message;
-      }
-      setError(message);
+      setError(refusalCopy(serverCode(err), serverMessage(err), 'Failed to create post. Try again.'));
     } finally {
       setIsSubmitting(false);
     }
-  }, [background, canPost, createGroupPost, createKey, createPost, crossPostTo, files, group, groupId, hashtagDraft, hashtags, hasColorBg, isAnonymous, isGroupMode, isSubmitting, journalTitle, location, mood, onClose, onDark, poll, showJournal, showPoll, text, toast, visibility]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [background, canPost, compose, createGroupPost, createKey, crossPostTo, details, feedMedia.media, files, group, groupId, hashtagDraft, hashtags, hasColorBg, isAnonymous, isGroupMode, isSubmitting, journalTitle, location, mood, onClose, onDark, poll, richDoc, showJournal, showPoll, text, toast]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -610,8 +658,6 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
     return () => window.removeEventListener('keydown', handleKey);
   }, [handleSubmit]);
 
-  const visOption = VIS_OPTIONS.find((v) => v.value === visibility) ?? VIS_OPTIONS[0];
-  const VisIcon = visOption.Icon;
 
   /*
     The tiles, and the modes behind them.
@@ -669,18 +715,17 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
     setShowJournal(true);
   };
 
-  const hasVideoFile = files.some((f) => f.type.startsWith('video'));
   const tiles = [
     {
       key: 'photo', fg: 'text-tile-photo', label: 'Photo', Icon: ImageIcon, title: 'Add photos',
-      active: files.length > 0 && !hasVideoFile,
-      disabled: files.length >= 10,
+      active: mediaCount > 0 && !hasVideoFile,
+      disabled: mediaCount >= 10,
       onClick: () => chooseMode('photo'),
     },
     {
       key: 'video', fg: 'text-tile-video', label: 'Video', Icon: VideoIcon, title: 'Add a video',
       active: hasVideoFile,
-      disabled: files.length >= 10,
+      disabled: mediaCount >= 10,
       onClick: () => chooseMode('video'),
     },
     {
@@ -721,6 +766,13 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
       field on the wire, and `@username` as plain body text links nowhere.
     */
     if (isGroupMode && tile.key === 'poll') return false;
+    /*
+      A feed post sets its place in the Location row and its tags in the
+      description ("# Hashtags"), so the two tiles would be a second way to
+      do the same thing. A group post keeps them: its place and tags go in
+      type_payload, which the details rows do not write.
+    */
+    if (!isGroupMode && (tile.key === 'place' || tile.key === 'tag')) return false;
     return true;
   });
 
@@ -856,7 +908,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               A chip, not a menu. A group post ignores the audience selector
               entirely — group-service decides who can see it from the group's
               own privacy and membership — so offering public / followers /
-              trusted / only-me here would be a control that changes nothing,
+              only-me here would be a control that changes nothing,
               which is a lie about how the post will be seen.
             */
             <span
@@ -870,46 +922,21 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               <span className="truncate">{group?.name || 'This space'}</span>
             </span>
           ) : (
-          <div className="relative">
+            /*
+              Who can view a feed post is the Audience row in the details below
+              (Everyone, Followers, Friends, Only you). Its place here is the way
+              to the author's saved drafts.
+            */
             <button
               type="button"
-              onClick={() => setShowVisMenu((v) => !v)}
+              onClick={() => { onClose(); router.push('/create/drafts'); }}
+              aria-label="Your drafts"
+              title="Your drafts"
               className="flex items-center gap-1.5 rounded-full bg-brand-secondary border border-brand-divider px-3.5 py-2 text-[11px] font-medium tracking-wider text-brand-text shadow-xs transition hover:bg-brand-secondary/80"
             >
-              <VisIcon className="h-3.5 w-3.5 text-primary-ink" />
-              {visOption.label}
-              <ChevronDown className="h-3 w-3 text-brand-text/60" />
+              <FileText className="h-3.5 w-3.5 text-primary-ink" aria-hidden="true" />
+              Drafts
             </button>
-            <AnimatePresence>
-              {showVisMenu && (
-                <motion.div
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-full z-30 mt-1 w-44 overflow-hidden rounded-xl border border-brand-divider bg-brand-card shadow-xl"
-                >
-                  {VIS_OPTIONS.map((opt) => {
-                    const Icon = opt.Icon;
-                    const active = opt.value === visibility;
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => { setVisibility(opt.value); setShowVisMenu(false); }}
-                        className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-medium transition-colors ${
-                          active ? 'bg-brand-secondary text-primary-ink' : 'text-brand-text hover:bg-brand-secondary'
-                        }`}
-                      >
-                        <Icon className="h-3.5 w-3.5" />
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
           )}
           <button
             type="button"
@@ -961,6 +988,13 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
               here exactly as PostCard will apply them once posted, so what
               you compose is what appears in the feed.
             */}
+            {/* A feed post's title sits above the card, outside its colours.
+                A journal entry has its own heading inside the card. */}
+            {!isGroupMode && !showJournal && (
+              <div className="mb-3 border-b border-brand-divider pb-2">
+                <TitleField value={details.title} onChange={(title) => patchDetails({ title })} disabled={isSubmitting} />
+              </div>
+            )}
             <div
               className={`rounded-[20px] transition-colors duration-300 ${
                 showJournal
@@ -1031,8 +1065,8 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                 {charCount.toLocaleString()} / {maxChars.toLocaleString()}
               </div>
 
-              {/* Media previews */}
-              {previews.length > 0 && (
+              {/* Media previews (a group post's files; a feed post uses the strip below) */}
+              {isGroupMode && previews.length > 0 && (
                 <div
                   className={`mt-3 grid gap-1.5 ${
                     previews.length === 1 ? 'grid-cols-2' : previews.length <= 4 ? 'grid-cols-3' : 'grid-cols-4'
@@ -1062,6 +1096,18 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                   >
                     <Plus className="h-5 w-5 text-muted-foreground" />
                   </button>
+                </div>
+              )}
+              {!isGroupMode && feedMedia.media.length > 0 && (
+                <div className="mt-3">
+                  <MediaStrip
+                    media={feedMedia.media}
+                    coverIndex={details.coverIndex}
+                    onCover={(coverIndex) => patchDetails({ coverIndex })}
+                    onRemove={removeFeedMedia}
+                    onAdd={() => openPicker(hasVideoFile ? 'image/*,video/*' : 'image/*')}
+                    disabled={isSubmitting || compose.savingDraft}
+                  />
                 </div>
               )}
               </div>
@@ -1185,6 +1231,30 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
             </div>
           )}
 
+          {/*
+            The details step (post screens parity): "# Hashtags" and "@ Mention"
+            write into the description, then Location, Add link, who can view
+            and More options. Shared with the full-page composer.
+          */}
+          {!isGroupMode && (
+            <div className="space-y-2 px-6 pt-3" data-compose="details">
+              {!showPoll && !showJournal && (
+                <CaptionHelpers
+                  disabled={isSubmitting}
+                  onInsertHashtag={() => editCaption((current, caret) => insertHashMark(current, caret))}
+                  onPickMention={(username) => editCaption((current, caret) => insertMention(current, username, caret))}
+                />
+              )}
+              <DetailRows
+                details={details}
+                onDetails={patchDetails}
+                media={feedMedia.media}
+                onAltText={feedMedia.setAltText}
+                disabled={isSubmitting || compose.savingDraft}
+              />
+            </div>
+          )}
+
           {isGroupMode && groupId && (
             <>
               <div className="composer-group-options">
@@ -1249,6 +1319,16 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         */}
         <div className="post-composer__footer mt-3 flex shrink-0 items-center justify-end gap-3 border-t border-brand-divider px-6 py-3.5">
 
+          {!isGroupMode ? (
+            <ComposeActions
+              onDrafts={handleSaveDraft}
+              onPost={handleSubmit}
+              canPost={canPost}
+              posting={isSubmitting}
+              savingDraft={compose.savingDraft}
+              draftBlocked={draftBlocked}
+            />
+          ) : (
           <button
             type="button"
             onClick={handleSubmit}
@@ -1262,15 +1342,14 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
             )}
             {isSubmitting ? 'Posting…' : 'Post'}
           </button>
+          )}
         </div>
 
         {/*
-          The footer status bar is gone. It said "Auto-saved as draft", and
-          nothing was: post-service has no draft route and this component
-          never called one, so the reassurance was false — close the dialog
-          and the text was lost. The character count it also carried now sits
-          inside the writing card, where the words are. If drafts are wanted,
-          that is a backend route first.
+          Drafts are explicit: the Drafts button saves a server draft
+          (/v1/posts/drafts) and the header's Drafts opens the list. Nothing
+          is saved behind the author's back, so nothing claims it was. The
+          character count sits inside the writing card, where the words are.
         */}
 
         <input

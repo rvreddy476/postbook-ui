@@ -3,13 +3,17 @@
 
   GET /v1/feed/reels returns feed-service HydratedPost rows. Only short-form
   belongs on this page: the server already limits candidates to flick/reel,
-  but the 5-minute cap is enforced on the client too (exactly as the Android
+  but the 10-minute Shorts cap is enforced on the client too (exactly as the Android
   reels screen does), because post-service only checks the cap on a category
   override, not on create. A long video or a feed post never reaches the
   stage, whatever the server sends.
 */
 
-export const REEL_MAX_DURATION_MS = 5 * 60 * 1000;
+import { disclosuresFromWire, type Disclosures } from "@/lib/disclosures";
+import { SHORTS_MAX_DURATION_MS } from "@/lib/videoLimits";
+
+/** The Shorts boundary (10 minutes, inclusive), from the one constant in lib/videoLimits. */
+export const REEL_MAX_DURATION_MS = SHORTS_MAX_DURATION_MS;
 export const SHORT_FORM_TYPES = new Set(["flick", "reel", "short"]);
 
 /** A media row as feed-service hydrates it. Only the fields the stage reads. */
@@ -86,6 +90,10 @@ export interface FeedReelPost {
   remix_setting?: string | null;
   original_audio_volume?: number | null;
   overlay_audio_volume?: number | null;
+  /** Creator disclosures (feed-service HydratedPost, never omitted). */
+  ai_generated?: boolean;
+  paid_promotion?: boolean;
+  altered_content?: boolean;
 }
 
 /** The added sound a reel plays, normalised. */
@@ -138,6 +146,8 @@ export interface ReelItem {
    * sounds.ts adds that, because the model does not know the viewer.
    */
   soundReuseAllowed: boolean;
+  /** AI-generated / paid promotion / altered content, shown as labels on the reel. */
+  disclosures?: Disclosures;
   media: {
     mediaId: string;
     width: number;
@@ -173,7 +183,7 @@ export function primaryVideo(post: FeedReelPost): FeedMedia | null {
 
 /**
   isShortForm decides whether a row belongs on the reels stage: a video, of a
-  short-form content type, at most five minutes long. `content_type` wins
+  short-form content type, at most ten minutes long. `content_type` wins
   over `feed_content_type` because it is the post's own classification.
 */
 export function isShortForm(post: FeedReelPost): boolean {
@@ -268,6 +278,7 @@ export function toReelItem(post: FeedReelPost): ReelItem | null {
     originalVolume: wireVolume(post.original_audio_volume),
     overlayVolume: wireVolume(post.overlay_audio_volume),
     soundReuseAllowed: (post.remix_setting || "").toLowerCase() !== "disallow",
+    disclosures: disclosuresFromWire(post),
     media: {
       mediaId: video.media_id,
       width: video.width ?? 1080,
@@ -314,7 +325,16 @@ export function formatClock(ms: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export function reelPermalink(id: string): string {
-  if (typeof window === "undefined") return `/reels/${id}`;
-  return `${window.location.origin}/reels/${id}`;
+/**
+ * The link Share and Copy link hand out for a reel: the public post
+ * permalink, `/post/<id>` (a reel is a post). /post/ is a public prefix in
+ * middleware and post-service's direct read gates visibility, so a
+ * signed-out recipient can open a public reel while a private one reads
+ * "Post not found". `/reels/<id>` stays as the in-app route to the stage,
+ * which needs a session, so it is not what goes out.
+ */
+export function reelPermalink(id: string, origin?: string): string {
+  const path = `/post/${encodeURIComponent(id)}`;
+  const base = origin ?? (typeof window === "undefined" ? "" : window.location?.origin ?? "");
+  return `${base}${path}`;
 }

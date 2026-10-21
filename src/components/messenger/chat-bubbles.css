@@ -1,0 +1,19 @@
+/*
+  Outgoing bubble colours (lib/chat/bubbleStyle.ts). Values are tokens in
+  src/ui/theme.css; nothing here names a colour of its own.
+*/
+.chat-bubble--ocean { background: rgb(var(--theme-bubble-ocean)); color: rgb(var(--theme-on-bubble)); }
+.chat-bubble--ember { background: rgb(var(--theme-bubble-ember)); color: rgb(var(--theme-on-bubble)); }
+.chat-bubble--forest { background: rgb(var(--theme-bubble-forest)); color: rgb(var(--theme-on-bubble)); }
+.chat-bubble--violet { background: rgb(var(--theme-bubble-violet)); color: rgb(var(--theme-on-bubble)); }
+.chat-bubble--mono { background: rgb(var(--theme-bubble-mono)); color: rgb(var(--theme-on-bubble)); }
+
+.chat-swatch--default { background: rgb(var(--brand-ink)); }
+.chat-swatch--ocean { background: rgb(var(--theme-bubble-ocean)); }
+.chat-swatch--ember { background: rgb(var(--theme-bubble-ember)); }
+.chat-swatch--forest { background: rgb(var(--theme-bubble-forest)); }
+.chat-swatch--violet { background: rgb(var(--theme-bubble-violet)); }
+.chat-swatch--mono { background: rgb(var(--theme-bubble-mono)); }
+
+/* Sensitive media: blurred until tapped (dm_sensitive_media_filter; always in requests). */
+.chat-media--blurred { filter: blur(24px); transform: scale(1.05); }

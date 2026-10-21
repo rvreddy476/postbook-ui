@@ -63,7 +63,7 @@
    Logo row at y 20, 28 tall; search pill x 16, y 64, 208×40; the list from y 128 in 40px
    rows with a 4px gap; footer at the bottom behind 24px of padding. The rail is 72 wide,
    icons only. The More panel is 320 wide beside the rail: 48px rows, 15/500, 16px in;
-   section labels 14/400 muted; the Dark mode row 60 tall with three 32×25 segments. */
+   section labels 14/400 muted. The appearance switch moved to /settings (17 Oct). */
 .video-nav[data-chrome="sidebar"] .video-nav__top { padding: 20px 16px 0 24px; gap: 8px; }
 .video-nav[data-chrome="sidebar"] .video-nav__brand { height: 28px; font-size: 20px; }
 .video-nav[data-chrome="sidebar"] .video-nav__toggle { width: 28px; height: 28px; border-radius: 6px; }
@@ -95,16 +95,6 @@
 .video-nav__column { display: flex; flex: 0 0 72px; width: 72px; flex-direction: column; min-height: 0; }
 .video-nav.is-more .video-more { flex: 0 0 320px; width: 320px; min-width: 0; border-left: 1px solid var(--brand-divider); }
 .video-nav[data-chrome="sidebar"] .video-more__head { padding: 20px 8px 8px 16px; }
-.video-nav[data-chrome="sidebar"] .video-more__scroll { padding: 0 0 16px; }
-.video-nav[data-chrome="sidebar"] .video-more .video-nav__section + .video-nav__section { margin-top: 4px; padding-top: 8px; }
-.video-nav[data-chrome="sidebar"] .video-more .video-nav__heading { margin: 0; padding: 8px 16px 4px; font-size: 14px; font-weight: 400; letter-spacing: 0; text-transform: none; color: rgb(var(--brand-text) / .6); }
-.video-nav[data-chrome="sidebar"] .video-more .video-nav__list { gap: 0; }
-.video-nav[data-chrome="sidebar"] .video-more .video-nav__item { height: 48px; padding: 0 16px; gap: 12px; border-radius: 0; font-size: 15px; font-weight: 500; color: rgb(var(--brand-text)); }
-.video-nav[data-chrome="sidebar"] .video-more .video-nav__item.is-current { color: rgb(var(--brand-text)); }
-.video-nav[data-chrome="sidebar"] .video-more__theme { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; height: 60px; padding: 0 16px; }
-.video-nav[data-chrome="sidebar"] .video-more__theme-label { gap: 12px; font-size: 15px; font-weight: 500; color: rgb(var(--brand-text)); }
-.video-nav[data-chrome="sidebar"] .video-more__segmented { grid-template-columns: repeat(3, 32px); gap: 0; padding: 0; height: 25px; border-radius: 6px; overflow: hidden; }
-.video-nav[data-chrome="sidebar"] .video-more__segment { width: 32px; height: 25px; border-radius: 6px; font-size: 10px; }
 
 /* The floating cluster over the main area's top-right: Create, notifications, account.
    A 40px pill, 4px padding, 6px gaps; inside it the Create pill is 32 tall (13/700, 16px icons),
@@ -134,19 +124,44 @@
 .video-more__title { margin: 0; font-size: 18px; font-weight: 750; letter-spacing: -.01em; }
 .video-more__close { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent; color: rgb(var(--brand-text) / .75); cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
 .video-more__close:hover { background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); }
-.video-more__scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 4px 12px 16px; }
-.video-more__logout { color: rgb(var(--danger)); }
-.video-more__logout:hover { color: rgb(var(--danger)); }
-.video-more__theme { display: flex; flex-direction: column; gap: 8px; padding: 6px 12px 8px; }
-.video-more__theme-label { display: flex; align-items: center; gap: 14px; font-size: 14px; font-weight: 500; color: rgb(var(--brand-text) / .82); }
-.video-more__segmented { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 3px; border-radius: 999px; background: rgb(var(--brand-secondary)); }
-.video-more__segment { height: 28px; border: 0; border-radius: 999px; background: transparent; font-size: 12px; font-weight: 600; color: rgb(var(--brand-text) / .65); cursor: pointer; transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease; }
-.video-more__segment:hover { color: rgb(var(--brand-text)); }
-.video-more__segment[aria-checked="true"] { background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); box-shadow: 0 1px 3px rgb(var(--brand-text) / .16); }
+.video-more__scroll { display: flex; flex: 1 1 auto; flex-direction: column; gap: 16px; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 4px 12px 16px; }
+/* Its own classes only: the rail's ".is-rail .video-nav__label { display: none }" must never
+   reach the panel (beside the rail it once showed icons only). */
+.video-more__section { display: flex; flex-direction: column; gap: 6px; }
+.video-more__heading { margin: 0; padding: 0 4px; font-size: 12px; font-weight: 600; letter-spacing: .02em; color: rgb(var(--brand-text) / .55); }
+/* Who you are */
+.video-more__profile { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); transition: background-color 120ms ease; }
+.video-more__profile:hover { background: rgb(var(--brand-tint)); }
+.video-more__avatar { display: flex; flex: 0 0 auto; width: 40px; height: 40px; align-items: center; justify-content: center; overflow: hidden; border-radius: 50%; background: rgb(var(--brand-accent) / .14); font-size: 16px; font-weight: 700; color: rgb(var(--brand-accent)); }
+.video-more__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.video-more__profile-text { display: flex; flex: 1 1 auto; flex-direction: column; min-width: 0; }
+.video-more__profile-name { overflow: hidden; font-size: 15px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.video-more__profile-handle { overflow: hidden; font-size: 12px; color: rgb(var(--brand-text) / .6); text-overflow: ellipsis; white-space: nowrap; }
+/* Apps as tiles: four across in the 320 panel, three in a narrower column */
+.video-more__tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.video-more__tile { display: flex; width: 100%; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px 8px; border: 0; border-radius: 12px; background: transparent; color: rgb(var(--brand-text)); cursor: pointer; transition: background-color 120ms ease; }
+.video-more__tile:hover { background: rgb(var(--brand-secondary)); }
+.video-more__tile-icon { display: flex; width: 44px; height: 44px; align-items: center; justify-content: center; border-radius: 14px; background: rgb(var(--brand-accent) / .1); color: rgb(var(--brand-accent)); }
+.video-more__tile-label { max-width: 100%; overflow: hidden; font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+/* Grouped lists: one card, rows divided by hairlines */
+.video-more__card { margin: 0; padding: 4px 0; overflow: hidden; border: 1px solid var(--brand-divider); border-radius: 14px; background: rgb(var(--brand-card)); list-style: none; }
+.video-more__card li + li { border-top: 1px solid var(--brand-divider); }
+.video-more__row { display: flex; width: 100%; height: 44px; align-items: center; gap: 12px; padding: 0 12px; border: 0; background: transparent; font-size: 14px; font-weight: 500; color: rgb(var(--brand-text)); text-align: left; cursor: pointer; transition: background-color 120ms ease; }
+.video-more__row:hover { background: rgb(var(--brand-secondary)); }
+.video-more__row-icon { display: flex; flex: 0 0 auto; width: 30px; height: 30px; align-items: center; justify-content: center; border-radius: 9px; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text) / .8); }
+.video-more__label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.video-more__chevron { flex: 0 0 auto; color: rgb(var(--brand-text) / .35); }
+.video-more__row:focus-visible, .video-more__tile:focus-visible, .video-more__profile:focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: -2px; }
+/* The legal links at the foot */
+.video-more__legal { margin: 0; padding: 0 4px; font-size: 12px; color: rgb(var(--brand-text) / .5); }
+.video-more__legal a { color: inherit; }
+.video-more__legal a:hover { color: rgb(var(--brand-text)); }
 
 /* ---- sidebar ---------------------------------------------------------- */
 .video-nav { display: flex; flex-direction: column; height: 100%; min-height: 0; color: rgb(var(--brand-text)); }
-.video-nav__scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 12px 12px 8px; }
+/* The side nav scrolls by wheel and touch without a bar of its own (2026-10-19): one scrollbar on the page, the main one. */
+.video-nav__scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding: 12px 12px 8px; }
+.video-nav__scroll::-webkit-scrollbar { display: none; }
 .video-nav__section + .video-nav__section { margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--brand-divider); }
 .video-nav__heading { margin: 0 0 4px; padding: 6px 12px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: rgb(var(--brand-text) / .55); }
 .video-nav__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -166,6 +181,9 @@
 .video-nav__item.is-soon:hover { background: transparent; color: rgb(var(--brand-text) / .45); }
 .video-nav__tag { flex: 0 0 auto; padding: 1px 6px; border-radius: 999px; font-size: 10px; font-weight: 700; line-height: 1.4; letter-spacing: .04em; text-transform: uppercase; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text) / .6); }
 .video-nav.is-rail .video-nav__tag { display: none; }
+/* The Activity unread count: a pill after the label; on the icon in the rail. */
+.video-nav__badge { flex: 0 0 auto; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; background: rgb(var(--danger)); color: rgb(var(--on-primary)); }
+.video-nav.is-rail .video-nav__badge { position: absolute; top: 2px; left: calc(50% + 4px); min-width: 16px; height: 16px; padding: 0 4px; font-size: 10px; line-height: 16px; }
 
 /* Rail: icon + 10px label, like a mini guide. */
 .video-nav.is-rail .video-nav__scroll { padding: 8px 6px; }
@@ -242,7 +260,7 @@
 
 /* ---- motion ----------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
-  .video-shell__sidebar, .video-nav__item, .video-nav__toggle, .video-nav__search-button, .video-shell__top-action, .video-more__close, .video-more__segment, .explore-launcher__tile, .trending-card__link { transition: none; }
+  .video-shell__sidebar, .video-nav__item, .video-nav__toggle, .video-nav__search-button, .video-shell__top-action, .video-more__close, .video-more__row, .video-more__tile, .video-more__profile, .explore-launcher__tile, .trending-card__link { transition: none; }
   .trending-card__row.is-skeleton * { animation: none; }
 }
 

@@ -26,6 +26,7 @@ const actionsBase = {
   onPass: noop,
   onQueue: noop,
   onAdd: noop,
+  onShare: noop,
   onMore: noop,
 };
 
@@ -69,11 +70,25 @@ describe("the RUTUBE layout", () => {
     const vote = html.slice(html.indexOf("tube-actions__vote"), html.indexOf('data-action="queue"'));
     expect(vote).toContain('data-action="love"');
     expect(vote).toContain('data-action="pass"');
-    expect(html).toContain(">Watch later<");
-    expect(html).toContain(">Add to collection<");
+    // Share, Watch later and Add to collection are icon buttons named for screen readers and on hover.
+    for (const name of ["Share", "Watch later", "Add to collection"]) expect(html).toContain(`aria-label="${name}" title="${name}"`);
     expect(html).toContain('aria-label="Like"');
     expect(html).toContain('aria-label="Dislike"');
     expect(html).not.toMatch(/Love|Pass|Queue/);
+    expect(html).toContain("lucide-thumbs-up");
+  });
+
+  test("a description that only repeats the title is not drawn twice", () => {
+    const html = renderToStaticMarkup(<WatchDetails {...detailsBase} description="rain on a tin roof " follow={null} actions={null} />);
+    expect(html.split("ain on a tin roof").length - 1).toBe(1);
+    // …and with no topic or tags either, there is nothing to "Show more".
+    const bare = renderToStaticMarkup(<WatchDetails {...detailsBase} topic={null} description="Rain on a tin roof" follow={null} actions={null} />);
+    expect(bare).not.toContain("Show more");
+  });
+
+  test("no Share button when the creator turned sharing off", () => {
+    const html = renderToStaticMarkup(<WatchActions {...actionsBase} onShare={undefined} />);
+    expect(html).not.toContain('data-action="share"');
   });
 
   test("liked and disliked light their own button only; Watch later lights when saved", () => {
@@ -83,7 +98,7 @@ describe("the RUTUBE layout", () => {
     const passed = renderToStaticMarkup(<WatchActions {...actionsBase} passed queued />);
     expect(passed).toContain('class="tube-actions__btn is-pass is-on" aria-pressed="true"');
     expect(passed).not.toContain("is-love is-on");
-    expect(passed).toContain('class="tube-actions__pill is-on" aria-pressed="true" data-action="queue"');
+    expect(passed).toContain('class="tube-actions__pill is-icon is-on" aria-pressed="true" aria-label="Remove from Watch later"');
   });
 
   test("details: title, the creator row with Subscribe and Thanks after the name, the actions, the about card", () => {
@@ -100,7 +115,7 @@ describe("the RUTUBE layout", () => {
     expect(noThanks).not.toContain('data-action="thanks"');
   });
 
-  test("More: the shared video menu (the same rows as the reels stage) in the choice-pane shell", () => {
+  test("More: the app's short list in the choice-pane shell", () => {
     const bare: WatchMoreInput = {
       channelName: "Ravi", isOwner: false, hasDescription: false, shareHidden: true, downloadAllowed: false,
       audioTrackCount: 1, hasCaptions: false, levels: [720], canOffline: true, canManageAudio: true,
@@ -122,30 +137,26 @@ describe("the RUTUBE layout", () => {
       expect([...at].sort((a, b) => a - b)).toEqual(at);
     };
 
+    // The app's short list (2026-10-19): Copy link, Description, Don't recommend, Report; Edit and Delete for the owner.
     const html = draw();
     expect(html).toContain("reel-more-menu tube-more-menu");
-    inOrder(html, ["block", "copy-link", "dont-recommend", "not-interested", "speed", "report"]);
-    for (const gone of ["edit", "delete", "manage-audio", "share", "offline", "audio", "captions", "quality", "description", "auto-scroll", "use-sound"]) {
+    inOrder(html, ["copy-link", "dont-recommend", "report"]);
+    for (const gone of ["block", "not-interested", "speed", "edit", "delete", "manage-audio", "share", "offline", "audio", "captions", "quality", "description", "auto-scroll", "use-sound"]) {
       expect(html).not.toContain(`data-row="${gone}"`);
     }
-    expect(html).toContain('class="reel-more-menu__value">1.5x<svg');
 
     const owner = draw({ isOwner: true });
-    inOrder(owner, ["manage-audio", "copy-link", "delete", "edit", "speed", "offline"]);
-    for (const gone of ["report", "block", "not-interested", "dont-recommend"]) expect(owner).not.toContain(`data-row="${gone}"`);
+    inOrder(owner, ["copy-link", "delete", "edit"]);
+    for (const gone of ["report", "block", "not-interested", "dont-recommend", "manage-audio", "offline", "speed"]) expect(owner).not.toContain(`data-row="${gone}"`);
 
     const full = draw({ hasDescription: true, shareHidden: false, downloadAllowed: true, audioTrackCount: 2, hasCaptions: true, levels: [720, 1080] });
-    inOrder(full, ["audio", "block", "captions", "copy-link", "description", "dont-recommend", "not-interested", "speed", "quality", "report", "offline", "share"]);
-    // The choice rows read the player's own state: the track, the caption language, the rung.
-    expect(full).toContain('class="reel-more-menu__value">Hindi<svg');
-    expect(full).toContain('class="reel-more-menu__value">EN<svg');
-    expect(full).toContain('class="reel-more-menu__value">720p<svg');
+    inOrder(full, ["copy-link", "description", "dont-recommend", "report"]);
   });
 });
 
 describe("the settings menu", () => {
-  test("rows in ascending order with the switches and the panes", () => {
-    const html = renderToStaticMarkup(
+  const menu = (extra: Partial<Parameters<typeof TubeSettingsMenu>[0]> = {}) =>
+    renderToStaticMarkup(
       <TubeSettingsMenu
         open
         onClose={noop}
@@ -164,17 +175,32 @@ describe("the settings menu", () => {
         sleepChoice="off"
         sleepSchedule={null}
         onSleep={noop}
+        onRestart={noop}
+        loop={{ on: false, onChange: noop }}
+        onCopyLink={noop}
+        {...extra}
       />,
     );
-    const marks = ['data-row="ambient"', 'data-row="audio"', 'data-row="autoplay"', 'data-row="captions"', 'data-row="keys"', 'data-row="speed"', 'data-row="quality"', 'data-row="sleep"', 'data-row="stable-volume"'];
+
+  test("RUTUBE's layout: a titled card, then Speed, Quality, Captions, Audio track, Autoplay, Ambient light, More", () => {
+    const html = menu();
+    expect(html).toContain(">Settings<");
+    expect(html).toContain('aria-label="Close settings"');
+    const marks = ['data-row="speed"', 'data-row="quality"', 'data-row="captions"', 'data-row="audio"', 'data-row="autoplay"', 'data-row="ambient"', 'data-row="more"'];
     const at = marks.map((m) => html.indexOf(m));
     for (const [i, pos] of at.entries()) expect(pos, marks[i]).toBeGreaterThan(-1);
     expect([...at].sort((a, b) => a - b)).toEqual(at);
     expect(html).toContain('role="menuitemcheckbox" aria-checked="true" data-row="ambient"');
     expect(html).toContain('role="menuitemcheckbox" aria-checked="true" data-row="autoplay"');
-    expect(html).toContain('role="menuitemcheckbox" aria-checked="false" data-row="stable-volume"');
-    expect(html).toContain('class="reel-more-menu__value">Off<svg');
+    // The rest lives under More.
+    for (const row of ["sleep", "stable-volume", "keys", "restart", "loop", "copy-link"]) expect(html).not.toContain(`data-row="${row}"`);
     expect(html).toContain("reel-more-menu tube-settings-menu");
+  });
+
+  test("captions and audio track are listed only when the video offers a choice", () => {
+    const html = menu({ captions: [], audioTracks: { options: [{ id: "original", label: "Original" }], current: "original", onChange: noop } });
+    expect(html).not.toContain('data-row="captions"');
+    expect(html).not.toContain('data-row="audio"');
   });
 });
 

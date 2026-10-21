@@ -62,7 +62,7 @@
 .tube-library__thumb-empty { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 11px; color: rgb(var(--reel-on-stage) / .6); }
 .tube-library__duration { position: absolute; right: 4px; bottom: 4px; padding: 1px 5px; border-radius: 4px; font-size: 10px; font-weight: 600; font-variant-numeric: tabular-nums; background: rgb(var(--reel-stage) / .85); color: rgb(var(--reel-on-stage)); }
 .tube-library__progress { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgb(var(--reel-on-stage) / .3); }
-.tube-library__progress > span { display: block; height: 100%; background: rgb(var(--brand-accent)); }
+.tube-library__progress > span { display: block; height: 100%; background: rgb(var(--playhead)); }
 .tube-library__progress.is-done > span { background: rgb(var(--success)); }
 .tube-library__body { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
 .tube-library__row-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 13px; font-weight: 600; line-height: 1.3; color: rgb(var(--brand-text)); text-decoration: none; }

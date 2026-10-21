@@ -5,8 +5,11 @@ import Link from "next/link";
 import { HandHeart, Lock, Radio, ShieldAlert } from "lucide-react";
 
 import { Avatar } from "@/components/LetterAvatar";
+import { DisclosureBadges } from "@/components/DisclosureBadges";
+import type { Disclosures } from "@/lib/disclosures";
 
-import { formatCount, formatDuration, timeAgo } from "../../model";
+import { formatCount, formatDuration, subscribersLabel, timeAgo, viewsLabel } from "../../model";
+import { postTimeTitle } from "@/lib/postTime";
 import type { Chapter } from "../chapters";
 import type { AgeGate, WatchRelatedPost } from "../watchApi";
 import { descriptionSegments } from "../linkify";
@@ -50,6 +53,8 @@ export interface WatchDetailsProps {
   related?: WatchRelatedPost | null;
   /** The More menu's Description row: each new value above 0 opens the about card and scrolls to it. */
   revealAbout?: number;
+  /** Creator disclosures (AI-generated, paid promotion, altered content), labels under the title. */
+  disclosures?: Disclosures | null;
 }
 
 export function WatchDetails({
@@ -69,11 +74,14 @@ export function WatchDetails({
   chapters,
   currentChapter,
   onSeek,
-  description,
+  description: rawDescription,
   hashtags,
   related = null,
   revealAbout = 0,
+  disclosures = null,
 }: WatchDetailsProps) {
+  // A description that only repeats the title is not drawn twice (founder, 2026-10-19).
+  const description = rawDescription.trim().toLowerCase() === title.trim().toLowerCase() ? "" : rawDescription;
   const [expanded, setExpanded] = useState(false);
   const aboutRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -87,35 +95,39 @@ export function WatchDetails({
   return (
     <section className="tube-details" aria-label="About this video">
       <h1 className="tube-details__title">{title}</h1>
+      <DisclosureBadges disclosures={disclosures} className="mt-1.5" />
 
-      <div className="tube-creator">
-        <Link href={channelHref} className="tube-creator__link">
-          <span className="tube-creator__avatar">
-            <Avatar src={channelAvatar ?? ""} name={channelName} seed={authorId} size="md" />
+      {/* The channel and the buttons on one line, as on RUTUBE (2026-10-19); they wrap on a narrow screen. */}
+      <div className="tube-meta-row">
+        <div className="tube-creator">
+          <Link href={channelHref} className="tube-creator__link">
+            <span className="tube-creator__avatar">
+              <Avatar src={channelAvatar ?? ""} name={channelName} seed={authorId} size="md" />
+            </span>
+            <span className="min-w-0">
+              <p className="tube-creator__name">{channelName}</p>
+              <p className="tube-creator__followers">{subscribersLabel(followerCount)}</p>
+            </span>
+          </Link>
+          <span className="tube-creator__buttons">
+            {follow}
+            {onThanks ? (
+              <button type="button" className="tube-creator__thanks" onClick={onThanks} data-action="thanks">
+                <HandHeart size={16} /> Thanks
+              </button>
+            ) : null}
           </span>
-          <span className="min-w-0">
-            <p className="tube-creator__name">{channelName}</p>
-            <p className="tube-creator__followers">{formatCount(followerCount)} subscribers</p>
-          </span>
-        </Link>
-        <span className="tube-creator__buttons">
-          {follow}
-          {onThanks ? (
-            <button type="button" className="tube-creator__thanks" onClick={onThanks} data-action="thanks">
-              <HandHeart size={16} /> Thanks
-            </button>
-          ) : null}
-        </span>
+        </div>
+
+        {actions}
       </div>
-
-      {actions}
 
       <ChapterStrip chapters={chapters} currentIndex={currentChapter} onSeek={onSeek} />
 
       <div ref={aboutRef} className="tube-about" data-expanded={expanded ? "" : undefined}>
         <p className="tube-about__meta">
-          <span>{formatCount(viewCount)} views</span>
-          {publishedAt ? <span>· {timeAgo(publishedAt)}</span> : null}
+          <span>{viewsLabel(viewCount)}</span>
+          {publishedAt ? <span>· <time dateTime={publishedAt} title={postTimeTitle(publishedAt)}>{timeAgo(publishedAt)}</time></span> : null}
           {source === "live" ? (
             <span className="tube-about__live">
               <Radio size={12} /> From a live stream
@@ -125,9 +137,8 @@ export function WatchDetails({
         {expanded ? (
           <>
             <hr className="tube-about__rule" />
+            {/* The title is already the heading above; only the topic is new here. */}
             <dl className="tube-about__facts">
-              <dt>Title</dt>
-              <dd>{title}</dd>
               {topic ? (
                 <>
                   <dt>Topic</dt>
@@ -178,9 +189,12 @@ export function WatchDetails({
           </p>
         ) : null}
         {related ? <RelatedCard related={related} /> : null}
-        <button type="button" className="tube-about__toggle" onClick={() => setExpanded((e) => !e)} aria-expanded={expanded}>
-          {expanded ? "Collapse" : "Show more"}
-        </button>
+        {/* Only when there is something more to show (2026-10-19). */}
+        {description || tags.length > 0 || topic ? (
+          <button type="button" className="tube-about__toggle" onClick={() => setExpanded((e) => !e)} aria-expanded={expanded}>
+            {expanded ? "Collapse" : "Show more"}
+          </button>
+        ) : null}
       </div>
     </section>
   );

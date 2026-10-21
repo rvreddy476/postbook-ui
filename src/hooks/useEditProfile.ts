@@ -3,7 +3,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
 import { uploadMedia } from "@/lib/mediaUpload"
-import type { UserProfile, UserLink, ProfileLink, Follow } from "@/types/profile"
+import type { UserProfile, UserLink, ProfileLink } from "@/types/profile"
+import { GRAPH_ROUTES, graphUserIdBody } from "@/lib/graphApi"
+import { resolveUserId } from "@/hooks/useConnections"
 
 // Backend returns user_id, frontend expects id — normalize once at the data layer
 function normalizeProfile(raw: Record<string, unknown>): UserProfile {
@@ -167,30 +169,56 @@ export function useDeleteProfileLink() {
     })
 }
 
-// Follow
-export function useFollowUser() {
+// Follow / unfollow — graph-service owns the follow edge (lib/graphApi.ts).
+// Callers pass a user id or a username; graph-service needs the id.
+
+/** What a follow did: "followed", or "requested" for a private account. */
+export interface FollowResult {
+    status: string
+}
+
+export interface FollowMutationOptions {
+    /**
+     * Leave the follower/following lists on screen as they are: they are
+     * marked stale but not refetched, so a row the viewer just unfollowed
+     * stays in their Following list showing "Follow" (Instagram/TikTok).
+     */
+    keepListsInPlace?: boolean
+}
+
+function invalidateAfterFollowChange(qc: ReturnType<typeof useQueryClient>, options?: FollowMutationOptions) {
+    qc.invalidateQueries({ queryKey: ["profile"] })
+    qc.invalidateQueries({ queryKey: ["aggregated-profile"] })
+    qc.invalidateQueries({ queryKey: ["relationship"] })
+    qc.invalidateQueries({ queryKey: ["relationships", "batch"] })
+    qc.invalidateQueries({ queryKey: ["connections"], refetchType: options?.keepListsInPlace ? "none" : "active" })
+}
+
+/** POST /v1/graph/follow { user_id } — the request useFollowUser sends. */
+export async function followUser(usernameOrId: string): Promise<FollowResult> {
+    const userId = await resolveUserId(usernameOrId)
+    const res = await api.post<{ data: FollowResult }>(GRAPH_ROUTES.follow, graphUserIdBody(userId))
+    return res.data.data
+}
+
+/** POST /v1/graph/unfollow { user_id } — the request useUnfollowUser sends. */
+export async function unfollowUser(usernameOrId: string): Promise<void> {
+    const userId = await resolveUserId(usernameOrId)
+    await api.post(GRAPH_ROUTES.unfollow, graphUserIdBody(userId))
+}
+
+export function useFollowUser(options?: FollowMutationOptions) {
     const qc = useQueryClient()
     return useMutation({
-        mutationFn: async (username: string) => {
-            const res = await api.post<{ data: Follow }>(`/v1/profiles/${username}/follow`)
-            return res.data.data
-        },
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ["profile"] })
-            qc.invalidateQueries({ queryKey: ["aggregated-profile"] })
-        },
+        mutationFn: followUser,
+        onSuccess: () => invalidateAfterFollowChange(qc, options),
     })
 }
 
-export function useUnfollowUser() {
+export function useUnfollowUser(options?: FollowMutationOptions) {
     const qc = useQueryClient()
     return useMutation({
-        mutationFn: async (username: string) => {
-            await api.delete(`/v1/profiles/${username}/follow`)
-        },
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ["profile"] })
-            qc.invalidateQueries({ queryKey: ["aggregated-profile"] })
-        },
+        mutationFn: unfollowUser,
+        onSuccess: () => invalidateAfterFollowChange(qc, options),
     })
 }

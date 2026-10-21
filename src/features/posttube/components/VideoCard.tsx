@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Play, Eye, MessageCircle, ThumbsUp } from "lucide-react";
 import type { PostTubeVideo } from "../types";
-import { formatCount, formatDuration, timeAgo } from "../model";
+import { formatCount, formatDuration, timeAgo, viewsLabel } from "../model";
 import { useDataSaver } from "@/hooks/useDataSaver";
-import { resolveImageUrl } from "@/lib/imageUrl";
+import { originalImageUrl, resolveImageUrl } from "@/lib/imageUrl";
+import { VideoTileMenu } from "./VideoTileMenu";
 import "./tube.css";
 
 function clampPercent(value: number) {
@@ -46,7 +47,13 @@ function VideoThumbnail({ thumbnailUrl, videoUrl, className }: { thumbnailUrl: s
           alt=""
           className={className}
           loading="lazy"
-          onError={() => setImgFailed(true)}
+          onError={(e) => {
+            // A size variant that 404s falls back to the original once, then gives up.
+            const img = e.currentTarget;
+            const original = img.dataset.fallback ? null : originalImageUrl(img.getAttribute("src"));
+            if (original) { img.dataset.fallback = "1"; img.src = original; return; }
+            setImgFailed(true);
+          }}
         />
       )}
     </>
@@ -117,7 +124,7 @@ function SpotlightPreview({ videoUrl, previewUrl, isActive }: { videoUrl: string
         className={`absolute inset-0 z-5 h-full w-full object-cover transition-opacity duration-300 ${playing ? "opacity-100" : "pointer-events-none opacity-0"}`}
       />
       <div className={`absolute bottom-0 left-0 right-0 z-20 h-[3px] bg-white/20 transition-opacity duration-300 ${playing ? "opacity-100" : "opacity-0"}`}>
-        <div ref={barRef} className="h-full bg-brand-accent" style={{ width: "0%" }} />
+        <div ref={barRef} className="h-full bg-playhead" style={{ width: "0%" }} />
       </div>
     </>
   );
@@ -171,17 +178,27 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
     </div>
   );
 
+  /*
+    The tile is a block with one link stretched over it (the title's ::after
+    in tube.css), so the whole tile still opens the video while the "⋮"
+    menu beside the title is its own button and never navigates.
+  */
+  const titleLink = (
+    <h3 className="tube-tile__title">
+      <Link href={href} className="tube-tile__link">{video.title}</Link>
+    </h3>
+  );
+
   if (variant === "wide") {
     return (
-      <Link
-        href={href}
+      <div
         className="tube-tile tube-tile--wide"
         onMouseEnter={() => setSpotlightActive(true)}
         onMouseLeave={() => setSpotlightActive(false)}
       >
         {poster}
         <div className="tube-tile__text">
-          <h3 className="tube-tile__title">{video.title}</h3>
+          {titleLink}
           <p className="tube-tile__meta">{video.channel_name}</p>
           {hasResumeState && (
             <p className="tube-tile__meta">
@@ -190,16 +207,16 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
             </p>
           )}
           <p className="tube-tile__meta">
-            {formatCount(video.view_count)} views · {timeAgo(video.published_at)}
+            {viewsLabel(video.view_count)} · {timeAgo(video.published_at)}
           </p>
         </div>
-      </Link>
+        <VideoTileMenu video={video} />
+      </div>
     );
   }
 
   return (
-    <Link
-      href={href}
+    <div
       className="tube-tile"
       onMouseEnter={() => setSpotlightActive(true)}
       onMouseLeave={() => setSpotlightActive(false)}
@@ -208,7 +225,7 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
       <div className="tube-tile__body">
         <img src={video.channel_avatar_url} alt="" className="tube-tile__avatar" loading="lazy" />
         <div className="tube-tile__text">
-          <h3 className="tube-tile__title">{video.title}</h3>
+          {titleLink}
           <p className="tube-tile__meta">{video.channel_name}</p>
           <p className="tube-tile__meta">
             {video.like_count > 0 && (
@@ -223,12 +240,13 @@ export function VideoCard({ video, variant = "default" }: VideoCardProps) {
                 <span>{formatCount(video.comment_count)}</span>
               </span>
             )}
-            <span>{formatCount(video.view_count)} views</span>
+            <span>{viewsLabel(video.view_count)}</span>
             <span aria-hidden>·</span>
             <span>{timeAgo(video.published_at)}</span>
           </p>
         </div>
+        <VideoTileMenu video={video} />
       </div>
-    </Link>
+    </div>
   );
 }

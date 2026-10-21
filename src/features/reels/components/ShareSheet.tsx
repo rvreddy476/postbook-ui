@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Link2, MessageCircle, Send, Mail, Check, Share2, X } from "lucide-react";
+import { Link2, MessageCircle, MessageSquare, Send, Mail, Check, X } from "lucide-react";
+
+import { SendInMessagesPanel, useCanSendInMessages } from "@/components/messenger/SendInMessagesPanel";
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
 interface ShareSheetProps {
   open: boolean;
@@ -11,6 +14,11 @@ interface ShareSheetProps {
   title?: string;
   /** What the sheet is called ("Share" unless the address is something else, like an RSS feed). */
   heading?: string;
+  /**
+   * The post being shared, when it is one: adds "Send in Messages" for a
+   * signed-in viewer (audit T-25). A channel, tag or feed address has none.
+   */
+  postId?: string;
 }
 
 interface ShareTarget {
@@ -21,8 +29,29 @@ interface ShareTarget {
   action?: () => void;
 }
 
-export function ShareSheet({ open, onClose, url, title = "Check this out on VChat", heading = "Share" }: ShareSheetProps) {
+export function ShareSheet({ open, onClose, url, title = "Check this out on VChat", heading = "Share", postId }: ShareSheetProps) {
   const [copied, setCopied] = useState(false);
+  const canMessage = useCanSendInMessages(postId);
+  const [picking, setPicking] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
+
+  // Closing resets the sheet: it reopens on the share targets.
+  useEffect(() => {
+    if (open) return;
+    setPicking(false);
+    setSentTo(null);
+  }, [open]);
+
+  // After a send, say so for a moment, then close. The latest onClose is read
+  // through a ref: callers pass an inline arrow, and a re-render must not
+  // restart the timer.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+  useEffect(() => {
+    if (!sentTo) return;
+    const t = window.setTimeout(() => onCloseRef.current(), 1500);
+    return () => window.clearTimeout(t);
+  }, [sentTo]);
 
   const enc = encodeURIComponent(url);
   const encTitle = encodeURIComponent(title);
@@ -49,6 +78,9 @@ export function ShareSheet({ open, onClose, url, title = "Check this out on VCha
   };
 
   const targets: ShareTarget[] = [
+    ...(canMessage
+      ? [{ label: "Send in Messages", icon: <MessageSquare className="h-5 w-5" />, bg: "bg-primary-tint text-primary-ink", action: () => setPicking(true) }]
+      : []),
     { label: copied ? "Copied!" : "Copy link", icon: copied ? <Check className="h-5 w-5" /> : <Link2 className="h-5 w-5" />, bg: "bg-brand-secondary text-brand-text", action: copyLink },
     { label: "WhatsApp", icon: <MessageCircle className="h-5 w-5" />, bg: "bg-emerald-500 text-white", href: `https://wa.me/?text=${encTitle}%20${enc}` },
     { label: "Telegram", icon: <Send className="h-5 w-5" />, bg: "bg-sky-500 text-white", href: `https://t.me/share/url?url=${enc}&text=${encTitle}` },
@@ -94,6 +126,15 @@ export function ShareSheet({ open, onClose, url, title = "Check this out on VCha
               </button>
             </div>
 
+            {sentTo ? (
+              <p role="status" className="flex items-center justify-center gap-2 px-5 py-8 text-[14px] font-semibold text-brand-text">
+                <Check className="h-5 w-5 text-success" aria-hidden /> Sent to {sentTo}
+              </p>
+            ) : picking && postId ? (
+              // The messenger's own recipient picker, sharing this post (audit T-25).
+              <SendInMessagesPanel postId={postId} onBack={() => setPicking(false)} onSent={(u) => setSentTo(u.name)} />
+            ) : (
+            <>
             {/* Link preview row */}
             <div className="mx-5 mb-4 mt-2 flex items-center gap-2 rounded-xl border border-brand-divider bg-brand-secondary/60 px-3 py-2.5">
               <span className="flex-1 truncate text-[12px] text-brand-text/60">{url}</span>
@@ -145,12 +186,14 @@ export function ShareSheet({ open, onClose, url, title = "Check this out on VCha
                   className="flex flex-col items-center gap-1.5 rounded-xl py-2 transition hover:bg-brand-secondary"
                 >
                   <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-secondary text-brand-text">
-                    <Share2 className="h-5 w-5" />
+                    <ShareIcon className="h-5 w-5" />
                   </span>
                   <span className="text-[11px] font-medium text-brand-text/70">More</span>
                 </button>
               ) : null}
             </div>
+            </>
+            )}
           </motion.div>
         </motion.div>
       ) : null}

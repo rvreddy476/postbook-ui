@@ -159,10 +159,10 @@ const RightPanel: React.FC<RightPanelProps> = () => {
                       </span>
                     </button>
                     {/*
-                      Message only. Connect is gone from the product; a
-                      connection forms when a message request is accepted.
+                      Message only. Connect is gone from the product; the
+                      server decides between a chat and a request.
                     */}
-                    <MessageButton targetUserId={p.user_id} />
+                    <MessageButton targetUserId={p.user_id} targetUsername={p.username} targetName={p.display_name} />
                   </li>
                 );
               })}

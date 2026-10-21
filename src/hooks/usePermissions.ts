@@ -1,20 +1,16 @@
 import { useQuery } from "@tanstack/react-query"
 import api from "@/lib/api"
+import { normaliseDenyReason, readDecision, type DmDenyReason } from "@/lib/chat/dmConsent"
 
 /**
  * What this viewer is allowed to do to these people, decided by the server.
  *
  * graph-service owns a single policy engine — permission.Resolve — and exposes
  * it at POST /v1/permissions/check-batch. It is the one place that knows the
- * whole rule: a block denies everything; a paused chat accepts nothing at all;
- * who_can_message then decides between a real thread, a message REQUEST, and
- * nothing, given the relationship (connected, mutual followers, second
- * degree). Android already asks it.
- *
- * The web never has. Every affordance here was derived from raw relationship
- * booleans instead, which is how two clients end up disagreeing about what the
- * same pair of people may do — and the client's guess is the one that is wrong,
- * because the server enforces its own answer regardless.
+ * whole rule (DM consent contract §4): a block either way, a paused account on
+ * either side, `no_one`; then "the recipient follows the sender" (or an older
+ * accepted connection) is a direct chat; otherwise who_can_message decides
+ * between a message REQUEST and nothing. Android asks it too.
  *
  * `fallback: "message_request"` is not a refusal. It means the message goes
  * through as a REQUEST: text only, one message, until they accept. That
@@ -24,6 +20,8 @@ import api from "@/lib/api"
 
 export type PermissionAction =
     | "message"
+    /** Same answer as `message` (graph-service accepts both). */
+    | "start_conversation"
     | "call"
     | "connect"
     | "follow"
@@ -35,6 +33,14 @@ export type PermissionAction =
     | "comment"
     | "view_posts"
 
+/**
+ * One action's answer. graph-service leaves empty fields out:
+ *   allow    {allowed: true}
+ *   request  {allowed: false, fallback: "message_request"}
+ *   deny     {allowed: false, reason: "unavailable" | "messages_off" | "you_paused"
+ *                                     | "no_one" | "followers_only" | "people_i_follow"}
+ * A block is reported as `unavailable`, for every action.
+ */
 export interface PermissionDecision {
     allowed: boolean
     /** "message_request" | "follow_request" — allowed via a lighter path. */
@@ -81,34 +87,43 @@ export function usePermissions(targetUserIds: string[], actions: PermissionActio
 }
 
 /**
- * How a Message control should behave for one person.
+ * A block: `unavailable` now, `blocked` from an older graph-service. Either
+ * way the person is simply not reachable, and it is never shown as a block.
+ */
+export function isUnavailableReason(reason: string | undefined): boolean {
+    return normaliseDenyReason(reason) === "unavailable"
+}
+
+/**
+ * How a Message control should behave for one person: the short form. The
+ * profile control uses the fuller messageButtonView (lib/chat/dmConsent.ts).
  *
  * Absent while the decision is loading: the caller shows a neutral, disabled
- * control rather than assuming either answer. Guessing "allowed" flashes an
- * affordance that then disappears; guessing "denied" hides one the viewer is
- * entitled to.
+ * control rather than assuming either answer.
+ *
+ * Reasons are read by their current names; the older ones (`blocked`,
+ * `chat_paused`, `privacy_*`) read as the new ones. An unknown reason still
+ * disables the control — a new rule on the server must not become an
+ * enabled button here by default.
  */
 export type MessageAffordance =
     | { state: "loading" }
     | { state: "open"; label: string }
     | { state: "request"; label: string }
-    | { state: "blocked"; label: string }
+    | { state: "blocked"; label: string; reason: DmDenyReason | null }
 
 export function messageAffordance(decision?: PermissionDecision): MessageAffordance {
-    if (!decision) return { state: "loading" }
-    if (decision.allowed) return { state: "open", label: "Message" }
-    if (decision.fallback === "message_request") {
-        return { state: "request", label: "Send a message request" }
-    }
-    // The server's reasons, said in words a reader can act on. An unknown
-    // reason still disables the control — a new rule on the server must not
-    // become an enabled button here by default.
-    const reason = decision.reason ?? ""
+    const read = readDecision(decision)
+    if (!read) return { state: "loading" }
+    if (read.decision === "allow") return { state: "open", label: "Message" }
+    if (read.decision === "message_request") return { state: "request", label: "Send request" }
     const label =
-        reason === "blocked" ? "Unavailable"
-        : reason === "chat_paused" ? "Not accepting messages right now"
-        : reason === "privacy_no_one" ? "Does not accept messages"
-        : reason === "privacy_connections_only" ? "Accepts messages from connections only"
-        : "Cannot be messaged"
-    return { state: "blocked", label }
+        read.reason === "unavailable" ? "Unavailable"
+        : read.reason === "messages_off" ? "Not taking messages right now"
+        : read.reason === "you_paused" ? "Turn your messages on to send"
+        : read.reason === "no_one" ? "Doesn't accept messages"
+        : read.reason === "followers_only" ? "Follow them to send a request"
+        : read.reason === "people_i_follow" ? "Only accepts messages from people they follow"
+        : "Can't be messaged right now"
+    return { state: "blocked", label, reason: read.reason }
 }

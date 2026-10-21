@@ -22,9 +22,6 @@ import {
     ExternalLink,
     Eye,
     Lock,
-    UserPlus,
-    UserCheck,
-    UserMinus,
     Film,
     Clapperboard,
     Play,
@@ -41,6 +38,9 @@ import { FriendRequestButton } from "@/components/connections/FriendRequestButto
 import MessageButton from "@/components/connections/MessageButton"
 import { ImageAdjustEditor } from "@/components/media/ImageAdjustEditor"
 import { ImageAdjustDialog } from "@/components/media/ImageAdjustDialog"
+import { ProfileActions } from "./ProfileActions"
+import { ProfileCounts } from "./ProfileCounts"
+import { followButtonState } from "./profileParity"
 
 interface ProfileHeaderProps {
     profile: UserProfile
@@ -63,6 +63,15 @@ interface ProfileHeaderProps {
     onMute?: () => void
     onUnmute?: () => void
     onUploadError?: (message: string) => void
+    /** A signed-in viewer (owner or visitor). Signed-out visitors get Share and Copy link only. */
+    signedIn?: boolean
+    followBusy?: boolean
+    onShare?: () => void
+    onCopyLink?: () => void
+    onReport?: () => void
+    /** Open the follower/following lists; omitted when they are not viewable (private, not followed). */
+    onOpenConnections?: () => void
+    signInHref?: string
 }
 
 const badgeConfig: Record<string, { icon: typeof BadgeCheck; color: string; bg: string }> = {
@@ -111,6 +120,13 @@ export function ProfileHeader({
     onMute,
     onUnmute,
     onUploadError,
+    signedIn = false,
+    followBusy = false,
+    onShare,
+    onCopyLink,
+    onReport,
+    onOpenConnections,
+    signInHref,
 }: ProfileHeaderProps) {
     const qc = useQueryClient()
     const avatarInputRef = useRef<HTMLInputElement>(null)
@@ -167,8 +183,7 @@ export function ProfileHeader({
     const resolvedAvatar = avatarSources[avatarFails] ?? null
     const resolvedCover = coverSources[coverFails] ?? null
     const followsYou = relationship?.followed_by ?? false
-    const isFollowing = relationship?.following ?? false
-    const canDM = relationship?.can_dm ?? false
+    const followState = followButtonState(profile, relationship)
     const isCreatorOrBusiness = !!(profile.badge_flags & (BADGE_CREATOR | BADGE_BUSINESS))
     // Tier 3 monetization modals
     const [showTierPicker, setShowTierPicker] = useState(false)
@@ -405,57 +420,43 @@ export function ProfileHeader({
                                 </div>
                             </div>
 
-                            {/* Right: Action buttons (Add Friend text + icon, Message icon-only) */}
-                            <div className="flex items-center justify-center md:justify-end gap-2 shrink-0">
-                                {isOwn ? (
-                                    <>
-                                        <button
-                                            onClick={onEditProfile}
-                                            className="flex items-center justify-center gap-2 h-10 px-5 rounded-xl bg-brand-text text-brand-card text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-xs"
-                                        >
-                                            <Settings className="w-3.5 h-3.5" />
-                                            Edit Profile
-                                        </button>
-                                        <button
-                                            onClick={toggleTheme}
-                                            type="button"
-                                            className="flex items-center justify-center h-10 w-10 rounded-xl border border-brand-divider bg-brand-card text-brand-text hover:bg-brand-secondary transition-all shadow-xs"
-                                            title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-                                        >
-                                            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                                        </button>
-                                    </>
-                                ) : (
-                                    <>
-                                        {/* Follow — for creator / business accounts */}
-                                        {isCreatorOrBusiness && (
-                                            isFollowing ? (
-                                                <button
-                                                    onClick={onUnfollow}
-                                                    className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-xs font-bold tracking-wider border border-brand-divider text-brand-text hover:bg-brand-secondary transition-all shadow-xs group"
-                                                    title="Unfollow"
-                                                >
-                                                    <UserCheck className="w-4 h-4 group-hover:hidden" />
-                                                    <UserMinus className="w-4 h-4 hidden group-hover:inline" />
-                                                    <span className="group-hover:hidden">Following</span>
-                                                    <span className="hidden group-hover:inline">Unfollow</span>
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    onClick={onFollow}
-                                                    className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-xs font-bold tracking-wider bg-primary-ink text-brand-bg hover:opacity-90 transition-all shadow-xs"
-                                                    title="Follow"
-                                                >
-                                                    <UserPlus className="w-4 h-4" />
-                                                    Follow
-                                                </button>
-                                            )
-                                        )}
+                            {/*
+                              Actions (parity 3-W1): owner Edit ·
+                              Share · Settings; visitor Follow · Message ·
+                              Share · ⋮ (Copy link, Mute, Block/Unblock,
+                              Report). Follow is offered on every account,
+                              not only creators; the circle control stays
+                              alongside for its incoming requests.
 
-                                        {/* Add Friend / Circle — for normal user accounts */}
-                                        {!isCreatorOrBusiness && (
+                              Message follows the server's decision (DM
+                              consent §4): Message, Send request,
+                              Requested, or disabled with the reason; a
+                              tap opens the thread.
+                            */}
+                            <div className="flex items-center justify-center md:justify-end gap-2 shrink-0">
+                                <ProfileActions
+                                    isOwn={isOwn}
+                                    signedIn={signedIn}
+                                    username={profile.username || profile.id}
+                                    followState={followState}
+                                    followBusy={followBusy}
+                                    blocked={!!relationship?.blocked}
+                                    isMuted={isMuted}
+                                    onFollow={onFollow}
+                                    onUnfollow={onUnfollow}
+                                    onEditProfile={onEditProfile}
+                                    onShare={() => onShare?.()}
+                                    onCopyLink={() => onCopyLink?.()}
+                                    onBlock={onBlock}
+                                    onUnblock={onUnblock}
+                                    onMute={onMute}
+                                    onUnmute={onUnmute}
+                                    onReport={onReport}
+                                    signInHref={signInHref}
+                                    connectionSlot={
+                                        signedIn && !isCreatorOrBusiness ? (
                                             <FriendRequestButton
-                allowSend={false}
+                                                allowSend={false}
                                                 targetUserId={profile.id}
                                                 targetUsername={profile.username}
                                                 relationship={relationship}
@@ -466,38 +467,42 @@ export function ProfileHeader({
                                                 declineClassName="flex h-10 items-center justify-center gap-2 rounded-xl border border-brand-divider px-4 text-xs font-bold tracking-wider text-brand-text/60 shadow-xs transition-all hover:bg-brand-secondary disabled:opacity-60"
                                                 onFriendsClick={onRemoveFromCircle}
                                             />
-                                        )}
-
-                                        {/*
-                                          Never locked.
-
-                                          This used to grey itself out with a
-                                          padlock and "Add to Circle to
-                                          message" whenever canDM was false —
-                                          which, with every account on the
-                                          default privacy setting, is every
-                                          stranger. It told people the one
-                                          thing they came to do was unavailable
-                                          when in fact it was available as a
-                                          message REQUEST, which is how a
-                                          connection is now formed at all.
-                                        */}
-                                        {/*
-                                          Labelled here rather than icon-only:
-                                          a profile is where someone decides
-                                          whether to reach out, so it should
-                                          say whether this will be a message or
-                                          a request — and, afterwards, that the
-                                          request has been sent.
-                                        */}
+                                        ) : null
+                                    }
+                                    messageSlot={
                                         <MessageButton
                                             targetUserId={profile.id}
+                                            targetUsername={profile.username}
+                                            targetName={profile.display_name}
                                             variant="full"
                                         />
-                                    </>
+                                    }
+                                />
+                                {isOwn && (
+                                    <button
+                                        onClick={toggleTheme}
+                                        type="button"
+                                        className="flex items-center justify-center h-10 w-10 rounded-xl border border-brand-divider bg-brand-card text-brand-text hover:bg-brand-secondary transition-all shadow-xs"
+                                        title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                                        aria-label={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                                    >
+                                        {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                                    </button>
                                 )}
                             </div>
                         </div>
+
+                        {/*
+                          Counts (T-20): graph-service /v1/graph/counts via
+                          the profile BFF, so they move after a follow or
+                          unfollow. No likes total: the only likes
+                          aggregate is analytics creator/me (owner only).
+                        */}
+                        <ProfileCounts
+                            followerCount={graphCounts.follower_count}
+                            followingCount={graphCounts.following_count}
+                            onOpen={onOpenConnections}
+                        />
 
                         {/* Meta chips */}
                         <div className="flex items-center gap-x-4 gap-y-1.5 pt-1 text-xs font-medium text-brand-text/60 justify-center md:justify-start flex-wrap">

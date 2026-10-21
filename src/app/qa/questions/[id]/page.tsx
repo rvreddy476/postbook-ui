@@ -15,9 +15,22 @@ import {
 } from '@/hooks/useQA'
 import type { Answer, AnswerComment } from '@/types/qa'
 import {
-  ChevronUp, ChevronDown, MessageSquare, Bookmark, Bell, Share2,
-  CheckCircle, Tag, Eye, Clock, MoreHorizontal, Send, Star, ThumbsUp, ThumbsDown
+  ChevronUp,
+  ChevronDown,
+  MessageSquare,
+  Bookmark,
+  Bell,
+  CheckCircle,
+  Tag,
+  Eye,
+  Clock,
+  MoreHorizontal,
+  Send,
+  Star,
+  ThumbsUp,
+  ThumbsDown,
 } from 'lucide-react'
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
 // --- Comment thread ---
 function CommentThread({ answerId, initialCount }: { answerId: string; initialCount: number }) {
@@ -185,7 +198,7 @@ function AnswerCard({
         </button>
 
         <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-brand-divider/60 font-medium text-neutral-600 dark:text-neutral-300 hover:bg-brand-secondary transition-colors">
-          <Share2 className="w-4 h-4" />
+          <ShareIcon className="w-4 h-4" />
         </button>
 
         <button className="ml-auto w-8 h-8 flex items-center justify-center rounded-full border border-brand-divider/60 text-brand-text/50 hover:bg-brand-secondary transition-colors">
@@ -304,7 +317,7 @@ export default function QuestionDetailPage() {
                   className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 transition-colors"
                   title="Copy link"
                 >
-                  <Share2 className="w-4 h-4" />
+                  <ShareIcon className="w-4 h-4" />
                 </button>
               </div>
             </div>

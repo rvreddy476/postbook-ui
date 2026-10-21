@@ -1,9 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import api from "@/lib/api";
 
-type ReportTargetType = "post" | "comment" | "reel" | "video";
+/** "user" reports an account (a profile); the id is the account's user id. */
+export type ReportTargetType = "post" | "comment" | "reel" | "video" | "user";
 
-type ReportReason =
+export type ReportReason =
   | "spam"
   | "harassment"
   | "hate_speech"
@@ -12,29 +13,40 @@ type ReportReason =
   | "misinformation"
   | "other";
 
-interface SubmitReportParams {
+export interface SubmitReportParams {
   targetType: ReportTargetType;
   targetId: string;
   reason: ReportReason;
   description?: string;
 }
 
+/** Where a report goes: trust-safety-service, through the gateway. */
+export const REPORTS_PATH = "/v1/reports";
+
+/**
+ * The body `POST /v1/reports` (trust-safety-service) takes: entity_type /
+ * entity_id / details (NOT target_type / description), and entity_type is
+ * one of user, post, comment. Reels and videos are posts, so they normalize
+ * to "post"; a profile report is entity_type "user". Pure, so the wire
+ * shape is pinned by a test.
+ */
+export function reportRequestBody(params: SubmitReportParams) {
+  const entityType =
+    params.targetType === "reel" || params.targetType === "video"
+      ? "post"
+      : params.targetType;
+  return {
+    entity_type: entityType,
+    entity_id: params.targetId,
+    reason: params.reason,
+    details: params.description ?? "",
+  };
+}
+
 export function useSubmitReport() {
   return useMutation({
     mutationFn: async (params: SubmitReportParams) => {
-      // /v1/reports → trust-safety-service, which expects entity_type/entity_id/details
-      // (NOT target_type/description), and entity_type ∈ {user, post, comment}.
-      // Reels/videos are posts, so normalize to "post".
-      const entityType =
-        params.targetType === "reel" || params.targetType === "video"
-          ? "post"
-          : params.targetType;
-      const res = await api.post("/v1/reports", {
-        entity_type: entityType,
-        entity_id: params.targetId,
-        reason: params.reason,
-        details: params.description ?? "",
-      });
+      const res = await api.post(REPORTS_PATH, reportRequestBody(params));
       return res.data;
     },
   });

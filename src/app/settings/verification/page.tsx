@@ -3,7 +3,6 @@
 import { useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
     ArrowLeft,
     BadgeCheck,
@@ -11,75 +10,58 @@ import {
     Clock,
     XCircle,
 } from "lucide-react"
-import api from "@/lib/api"
+import {
+    useSubmitVerification,
+    useVerificationRequest,
+    type VerificationType,
+} from "@/hooks/useTrust"
+import { asServerError } from "../_lib/saveFeedback"
 
-/* ------------------------------------------------------------------ */
-/*  Types                                                               */
-/* ------------------------------------------------------------------ */
+/*
+ * Submits to trust-safety through the shared hooks in useTrust.ts
+ * (POST /v1/verification-requests). This page used to call
+ * /v1/trust/verification, which the gateway never routed.
+ *
+ * There is no self-service status read upstream (the list is admin-only), so
+ * useVerificationRequest reports null and the page offers the form. A
+ * duplicate request is refused by the server ("a pending verification request
+ * already exists"), and that message is shown as is.
+ */
 
 type VerificationStatus = "pending" | "approved" | "rejected"
-type VerificationType = "individual" | "business" | "creator" | "public_figure"
-
-interface VerificationRequest {
-    id: string
-    type: VerificationType
-    status: VerificationStatus
-    submitted_at: string
-}
 
 /* ------------------------------------------------------------------ */
 /*  Type Options                                                        */
 /* ------------------------------------------------------------------ */
 
+// The four types trust-safety accepts (validVerificationTypes). The old
+// "individual" and "public_figure" options were rejected with a 400.
 const TYPE_OPTIONS: {
     value: VerificationType
     label: string
     description: string
 }[] = [
     {
-        value: "individual",
-        label: "Individual",
-        description: "A personal account representing yourself as a private individual.",
-    },
-    {
-        value: "business",
-        label: "Business",
-        description: "A company, brand, or organization with a commercial presence.",
-    },
-    {
         value: "creator",
         label: "Creator",
         description: "A content creator, influencer, or artist with an established audience.",
     },
     {
-        value: "public_figure",
-        label: "Public Figure",
-        description: "A politician, journalist, athlete, or other well-known public personality.",
+        value: "business",
+        label: "Business",
+        description: "A company or brand with a commercial presence.",
+    },
+    {
+        value: "organization",
+        label: "Organization",
+        description: "A non-profit, institution, club or other organization.",
+    },
+    {
+        value: "government",
+        label: "Government",
+        description: "A government body, agency or official.",
     },
 ]
-
-/* ------------------------------------------------------------------ */
-/*  Skeleton                                                            */
-/* ------------------------------------------------------------------ */
-
-function PageSkeleton() {
-    return (
-        <div className="rounded-2xl bg-brand-card border border-brand-text/10 shadow-xs p-6 space-y-4 animate-pulse">
-            <div className="flex items-center gap-4">
-                <div className="h-11 w-11 rounded-xl bg-brand-secondary" />
-                <div className="flex-1 space-y-2">
-                    <div className="h-4 w-36 rounded-sm bg-brand-secondary" />
-                    <div className="h-3 w-52 rounded-sm bg-brand-secondary" />
-                </div>
-            </div>
-            <div className="space-y-3 pt-2">
-                <div className="h-12 rounded-xl bg-brand-secondary" />
-                <div className="h-12 rounded-xl bg-brand-secondary" />
-                <div className="h-12 rounded-xl bg-brand-secondary" />
-            </div>
-        </div>
-    )
-}
 
 /* ------------------------------------------------------------------ */
 /*  Status Badge                                                        */
@@ -89,15 +71,15 @@ function StatusBadge({ status }: { status: VerificationStatus }) {
     const map: Record<VerificationStatus, { label: string; className: string }> = {
         pending: {
             label: "Pending Review",
-            className: "bg-yellow-100 text-yellow-700 border border-yellow-200",
+            className: "bg-warning/10 text-warning border border-warning/30",
         },
         approved: {
             label: "Approved",
-            className: "bg-emerald-100 text-emerald-700 border border-emerald-200",
+            className: "bg-success/10 text-success border border-success/30",
         },
         rejected: {
             label: "Not Approved",
-            className: "bg-red-100 text-red-600 border border-red-200",
+            className: "bg-danger/10 text-danger border border-danger/30",
         },
     }
     const { label, className } = map[status]
@@ -113,17 +95,8 @@ function StatusBadge({ status }: { status: VerificationStatus }) {
 /* ------------------------------------------------------------------ */
 
 function ApplicationForm({ onSubmitted }: { onSubmitted: () => void }) {
-    const [selectedType, setSelectedType] = useState<VerificationType>("individual")
-    const queryClient = useQueryClient()
-
-    const mutation = useMutation({
-        mutationFn: (type: VerificationType) =>
-            api.post("/v1/trust/verification", { type, docs: {} }).then((r) => r.data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["verification"] })
-            onSubmitted()
-        },
-    })
+    const [selectedType, setSelectedType] = useState<VerificationType>("creator")
+    const mutation = useSubmitVerification()
 
     return (
         <div className="space-y-5">
@@ -163,13 +136,13 @@ function ApplicationForm({ onSubmitted }: { onSubmitted: () => void }) {
             </fieldset>
 
             {mutation.isError && (
-                <p className="text-xs text-red-500 font-medium">
-                    Submission failed. Please try again.
+                <p className="text-xs text-danger font-medium" role="alert">
+                    {asServerError(mutation.error).message}
                 </p>
             )}
 
             <button
-                onClick={() => mutation.mutate(selectedType)}
+                onClick={() => mutation.mutate({ type: selectedType }, { onSuccess: onSubmitted })}
                 disabled={mutation.isPending}
                 className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white bg-primary-ink transition-opacity disabled:opacity-60"
             >
@@ -185,17 +158,9 @@ function ApplicationForm({ onSubmitted }: { onSubmitted: () => void }) {
 
 export default function VerificationPage() {
     const [justSubmitted, setJustSubmitted] = useState(false)
+    const { data: request } = useVerificationRequest()
 
-    const { data: request, isLoading, isError } = useQuery<VerificationRequest | null>({
-        queryKey: ["verification"],
-        queryFn: () =>
-            api
-                .get("/v1/trust/verification")
-                .then((r) => r.data?.data ?? r.data)
-                .catch(() => null),
-    })
-
-    const canReapply = request?.status === "rejected" && !justSubmitted
+    const status = request?.status as VerificationStatus | undefined
 
     return (
         <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
@@ -221,116 +186,95 @@ export default function VerificationPage() {
                 </div>
             </div>
 
-            {isLoading ? (
-                <PageSkeleton />
-            ) : isError ? (
-                <p className="text-sm text-brand-highlight">Could not load verification status.</p>
-            ) : (
-                <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="rounded-2xl bg-brand-card border border-brand-text/10 shadow-xs p-6"
-                >
-                    {/* ---- Approved ---- */}
-                    {request?.status === "approved" && (
-                        <div className="flex flex-col items-center gap-4 py-6 text-center">
-                            <CheckCircle2 className="h-14 w-14 text-emerald-500" />
+            <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-2xl bg-brand-card border border-brand-text/10 shadow-xs p-6"
+            >
+                {/* ---- Approved ---- */}
+                {status === "approved" && !justSubmitted && (
+                    <div className="flex flex-col items-center gap-4 py-6 text-center">
+                        <CheckCircle2 className="h-14 w-14 text-success" />
+                        <div>
+                            <h2 className="text-lg font-bold text-brand-text">
+                                Congratulations! You&apos;re verified
+                            </h2>
+                            <p className="mt-1 text-sm text-brand-highlight">
+                                Your verified badge is now active on your profile.
+                            </p>
+                        </div>
+                        <StatusBadge status="approved" />
+                    </div>
+                )}
+
+                {/* ---- Pending / just submitted ---- */}
+                {(justSubmitted || status === "pending") && (
+                    <div className="flex flex-col items-center gap-4 py-6 text-center" role="status">
+                        <Clock className="h-14 w-14 text-warning" />
+                        <div>
+                            <h2 className="text-lg font-bold text-brand-text">
+                                {justSubmitted ? "Application submitted" : "Your request is under review"}
+                            </h2>
+                            <p className="mt-1 text-sm text-brand-highlight">
+                                {request?.created_at && !justSubmitted
+                                    ? `Submitted on ${new Date(request.created_at).toLocaleDateString(undefined, {
+                                          year: "numeric",
+                                          month: "long",
+                                          day: "numeric",
+                                      })}. `
+                                    : ""}
+                                We will notify you when a decision has been made.
+                            </p>
+                        </div>
+                        <StatusBadge status="pending" />
+                    </div>
+                )}
+
+                {/* ---- Rejected: show info and the re-apply form ---- */}
+                {status === "rejected" && !justSubmitted && (
+                    <div className="space-y-5">
+                        <div className="flex items-center gap-3">
+                            <XCircle className="h-8 w-8 shrink-0 text-danger" />
                             <div>
-                                <h2 className="text-lg font-bold text-brand-text">
-                                    Congratulations! You&apos;re verified
+                                <h2 className="text-base font-bold text-brand-text">
+                                    Request not approved
                                 </h2>
-                                <p className="mt-1 text-sm text-brand-highlight">
-                                    Your verified badge is now active on your profile.
+                                <p className="text-sm text-brand-highlight">
+                                    {request?.rejection_reason ||
+                                        "Your previous application did not meet our verification criteria."}{" "}
+                                    You may apply again below.
                                 </p>
                             </div>
-                            <StatusBadge status="approved" />
                         </div>
-                    )}
+                        <StatusBadge status="rejected" />
+                        <hr className="border-brand-divider" />
+                        <h3 className="text-sm font-semibold text-brand-text">
+                            Resubmit application
+                        </h3>
+                        <ApplicationForm onSubmitted={() => setJustSubmitted(true)} />
+                    </div>
+                )}
 
-                    {/* ---- Pending ---- */}
-                    {request?.status === "pending" && !justSubmitted && (
-                        <div className="flex flex-col items-center gap-4 py-6 text-center">
-                            <Clock className="h-14 w-14 text-yellow-500" />
+                {/* ---- No known request ---- */}
+                {!status && !justSubmitted && (
+                    <div className="space-y-5">
+                        <div className="flex items-center gap-3">
+                            <BadgeCheck className="h-8 w-8 shrink-0 text-brand-text/60" />
                             <div>
-                                <h2 className="text-lg font-bold text-brand-text">
-                                    Your request is under review
+                                <h2 className="text-base font-bold text-brand-text">
+                                    Apply for verification
                                 </h2>
-                                <p className="mt-1 text-sm text-brand-highlight">
-                                    Submitted on{" "}
-                                    {new Date(request.submitted_at).toLocaleDateString(undefined, {
-                                        year: "numeric",
-                                        month: "long",
-                                        day: "numeric",
-                                    })}
-                                    . Our team typically responds within 7–10 business days.
+                                <p className="text-sm text-brand-highlight">
+                                    A verified badge helps your followers know they are engaging
+                                    with the real you.
                                 </p>
                             </div>
-                            <StatusBadge status="pending" />
                         </div>
-                    )}
-
-                    {/* ---- Just submitted ---- */}
-                    {justSubmitted && (
-                        <div className="flex flex-col items-center gap-4 py-6 text-center">
-                            <Clock className="h-14 w-14 text-yellow-500" />
-                            <div>
-                                <h2 className="text-lg font-bold text-brand-text">
-                                    Application submitted!
-                                </h2>
-                                <p className="mt-1 text-sm text-brand-highlight">
-                                    Your request is now under review. We will notify you when a
-                                    decision has been made.
-                                </p>
-                            </div>
-                            <StatusBadge status="pending" />
-                        </div>
-                    )}
-
-                    {/* ---- Rejected — show info + re-apply option ---- */}
-                    {request?.status === "rejected" && !justSubmitted && (
-                        <div className="space-y-5">
-                            <div className="flex items-center gap-3">
-                                <XCircle className="h-8 w-8 shrink-0 text-red-400" />
-                                <div>
-                                    <h2 className="text-base font-bold text-brand-text">
-                                        Request not approved
-                                    </h2>
-                                    <p className="text-sm text-brand-highlight">
-                                        Your previous application did not meet our verification
-                                        criteria. You may apply again below.
-                                    </p>
-                                </div>
-                            </div>
-                            <StatusBadge status="rejected" />
-                            <hr className="border-brand-divider" />
-                            <h3 className="text-sm font-semibold text-brand-text">
-                                Resubmit application
-                            </h3>
-                            <ApplicationForm onSubmitted={() => setJustSubmitted(true)} />
-                        </div>
-                    )}
-
-                    {/* ---- No request yet ---- */}
-                    {!request && !justSubmitted && !canReapply && (
-                        <div className="space-y-5">
-                            <div className="flex items-center gap-3">
-                                <BadgeCheck className="h-8 w-8 shrink-0 text-brand-text/60" />
-                                <div>
-                                    <h2 className="text-base font-bold text-brand-text">
-                                        Apply for verification
-                                    </h2>
-                                    <p className="text-sm text-brand-highlight">
-                                        A verified badge helps your followers know they are engaging
-                                        with the real you.
-                                    </p>
-                                </div>
-                            </div>
-                            <hr className="border-brand-divider" />
-                            <ApplicationForm onSubmitted={() => setJustSubmitted(true)} />
-                        </div>
-                    )}
-                </motion.div>
-            )}
+                        <hr className="border-brand-divider" />
+                        <ApplicationForm onSubmitted={() => setJustSubmitted(true)} />
+                    </div>
+                )}
+            </motion.div>
         </div>
     )
 }

@@ -57,7 +57,8 @@ import { TubeStage } from "../watch/miniPlayer";
 import { RAIL_IDLE, railReducer } from "../watch/railState";
 import { showThanks } from "../watch/thanks";
 import { upNextPills, type UpNextChip } from "../watch/upNext";
-import { ageGateFromError, recordElementEvent, sendThanks, setCommentHeart, setCommentPin, setPass, thanksErrorMessage, viewerSubtitleTracks, type ElementEvent, type ElementSurface } from "../watch/watchApi";
+import { ageGateFromError, recordElementEvent, sendThanks, setPass, thanksErrorMessage, viewerSubtitleTracks, type ElementEvent, type ElementSurface } from "../watch/watchApi";
+import { commentCreatorTools } from "@/components/comments/creatorTools";
 import { ThanksSheet } from "../watch/components/ThanksSheet";
 import { UpNext, type UpNextRow } from "../watch/components/UpNext";
 import { VideoElementsOverlay } from "../watch/components/VideoElementsOverlay";
@@ -140,9 +141,11 @@ interface WatchPageProps {
   videoId?: string;
   /** `?list=<playlistId>`: play through that collection. */
   listId?: string | null;
+  /** `?t=<seconds>`: start there (a "Copy link at current time" link) instead of the saved resume point. */
+  startSeconds?: number | null;
 }
 
-function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
+function WatchPageContent({ videoId, listId = null, startSeconds = null }: WatchPageProps) {
   const router = useRouter();
   const user = useAuthUser();
   const { effective: dataSaver } = useDataSaver();
@@ -232,8 +235,8 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   /* ── playback urls ─────────────────────────────────── */
   const hlsUrl = mediaAssetId ? hlsMasterUrl(mediaAssetId) : null;
   const fileUrl = videoMetadataQuery.data?.playback_url || video?.video_url || (mediaAssetId ? mediaServeUrl(mediaAssetId) : "");
-  const startPositionMs = resumePositionMs(progressQuery.data);
-  const startReady = !user || !progressQuery.isLoading;
+  const startPositionMs = startSeconds != null ? startSeconds * 1000 : resumePositionMs(progressQuery.data);
+  const startReady = startSeconds != null || !user || !progressQuery.isLoading;
 
   /* ── progress + telemetry ──────────────────────────── */
   const latestRef = useRef({ positionMs: 0, durationMs: 0 });
@@ -545,7 +548,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
     }
   };
 
-  const creatorTools = useMemo(() => ({ onHeart: setCommentHeart, onPin: setCommentPin }), []);
+  const creatorTools = commentCreatorTools;
 
   /* ── render ────────────────────────────────────────── */
   if (videoId && detailQuery.isLoading) {
@@ -701,7 +704,10 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   const moreRowList = watchMoreRows({
     channelName,
     isOwner,
-    hasDescription: video.description.trim().length > 0 || video.hashtags.length > 0,
+    // A description that only repeats the title is not one (the about card hides it too).
+    hasDescription:
+      (video.description.trim().length > 0 && video.description.trim().toLowerCase() !== video.title.trim().toLowerCase()) ||
+      video.hashtags.length > 0,
     shareHidden: detail.shareHidden,
     downloadAllowed: detail.allowDownload,
     audioTrackCount: gated ? 0 : audioOptions.length,
@@ -770,6 +776,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
       onPass={handlePass}
       onQueue={() => void handleQueue()}
       onAdd={() => requireUser() && setPlaylistOpen(true)}
+      onShare={detail.shareHidden ? undefined : () => setShareOpen(true)}
       onMore={() => setMoreOpen((o) => !o)}
       moreOpen={moreOpen}
       moreMenu={moreMenu}
@@ -832,7 +839,9 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
               onEndedChange={onEndedChange}
               onTheater={toggleTheater}
               theater={theater}
-              onMiniplayer={toggleMini}
+              // Miniplayer hidden for now (founder, 2026-10-19): no button and no I key.
+              // The dock stays in the code; pass toggleMini here to bring it back.
+              onMiniplayer={undefined}
               miniplayer={miniOn}
               onNext={nextTarget ? goNext : undefined}
               chapters={detail.chapters}
@@ -889,6 +898,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
             description={video.description}
             hashtags={video.hashtags}
             related={detail.relatedPost}
+            disclosures={detail.disclosures}
             revealAbout={revealAbout}
           />
 
@@ -1002,6 +1012,6 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   );
 }
 
-export function WatchPage({ videoId, listId }: WatchPageProps) {
-  return <WatchPageContent key={`${videoId ?? "posttube-watch"}:${listId ?? ""}`} videoId={videoId} listId={listId ?? null} />;
+export function WatchPage({ videoId, listId, startSeconds }: WatchPageProps) {
+  return <WatchPageContent key={`${videoId ?? "posttube-watch"}:${listId ?? ""}`} videoId={videoId} listId={listId ?? null} startSeconds={startSeconds ?? null} />;
 }

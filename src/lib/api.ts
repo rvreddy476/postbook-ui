@@ -6,6 +6,7 @@ import {
     peekAccessToken,
     purgeLegacyTokenStorage,
 } from "@/lib/accessToken"
+import { announceMeaningfulAction, meaningfulActionFor } from "@/features/webPush/meaningfulAction"
 
 const SESSION_KEY = "postbook_session"
 
@@ -210,7 +211,14 @@ api.interceptors.request.use(async (config) => {
 // request against a refresh token the server rotates on every use.
 
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        // A follow, comment or post the server accepted: the moment the web
+        // push soft prompt may follow (src/features/webPush). Inert unless
+        // web push is configured.
+        const action = meaningfulActionFor(response.config?.method, response.config?.url)
+        if (action) announceMeaningfulAction(action)
+        return response
+    },
     async (error: AxiosError) => {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 

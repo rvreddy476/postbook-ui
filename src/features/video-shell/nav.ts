@@ -1,6 +1,7 @@
 import {
   ArrowDownToLine,
   Bell,
+  Bookmark,
   CalendarClock,
   CircleUserRound,
   Clapperboard,
@@ -9,14 +10,14 @@ import {
   FileText,
   Flame,
   Heart,
-  HelpCircle,
   History,
   Home,
-  Info,
+  Hourglass,
   LayoutDashboard,
   LayoutGrid,
   ListPlus,
   ListVideo,
+  Lock,
   LogOut,
   MessageSquare,
   Moon,
@@ -24,6 +25,7 @@ import {
   Settings,
   Shapes,
   ShieldCheck,
+  ShoppingBag,
   ThumbsUp,
   Tv,
   Upload,
@@ -45,12 +47,13 @@ import {
   the shape is settled once and only the flag changes. The way back to the
   app home is the header's product badge. Reels has its own list, shaped
   like TikTok's:
-  For You / Explore / Following / Friends / LIVE / Messages / Activity /
-  Upload / Profile. Under the "sidebar" chrome (search in the menu, no
+  For You / Explore / Following / Friends / LIVE / Shop / Messages /
+  Activity / Upload / Profile (Shop is MStore at /shop, audit T-33). Under the "sidebar" chrome (search in the menu, no
   header) the list ends with "More", which opens a panel beside the icon
-  rail holding the way back to Home, PostTube and Liked reels, the theme
-  switch and log out — under the "header" chrome those live in a divider
-  group instead. Keeping it pure — no hooks, no pathname — is what lets
+  rail holding the way back to Home, PostTube and Liked reels and one
+  "Settings & privacy" row (the theme switch and Log out are on /settings)
+  — under the "header" chrome the app links live in a divider group
+  instead. Keeping it pure — no hooks, no pathname — is what lets
   the tests pin the lists down.
 */
 
@@ -119,20 +122,29 @@ export const VIDEO_NAV_YOU: readonly VideoNavItem[] = [
   { key: "hub", label: "Creator Hub", icon: LayoutDashboard, href: "/posttube/hub" },
 ];
 
+/*
+  Help and About are left out on purpose (audit T-24): there is no /help or
+  /about page, and a footer link to a 404 is worse than no link. Add them
+  back with the page. The nav test checks every footer and More link
+  against src/app, so a dead link cannot come back unnoticed.
+*/
 export const VIDEO_NAV_FOOTER: readonly VideoNavItem[] = [
   { key: "settings", label: "Settings", icon: Settings, href: "/settings" },
-  { key: "help", label: "Help", icon: HelpCircle, href: "/help" },
   { key: "terms", label: "Terms", icon: FileText, href: "/terms" },
   { key: "privacy", label: "Privacy", icon: ShieldCheck, href: "/privacy" },
 ];
 
-/** The reels menu: the nine the rail shows as icons, in TikTok's order. */
+/**
+ * The reels menu: the ten the rail shows as icons. Shop (MStore) sits after
+ * LIVE, as the shell plan reads (audit T-33).
+ */
 export const REELS_NAV_TOP: readonly VideoNavItem[] = [
   { key: "for-you", label: "For You", icon: Home, href: "/reels", exact: true, absentParams: ["feed"] },
   { key: "explore", label: "Explore", icon: Compass, action: "explore" },
   { key: "following", label: "Following", icon: UserRoundCheck, href: "/reels?feed=following", exact: true },
   { key: "friends", label: "Friends", icon: Users, href: "/connections" },
   { key: "live", label: "LIVE", icon: Radio, href: "/reels/live" },
+  { key: "shop", label: "Shop", icon: ShoppingBag, href: "/shop" },
   { key: "messages", label: "Messages", icon: MessageSquare, href: "/messenger" },
   { key: "activity", label: "Activity", icon: Bell, href: "/notifications" },
   { key: "upload", label: "Upload", icon: Upload, href: "/reels/create" },
@@ -151,13 +163,11 @@ export const REELS_NAV_APPS: readonly VideoNavItem[] = [
 export const REELS_NAV_MORE: VideoNavItem = { key: "more", label: "More", icon: Ellipsis, action: "more" };
 
 /**
- * The footer under the sidebar chrome, as TikTok's reads: two rows of
- * links in a two-column grid ("About  Help" / "Terms & Policies  Privacy"),
- * then the copyright line. Every link is a real route.
+ * The footer under the sidebar chrome: links in a two-column grid
+ * ("Terms & Policies  Privacy"), then the copyright line. Every link is a
+ * real route; About and Help return when their pages exist (see above).
  */
 export const REELS_SIDEBAR_FOOTER: readonly VideoNavItem[] = [
-  { key: "about", label: "About", icon: Info, href: "/about" },
-  { key: "help", label: "Help", icon: HelpCircle, href: "/help" },
   { key: "terms", label: "Terms & Policies", icon: FileText, href: "/terms" },
   { key: "privacy", label: "Privacy", icon: ShieldCheck, href: "/privacy" },
 ];
@@ -169,8 +179,8 @@ export const REELS_SIDEBAR_COPYRIGHT = "© 2026 VChat";
  * is 240 wide; the rail 72 (icons only); the More panel opens as a 320px
  * panel beside the rail (392 in all). Nav rows are 40px tall with a 4px gap
  * (44 pitch), starting 24px under the 40px search pill at y 64, which puts
- * every row within 5px of TikTok's. More-panel rows are 48px; its Dark
- * mode row is 60px with three 32×25 segments.
+ * every row within 5px of TikTok's. The More panel's own rows (44px, in
+ * grouped cards) are drawn by video-shell.css; see VideoMorePanel.
  */
 export const REELS_SIDEBAR_METRICS = {
   expandedWidth: 240,
@@ -183,10 +193,7 @@ export const REELS_SIDEBAR_METRICS = {
   listTop: 128,
   rowHeight: 40,
   rowGap: 4,
-  moreRowHeight: 48,
-  themeRowHeight: 60,
-  segmentWidth: 32,
-  segmentHeight: 25,
+  moreRowHeight: 44,
   footerPadding: 24,
 } as const;
 
@@ -214,12 +221,8 @@ export function videoNav(app: VideoApp, chrome: VideoChrome = "header"): VideoNa
 
 /* ---- the More panel --------------------------------------------------- */
 
-/**
- * What a More-panel row does when it is not a link: open the Explore
- * launcher, show the theme switch (a row with its own control, no click),
- * or log out.
- */
-export type MorePanelAction = "explore" | "theme" | "logout";
+/** What a More-panel row does when it is not a link: open the Explore launcher. */
+export type MorePanelAction = "explore";
 
 export interface MorePanelItem {
   key: string;
@@ -230,50 +233,61 @@ export interface MorePanelItem {
 }
 
 export interface MorePanelSection {
-  key: "settings" | "tools" | "apps" | "other";
+  key: "apps" | "activity" | "creator";
   title: string;
+  /** "tiles": a grid of app tiles; "list": rows with a chevron. */
+  layout: "tiles" | "list";
   items: MorePanelItem[];
 }
 
-/** The More panel, section by section, as TikTok's reads. Pure data. */
+/*
+  The More panel is the short first level (founder's walk of TikTok's
+  Profile menu, 17 Oct; rebuilt the same day after the rail's label rule
+  reached into it): a profile row, the apps as tiles, two short lists
+  (Your activity, Creator tools), then ONE "Settings & privacy" row
+  (REELS_MORE_SETTINGS) to the /settings page. The settings themselves —
+  notifications, privacy, appearance, Log out — live on that page
+  (src/app/settings/_lib/settingsHub.ts), not here. Every link is a page
+  that exists (nav.test.ts checks it). Pure data.
+*/
 export const REELS_MORE_PANEL: readonly MorePanelSection[] = [
-  {
-    key: "settings",
-    title: "Settings",
-    items: [
-      { key: "general", label: "General", icon: Settings, href: "/settings" },
-      { key: "theme", label: "Dark mode", icon: Moon, action: "theme" },
-    ],
-  },
-  {
-    key: "tools",
-    title: "Tools",
-    items: [
-      { key: "upload", label: "Upload", icon: Upload, href: "/reels/create" },
-      { key: "channel", label: "Your channel", icon: UserRound, href: "/posttube/channel" },
-      { key: "live-tools", label: "LIVE tools", icon: Radio, href: "/live" },
-    ],
-  },
   {
     key: "apps",
     title: "Apps",
+    layout: "tiles",
     items: [
       { key: "home", label: "Home", icon: LayoutGrid, href: "/" },
       { key: "tube", label: "PostTube", icon: Tv, href: "/posttube" },
-      { key: "liked", label: "Liked reels", icon: ThumbsUp, href: "/reels/liked" },
-      { key: "offline", label: "Offline", icon: ArrowDownToLine, href: "/posttube/offline" },
       { key: "explore", label: "Explore", icon: Compass, action: "explore" },
+      { key: "groups", label: "Groups", icon: Users, href: "/groups" },
     ],
   },
   {
-    key: "other",
-    title: "Other",
+    key: "activity",
+    title: "Your activity",
+    layout: "list",
     items: [
-      { key: "help-center", label: "Help Center", icon: HelpCircle, href: "/help" },
-      { key: "logout", label: "Log out", icon: LogOut, action: "logout" },
+      { key: "liked", label: "Liked reels", icon: ThumbsUp, href: "/reels/liked" },
+      { key: "saved", label: "Saved", icon: Bookmark, href: "/saved" },
+      { key: "history", label: "Watch history", icon: History, href: "/posttube/history" },
+      { key: "offline", label: "Offline", icon: ArrowDownToLine, href: "/posttube/offline" },
+    ],
+  },
+  {
+    key: "creator",
+    title: "Creator tools",
+    layout: "list",
+    items: [
+      { key: "hub", label: "Creator Hub", icon: LayoutDashboard, href: "/posttube/hub" },
+      { key: "upload", label: "Upload", icon: Upload, href: "/reels/create" },
+      { key: "live-tools", label: "LIVE tools", icon: Radio, href: "/live" },
+      { key: "channel", label: "Your channel", icon: UserRound, href: "/posttube/channel" },
     ],
   },
 ];
+
+/** The one row under the lists: the way to the full settings page. */
+export const REELS_MORE_SETTINGS: MorePanelItem = { key: "settings", label: "Settings & privacy", icon: Settings, href: "/settings" };
 
 /**
  * Whether a link is the current page. Exact match, or the pathname sits

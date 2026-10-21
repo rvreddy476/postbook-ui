@@ -1,15 +1,66 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown, Info, X } from "lucide-react";
+import { useId, useState, type ReactNode } from "react";
+import { ChevronDown, Info, X, type LucideIcon } from "lucide-react";
 
-/* ── Section Header ───────────────────────────────────── */
+/*
+  The studio's building blocks. One look for every step: a section is a
+  title, one muted line and its body; grouped settings sit in one bordered
+  list with dividers; choices are radio cards. Colour and type come from
+  the theme only (upload.css reads the same tokens).
+*/
+
+/* ── Section ──────────────────────────────────────────── */
+
+export function Section({
+  title,
+  subtitle,
+  icon: Icon,
+  required,
+  aside,
+  children,
+  id,
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: LucideIcon;
+  required?: boolean;
+  aside?: ReactNode;
+  children: ReactNode;
+  id?: string;
+}) {
+  const headingId = useId();
+  return (
+    <section className="upload-section" aria-labelledby={headingId} id={id}>
+      <header className="upload-section-head">
+        {Icon ? <span className="upload-section-icon" aria-hidden="true"><Icon /></span> : null}
+        <div className="min-w-0 flex-1">
+          <h3 id={headingId}>
+            {title}
+            {required ? <span className="upload-required" aria-hidden="true">*</span> : null}
+            {required ? <span className="upload-sr-only"> (required)</span> : null}
+          </h3>
+          {subtitle ? <p>{subtitle}</p> : null}
+        </div>
+        {aside}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+/** A bordered list of settings rows with dividers between them. */
+export function SettingsGroup({ children, invalid }: { children: ReactNode; invalid?: boolean }) {
+  return <div className="upload-group" data-invalid={invalid || undefined}>{children}</div>;
+}
+
+/* ── Section Header (a bare heading, for a sub-part of a section) ── */
 
 export function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="mb-4">
-      <h3 className="text-[14px] font-bold text-brand-text">{title}</h3>
-      {subtitle && <p className="mt-0.5 text-[12px] text-muted">{subtitle}</p>}
+    <div className="upload-subhead">
+      <h3>{title}</h3>
+      {subtitle && <p>{subtitle}</p>}
     </div>
   );
 }
@@ -30,13 +81,13 @@ export function FieldLabel({
   htmlFor?: string;
 }) {
   return (
-    <label htmlFor={htmlFor} className="mb-1.5 flex items-center justify-between gap-2">
-      <span className="text-[12px] font-semibold text-muted">
+    <label htmlFor={htmlFor} className="upload-label">
+      <span>
         {label}
-        {required && <span className="ml-0.5 text-danger" aria-label="required">*</span>}
+        {required && <span className="upload-required" aria-label="required">*</span>}
       </span>
-      {counter && <span className="text-[11px] text-muted">{counter}</span>}
-      {hint && !counter && <span className="text-[11px] text-muted">{hint}</span>}
+      {counter && <span className="upload-label-meta">{counter}</span>}
+      {hint && !counter && <span className="upload-label-meta">{hint}</span>}
     </label>
   );
 }
@@ -48,29 +99,30 @@ export function ToggleSwitch({
   onChange,
   disabled,
   label,
+  describedBy,
+  id,
 }: {
   checked: boolean;
   onChange: (val: boolean) => void;
   disabled?: boolean;
   label?: string;
+  describedBy?: string;
+  id?: string;
 }) {
   return (
     <button
       type="button"
       role="switch"
+      id={id}
       aria-label={label}
       aria-checked={checked}
+      aria-describedby={describedBy}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-text/40 disabled:cursor-not-allowed disabled:opacity-40 ${
-        checked ? "bg-brand-text" : "bg-brand-text/10"
-      }`}
+      className="upload-switch"
+      data-on={checked || undefined}
     >
-      <span
-        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-brand-card shadow-xs transition-transform duration-200 ${
-          checked ? "translate-x-[22px]" : "translate-x-[3px]"
-        }`}
-      />
+      <span aria-hidden="true" />
     </button>
   );
 }
@@ -83,25 +135,28 @@ export function ToggleRow({
   checked,
   onChange,
   disabled,
+  id,
 }: {
   label: string;
   description?: string;
   checked: boolean;
   onChange: (val: boolean) => void;
   disabled?: boolean;
+  id?: string;
 }) {
+  const descriptionId = useId();
   return (
-    <div className="flex items-center justify-between gap-4 py-2.5">
-      <div className="min-w-0">
-        <p className="text-[13px] font-medium text-brand-text">{label}</p>
-        {description && <p className="mt-0.5 text-[11px] text-muted">{description}</p>}
+    <div className="upload-row">
+      <div className="upload-row-text">
+        <p className="upload-row-title">{label}</p>
+        {description && <p id={descriptionId} className="upload-row-desc">{description}</p>}
       </div>
-      <ToggleSwitch checked={checked} onChange={onChange} disabled={disabled} label={label} />
+      <ToggleSwitch id={id} checked={checked} onChange={onChange} disabled={disabled} label={label} describedBy={description ? descriptionId : undefined} />
     </div>
   );
 }
 
-/* ── Radio Option ─────────────────────────────────────── */
+/* ── Radio Option (a row inside a SettingsGroup) ──────── */
 
 export function RadioOption({
   label,
@@ -117,47 +172,41 @@ export function RadioOption({
   name: string;
 }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-brand-secondary">
-      <input
-        type="radio"
-        name={name}
-        checked={checked}
-        onChange={onChange}
-        className="mt-0.5 h-4 w-4 accent-brand-text"
-      />
-      <div className="min-w-0">
-        <p className="text-[13px] font-medium text-brand-text">{label}</p>
-        {description && <p className="mt-0.5 text-[11px] text-muted">{description}</p>}
-      </div>
+    <label className="upload-radio-row" data-checked={checked || undefined}>
+      <input type="radio" name={name} checked={checked} onChange={onChange} />
+      <span className="upload-row-text">
+        <span className="upload-row-title">{label}</span>
+        {description && <span className="upload-row-desc">{description}</span>}
+      </span>
     </label>
   );
 }
 
-/* ── Check Option ─────────────────────────────────────── */
+/* ── Choice Card (radio card, for the few big choices) ── */
 
-export function CheckOption({
+export function ChoiceCard({
   label,
   description,
   checked,
   onChange,
+  name,
+  icon: Icon,
 }: {
   label: string;
   description?: string;
   checked: boolean;
-  onChange: (val: boolean) => void;
+  onChange: () => void;
+  name: string;
+  icon?: LucideIcon;
 }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-brand-secondary">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 rounded-sm accent-brand-text"
-      />
-      <div className="min-w-0">
-        <p className="text-[13px] font-medium text-brand-text">{label}</p>
-        {description && <p className="mt-0.5 text-[11px] text-muted">{description}</p>}
-      </div>
+    <label className="upload-choice" data-checked={checked || undefined}>
+      {Icon ? <span className="upload-choice-icon" aria-hidden="true"><Icon /></span> : null}
+      <span className="upload-row-text">
+        <span className="upload-row-title">{label}</span>
+        {description && <span className="upload-row-desc">{description}</span>}
+      </span>
+      <input type="radio" name={name} checked={checked} onChange={onChange} />
     </label>
   );
 }
@@ -168,17 +217,12 @@ export function InfoBanner({
   children,
   variant = "info",
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   variant?: "info" | "warning" | "error";
 }) {
-  const colors = {
-    info: "bg-brand-secondary border-brand-divider text-muted",
-    warning: "bg-warning/5 border-warning/20 text-warning",
-    error: "bg-danger/5 border-danger/20 text-danger",
-  };
   return (
-    <div className={`flex items-start gap-2.5 rounded-xl border px-4 py-3 text-[12px] ${colors[variant]}`}>
-      <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-60" />
+    <div className="upload-banner" data-variant={variant}>
+      <Info aria-hidden="true" />
       <div>{children}</div>
     </div>
   );
@@ -194,11 +238,11 @@ export function TagChip({
   onRemove?: () => void;
 }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-brand-secondary px-2.5 py-1 text-[11px] font-medium text-muted">
+    <span className="upload-chip">
       {label}
       {onRemove && (
-        <button type="button" aria-label={`Remove ${label}`} onClick={onRemove} className="hover:text-danger transition-colors">
-          <X className="h-3 w-3" />
+        <button type="button" aria-label={`Remove ${label}`} onClick={onRemove}>
+          <X aria-hidden="true" />
         </button>
       )}
     </span>
@@ -212,23 +256,19 @@ export function Collapsible({
   defaultOpen = false,
   children,
 }: {
-  title: React.ReactNode;
+  title: ReactNode;
   defaultOpen?: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const bodyId = useId();
   return (
-    <div className="rounded-xl border border-brand-text/10">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-        className="flex w-full items-center justify-between px-4 py-3 text-[13px] font-semibold text-brand-text hover:bg-brand-secondary rounded-xl transition-colors"
-      >
-        {title}
-        <ChevronDown className={`h-4 w-4 text-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+    <div className="upload-collapsible">
+      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls={bodyId}>
+        <span className="min-w-0 flex-1">{title}</span>
+        <ChevronDown aria-hidden="true" data-open={open || undefined} />
       </button>
-      {open && <div className="border-t border-brand-text/10 px-4 py-3">{children}</div>}
+      {open && <div id={bodyId} className="upload-collapsible-body">{children}</div>}
     </div>
   );
 }
@@ -266,34 +306,7 @@ export function StudioInput({
       onChange={(e) => onChange(e.target.value)}
       maxLength={maxLength}
       autoFocus={autoFocus}
-      className="h-11 w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 text-[14px] text-brand-text placeholder:text-muted outline-hidden focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
-      placeholder={placeholder}
-    />
-  );
-}
-
-/* ── Studio Textarea ──────────────────────────────────── */
-
-export function StudioTextarea({
-  value,
-  onChange,
-  placeholder,
-  maxLength,
-  rows = 4,
-}: {
-  value: string;
-  onChange: (val: string) => void;
-  placeholder?: string;
-  maxLength?: number;
-  rows?: number;
-}) {
-  return (
-    <textarea
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      maxLength={maxLength}
-      rows={rows}
-      className="w-full rounded-xl border border-brand-text/10 bg-brand-secondary px-4 py-3 text-[13px] text-brand-text placeholder:text-muted outline-hidden focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 resize-none transition-all"
+      className="upload-input"
       placeholder={placeholder}
     />
   );
@@ -323,7 +336,7 @@ export function StudioSelect({
   label?: string;
 }) {
   return (
-    <div className="relative">
+    <div className="upload-select">
       <select
         id={id}
         required={required}
@@ -332,14 +345,14 @@ export function StudioSelect({
         aria-describedby={describedBy}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-11 w-full appearance-none rounded-xl border border-brand-text/10 bg-brand-secondary px-4 pr-9 text-[13px] text-brand-text outline-hidden focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
+        className="upload-input"
       >
-        {placeholder && <option value="">{placeholder}</option>}
+        {placeholder !== undefined && <option value="">{placeholder}</option>}
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
-      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+      <ChevronDown aria-hidden="true" />
     </div>
   );
 }

@@ -34,7 +34,7 @@ export interface ReelAuthorCardProps {
   The "user profile panel" at the top of the comments column and of the
   theater panel — TikTok's card above the thread. Avatar 40, the display
   name (18/700, a link) and handle (14/500 muted) with the Follow pill at
-  the right (Following outlined; Subscribe for a channel reel; nothing on
+  the right (Following outlined; a channel reel says Follow too; nothing on
   an own reel); the full description and hashtags; the sound line (the
   overlay is hidden in theater, so this is where it is read there); then
   the counts row —
@@ -79,7 +79,8 @@ export function ReelAuthorCard({
         </div>
         {action === "subscribe" && subscribed !== undefined ? (
           <button type="button" disabled={subscribePending} aria-pressed={subscribed} onClick={onToggleSubscribe} className={`reel-panel-follow ${subscribed ? "is-on" : ""}`}>
-            {subscribed ? "Subscribed" : "Subscribe"}
+            {/* Reels always say Follow (founder, 2026-10-20); a channel reel still subscribes underneath. */}
+            {subscribed ? "Following" : "Follow"}
           </button>
         ) : action === "follow" && following !== undefined ? (
           <button type="button" disabled={followPending} aria-pressed={following} onClick={onToggleFollow} className={`reel-panel-follow ${following ? "is-on" : ""}`}>

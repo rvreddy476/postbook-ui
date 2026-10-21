@@ -12,7 +12,7 @@ import { uploadMedia } from "@/lib/mediaUpload";
 import { useAuthUser } from "@/store/auth";
 
 import { BrandingScreen } from "./BrandingScreen";
-import { useActiveSection, useFeaturedPicker, useHandleAvailability } from "./hooks";
+import { useActiveSection, useFeaturedPicker, useHandleAvailability, useNameAvailability } from "./hooks";
 import { useCreateChannelForm } from "./useCreateChannelForm";
 import {
   BrandingValidationError,
@@ -107,6 +107,7 @@ export function BrandingSettings() {
 
   const effective = draft ?? baseline;
   const availability = useHandleAvailability(effective.handle, baseline.handle);
+  const nameAvailability = useNameAvailability(effective.name, baseline.name);
   const featured = useFeaturedPicker(user?.id, effective.featured_post_id);
   const activeSection = useActiveSection(SECTION_IDS, "identity");
 
@@ -122,7 +123,8 @@ export function BrandingSettings() {
       return 0;
     }
   }, [baseline, draft]);
-  const blockingErrors = countErrors(errors) + (availability.state === "taken" && !errors.handle ? 1 : 0);
+  const blockingErrors =
+    countErrors(errors) + (availability.state === "taken" && !errors.handle ? 1 : 0) + (nameAvailability.state === "taken" && !errors.name ? 1 : 0);
 
   /* ── Images ────────────────────────────────────────────── */
   const pick = useCallback(
@@ -177,6 +179,10 @@ export function BrandingSettings() {
     }
     if (availability.state === "taken") {
       setServerErrors((s) => ({ ...s, handle: "That handle is taken." }));
+      return;
+    }
+    if (nameAvailability.state === "taken") {
+      setServerErrors((s) => ({ ...s, name: "That channel name is taken. Names are unique." }));
       return;
     }
     if (!Object.keys(patch).length) return;
@@ -255,6 +261,7 @@ export function BrandingSettings() {
         bannerUrl: urlFor(d.banner_media_id, "banner"),
         uploading,
         availability,
+        nameAvailability,
         onChange: (field, value) => patchDraft(field, (cur) => ({ ...cur, [field]: field === "handle" ? normalizeHandleInput(value) : value })),
         onPickAvatar: (file) => void pick("avatar", file),
         onRemoveAvatar: () => patchDraft("avatar_media_id", (cur) => ({ ...cur, avatar_media_id: null })),

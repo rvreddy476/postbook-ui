@@ -1,78 +1,79 @@
-/** Upload Studio design tokens - neutral black/white theme */
+/** Upload Studio constants. Colour and type come from the shared theme (src/ui/theme.css), never from here. */
 
-export const T = {
-  /* Surface */
-  bg: "#F5F4F1",
-  card: "#FFFFFF",
-  cardBorder: "#E8E6E1",
-  cardHover: "#FAFAF8",
+import { SHORTS_MAX_DURATION_LABEL, SHORTS_MAX_DURATION_SECONDS } from "@/lib/videoLimits";
 
-  /* Text */
-  textPrimary: "#1A1A1A",
-  textSecondary: "#6B6B6B",
-  textMuted: "#9E9E9E",
-  textPlaceholder: "#BFBFBF",
-
-  /* Brand accents */
-  pink: "#E8527A",
-  coral: "#F28B6D",
-  teal: "#2BB5A0",
-  neutral: "#0F1419",
-  gold: "#E5A93D",
-
-  /* UI */
-  accent: "#0F1419",
-  accentHover: "#000000",
-  accentLight: "#F7F9F9",
-  danger: "#E8527A",
-  success: "#2BB5A0",
-  warning: "#E5A93D",
-
-  /* Borders / Dividers */
-  border: "#E8E6E1",
-  borderFocus: "#0F1419",
-  divider: "#F0EEE9",
-
-  /* Radius */
-  radiusSm: "8px",
-  radiusMd: "12px",
-  radiusLg: "16px",
-  radiusXl: "20px",
-  radiusFull: "9999px",
-
-  /* Shadows */
-  shadowSm: "0 1px 3px rgba(0,0,0,0.04)",
-  shadowMd: "0 4px 12px rgba(0,0,0,0.06)",
-  shadowLg: "0 12px 32px rgba(0,0,0,0.08)",
-} as const;
-
-/** Content type identifiers */
+/** Content type identifiers. "short" and "reel" are the same vertical studio. */
 export type ContentType = "reel" | "short" | "long" | "podcast";
 
-/** Step schemas per content type */
+export type StepId = "video" | "details" | "audience" | "engage" | "enrich" | "publish";
+
+/** True for the vertical shorts studio (Reels); false for long video and podcasts (PostTube). */
+export function isShortStudio(contentType: ContentType): boolean {
+  return contentType === "reel" || contentType === "short";
+}
+
+/**
+ * Step schemas per content type. Shorts ask much less (founder, 2026-10-21):
+ * the video, a few details, and one page of final settings. Long video and
+ * podcasts keep the full studio.
+ */
 export const STEP_SCHEMAS: Record<ContentType, readonly StepId[]> = {
-  reel:    ["video", "details", "audience", "engage", "publish"],
-  short:   ["video", "details", "audience", "engage", "publish"],
+  reel:    ["video", "details", "publish"],
+  short:   ["video", "details", "publish"],
   long:    ["video", "details", "audience", "engage", "enrich", "publish"],
   podcast: ["video", "details", "audience", "engage", "enrich", "publish"],
 } as const;
 
-export type StepId = "video" | "details" | "audience" | "engage" | "enrich" | "publish";
-
 export const STEP_META: Record<StepId, { label: string; description: string }> = {
-  video:    { label: "Video",    description: "Upload your file" },
-  details:  { label: "Details",  description: "Title, caption, cover & audio" },
-  audience: { label: "Audience", description: "Age, COPPA & disclosures" },
-  engage:   { label: "Engage",   description: "Comments, sparks & remix" },
-  enrich:   { label: "Enrich",   description: "Subtitles, chapters & metadata" },
-  publish:  { label: "Publish",  description: "Visibility, schedule & cross-post" },
+  video:    { label: "Video",    description: "Choose your file" },
+  details:  { label: "Details",  description: "Title, description and cover" },
+  audience: { label: "Audience", description: "Who it is for and disclosures" },
+  engage:   { label: "Comments", description: "Comments, likes and remixing" },
+  enrich:   { label: "Extras",   description: "Language, subtitles and chapters" },
+  publish:  { label: "Publish",  description: "Visibility, topic and schedule" },
 };
 
-export const CONTENT_TYPE_META: Record<ContentType, { label: string; platformLabel: string; icon: string; aspect: string; maxDuration: number; maxSize: number }> = {
-  reel:    { label: "Reel",          platformLabel: "Reels",           icon: "sparkles", aspect: "9/16", maxDuration: 180,   maxSize: 500 * 1024 * 1024 },
-  short:   { label: "Reel / Clip",   platformLabel: "Posttube Reels",  icon: "clapperboard", aspect: "9/16", maxDuration: 180,   maxSize: 500 * 1024 * 1024 },
-  long:    { label: "Video",         platformLabel: "Posttube",        icon: "film",          aspect: "16/9", maxDuration: 43200, maxSize: 10 * 1024 * 1024 * 1024 },
-  podcast: { label: "Podcast",       platformLabel: "Posttube",        icon: "mic",           aspect: "1/1",  maxDuration: 28800, maxSize: 2 * 1024 * 1024 * 1024 },
+/** The heading and one line under it, per step and studio. */
+export function stepIntro(step: StepId, contentType: ContentType): { title: string; body: string } {
+  const short = isShortStudio(contentType);
+  switch (step) {
+    case "video":
+      return { title: "Choose a video", body: short ? `A vertical clip of up to ${SHORTS_MAX_DURATION_LABEL}; a longer one is posted as a long video. Nothing uploads until you publish or save a draft.` : "Start with a file from your device. Nothing uploads until you publish or save a draft." };
+    case "details":
+      return short
+        ? { title: "Describe your reel", body: "A title is required. Add a caption with #hashtags, a cover, a sound or a place if you like." }
+        : { title: "Add the details", body: "A title is required. A description, tags and a cover help people find your video." };
+    case "audience":
+      return { title: "Audience", body: "Say who this video is for and anything viewers should know." };
+    case "engage":
+      return { title: "Comments and likes", body: "Choose how viewers can respond to your video." };
+    case "enrich":
+      return { title: "Extras", body: "Optional: language, subtitles and chapters help viewers find their way." };
+    case "publish":
+      return short
+        ? { title: "Ready to post", body: "Check who can watch, then publish now or schedule it." }
+        : { title: "Review and publish", body: "Choose a topic, check who can watch and decide when it goes live." };
+  }
+}
+
+/**
+ * The Shorts (reel / flick) duration boundary in seconds, inclusive: 600 s =
+ * 10 minutes. A classification boundary, not a cap: a longer file picked in
+ * the Shorts studio is posted as a long video. Defined once in
+ * src/lib/videoLimits.ts, mirroring the server's FlickMaxDurationSeconds.
+ * A reel is also portrait or square.
+ */
+export const FLICK_MAX_DURATION_SECONDS = SHORTS_MAX_DURATION_SECONDS;
+
+/**
+ * Per studio: labels and layout only. No studio has a size or length limit
+ * (founder, 2026-10-21); a Short over the boundary becomes a long video.
+ */
+export const CONTENT_TYPE_META: Record<ContentType, { label: string; platformLabel: string; icon: string; aspect: string }> = {
+  reel:    { label: "Reel",    platformLabel: "Reels",    icon: "sparkles",     aspect: "9/16" },
+  short:   { label: "Reel",    platformLabel: "Reels",    icon: "clapperboard", aspect: "9/16" },
+  long:    { label: "Video",   platformLabel: "PostTube", icon: "film",         aspect: "16/9" },
+  podcast: { label: "Podcast", platformLabel: "PostTube", icon: "mic",          aspect: "1/1"  },
 };
 
 // Topics are not a list here any more: the studio reads GET /v1/posts/categories
