@@ -3,6 +3,7 @@
 import React from 'react';
 import { Type, Camera, Video, FileText, BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { SHORTS_MAX_DURATION_SECONDS } from '@/lib/videoLimits';
 
 export interface PostType {
   id: string;
@@ -15,7 +16,7 @@ export interface PostType {
 export const POST_TYPES: PostType[] = [
   { id: 'text', label: 'Text', icon: <Type className="w-4 h-4" />, color: '#2563EB', hint: 'Share a thought' },
   { id: 'photo', label: 'Photo', icon: <Camera className="w-4 h-4" />, color: '#059669', hint: 'A moment captured' },
-  { id: 'video', label: 'Video', icon: <Video className="w-4 h-4" />, color: '#E11D48', hint: 'Up to 5 min' },
+  { id: 'video', label: 'Video', icon: <Video className="w-4 h-4" />, color: '#E11D48', hint: `Up to ${SHORTS_MAX_DURATION_SECONDS / 60} min` },
   { id: 'article', label: 'Article', icon: <FileText className="w-4 h-4" />, color: '#D97706', hint: 'Long-form writing' },
   { id: 'poll', label: 'Poll', icon: <BarChart3 className="w-4 h-4" />, color: '#7C3AED', hint: 'Let people decide' },
 ];

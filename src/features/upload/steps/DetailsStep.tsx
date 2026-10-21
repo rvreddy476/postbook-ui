@@ -11,6 +11,8 @@ import { LocationField } from "../components/LocationField";
 import { StudioSoundSection } from "../components/StudioSoundSection";
 import { Collapsible, FieldLabel, Section, StudioInput, TagChip } from "../primitives";
 import { isShortStudio, type ContentType } from "../tokens";
+import { shortsLongVideoNotice } from "../fileRules";
+import { LongVideoNotice } from "./VideoStep";
 import type { StudioFormState } from "../types";
 
 interface DetailsStepProps {
@@ -68,9 +70,11 @@ export function DetailsStep({ form, patch, extractCoverPreview, selectCustomCove
   const titleError = showErrors && !form.title.trim();
   const captionOverflow = form.caption.length > MAX_CAPTION;
   const typedTags = captionHashtags(form.caption);
+  const longVideoNotice = shortsLongVideoNotice(contentType, form.videoDurationSec);
 
   return (
     <div className="upload-stack">
+      {longVideoNotice ? <LongVideoNotice text={longVideoNotice} /> : null}
       <Section title={short ? "Title and caption" : "Title and description"}>
         {/* ── Title ── */}
         <div className="upload-field">

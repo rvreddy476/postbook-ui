@@ -3,24 +3,32 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { StudioToolbar } from "../components/StudioToolbar";
 import { PreviewPanel } from "../components/PreviewPanel";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { VideoStep } from "../steps/VideoStep";
+import { DetailsStep } from "../steps/DetailsStep";
 import { FieldLabel, StudioSelect, ToggleRow } from "../primitives";
 import { INITIAL_FORM_STATE, type StudioFormState } from "../types";
 import { STEP_SCHEMAS } from "../tokens";
 import { canPublish, getAllErrors, getStepErrors } from "../validation";
-import { tomorrowLocalInput, uploadLimits, validateMediaDuration, validateSelectedFile } from "../fileRules";
+import { tomorrowLocalInput, uploadLimitLabels, validateMediaDuration, validateSelectedFile } from "../fileRules";
 
 const form = (patch: Partial<StudioFormState> = {}): StudioFormState => ({ ...INITIAL_FORM_STATE, contentType: "long", ...patch });
 const noop = () => {};
 
+const GB = 1024 * 1024 * 1024;
+
 describe("upload file requirements", () => {
-  test("the advertised limit matches the enforced 500 MB ceiling, including long video", () => {
-    for (const type of ["long", "short", "reel", "podcast"] as const) {
-      const limit = uploadLimits(type).maxSize;
-      expect(limit).toBe(500 * 1024 * 1024);
-      expect(validateSelectedFile({ type: "video/mp4", size: limit }, type)).toBeNull();
-      expect(validateSelectedFile({ type: "video/mp4", size: limit + 1 }, type)).toContain("500 MB");
-    }
+  test("no size cap anywhere: a 2 GB+ long video, a 50 GB one and a large Short all pass the file rules", () => {
+    expect(validateSelectedFile({ type: "video/mp4", size: 2 * GB + 1 }, "long")).toBeNull();
+    expect(validateSelectedFile({ type: "video/quicktime", size: 50 * GB }, "long")).toBeNull();
+    expect(validateSelectedFile({ type: "video/webm", size: 3 * GB }, "podcast")).toBeNull();
+    expect(validateSelectedFile({ type: "video/mp4", size: 600 * 1024 * 1024 }, "reel")).toBeNull();
+    expect(validateSelectedFile({ type: "video/mp4", size: 600 * 1024 * 1024 }, "short")).toBeNull();
+  });
+  test("the labels advertise no number that is not enforced", () => {
+    expect(uploadLimitLabels("long")).toEqual({ size: "Any file size", duration: "Any length" });
+    expect(uploadLimitLabels("podcast")).toEqual({ size: "Any file size", duration: "Any length" });
+    expect(uploadLimitLabels("reel")).toEqual({ size: "Any file size", duration: "Up to 10 minutes as a Short" });
   });
   test("empty and unsupported files receive actionable errors", () => {
     expect(validateSelectedFile({ type: "video/mp4", size: 0 }, "long")).toContain("empty");
@@ -28,12 +36,9 @@ describe("upload file requirements", () => {
     expect(validateSelectedFile({ type: "audio/mpeg", size: 100 }, "long")).not.toBeNull();
     expect(validateSelectedFile({ type: "audio/mpeg", size: 100 }, "podcast")).toBeNull();
   });
-  test("duration must be finite, positive and within the exact content limit", () => {
-    for (const duration of [0, -1, NaN, Infinity]) expect(validateMediaDuration(duration, "long")).not.toBeNull();
-    expect(validateMediaDuration(300, "reel")).toBeNull();
-    expect(validateMediaDuration(300.1, "reel")).toContain("5 minutes");
-    expect(validateMediaDuration(43200, "long")).toBeNull();
-    expect(validateMediaDuration(43201, "long")).toContain("12 hours");
+  test("duration must be finite and positive; there is no upper limit", () => {
+    for (const duration of [0, -1, NaN, Infinity]) expect(validateMediaDuration(duration)).not.toBeNull();
+    for (const duration of [300.1, 600, 601, 43201, 100 * 3600]) expect(validateMediaDuration(duration)).toBeNull();
   });
 });
 
@@ -72,10 +77,38 @@ describe("accessible upload surfaces", () => {
     expect(html).toContain("Select file");
     expect(html).toContain('aria-describedby="upload-file-error upload-file-limits"');
     expect(html).toContain('role="alert"');
-    expect(html).toContain("500 MB");
-    expect(html).not.toContain("10 GB");
+    expect(html).toContain("Any file size");
+    expect(html).toContain("Any length");
+    expect(html).not.toContain("500 MB");
+    expect(html).not.toContain("12 hours");
     expect(html).not.toContain("overflow-y-auto");
     expect(html).not.toContain("audio/*");
+  });
+  test("the Shorts drop zone says 10 minutes as a Short", () => {
+    const html = renderToStaticMarkup(<VideoStep form={form({ contentType: "reel" })} patch={noop} onFileSelected={noop} clearFile={noop} contentType="reel" />);
+    expect(html).toContain("Up to 10 minutes as a Short");
+    expect(html).not.toContain("5 minutes");
+  });
+  test("a 15-minute file in the Shorts studio is accepted with a calm long-video notice, not an error", () => {
+    const fifteen = { name: "talk.mp4", size: 2.5 * GB } as File;
+    const picked = form({ contentType: "reel", videoFile: fifteen, videoPreviewUrl: "blob:v", videoDurationSec: 900, videoWidth: 1080, videoHeight: 1920, computedVideoCategory: "long_video", finalVideoCategory: "long_video" });
+    const html = renderToStaticMarkup(<VideoStep form={picked} patch={noop} onFileSelected={noop} clearFile={noop} contentType="reel" />);
+    expect(html).toContain("Over 10 minutes — this will be posted as a long video.");
+    expect(html).toContain("data-long-video-notice");
+    expect(html).toContain("2.5 GB");
+    expect(html).not.toContain('role="alert"');
+    expect(getStepErrors("video", picked)).toEqual([]);
+    const short = form({ contentType: "reel", videoFile: fifteen, videoDurationSec: 600, videoWidth: 1080, videoHeight: 1920 });
+    expect(renderToStaticMarkup(<VideoStep form={short} patch={noop} onFileSelected={noop} clearFile={noop} contentType="reel" />)).not.toContain("data-long-video-notice");
+  });
+  test("the Details step repeats the notice for an over-10-minute Short", () => {
+    const picked = form({ contentType: "reel", videoFile: { name: "talk.mp4", size: 1 } as File, videoPreviewUrl: "blob:v", videoDurationSec: 900, videoWidth: 1080, videoHeight: 1920 });
+    const html = renderToStaticMarkup(
+      <QueryClientProvider client={new QueryClient()}>
+        <DetailsStep form={picked} patch={noop} contentType="reel" extractCoverPreview={{ mutate: noop, isPending: false }} selectCustomCover={noop} />
+      </QueryClientProvider>,
+    );
+    expect(html).toContain("this will be posted as a long video");
   });
   test("file checking has a visible, disabled state", () => {
     const html = renderToStaticMarkup(<VideoStep form={form()} patch={noop} onFileSelected={noop} clearFile={noop} contentType="long" checking />);

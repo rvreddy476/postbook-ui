@@ -71,9 +71,9 @@ function mergeHashtags(chips: string[], caption: string): string[] {
 
 /**
  * Classify video per spec v2.1, mirroring postclassify.Classify on the server:
- * - Flick: 0 < duration ≤ 300s (exactly 300s is a flick) AND portrait or
+ * - Flick: 0 < duration ≤ FLICK_MAX_DURATION_SECONDS (600 s; exactly 600 s is a flick) AND portrait or
  *   square (height ≥ width)
- * - LongVideo: duration > 300s (any orientation), landscape (any duration),
+ * - LongVideo: duration > 600 s (any orientation), landscape (any duration),
  *   or an unknown/zero duration or dimension (the server's safe default)
  */
 export function classifyVideo(
@@ -228,7 +228,7 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
       const duration = video.duration;
       const width = video.videoWidth;
       const height = video.videoHeight;
-      const durationError = validateMediaDuration(duration, contentType);
+      const durationError = validateMediaDuration(duration);
       if (durationError) { fail(durationError); return; }
       const computedCategory = classifyVideo(Math.round(duration), width || null, height || null);
       cleanup(false);

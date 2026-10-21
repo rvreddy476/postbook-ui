@@ -1,10 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Upload, FileVideo, X, CheckCircle2, AlertCircle, Film, Clock, HardDrive } from "lucide-react";
+import { Upload, FileVideo, X, CheckCircle2, AlertCircle, Film, Clock, HardDrive, Info } from "lucide-react";
 import type { StudioFormState } from "../types";
 import { isShortStudio, type ContentType } from "../tokens";
-import { uploadLimits } from "../fileRules";
+import { shortsLongVideoNotice, uploadLimitLabels } from "../fileRules";
 
 interface VideoStepProps {
   form: StudioFormState;
@@ -21,7 +21,8 @@ export function VideoStep({ form, onFileSelected, clearFile, contentType, showEr
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [dropError, setDropError] = useState<string | null>(null);
-  const limits = uploadLimits(contentType);
+  const limits = uploadLimitLabels(contentType);
+  const longVideoNotice = form.videoFile ? shortsLongVideoNotice(contentType, form.videoDurationSec) : null;
   const error = dropError || form.uploadError || (showErrors && !form.videoFile ? "Choose a video file before continuing to Details." : null);
   const busy = disabled || checking;
   const select = (files: FileList | null) => {
@@ -49,7 +50,7 @@ export function VideoStep({ form, onFileSelected, clearFile, contentType, showEr
       {form.videoPreviewUrl ? <video src={form.videoPreviewUrl} controls muted playsInline preload="metadata" aria-label="Selected video preview" /> : null}
       <div className="upload-file-row">
         <FileVideo aria-hidden="true" />
-        <div><strong title={form.videoFile.name}>{form.videoFile.name}</strong><span>{(form.videoFile.size / (1024 * 1024)).toFixed(1)} MB{form.videoDurationSec != null ? ` · ${Math.floor(form.videoDurationSec / 60)}m ${form.videoDurationSec % 60}s` : ""}</span></div>
+        <div><strong title={form.videoFile.name}>{form.videoFile.name}</strong><span>{fileSizeLabel(form.videoFile.size)}{form.videoDurationSec != null ? ` · ${Math.floor(form.videoDurationSec / 60)}m ${form.videoDurationSec % 60}s` : ""}</span></div>
         <button id="upload-videoFile" type="button" className="upload-button" disabled={busy} onClick={() => fileRef.current?.click()}>Change</button>
         <button type="button" className="upload-icon-button" aria-label="Remove selected file" disabled={busy} onClick={clearFile}><X aria-hidden="true" /></button>
       </div>
@@ -57,9 +58,21 @@ export function VideoStep({ form, onFileSelected, clearFile, contentType, showEr
     </div>}
     <ul id="upload-file-limits" className="upload-file-limits">
       <li><Film aria-hidden="true" />MP4, WebM, MOV{contentType === "podcast" ? " or audio" : ""}</li>
-      <li><HardDrive aria-hidden="true" />Up to {limits.maxSize / (1024 * 1024)} MB</li>
-      <li><Clock aria-hidden="true" />Up to {limits.maxDuration >= 3600 ? `${limits.maxDuration / 3600} hours` : `${limits.maxDuration / 60} minutes`}</li>
+      <li><HardDrive aria-hidden="true" />{limits.size}</li>
+      <li><Clock aria-hidden="true" />{limits.duration}</li>
     </ul>
+    {longVideoNotice ? <LongVideoNotice text={longVideoNotice} /> : null}
     {error ? <p id="upload-file-error" className="upload-field-error" role="alert"><AlertCircle aria-hidden="true" />{error}</p> : null}
   </div>;
+}
+
+/** A Short over the boundary is not an error: it is posted as a long video, and the studio says so. */
+export function LongVideoNotice({ text }: { text: string }) {
+  return <p className="upload-banner" role="status" data-long-video-notice><Info aria-hidden="true" />{text}</p>;
+}
+
+/** 734.2 MB, 2.4 GB — a multi-GB long video reads in GB. */
+export function fileSizeLabel(bytes: number): string {
+  const mb = bytes / (1024 * 1024);
+  return mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb.toFixed(1)} MB`;
 }

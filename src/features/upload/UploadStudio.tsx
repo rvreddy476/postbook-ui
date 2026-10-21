@@ -196,7 +196,7 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
               <CheckCircle2 className="h-8 w-8 text-success" aria-hidden="true" />
             </div>
             <h2 className="mt-5 text-[20px] font-bold text-brand-text">
-              {config.label} {scheduled ? "scheduled" : "published"}
+              {short && isLongVideo ? "Video" : config.label} {scheduled ? "scheduled" : "published"}
             </h2>
             <p className="mx-auto mt-2 max-w-sm text-[13px] leading-relaxed text-muted-foreground">
               {scheduled

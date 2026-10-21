@@ -1,5 +1,7 @@
 /** Upload Studio constants. Colour and type come from the shared theme (src/ui/theme.css), never from here. */
 
+import { SHORTS_MAX_DURATION_LABEL, SHORTS_MAX_DURATION_SECONDS } from "@/lib/videoLimits";
+
 /** Content type identifiers. "short" and "reel" are the same vertical studio. */
 export type ContentType = "reel" | "short" | "long" | "podcast";
 
@@ -36,7 +38,7 @@ export function stepIntro(step: StepId, contentType: ContentType): { title: stri
   const short = isShortStudio(contentType);
   switch (step) {
     case "video":
-      return { title: "Choose a video", body: short ? "A vertical clip of up to 5 minutes. Nothing uploads until you publish or save a draft." : "Start with a file from your device. Nothing uploads until you publish or save a draft." };
+      return { title: "Choose a video", body: short ? `A vertical clip of up to ${SHORTS_MAX_DURATION_LABEL}; a longer one is posted as a long video. Nothing uploads until you publish or save a draft.` : "Start with a file from your device. Nothing uploads until you publish or save a draft." };
     case "details":
       return short
         ? { title: "Describe your reel", body: "A title is required. Add a caption with #hashtags, a cover, a sound or a place if you like." }
@@ -55,17 +57,23 @@ export function stepIntro(step: StepId, contentType: ContentType): { title: stri
 }
 
 /**
- * The reel (flick) duration cap in seconds, inclusive: 300 s = 5 minutes.
- * Mirrors FlickMaxDurationSeconds in Architecture/shared/postclassify/classify.go,
- * the server's single source of truth. A reel is also portrait or square.
+ * The Shorts (reel / flick) duration boundary in seconds, inclusive: 600 s =
+ * 10 minutes. A classification boundary, not a cap: a longer file picked in
+ * the Shorts studio is posted as a long video. Defined once in
+ * src/lib/videoLimits.ts, mirroring the server's FlickMaxDurationSeconds.
+ * A reel is also portrait or square.
  */
-export const FLICK_MAX_DURATION_SECONDS = 300;
+export const FLICK_MAX_DURATION_SECONDS = SHORTS_MAX_DURATION_SECONDS;
 
-export const CONTENT_TYPE_META: Record<ContentType, { label: string; platformLabel: string; icon: string; aspect: string; maxDuration: number; maxSize: number }> = {
-  reel:    { label: "Reel",    platformLabel: "Reels",    icon: "sparkles",     aspect: "9/16", maxDuration: FLICK_MAX_DURATION_SECONDS, maxSize: 500 * 1024 * 1024 },
-  short:   { label: "Reel",    platformLabel: "Reels",    icon: "clapperboard", aspect: "9/16", maxDuration: FLICK_MAX_DURATION_SECONDS, maxSize: 500 * 1024 * 1024 },
-  long:    { label: "Video",   platformLabel: "PostTube", icon: "film",         aspect: "16/9", maxDuration: 43200, maxSize: 10 * 1024 * 1024 * 1024 },
-  podcast: { label: "Podcast", platformLabel: "PostTube", icon: "mic",          aspect: "1/1",  maxDuration: 28800, maxSize: 2 * 1024 * 1024 * 1024 },
+/**
+ * Per studio: labels and layout only. No studio has a size or length limit
+ * (founder, 2026-10-21); a Short over the boundary becomes a long video.
+ */
+export const CONTENT_TYPE_META: Record<ContentType, { label: string; platformLabel: string; icon: string; aspect: string }> = {
+  reel:    { label: "Reel",    platformLabel: "Reels",    icon: "sparkles",     aspect: "9/16" },
+  short:   { label: "Reel",    platformLabel: "Reels",    icon: "clapperboard", aspect: "9/16" },
+  long:    { label: "Video",   platformLabel: "PostTube", icon: "film",         aspect: "16/9" },
+  podcast: { label: "Podcast", platformLabel: "PostTube", icon: "mic",          aspect: "1/1"  },
 };
 
 // Topics are not a list here any more: the studio reads GET /v1/posts/categories

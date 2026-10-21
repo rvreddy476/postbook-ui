@@ -3,15 +3,17 @@
 
   GET /v1/feed/reels returns feed-service HydratedPost rows. Only short-form
   belongs on this page: the server already limits candidates to flick/reel,
-  but the 5-minute cap is enforced on the client too (exactly as the Android
+  but the 10-minute Shorts cap is enforced on the client too (exactly as the Android
   reels screen does), because post-service only checks the cap on a category
   override, not on create. A long video or a feed post never reaches the
   stage, whatever the server sends.
 */
 
 import { disclosuresFromWire, type Disclosures } from "@/lib/disclosures";
+import { SHORTS_MAX_DURATION_MS } from "@/lib/videoLimits";
 
-export const REEL_MAX_DURATION_MS = 5 * 60 * 1000;
+/** The Shorts boundary (10 minutes, inclusive), from the one constant in lib/videoLimits. */
+export const REEL_MAX_DURATION_MS = SHORTS_MAX_DURATION_MS;
 export const SHORT_FORM_TYPES = new Set(["flick", "reel", "short"]);
 
 /** A media row as feed-service hydrates it. Only the fields the stage reads. */
@@ -181,7 +183,7 @@ export function primaryVideo(post: FeedReelPost): FeedMedia | null {
 
 /**
   isShortForm decides whether a row belongs on the reels stage: a video, of a
-  short-form content type, at most five minutes long. `content_type` wins
+  short-form content type, at most ten minutes long. `content_type` wins
   over `feed_content_type` because it is the post's own classification.
 */
 export function isShortForm(post: FeedReelPost): boolean {
