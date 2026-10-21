@@ -9,6 +9,8 @@
   stage, whatever the server sends.
 */
 
+import { disclosuresFromWire, type Disclosures } from "@/lib/disclosures";
+
 export const REEL_MAX_DURATION_MS = 5 * 60 * 1000;
 export const SHORT_FORM_TYPES = new Set(["flick", "reel", "short"]);
 
@@ -86,6 +88,10 @@ export interface FeedReelPost {
   remix_setting?: string | null;
   original_audio_volume?: number | null;
   overlay_audio_volume?: number | null;
+  /** Creator disclosures (feed-service HydratedPost, never omitted). */
+  ai_generated?: boolean;
+  paid_promotion?: boolean;
+  altered_content?: boolean;
 }
 
 /** The added sound a reel plays, normalised. */
@@ -138,6 +144,8 @@ export interface ReelItem {
    * sounds.ts adds that, because the model does not know the viewer.
    */
   soundReuseAllowed: boolean;
+  /** AI-generated / paid promotion / altered content, shown as labels on the reel. */
+  disclosures?: Disclosures;
   media: {
     mediaId: string;
     width: number;
@@ -268,6 +276,7 @@ export function toReelItem(post: FeedReelPost): ReelItem | null {
     originalVolume: wireVolume(post.original_audio_volume),
     overlayVolume: wireVolume(post.overlay_audio_volume),
     soundReuseAllowed: (post.remix_setting || "").toLowerCase() !== "disallow",
+    disclosures: disclosuresFromWire(post),
     media: {
       mediaId: video.media_id,
       width: video.width ?? 1080,

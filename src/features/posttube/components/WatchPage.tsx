@@ -898,6 +898,7 @@ function WatchPageContent({ videoId, listId = null, startSeconds = null }: Watch
             description={video.description}
             hashtags={video.hashtags}
             related={detail.relatedPost}
+            disclosures={detail.disclosures}
             revealAbout={revealAbout}
           />
 

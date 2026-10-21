@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Volume2, VolumeX } from "lucide-react";
 
+import { DisclosureBadges } from "@/components/DisclosureBadges";
 import { ReelSoundLabel } from "@/features/reels/components/ReelSoundLabel";
 import type { ReelItem } from "@/features/reels/model";
 
@@ -64,6 +65,8 @@ export function ReelOverlay({ reel, sound, volume, onVolumeChange, onToggleSound
           </div>
 
           {reel.title ? <h2 className="reel-title" title={reel.title}>{reel.title}</h2> : null}
+
+          <DisclosureBadges disclosures={reel.disclosures} onMedia className="mt-1.5" />
 
           {reel.hashtags.length > 0 ? (
             <p className="reel-hashtags pointer-events-auto">

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { HandHeart, Lock, Radio, ShieldAlert } from "lucide-react";
 
 import { Avatar } from "@/components/LetterAvatar";
+import { DisclosureBadges } from "@/components/DisclosureBadges";
+import type { Disclosures } from "@/lib/disclosures";
 
 import { formatCount, formatDuration, subscribersLabel, timeAgo, viewsLabel } from "../../model";
 import { postTimeTitle } from "@/lib/postTime";
@@ -51,6 +53,8 @@ export interface WatchDetailsProps {
   related?: WatchRelatedPost | null;
   /** The More menu's Description row: each new value above 0 opens the about card and scrolls to it. */
   revealAbout?: number;
+  /** Creator disclosures (AI-generated, paid promotion, altered content), labels under the title. */
+  disclosures?: Disclosures | null;
 }
 
 export function WatchDetails({
@@ -74,6 +78,7 @@ export function WatchDetails({
   hashtags,
   related = null,
   revealAbout = 0,
+  disclosures = null,
 }: WatchDetailsProps) {
   // A description that only repeats the title is not drawn twice (founder, 2026-10-19).
   const description = rawDescription.trim().toLowerCase() === title.trim().toLowerCase() ? "" : rawDescription;
@@ -90,6 +95,7 @@ export function WatchDetails({
   return (
     <section className="tube-details" aria-label="About this video">
       <h1 className="tube-details__title">{title}</h1>
+      <DisclosureBadges disclosures={disclosures} className="mt-1.5" />
 
       {/* The channel and the buttons on one line, as on RUTUBE (2026-10-19); they wrap on a narrow screen. */}
       <div className="tube-meta-row">
