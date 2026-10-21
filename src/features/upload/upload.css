@@ -312,6 +312,11 @@ textarea.upload-input { resize: vertical; min-height: 96px; line-height: 1.55; }
   .upload-footer-secondary > .upload-muted { display: none; }
   .upload-footer-secondary .upload-button { padding-inline: 12px; }
   .upload-form-footer > .upload-button-primary { flex: 1 1 auto; max-width: 220px; }
+  /* One row on a phone: Back + an icon-only Save draft beside Publish, and the
+     bar painted down over the shell's 12px bottom padding so nothing shows under it. */
+  .upload-footer-secondary { flex-wrap: nowrap; }
+  .upload-save-label { display: none; }
+  .upload-form-footer { box-shadow: 0 12px 0 rgb(var(--brand-card)); }
   .upload-file-row { flex-wrap: wrap; }
   .upload-file-row > div { flex-basis: calc(100% - 32px); }
   .upload-summary { padding: 12px; gap: 12px; }

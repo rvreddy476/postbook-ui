@@ -320,7 +320,7 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
           <footer className="upload-form-footer">
             <div className="upload-footer-secondary">
               {!isFirstStep ? <button type="button" className="upload-button" disabled={navigationLocked} onClick={() => { setAttemptedNext(false); setShowValidationErrors(false); prevStep(); }}><ChevronLeft aria-hidden="true" />Back</button> : !form.videoFile ? <span className="upload-muted">Choose a file to continue</span> : null}
-              {form.videoFile ? <button type="button" className="upload-button upload-button-quiet upload-save" disabled={navigationLocked} onClick={() => studio.saveDraftMutation.mutate()}><Save aria-hidden="true" />Save draft</button> : null}
+              {form.videoFile ? <button type="button" className="upload-button upload-button-quiet upload-save" aria-label="Save draft" title="Save draft" disabled={navigationLocked} onClick={() => studio.saveDraftMutation.mutate()}><Save aria-hidden="true" /><span className="upload-save-label">Save draft</span></button> : null}
             </div>
             <button type="button" className="upload-button upload-button-primary" disabled={navigationLocked}
               onClick={isLastStep ? handlePublish : handleNext}>
