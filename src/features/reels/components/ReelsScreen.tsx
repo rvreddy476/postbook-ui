@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSS
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ChevronDown, ChevronUp, Clapperboard, Maximize, MoreHorizontal, RefreshCw, Undo2, UserRoundCheck, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Clapperboard, Maximize, MoreVertical, RefreshCw, Undo2, UserRoundCheck, X } from "lucide-react";
 import Link from "next/link";
 
 import { VideoShell } from "@/features/video-shell";
@@ -620,7 +620,14 @@ export function ReelsScreen() {
     playerRef.current?.setVolume(volume);
     updatePrefs({ volume, sound: volume > 0 });
   };
+  // The browser held sound back on a cold page: the reel plays muted and the top
+  // speaker shows it (no second control, founder 21 Oct); its tap lets sound in.
+  const [forcedMuted, setForcedMuted] = useState(false);
   const onToggleSound = () => {
+    if (forcedMuted) {
+      playerRef.current?.unmute();
+      return;
+    }
     const sound = !prefs.sound;
     const volume = prefs.volume || 1;
     playerRef.current?.setVolume(sound ? volume : 0);
@@ -740,9 +747,6 @@ export function ReelsScreen() {
                       <Link href="/reels/create" className="reel-state-action">
                         <Clapperboard className="h-4 w-4" /> Create a reel
                       </Link>
-                      <button type="button" onClick={() => void refreshFeed()} disabled={refreshing} className="reel-state-action" data-reels-refresh>
-                        <RefreshCw className={`h-4 w-4${refreshing ? " animate-spin" : ""}`} /> Refresh
-                      </button>
                     </span>
                   }
                 />
@@ -792,6 +796,7 @@ export function ReelsScreen() {
                           position={index}
                           prefs={prefs}
                           onPrefsChange={updatePrefs}
+                          onForcedMutedChange={setForcedMuted}
                           onEnded={onEnded}
                           onDoubleTap={onDoubleTapLike}
                           onQualityLevels={setQualityHeights}
@@ -811,7 +816,7 @@ export function ReelsScreen() {
                         {theater ? null : (
                           <ReelOverlay
                             reel={active}
-                            sound={prefs.sound}
+                            sound={prefs.sound && !forcedMuted}
                             volume={prefs.volume}
                             onVolumeChange={onVolumeChange}
                             onToggleSound={onToggleSound}
@@ -838,31 +843,21 @@ export function ReelsScreen() {
                         )}
                       </motion.div>
                     </AnimatePresence>
-                    {/* frame top-right: the three dots, on hover only (the phone rail has its own More).
+                    {/* frame top-right: full screen, then the vertical dots in the corner, on hover only (the phone rail has its own More).
                         The one menu — playback rows and the mapped rows — hangs from this corner. */}
                     {theater ? null : (
                       <div className="reel-frame-actions" onClick={(e) => e.stopPropagation()}>
-                        <div className="reel-frame-action-wrap is-more">
-                          <button type="button" aria-label="More" aria-expanded={moreOpen} onClick={() => setMoreOpen((v) => !v)} className="reel-frame-action">
-                            <MoreHorizontal size={24} aria-hidden />
-                          </button>
-                          {desktop ? moreMenuFor("below") : null}
-                        </div>
-                        <button
-                          type="button"
-                          aria-label="Refresh reels"
-                          title="Refresh"
-                          aria-busy={refreshing || undefined}
-                          disabled={refreshing}
-                          onClick={() => void refreshFeed()}
-                          className="reel-frame-action"
-                          data-reels-refresh
-                        >
-                          <RefreshCw size={22} aria-hidden className={refreshing ? "animate-spin" : undefined} />
-                        </button>
                         <button type="button" aria-label={desktop ? "Theater mode" : "Full screen"} onClick={() => (desktop ? void enterTheater() : enterPhoneFullscreen())} className="reel-frame-action">
                           <Maximize size={24} aria-hidden />
                         </button>
+                        {/* Vertical dots in the very corner (founder, 21 Oct). No refresh button here:
+                            clicking Reels again in the menu refreshes (useReselect). */}
+                        <div className="reel-frame-action-wrap is-more">
+                          <button type="button" aria-label="More" aria-expanded={moreOpen} onClick={() => setMoreOpen((v) => !v)} className="reel-frame-action">
+                            <MoreVertical size={24} aria-hidden />
+                          </button>
+                          {desktop ? moreMenuFor("below") : null}
+                        </div>
                       </div>
                     )}
                     <AnimatePresence>

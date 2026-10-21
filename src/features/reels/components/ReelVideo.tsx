@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Heart, Loader2, Play, VolumeX } from "lucide-react";
+import { Heart, Loader2, Play } from "lucide-react";
 import type Hls from "hls.js";
 
 import type { ReelItem } from "@/features/reels/model";
@@ -27,8 +27,8 @@ import { ReelScrubber } from "@/features/reels/components/ReelScrubber";
   access_token cookie scoped to /v1/media, so no header plumbing here.
 
   Autoplay policy: the browser may refuse an unmuted autoplay. When that
-  happens the reel starts muted and a "Tap to unmute" pill appears; the tap
-  is the gesture that lets sound through, and it also records the choice.
+  happens the reel starts muted, the top-left speaker shows muted, and the
+  first tap or key anywhere (or the speaker itself) lets sound through.
 
   An added sound (reel.sound) is a second file played by a hidden <audio>
   beside the video — nothing is mixed on the server. The video is the
@@ -46,6 +46,8 @@ export interface ReelVideoHandle {
   seekTo(ms: number): void;
   isPaused(): boolean;
   setVolume(volume: number): void;
+  /** Lets sound through after the browser forced a muted start (the top speaker's tap). */
+  unmute(): void;
 }
 
 interface ReelVideoProps {
@@ -80,12 +82,17 @@ interface ReelVideoProps {
    * playhead and the play/pause state.
    */
   sourceOverride?: string | null;
+  /**
+   * The browser refused sound and the reel plays muted (true), or sound got
+   * through again (false). The screen shows the top speaker as muted meanwhile.
+   */
+  onForcedMutedChange?: (forcedMuted: boolean) => void;
 }
 
 const DOUBLE_TAP_MS = 260;
 
 export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function ReelVideo(
-  { reel, active, position, prefs, onPrefsChange, onEnded, onDoubleTap, onQualityLevels, onProgress, onCaptionsAvailable, onTime, onPlayState, onDimensions, chromeless = false, sourceOverride = null },
+  { reel, active, position, prefs, onPrefsChange, onEnded, onDoubleTap, onQualityLevels, onProgress, onCaptionsAvailable, onTime, onPlayState, onDimensions, chromeless = false, sourceOverride = null, onForcedMutedChange },
   ref,
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -538,6 +545,7 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
     ref,
     () => ({
       togglePlay,
+      unmute: () => unmuteRef.current(),
       setVolume: (volume) => {
         const video = videoRef.current;
         if (!video) return;
@@ -588,6 +596,31 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
     }
     onPrefsChange({ sound: true });
   };
+  const unmuteRef = useRef(unmute);
+  unmuteRef.current = unmute;
+
+  // The screen draws the top speaker as muted while the browser holds sound back.
+  useEffect(() => {
+    if (active) onForcedMutedChange?.(forcedMuted);
+  }, [active, forcedMuted, onForcedMutedChange]);
+
+  // No pill (founder, 21 Oct: one sound control, top-left). The first tap or
+  // key anywhere is the gesture the browser waits for, so it lets sound in —
+  // except a tap on the sound control itself, which does that on its own.
+  useEffect(() => {
+    if (!forcedMuted || !active) return;
+    const onGesture = (e: Event) => {
+      const target = e.target as Element | null;
+      if (target?.closest?.(".reel-playback-controls")) return;
+      unmuteRef.current();
+    };
+    window.addEventListener("pointerdown", onGesture, { capture: true, once: true });
+    window.addEventListener("keydown", onGesture, { capture: true, once: true });
+    return () => {
+      window.removeEventListener("pointerdown", onGesture, { capture: true });
+      window.removeEventListener("keydown", onGesture, { capture: true });
+    };
+  }, [forcedMuted, active]);
 
   // The frame already has the media's aspect ratio (stage.ts), so contain
   // shows the whole picture with no bars in either orientation.
@@ -663,20 +696,6 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
           </motion.div>
         ) : null}
       </AnimatePresence>
-
-      {/* forced-mute pill */}
-      {forcedMuted && active ? (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            unmute();
-          }}
-          className="reel-unmute-hint absolute left-3 bottom-10 z-20 flex items-center gap-2 rounded-full bg-black/70 px-3 py-1.5 text-[12px] font-semibold text-white backdrop-blur hover:bg-black/80"
-        >
-          <VolumeX className="h-4 w-4" /> Tap to unmute
-        </button>
-      ) : null}
 
       {/* processing / failure */}
       {reel.isProcessing || failed ? (

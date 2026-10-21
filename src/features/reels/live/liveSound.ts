@@ -2,7 +2,7 @@ import type { PlayerPrefs } from "@/features/reels/playback/playerPrefs";
 
 /*
   Sound on the live stage follows the reels sound preference
-  (reels_player_prefs_v1): a browser that has never chosen starts muted,
+  (reels_player_prefs_v2): a browser that has never chosen starts with sound,
   and once the viewer unmutes, every stream after it — and every reel —
   plays with sound until they mute again.
 */
