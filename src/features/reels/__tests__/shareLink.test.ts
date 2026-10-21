@@ -43,7 +43,10 @@ describe("reelPermalink", () => {
   test("the shared link opens signed out; the reels stage does not", () => {
     const url = new URL(reelPermalink("3f860f61-ddb6-4be6-98e6-3b892e9c584f", "https://cleestudio.com"));
     expect(passes(visit(url.pathname))).toBe(true);
-    for (const gated of ["/reels", "/reels/3f860f61-ddb6-4be6-98e6-3b892e9c584f"]) {
+    // The single-reel permalink (21 Oct 2026) reaches its page, which sends a
+    // stranger to /post/<id> itself (app/reels/[id]); only a UUID gets through.
+    expect(passes(visit("/reels/3f860f61-ddb6-4be6-98e6-3b892e9c584f"))).toBe(true);
+    for (const gated of ["/reels", "/reels/create", "/reels/liked", "/reels/not-a-uuid"]) {
       const res = visit(gated);
       expect(passes(res)).toBe(false);
       expect(new URL(res.headers.get("location") as string).pathname).toBe("/login");
@@ -56,7 +59,8 @@ describe("reelPermalink", () => {
 
   test("the reels stage's Share sheet and Copy link both use it", () => {
     const screen = readFileSync(resolve(import.meta.dir, "../components/ReelsScreen.tsx"), "utf8");
-    expect(screen).toContain("navigator.clipboard.writeText(reelPermalink(active.id))");
+    // Copy link adds the share ref itself; the ShareSheet adds it to the url it is given.
+    expect(screen).toContain("navigator.clipboard.writeText(withShareRef(reelPermalink(active.id)))");
     expect(screen).toContain("url={reelPermalink(active.id)}");
   });
 });

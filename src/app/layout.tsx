@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { DM_Sans, Outfit, Space_Mono } from 'next/font/google';
 import { Providers } from './providers';
+import { OpenInAppBanner } from '@/features/share/components/OpenInAppBanner';
 import './globals.css';
 
 const outfit = Outfit({
@@ -112,7 +113,11 @@ export default function RootLayout({
             }),
           }}
         />
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          {/* "Open in app" on a phone, on the routes a shared link lands on; see features/share. */}
+          <OpenInAppBanner />
+        </Providers>
       </body>
     </html>
   );

@@ -11,6 +11,7 @@ import { ProfileTabError } from "./states/ProfileTabError"
 import { ReportProfileDialog } from "./ReportProfileDialog"
 import { ShareSheet } from "@/features/reels/components/ShareSheet"
 import { followButtonState, profileShareUrl, profileViewState } from "./profileParity"
+import { withShareRef } from "@/features/share/shareRef"
 import { ProfileTabs } from "./ProfileTabs"
 import ProfileQASection from "./ProfileQASection"
 import { CreationsTab } from "./tabs/CreationsTab"
@@ -524,7 +525,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
     const handleCopyLink = useCallback(() => {
         if (!shareUrl) return
         navigator.clipboard
-            .writeText(shareUrl)
+            .writeText(withShareRef(shareUrl))
             .then(() => toast({ type: "success", title: "Profile link copied" }))
             .catch(() => toast({ type: "error", title: "Could not copy the link" }))
     }, [shareUrl, toast])

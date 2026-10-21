@@ -67,6 +67,7 @@ import { AgeGateCard, MembershipCard, WatchDetails } from "../watch/components/W
 import { WatchMoreMenu, watchMoreRows } from "../watch/components/WatchMoreMenu";
 import { WatchActions } from "../watch/components/WatchActions";
 import "@/features/reels/components/reels-screen.css";
+import { withShareRef } from "@/features/share/shareRef";
 import "./tube.css";
 import "../watch/watch.css";
 
@@ -694,7 +695,7 @@ function WatchPageContent({ videoId, listId = null, startSeconds = null }: Watch
 
   const copyLink = async () => {
     try {
-      await navigator.clipboard.writeText(shareUrl ?? window.location.href);
+      await navigator.clipboard.writeText(withShareRef(shareUrl ?? window.location.href));
       toast({ type: "success", title: "Link copied" });
     } catch {
       toast({ type: "error", title: "Could not copy the link" });

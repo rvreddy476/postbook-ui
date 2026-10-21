@@ -112,7 +112,13 @@ describe("HashtagGrid", () => {
 });
 
 describe("the page", () => {
-  const page = readFileSync(resolve(import.meta.dir, "../../../app/hashtag/[tag]/page.tsx"), "utf8");
+  // The screen itself (the route file only adds generateMetadata, features/share).
+  const page = readFileSync(resolve(import.meta.dir, "../../../app/hashtag/[tag]/HashtagClient.tsx"), "utf8");
+
+  test("opens signed out: the public chrome, not the app shell", () => {
+    expect(page).toContain("<PublicPageChrome>");
+    expect(page).not.toMatch(/<AppShell/);
+  });
 
   test("shows the count line, a Share sheet with the page URL, and the grid — not a list of feed cards", () => {
     expect(page).toContain("hashtagCountLabel(total, allPosts.length");

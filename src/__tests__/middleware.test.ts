@@ -73,9 +73,8 @@ describe("middleware: sound and hashtag pages (audit T-34)", () => {
     expect(new URL(res.headers.get("location") as string).pathname).toBe("/login");
   });
 
-  test("the hashtag page stays gated: AppShell sends a visitor with no session to /login", () => {
-    const res = visit("/hashtag/sunset");
-    expect(passes(res)).toBe(false);
-    expect(new URL(res.headers.get("location") as string).pathname).toBe("/login");
+  test("the hashtag page passes signed out (21 Oct 2026): it sits in PublicPageChrome, not AppShell", () => {
+    expect(passes(visit("/hashtag/sunset"))).toBe(true);
+    expect(passes(visit("/hashtag/%23sunset"))).toBe(true);
   });
 });

@@ -1,87 +1,26 @@
-'use client';
+import type { Metadata } from "next";
 
-import React, { Suspense } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { usePostDetail } from '@/hooks/useFeedPosts';
-import { usePostRoom } from '@/hooks/usePostRoom';
-import PostCard from '@/components/PostCard';
-import CommentSection from '@/components/CommentSection';
-import { commentCreatorTools } from '@/components/comments/creatorTools';
-import { ArrowLeft } from 'lucide-react';
+import { postPageMetadata } from "@/features/share/routeMetadata";
 
-function PostDetailContent() {
-  const params = useParams();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const postId = params.postId as string;
-  const focusCommentId = searchParams.get('focusComment') || undefined;
+import { PostDetailScreen } from "./PostDetailClient";
 
-  const { data: post, isLoading, isError } = usePostDetail(postId);
+type Props = { params: Promise<{ postId: string }> };
 
-  // Subscribe to real-time per-post updates via WebSocket
-  usePostRoom(postId);
+/*
+  /post/<id> — a post's public permalink: what Copy link and Share hand out
+  for posts AND reels (the reels stage is gated; this page plays a reel
+  signed out), and the address the Android app's App Link opens.
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-brand-bg flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-brand-divider border-t-brand-accent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (isError || !post) {
-    return (
-      <div className="min-h-screen bg-brand-bg flex flex-col items-center justify-center gap-4">
-        <p className="text-lg font-black text-brand-text/30 tracking-widest italic">Post not found</p>
-        <button
-          onClick={() => router.back()}
-          className="px-6 py-3 bg-brand-card rounded-2xl font-black text-[10px] tracking-widest text-brand-highlight hover:text-brand-accent hover:shadow-lg transition-all border border-brand-divider"
-        >
-          Go Back
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-brand-bg font-sans">
-      {/* Top bar */}
-      <div className="sticky top-0 z-50 bg-brand-card/80 backdrop-blur-xl border-b border-white/40">
-        <div className="max-w-[640px] mx-auto px-4 py-4 flex items-center gap-4">
-          <button
-            onClick={() => router.back()}
-            className="p-2 rounded-xl hover:bg-brand-secondary transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-brand-highlight" />
-          </button>
-          <h1 className="text-sm font-black tracking-widest text-brand-text italic">Post</h1>
-        </div>
-      </div>
-
-      {/* Post content */}
-      <div className="max-w-[640px] mx-auto px-4 sm:px-0 py-8 space-y-0">
-        <PostCard post={post} />
-
-        {/* Always-expanded comment section for detail page */}
-        <div className="glass-panel rounded-b-[3rem] border border-t-0 border-white/80 overflow-hidden -mt-1">
-          <CommentSection
-            postId={post.id}
-            postAuthorId={post.author_id}
-            commentsCount={post.counts?.comments ?? 0}
-            alwaysExpanded
-            focusCommentId={focusCommentId}
-            creatorTools={commentCreatorTools}
-          />
-        </div>
-      </div>
-    </div>
-  );
+  The link preview (OpenGraph + Twitter card) is built on the server from
+  GET /v1/posts/:id read signed out: caption, cover, and og:video where a
+  public MP4 exists. A post a stranger may not see (404, members-only,
+  age-restricted, not public) gets the neutral card and names nothing.
+*/
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { postId } = await params;
+  return postPageMetadata(postId, `/post/${encodeURIComponent(postId)}`);
 }
 
 export default function PostDetailPage() {
-  return (
-    <Suspense fallback={null}>
-      <PostDetailContent />
-    </Suspense>
-  )
+  return <PostDetailScreen />;
 }

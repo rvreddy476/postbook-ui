@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link2, MessageCircle, MessageSquare, Send, Mail, Check, X } from "lucide-react";
 
 import { SendInMessagesPanel, useCanSendInMessages } from "@/components/messenger/SendInMessagesPanel";
 import { ShareIcon } from "@/components/icons/ShareIcon";
+import { withShareRef } from "@/features/share/shareRef";
 
 interface ShareSheetProps {
   open: boolean;
@@ -29,7 +30,12 @@ interface ShareTarget {
   action?: () => void;
 }
 
-export function ShareSheet({ open, onClose, url, title = "Check this out on VChat", heading = "Share", postId }: ShareSheetProps) {
+export function ShareSheet({ open, onClose, url: rawUrl, title = "Check this out on VChat", heading = "Share", postId }: ShareSheetProps) {
+  // One share ref per opening (features/share/shareRef): the preview row,
+  // Copy link and every target hand out the same address. `open` is in the
+  // list on purpose, so a reopened sheet mints a fresh one.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const url = useMemo(() => (rawUrl ? withShareRef(rawUrl) : rawUrl), [rawUrl, open]);
   const [copied, setCopied] = useState(false);
   const canMessage = useCanSendInMessages(postId);
   const [picking, setPicking] = useState(false);

@@ -14,6 +14,7 @@ import {
   type SharePayload,
 } from "../../model/share"
 import { ShareIcon } from "@/components/icons/ShareIcon";
+import { withShareRef } from "@/features/share/shareRef"
 
 const ICONS = { copy_link: Link2, whatsapp: MessageCircle } as const
 
@@ -46,7 +47,10 @@ export function ShareButton({ productId, title, priceMinor }: { productId: strin
   }, [open])
 
   const share = async () => {
-    const data = sharePayload({ origin: window.location.origin, productId, title, priceMinor })
+    // The share ref (features/share/shareRef) is the one thing the link
+    // carries beyond the path: a random id, nothing about the sharer.
+    const base = sharePayload({ origin: window.location.origin, productId, title, priceMinor })
+    const data = { ...base, url: withShareRef(base.url) }
     setPayload(data)
     const nav = navigator as unknown as ShareNavigator
     if (canShareNatively(nav)) {

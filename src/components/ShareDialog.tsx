@@ -6,6 +6,7 @@ import { useSharePost } from '@/hooks/usePostActions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Repeat2, Quote, Link2, Send, MessageSquare } from 'lucide-react';
 import { SendInMessagesPanel, useCanSendInMessages } from '@/components/messenger/SendInMessagesPanel';
+import { withShareRef } from '@/features/share/shareRef';
 
 interface ShareDialogProps {
   postId: string;
@@ -41,7 +42,8 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose, shar
   const handleShare = async (type: 'repost' | 'quote' | 'external') => {
 
     if (type === 'external') {
-      const url = shareUrl || `${window.location.origin}/post/${postId}`;
+      // The link carries a share ref (features/share/shareRef) and nothing else.
+      const url = withShareRef(shareUrl || `${window.location.origin}/post/${postId}`);
       await navigator.clipboard.writeText(url);
       shareMutation.mutate(
         { postId, shareType: 'external' },

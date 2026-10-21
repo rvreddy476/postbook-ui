@@ -15,8 +15,9 @@ const API_GATEWAY_URL = process.env.API_GATEWAY_URL || "http://localhost:8080"
 
   Fetched here, on the server, from the gateway WITHOUT the viewer's cookie:
   the preview is what a stranger opening the link may see, so a product a
-  buyer may not see (404 PRODUCT_NOT_FOUND) gets no preview, and a slow or
-  failing API costs the page its preview, never its render.
+  buyer may not see (404 PRODUCT_NOT_FOUND) gets the neutral card (the
+  store's name and generic picture, nothing about the product), and a slow
+  or failing API costs the page its preview, never its render.
 */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params

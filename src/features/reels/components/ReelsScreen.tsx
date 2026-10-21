@@ -51,6 +51,7 @@ import { useReelSubscription } from "@/features/reels/hooks/useReelSubscription"
 import { usePlayerPrefs } from "@/features/reels/hooks/usePlayerPrefs";
 import { CLEAR_SCREEN_HINT_MS, CLEAR_SCREEN_INITIAL, clearScreenReducer } from "@/features/reels/clearScreen";
 import { reelPermalink, type ReelItem } from "@/features/reels/model";
+import { withShareRef } from "@/features/share/shareRef";
 import { readSessionUserId } from "@/features/reels/session";
 import { nextSoundStep, reelStageHref, signInHref, soundDestination, soundRefusalMessage, type SoundIntent } from "@/features/reels/sounds";
 import { COMMENTS_TRACK_WIDTH, STAGE_DEFAULT_ASPECT, stageAspect } from "@/features/reels/stage";
@@ -303,7 +304,7 @@ export function ReelsScreen() {
   const onCopyLink = async () => {
     if (!active) return;
     try {
-      await navigator.clipboard.writeText(reelPermalink(active.id));
+      await navigator.clipboard.writeText(withShareRef(reelPermalink(active.id)));
       toast({ type: "success", title: "Link copied" });
     } catch {
       toast({ type: "error", title: "Could not copy the link" });

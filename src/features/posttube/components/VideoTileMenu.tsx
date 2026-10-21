@@ -12,6 +12,7 @@ import { sendFeedFeedback } from "../data/posttubeApi";
 import { SaveToPlaylistDialog } from "./SaveToPlaylistDialog";
 import { tileMenuRows, type TileMenuKey } from "./tileMenuRows";
 import { ShareIcon } from "@/components/icons/ShareIcon";
+import { withShareRef } from "@/features/share/shareRef";
 
 const ICONS: Record<TileMenuKey, (props: { "aria-hidden"?: boolean }) => React.ReactNode> = {
   "copy-link": Link2,
@@ -125,7 +126,7 @@ function TileMenuList({
     try {
       switch (key) {
         case "copy-link":
-          await navigator.clipboard.writeText(`${window.location.origin}/posttube/watch/${video.id}`);
+          await navigator.clipboard.writeText(withShareRef(`${window.location.origin}/posttube/watch/${video.id}`));
           toast({ type: "success", title: "Link copied" });
           return;
         case "share":

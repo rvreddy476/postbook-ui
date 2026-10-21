@@ -105,9 +105,13 @@ const PUBLIC_PREFIXES = [
     // A sound's page (/reels/sound/<id>) is a link people share; it already
     // renders with no session (a stranger gets what post-service gives the
     // public, "Use this sound" asks them to sign in first). The reels stage
-    // its tiles open stays gated. /hashtag/ is NOT here: that page sits in
-    // AppShell, which sends a visitor with no session to /login (audit T-34).
+    // its tiles open stays gated.
     "/reels/sound/",
+    // A tag's page (21 Oct 2026): it sits in PublicPageChrome now (the app
+    // shell signed in, the minimal header signed out), so a shared
+    // /hashtag/<tag> opens with no session. Audit T-34 kept it gated only
+    // because AppShell sent a stranger to /login.
+    "/hashtag/",
     // The /tube alias only redirects to /posttube/* (app/tube/[[...path]]);
     // it must be reachable signed out so a push's /tube/watch/{id} reaches
     // the public watch page. The destination is gated on its own path.
@@ -137,8 +141,17 @@ const UNGATED_PREFIXES = ["/v1/", "/api/", "/_next/", "/static/"]
 const normalise = (pathname: string) =>
     pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname
 
+/**
+ * The single-reel permalink, /reels/<uuid> and nothing else under /reels:
+ * it only decides where to send the visitor (the stage when signed in, the
+ * public /post/<id> when not — app/reels/[id]). The stage itself, and
+ * /reels/create, /reels/liked, /reels/live, /reels/search, stay gated.
+ */
+const REEL_PERMALINK_RE = /^\/reels\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i
+
 const isPublicPath = (pathname: string) => {
     if (PUBLIC_EXACT.has(pathname)) return true
+    if (REEL_PERMALINK_RE.test(pathname)) return true
     // Prefixes are written with their trailing slash so "/u/" cannot also
     // match a future "/users". Test the un-normalised path too, so a bare
     // "/u" does not slip past on the normalised one.
