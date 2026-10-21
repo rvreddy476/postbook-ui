@@ -65,8 +65,8 @@ test('overlay carries the author name (a plain link), the title and the hashtags
   const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
   expect(css).toContain('.reel-overlay-text { max-width: 381px;');
   expect(css).toContain('.reel-overlay-details { pointer-events: none; position: absolute; inset: auto 0 0 0; z-index: 10; padding: 64px 80px 16px 12px;');
-  expect(css).toContain('.reel-author-row__name { min-width: 0; font-size: 18px; font-weight: 700;');
-  expect(css).toContain('.reel-hashtags { margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 0 8px; font-size: 14px; font-weight: 700;');
+  expect(css).toContain('.reel-author-row__name { min-width: 0; font-size: var(--type-lg); font-weight: 700;');
+  expect(css).toContain('.reel-hashtags { margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 0 8px; font-size: var(--type-sm); font-weight: 700;');
   expect(css).toContain('.reel-playback-controls { position: absolute; left: 8px; top: 8px;');
   expect(css).toContain('.reel-playback-button { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px;');
 });
@@ -144,7 +144,7 @@ test('desktop rail reads Save, Share, Comments, Like, Avatar from the bottom —
   expect(css).toContain('.reel-action-rail.is-desktop { gap: 0; padding: 0; border: 0; border-radius: 0; background: transparent; width: var(--reel-rail-w); }');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button { gap: 2px; width: var(--reel-rail-w); min-width: 0; min-height: 0; padding: 0 0 2px;');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-icon { width: 36px; height: 36px; border-radius: 50%; background: rgb(var(--brand-text) / .06);');
-  expect(css).toContain('.reel-action-rail.is-desktop .reel-action-count { font-size: 12px; line-height: 16px; font-weight: 700;');
+  expect(css).toContain('.reel-action-rail.is-desktop .reel-action-count { font-size: var(--type-xs); line-height: 16px; font-weight: 700;');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-liked .reel-action-icon { color: rgb(var(--danger)); }');
   expect(css).toContain('.reel-action-rail.is-desktop .reel-action-button.is-saved .reel-action-icon { color: rgb(var(--brand-accent)); }');
   // The Follow seal (20 Oct): 44px like the profile picture; FOLLOW all the way round, turning; a plus badge at the lower right.
@@ -179,11 +179,11 @@ test('the author card: avatar, name link, handle, Follow pill (Following outline
   expect(drawer).toContain('<ReelAuthorCard');
   expect(drawer.indexOf('reel-comments-panel__author')).toBeLessThan(drawer.indexOf('reel-comments-head'));
   const css=readFileSync(resolve(import.meta.dir,'../components/reels-screen.css'),'utf8');
-  expect(css).toContain('.reel-author-card__name { display: block; font-size: 18px; font-weight: 700;');
-  expect(css).toContain('.reel-author-card__handle { margin: 2px 0 0; font-size: 14px; font-weight: 500;');
+  expect(css).toContain('.reel-author-card__name { display: block; font-size: var(--type-lg); font-weight: 700;');
+  expect(css).toContain('.reel-author-card__handle { margin: 2px 0 0; font-size: var(--type-sm); font-weight: 500;');
   expect(css).toContain('.reel-panel-follow { flex: 0 0 auto; height: 36px; padding: 0 16px; border-radius: 999px;');
   expect(css).toContain('.reel-author-card__counts { display: flex; flex-wrap: wrap; gap: 8px 20px;');
-  expect(css).toContain('.reel-panel-count { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700;');
+  expect(css).toContain('.reel-panel-count { display: inline-flex; align-items: center; gap: 6px; font-size: var(--type-xs); font-weight: 700;');
 });
 
 test('comments column is TikTok\'s 352px card in a 368px track driven by the constants; the hover card is gone', () => {

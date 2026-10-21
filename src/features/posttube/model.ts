@@ -569,3 +569,38 @@ export function viewsLabel(count: number): string {
 export function subscribersLabel(count: number): string {
   return `${formatCount(count)} ${count === 1 ? "subscriber" : "subscribers"}`;
 }
+
+/*
+  The words a creator reads on the Uploads list (audit, 21 Oct 2026). The
+  wire carries media-service's processing enum ("processing",
+  "failed_transcode", …) and the category slug ("long_video", "flick");
+  neither is a word for a person. Ready and published videos get no pill.
+*/
+const UPLOAD_IN_FLIGHT = new Set(["pending", "queued", "uploading", "uploaded", "processing", "transcoding"]);
+
+export function uploadStatusLabel(status: string | null | undefined): string | null {
+  const s = (status || "").toLowerCase();
+  if (!s || s === "ready" || s === "published") return null;
+  if (UPLOAD_IN_FLIGHT.has(s)) return "Processing";
+  if (s === "failed" || s === "error" || s.startsWith("failed")) return "Needs attention";
+  const words = s.replace(/_/g, " ");
+  return words[0].toUpperCase() + words.slice(1);
+}
+
+const UPLOAD_CATEGORY_LABEL: Record<string, string> = {
+  long_video: "Video",
+  video: "Video",
+  flick: "Reel",
+  short: "Reel",
+  short_video: "Reel",
+  reel: "Reel",
+  post: "Post",
+};
+
+export function uploadCategoryLabel(category: string | null | undefined): string {
+  const c = (category || "").toLowerCase();
+  if (!c) return "";
+  if (UPLOAD_CATEGORY_LABEL[c]) return UPLOAD_CATEGORY_LABEL[c];
+  const words = c.replace(/_/g, " ");
+  return words[0].toUpperCase() + words.slice(1);
+}

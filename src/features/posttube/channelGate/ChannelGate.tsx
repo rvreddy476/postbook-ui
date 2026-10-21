@@ -70,13 +70,13 @@ export function ChannelGate({ contentType, children }: { contentType: string; ch
         </div>
       ) : state === "signed-out" ? (
         <GateCard title="Sign in to upload" body="Videos are posted from your channel.">
-          <Link href="/login?next=/posttube/upload" className="rounded-full bg-brand-ink px-4 py-2 text-[13px] font-semibold text-on-primary">
+          <Link href="/login?next=/posttube/upload" className="rounded-full bg-brand-ink px-4 py-2 text-sm font-semibold text-on-primary">
             Sign in
           </Link>
         </GateCard>
       ) : state === "error" ? (
         <GateCard title="Couldn't check your channel" body="Check your connection and try again.">
-          <button type="button" onClick={() => void channelQuery.refetch()} className="rounded-full bg-brand-secondary px-4 py-2 text-[13px] font-semibold text-brand-text">
+          <button type="button" onClick={() => void channelQuery.refetch()} className="rounded-full bg-brand-secondary px-4 py-2 text-sm font-semibold text-brand-text">
             Try again
           </button>
         </GateCard>
@@ -102,8 +102,8 @@ export function ChannelCreatePrompt({ title, body, onCreated, heading: Heading =
           <Tv className="h-4 w-4 text-brand-text" aria-hidden />
         </span>
         <div>
-          <Heading className="text-[16px] font-bold text-brand-text">{title}</Heading>
-          <p className="mt-0.5 text-[12px] text-brand-text/70">{body}</p>
+          <Heading className="text-base font-bold text-brand-text">{title}</Heading>
+          <p className="mt-0.5 text-xs text-brand-text/70">{body}</p>
         </div>
       </div>
       {form ? (
@@ -120,8 +120,8 @@ export function ChannelCreatePrompt({ title, body, onCreated, heading: Heading =
 function GateCard({ title, body, children }: { title: string; body: string; children: ReactNode }) {
   return (
     <section className="rounded-2xl border border-border bg-brand-card p-6 text-center">
-      <h1 className="text-[15px] font-bold text-brand-text">{title}</h1>
-      <p className="mt-1 text-[12px] text-brand-text/70">{body}</p>
+      <h1 className="text-base font-bold text-brand-text">{title}</h1>
+      <p className="mt-1 text-xs text-brand-text/70">{body}</p>
       <div className="mt-4 flex justify-center">{children}</div>
     </section>
   );

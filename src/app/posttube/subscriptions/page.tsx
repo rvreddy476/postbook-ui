@@ -29,7 +29,7 @@ export default function PosttubeSubscriptionsPage() {
     return (
       <div className="mx-auto w-full max-w-5xl px-4 py-16 text-center sm:px-6">
         <h1 className="text-2xl font-semibold text-brand-text">Subscriptions</h1>
-        <p className="mt-2 text-[13px] text-muted-foreground">Sign in to see the channels you follow.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Sign in to see the channels you follow.</p>
       </div>
     );
   }
@@ -42,7 +42,7 @@ export default function PosttubeSubscriptionsPage() {
         </div>
         <div>
           <h1 className="text-2xl font-semibold text-brand-text">Subscriptions</h1>
-          <p className="text-[12px] text-muted-foreground">New videos from the channels you follow.</p>
+          <p className="text-xs text-muted-foreground">New videos from the channels you follow.</p>
         </div>
       </div>
 
@@ -58,7 +58,7 @@ export default function PosttubeSubscriptionsPage() {
             ))}
           </div>
         ) : channels.length === 0 ? (
-          <p className="text-[13px] text-muted-foreground">You have not subscribed to any channels yet.</p>
+          <p className="text-sm text-muted-foreground">You have not subscribed to any channels yet.</p>
         ) : (
           <div className="flex gap-4 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
             {channels.map((row) => {
@@ -67,8 +67,8 @@ export default function PosttubeSubscriptionsPage() {
               return (
                 <Link key={ref || c.name} href={`/posttube/channel/${encodeURIComponent(ref)}`} className="flex w-[88px] shrink-0 flex-col items-center gap-2 text-center">
                   <Avatar src={channelAvatarUrl(c)} name={c.name} seed={channelUserId(c) ?? c.name} size="xl" className="ring-1 ring-border" />
-                  <span className="line-clamp-2 text-[12px] font-semibold leading-tight text-brand-text">{c.name}</span>
-                  <span className="-mt-1 text-[10px] text-muted-foreground">{formatCount(c.subscriber_count ?? 0)} subs</span>
+                  <span className="line-clamp-2 text-xs font-semibold leading-tight text-brand-text">{c.name}</span>
+                  <span className="-mt-1 text-xs text-muted-foreground">{formatCount(c.subscriber_count ?? 0)} subs</span>
                 </Link>
               );
             })}
@@ -77,7 +77,7 @@ export default function PosttubeSubscriptionsPage() {
                 type="button"
                 onClick={() => subs.fetchNextPage()}
                 disabled={subs.isFetchingNextPage}
-                className="flex h-16 w-16 shrink-0 items-center justify-center self-start rounded-full border border-border text-[11px] font-semibold text-brand-text hover:bg-brand-secondary"
+                className="flex h-16 w-16 shrink-0 items-center justify-center self-start rounded-full border border-border text-xs font-semibold text-brand-text hover:bg-brand-secondary"
               >
                 {subs.isFetchingNextPage ? <Loader2 className="h-4 w-4 animate-spin" /> : "More"}
               </button>
@@ -90,7 +90,7 @@ export default function PosttubeSubscriptionsPage() {
       {feed.isLoading ? (
         <VideoGridSkeleton />
       ) : videos.length === 0 ? (
-        <div className="py-16 text-center text-[13px] text-muted-foreground">
+        <div className="py-16 text-center text-sm text-muted-foreground">
           {channels.length === 0 ? (
             <>
               Find channels on the{" "}
@@ -117,7 +117,7 @@ export default function PosttubeSubscriptionsPage() {
                 type="button"
                 onClick={() => feed.fetchNextPage()}
                 disabled={feed.isFetchingNextPage}
-                className="rounded-full border border-border bg-brand-card px-6 py-2.5 text-[13px] font-semibold text-brand-text hover:bg-brand-secondary disabled:opacity-50"
+                className="rounded-full border border-border bg-brand-card px-6 py-2.5 text-sm font-semibold text-brand-text hover:bg-brand-secondary disabled:opacity-50"
               >
                 {feed.isFetchingNextPage ? "Loading..." : "Load more"}
               </button>

@@ -56,7 +56,7 @@ export function SubscribeButton({
   if (hidden || !channelRef) return null;
 
   const pending = subscribeMutation.isPending;
-  const pad = size === "sm" ? "px-3.5 py-1.5 text-[12px]" : "px-4 py-2 text-[13px]";
+  const pad = size === "sm" ? "px-3.5 py-1.5 text-xs" : "px-4 py-2 text-sm";
   const iconBox = size === "sm" ? "h-8 w-8" : "h-9 w-9";
 
   const toggle = () => {

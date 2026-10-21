@@ -343,9 +343,9 @@ export function ReelPlayer({
       {showStateOverlay ? (
         <div className="pointer-events-none absolute inset-0 z-2 flex items-center justify-center bg-black/35 px-8 text-center">
           <div className="max-w-md">
-            <p className="text-[15px] font-semibold text-white">{stateTitle}</p>
+            <p className="text-base font-semibold text-white">{stateTitle}</p>
             {stateHint ? (
-              <p className="mt-2 text-[12px] leading-relaxed text-white/75">{stateHint}</p>
+              <p className="mt-2 text-xs leading-relaxed text-white/75">{stateHint}</p>
             ) : null}
           </div>
         </div>

@@ -88,10 +88,10 @@ export function ShareSheet({ open, onClose, url: rawUrl, title = "Check this out
       ? [{ label: "Send in Messages", icon: <MessageSquare className="h-5 w-5" />, bg: "bg-primary-tint text-primary-ink", action: () => setPicking(true) }]
       : []),
     { label: copied ? "Copied!" : "Copy link", icon: copied ? <Check className="h-5 w-5" /> : <Link2 className="h-5 w-5" />, bg: "bg-brand-secondary text-brand-text", action: copyLink },
-    { label: "WhatsApp", icon: <MessageCircle className="h-5 w-5" />, bg: "bg-emerald-500 text-white", href: `https://wa.me/?text=${encTitle}%20${enc}` },
-    { label: "Telegram", icon: <Send className="h-5 w-5" />, bg: "bg-sky-500 text-white", href: `https://t.me/share/url?url=${enc}&text=${encTitle}` },
-    { label: "X", icon: <span className="text-[17px] font-black leading-none">𝕏</span>, bg: "bg-black text-white", href: `https://twitter.com/intent/tweet?url=${enc}&text=${encTitle}` },
-    { label: "Facebook", icon: <span className="text-[18px] font-black leading-none">f</span>, bg: "bg-[#1877F2] text-white", href: `https://www.facebook.com/sharer/sharer.php?u=${enc}` },
+    { label: "WhatsApp", icon: <MessageCircle className="h-5 w-5" />, bg: "bg-brand-whatsapp text-white", href: `https://wa.me/?text=${encTitle}%20${enc}` },
+    { label: "Telegram", icon: <Send className="h-5 w-5" />, bg: "bg-brand-telegram text-white", href: `https://t.me/share/url?url=${enc}&text=${encTitle}` },
+    { label: "X", icon: <span className="text-lg font-black leading-none">𝕏</span>, bg: "bg-brand-x text-white", href: `https://twitter.com/intent/tweet?url=${enc}&text=${encTitle}` },
+    { label: "Facebook", icon: <span className="text-lg font-black leading-none">f</span>, bg: "bg-brand-facebook text-white", href: `https://www.facebook.com/sharer/sharer.php?u=${enc}` },
     { label: "Email", icon: <Mail className="h-5 w-5" />, bg: "bg-brand-secondary text-brand-text", href: `mailto:?subject=${encTitle}&body=${enc}` },
   ];
 
@@ -121,7 +121,7 @@ export function ShareSheet({ open, onClose, url: rawUrl, title = "Check this out
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-brand-text/20" />
 
             <div className="flex items-center justify-between px-5 pb-1">
-              <h3 className="text-[15px] font-bold text-brand-text">{heading}</h3>
+              <h3 className="text-base font-bold text-brand-text">{heading}</h3>
               <button
                 type="button"
                 onClick={onClose}
@@ -133,7 +133,7 @@ export function ShareSheet({ open, onClose, url: rawUrl, title = "Check this out
             </div>
 
             {sentTo ? (
-              <p role="status" className="flex items-center justify-center gap-2 px-5 py-8 text-[14px] font-semibold text-brand-text">
+              <p role="status" className="flex items-center justify-center gap-2 px-5 py-8 text-sm font-semibold text-brand-text">
                 <Check className="h-5 w-5 text-success" aria-hidden /> Sent to {sentTo}
               </p>
             ) : picking && postId ? (
@@ -143,11 +143,11 @@ export function ShareSheet({ open, onClose, url: rawUrl, title = "Check this out
             <>
             {/* Link preview row */}
             <div className="mx-5 mb-4 mt-2 flex items-center gap-2 rounded-xl border border-brand-divider bg-brand-secondary/60 px-3 py-2.5">
-              <span className="flex-1 truncate text-[12px] text-brand-text/60">{url}</span>
+              <span className="flex-1 truncate text-xs text-brand-text/60">{url}</span>
               <button
                 type="button"
                 onClick={copyLink}
-                className="shrink-0 rounded-lg bg-primary-ink px-3 py-1.5 text-[12px] font-bold text-white transition hover:bg-primary-hover"
+                className="shrink-0 rounded-lg bg-primary-ink px-3 py-1.5 text-xs font-bold text-white transition hover:bg-primary-hover"
               >
                 {copied ? "Copied" : "Copy"}
               </button>
@@ -159,7 +159,7 @@ export function ShareSheet({ open, onClose, url: rawUrl, title = "Check this out
                 const inner = (
                   <>
                     <span className={`flex h-12 w-12 items-center justify-center rounded-full ${t.bg}`}>{t.icon}</span>
-                    <span className="text-[11px] font-medium text-brand-text/70">{t.label}</span>
+                    <span className="text-xs font-medium text-muted-foreground">{t.label}</span>
                   </>
                 );
                 return t.href ? (
@@ -194,7 +194,7 @@ export function ShareSheet({ open, onClose, url: rawUrl, title = "Check this out
                   <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-secondary text-brand-text">
                     <ShareIcon className="h-5 w-5" />
                   </span>
-                  <span className="text-[11px] font-medium text-brand-text/70">More</span>
+                  <span className="text-xs font-medium text-muted-foreground">More</span>
                 </button>
               ) : null}
             </div>

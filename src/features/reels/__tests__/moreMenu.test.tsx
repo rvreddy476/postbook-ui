@@ -109,10 +109,10 @@ test("the card in CSS: the theme surface, radius 12, 4px padding, 40px rows 12px
   const css = readFileSync(resolve(import.meta.dir, '../components/reels-screen.css'), 'utf8');
   expect(css).toContain('.reel-more-menu[role="menu"] { padding: 4px; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); box-shadow: 0 12px 32px rgb(0 0 0 / .28); }');
   expect(css).toContain('.reel-more-menu[role="menu"] { width: 100%; border-radius: 12px;');
-  expect(css).toContain('.reel-more-menu__row { display: flex; width: 100%; min-width: 0; height: 40px; align-items: center; gap: 10px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: inherit; font-size: 14px; font-weight: 500;');
+  expect(css).toContain('.reel-more-menu__row { display: flex; width: 100%; min-width: 0; height: 40px; align-items: center; gap: 10px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: inherit; font-size: var(--type-sm); font-weight: 500;');
   expect(css).toContain('.reel-more-menu__icon { display: inline-flex; flex: 0 0 20px; width: 20px; height: 20px;');
-  expect(css).toContain('.reel-more-menu__value { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 2px; font-size: 12px; font-weight: 400; color: rgb(var(--brand-text) / .6); }');
-  expect(css).toContain('.reel-speed-panel__readout { font-size: 20px; font-weight: 700;');
+  expect(css).toContain('.reel-more-menu__value { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 2px; font-size: var(--type-xs); font-weight: 400; color: rgb(var(--brand-text) / .6); }');
+  expect(css).toContain('.reel-speed-panel__readout { font-size: var(--type-xl); font-weight: 700;');
   expect(css).toContain('.reel-speed-panel__slider input[type="range"] { flex: 1 1 auto; min-width: 0; height: 4px; margin: 0; accent-color: rgb(var(--brand-text)); cursor: pointer; }');
   expect(css).toContain('.reel-more-menu__chip { display: inline-flex; height: 30px;');
   expect(css).toContain('.reel-more-menu__switch { position: relative; display: inline-block; flex: 0 0 40px; width: 40px; height: 22px;');

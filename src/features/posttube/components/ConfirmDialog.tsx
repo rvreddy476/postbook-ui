@@ -49,7 +49,7 @@ export function ConfirmDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
-          <h3 id="posttube-confirm-title" className="text-[15px] font-bold text-brand-text">
+          <h3 id="posttube-confirm-title" className="text-base font-bold text-brand-text">
             {title}
           </h3>
           <button
@@ -61,12 +61,12 @@ export function ConfirmDialog({
             <X className="h-4 w-4" />
           </button>
         </div>
-        {body ? <div className="px-5 py-4 text-[13px] leading-relaxed text-brand-text">{body}</div> : null}
+        {body ? <div className="px-5 py-4 text-sm leading-relaxed text-brand-text">{body}</div> : null}
         <div className="flex justify-end gap-2 border-t border-border px-5 py-3">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full px-4 py-2 text-[13px] font-semibold text-brand-text hover:bg-brand-secondary"
+            className="rounded-full px-4 py-2 text-sm font-semibold text-brand-text hover:bg-brand-secondary"
           >
             {cancelLabel}
           </button>
@@ -74,7 +74,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={pending}
-            className={`rounded-full px-4 py-2 text-[13px] font-semibold text-primary-foreground disabled:opacity-50 ${
+            className={`rounded-full px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50 ${
               danger ? "bg-danger hover:bg-danger/90" : "bg-primary-ink hover:bg-primary-hover"
             }`}
           >

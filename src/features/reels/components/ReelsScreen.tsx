@@ -96,6 +96,9 @@ import { reelLiveHref } from "@/features/reels/live/liveRing";
 const NAV_COOLDOWN_MS = 320;
 const WHEEL_THRESHOLD = 24;
 const SWIPE_THRESHOLD = 48;
+// A flick: at least this far, at least this fast (px per ms), to turn the page before the thumb travels the full threshold.
+const SWIPE_FLICK_MIN = 20;
+const SWIPE_FLICK_VELOCITY = 0.45;
 
 function isTypingTarget(t: EventTarget | null): boolean {
   if (!(t instanceof HTMLElement)) return false;
@@ -142,7 +145,7 @@ export function ReelsScreen() {
   theaterRef.current = theater;
   const navAtRef = useRef(0);
   const wheelAccRef = useRef(0);
-  const touchStartRef = useRef<number | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number; at: number } | null>(null);
 
   useEffect(() => {
     setViewerId(readSessionUserId());
@@ -597,14 +600,23 @@ export function ReelsScreen() {
       touchStartRef.current = null;
       return;
     }
-    touchStartRef.current = e.touches[0]?.clientY ?? null;
+    const touch = e.touches[0];
+    touchStartRef.current = touch ? { x: touch.clientX, y: touch.clientY, at: e.timeStamp } : null;
   };
   const onTouchEnd = (e: React.TouchEvent) => {
     const start = touchStartRef.current;
     touchStartRef.current = null;
     if (start === null) return;
-    const dy = (e.changedTouches[0]?.clientY ?? start) - start;
-    if (Math.abs(dy) >= SWIPE_THRESHOLD) go(dy < 0 ? 1 : -1);
+    const end = e.changedTouches[0];
+    if (!end) return;
+    const dy = end.clientY - start.y;
+    const dx = end.clientX - start.x;
+    // A sideways drag (the rail, a sheet, iOS back-swipe) is not a page turn.
+    if (Math.abs(dx) > Math.abs(dy)) return;
+    // Either a long drag, or a short quick flick: TikTok turns on both.
+    const elapsed = Math.max(1, e.timeStamp - start.at);
+    const flick = Math.abs(dy) >= SWIPE_FLICK_MIN && Math.abs(dy) / elapsed >= SWIPE_FLICK_VELOCITY;
+    if (Math.abs(dy) >= SWIPE_THRESHOLD || flick) go(dy < 0 ? 1 : -1);
   };
 
   const onEnded = useCallback(() => {
@@ -702,7 +714,7 @@ export function ReelsScreen() {
         <main className="reels-main" onWheel={onWheel} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
           {loading ? (
             <StateLayout stageRef={stageRef}>
-              <div className="flex h-full items-center justify-center text-[13px] text-[rgb(var(--reel-on-stage)/.7)]">Loading reels…</div>
+              <div className="flex h-full items-center justify-center text-sm text-[rgb(var(--reel-on-stage)/.7)]">Loading reels…</div>
             </StateLayout>
           ) : errored ? (
             <StateLayout stageRef={stageRef}>
@@ -966,10 +978,10 @@ export function ReelsScreen() {
                     onClick={(e) => e.stopPropagation()}
                     className="reel-confirm-card"
                   >
-                    <h2 className="mb-2 text-[14px] font-bold">Description</h2>
-                    <p className="whitespace-pre-wrap text-[13px] leading-relaxed">{active.caption || "No description."}</p>
+                    <h2 className="mb-2 text-sm font-bold">Description</h2>
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{active.caption || "No description."}</p>
                     {active.hashtags.length ? (
-                      <p className="mt-2 flex flex-wrap gap-x-2 text-[12px] font-semibold text-brand-accent">
+                      <p className="mt-2 flex flex-wrap gap-x-2 text-xs font-semibold text-brand-accent">
                         {active.hashtags.map((t) => (
                           <Link key={t} href={`/hashtag/${encodeURIComponent(t)}`}>
                             #{t}
@@ -1041,8 +1053,8 @@ function StateCard({ title, hint, action, icon }: { title: string; hint: string;
   return (
     <div className="reel-state-card">
       {icon ?? <Clapperboard className="h-10 w-10 opacity-60" />}
-      <h2 className="text-[16px] font-bold">{title}</h2>
-      <p className="max-w-xs text-[13px] opacity-70">{hint}</p>
+      <h2 className="text-base font-bold">{title}</h2>
+      <p className="max-w-xs text-sm opacity-70">{hint}</p>
       {action ? <div className="mt-2">{action}</div> : null}
     </div>
   );
@@ -1088,7 +1100,7 @@ function ReelUndoToast({
               onFailed();
             }
           }}
-          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-secondary px-3 py-1.5 text-[12px] font-semibold text-brand-text transition hover:bg-brand-divider disabled:opacity-60"
+          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-secondary px-3 py-1.5 text-xs font-semibold text-brand-text transition hover:bg-brand-divider disabled:opacity-60"
         >
           <Undo2 className="h-3.5 w-3.5" /> {state === "busy" ? busyLabel : "Undo"}
         </button>

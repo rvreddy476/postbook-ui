@@ -71,7 +71,7 @@ export function ReelReportDialog({ open, targetId, targetType = "reel", onClose 
             className="w-full max-w-md rounded-t-2xl border border-border bg-brand-card p-5 text-brand-text shadow-2xl md:rounded-2xl"
           >
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="flex items-center gap-2 text-[15px] font-bold">
+              <h2 className="flex items-center gap-2 text-base font-bold">
                 <Flag className="h-4 w-4 text-danger" /> Report this {targetType}
               </h2>
               <button type="button" aria-label="Close" onClick={close} className="rounded-full p-1 hover:bg-brand-secondary">
@@ -80,7 +80,7 @@ export function ReelReportDialog({ open, targetId, targetType = "reel", onClose 
             </div>
             <div className="space-y-1">
               {REPORT_REASONS.map((r) => (
-                <label key={r.value} className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-[13px] hover:bg-brand-secondary">
+                <label key={r.value} className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm hover:bg-brand-secondary">
                   <input type="radio" name={`${targetType}-report-reason`} value={r.value} checked={reason === r.value} onChange={() => setReason(r.value)} className="accent-[rgb(var(--theme-brand-accent))]" />
                   {r.label}
                 </label>
@@ -91,17 +91,17 @@ export function ReelReportDialog({ open, targetId, targetType = "reel", onClose 
               onChange={(e) => setDetails(e.target.value)}
               placeholder="Anything else we should know? (optional)"
               rows={2}
-              className="mt-3 w-full resize-none rounded-lg border border-border bg-canvas px-3 py-2 text-[13px] outline-none focus:border-brand-accent"
+              className="mt-3 w-full resize-none rounded-lg border border-border bg-canvas px-3 py-2 text-sm outline-none focus:border-brand-accent"
             />
             <div className="mt-4 flex justify-end gap-2">
-              <button type="button" onClick={close} className="rounded-full px-4 py-2 text-[13px] font-semibold hover:bg-brand-secondary">
+              <button type="button" onClick={close} className="rounded-full px-4 py-2 text-sm font-semibold hover:bg-brand-secondary">
                 Cancel
               </button>
               <button
                 type="button"
                 disabled={!reason || report.isPending}
                 onClick={submit}
-                className="rounded-full bg-danger px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50"
+                className="rounded-full bg-danger px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
               >
                 {report.isPending ? "Sending…" : "Send report"}
               </button>

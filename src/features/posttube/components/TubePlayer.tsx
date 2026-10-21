@@ -825,8 +825,8 @@ export function TubePlayer({
 
         {failed ? (
           <div className="tube-player__failed">
-            <p className="text-[14px] font-semibold">This video can&apos;t be played right now.</p>
-            <p className="text-[12px] opacity-70">It may still be processing. Try again in a moment.</p>
+            <p className="text-sm font-semibold">This video can&apos;t be played right now.</p>
+            <p className="text-xs opacity-70">It may still be processing. Try again in a moment.</p>
           </div>
         ) : null}
 

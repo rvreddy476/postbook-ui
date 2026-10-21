@@ -233,3 +233,55 @@
   --reel-stage: 8 12 18;
   --reel-on-stage: 255 255 255;
 }
+
+/*
+  Type scale (founder, 21 Oct 2026: one scale, defined once).
+
+  Every font size in the product comes from these nine steps. Tailwind's
+  text-2xs … text-4xl utilities read them through `@theme inline` in
+  globals.css, src/ui/tokens.ts exposes the same variables for inline
+  styles, and feature CSS writes `font-size: var(--type-sm)`, never a px
+  literal (src/ui/__tests__/typeScale.test.ts guards that).
+
+  The named steps keep the pixel values Tailwind's text-xs/sm/base/lg/xl/
+  2xl/3xl already had, so the 2,400 existing call sites do not move. The
+  floor for anything a person reads is --type-xs (12px); --type-2xs (11px)
+  is for explicit meta only — timestamps, count badges, the LIVE tag under
+  an avatar. Nothing below it: 9–10px type was the audit's biggest finding.
+
+  Line heights sit beside the sizes so a utility and a CSS rule agree.
+*/
+:root {
+  --type-2xs: 11px;
+  --type-2xs-lh: 14px;
+  --type-xs: 12px;
+  --type-xs-lh: 16px;
+  --type-sm: 14px;
+  --type-sm-lh: 20px;
+  --type-base: 16px;
+  --type-base-lh: 24px;
+  --type-lg: 18px;
+  --type-lg-lh: 28px;
+  --type-xl: 20px;
+  --type-xl-lh: 28px;
+  --type-2xl: 24px;
+  --type-2xl-lh: 32px;
+  --type-3xl: 30px;
+  --type-3xl-lh: 36px;
+  --type-4xl: 36px;
+  --type-4xl-lh: 40px;
+}
+
+/*
+  Share-target brand colours (WhatsApp, Telegram, X, Facebook). The one
+  place a third party's colour is allowed, because the tile is their mark.
+  Same in both themes — a brand colour is not ours to lift — but held here
+  so a sheet never spells a hex and dark mode can dim them in one edit.
+*/
+:root,
+.dark {
+  --theme-brand-whatsapp: 37 211 102;
+  --theme-brand-telegram: 36 161 222;
+  --theme-brand-x: 15 20 25;
+  --theme-brand-facebook: 24 119 242;
+}

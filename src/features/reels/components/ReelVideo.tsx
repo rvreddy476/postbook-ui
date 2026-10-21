@@ -700,8 +700,8 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
       {/* processing / failure */}
       {reel.isProcessing || failed ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/70 text-center text-white">
-          <span className="text-[14px] font-semibold">{failed ? "This reel can't be played right now" : "Still processing"}</span>
-          <span className="text-[12px] text-white/70">{failed ? "Try again in a moment." : "It will be ready shortly."}</span>
+          <span className="text-sm font-semibold">{failed ? "This reel can't be played right now" : "Still processing"}</span>
+          <span className="text-xs text-white/70">{failed ? "Try again in a moment." : "It will be ready shortly."}</span>
         </div>
       ) : null}
 

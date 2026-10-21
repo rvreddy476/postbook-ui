@@ -361,10 +361,12 @@ describe("RUTUBE words, our tokens", () => {
     expect(rules).not.toMatch(/rgba?\(\s*\d/); // colour only as rgb(var(--token))
     expect(rules).not.toMatch(/hsla?\(/);
     expect(rules).not.toMatch(/:\s*(white|black|red|blue|gray|grey)\b/i);
-    const sizes = [...rules.matchAll(/font-size:\s*(\d+)px/g)].map((m) => Number(m[1]));
-    expect(sizes.length).toBeGreaterThan(0);
-    expect(Math.max(...sizes)).toBeLessThanOrEqual(22);
-    expect(rules).toContain(".tube-chan-head__name { margin: 0; font-size: 18px; font-weight: 700;");
+    // Sizes come from the scale (src/ui/theme.css): never a px literal, never above 2xl (24px).
+    const steps = [...rules.matchAll(/font-size:\s*var\(--type-(\w+)\)/g)].map((m) => m[1]);
+    expect(steps.length).toBeGreaterThan(0);
+    expect(rules).not.toMatch(/font-size:\s*[0-9.]+px/);
+    expect(steps.every((s) => ["2xs", "xs", "sm", "base", "lg", "xl", "2xl"].includes(s))).toBe(true);
+    expect(rules).toContain(".tube-chan-head__name { margin: 0; font-size: var(--type-lg); font-weight: 700;");
     expect(rules).toContain("aspect-ratio: 3 / 1");
     expect(rules).toContain("aspect-ratio: 9 / 16");
   });

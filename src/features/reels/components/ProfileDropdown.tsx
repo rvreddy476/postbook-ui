@@ -106,15 +106,15 @@ export function ProfileDropdown({ size = "md" }: ProfileDropdownProps) {
                   <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="truncate text-[11px] font-black tracking-widest text-brand-text">
+                  <h4 className="truncate text-xs font-black tracking-widest text-brand-text">
                     {displayName}
                   </h4>
                   {handle ? (
-                    <p className="truncate text-[10px] text-brand-text/60">@{handle}</p>
+                    <p className="truncate text-xs text-brand-text/60">@{handle}</p>
                   ) : null}
                   <div className="mt-0.5 flex items-center gap-1">
                     <div className="h-1 w-1 rounded-full bg-emerald-500" />
-                    <span className="text-[8px] font-bold tracking-widest text-brand-text/60">
+                    <span className="text-xs font-bold tracking-widest text-brand-text/60">
                       Online
                     </span>
                   </div>
@@ -130,7 +130,7 @@ export function ProfileDropdown({ size = "md" }: ProfileDropdownProps) {
                     <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-brand-secondary text-brand-text/60 transition-colors ${item.hoverColor}`}>
                       <item.icon className="h-4 w-4" />
                     </div>
-                    <span className="text-[10px] font-black tracking-widest text-brand-highlight group-hover:text-brand-text">
+                    <span className="text-xs font-black tracking-widest text-brand-highlight group-hover:text-brand-text">
                       {item.label}
                     </span>
                   </div>
@@ -154,7 +154,7 @@ export function ProfileDropdown({ size = "md" }: ProfileDropdownProps) {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-500 transition-colors group-hover:bg-rose-100">
                   <LogOut className="h-4 w-4" />
                 </div>
-                <span className="text-[10px] font-black tracking-widest">
+                <span className="text-xs font-black tracking-widest">
                   Logout
                 </span>
               </button>

@@ -6,6 +6,8 @@ import {
   buildVideoFeedQuery,
   mapRelatedRows,
   mapTrendingRows,
+  uploadCategoryLabel,
+  uploadStatusLabel,
   nextEpisode,
   normalizeCategories,
   normalizeProgressRow,
@@ -298,5 +300,27 @@ describe("parseTubePrefs", () => {
     expect(speedOf(2.5)).toBe(1);
     expect(speedOf("1.5")).toBe(1);
     expect(speedOf(Number.NaN)).toBe(1);
+  });
+});
+
+describe("uploads list words", () => {
+  test("a processing state is one word, a failure asks for attention, ready and published show no pill", () => {
+    expect(uploadStatusLabel("processing")).toBe("Processing");
+    expect(uploadStatusLabel("transcoding")).toBe("Processing");
+    expect(uploadStatusLabel("queued")).toBe("Processing");
+    expect(uploadStatusLabel("failed_transcode")).toBe("Needs attention");
+    expect(uploadStatusLabel("failed")).toBe("Needs attention");
+    expect(uploadStatusLabel("ready")).toBeNull();
+    expect(uploadStatusLabel("published")).toBeNull();
+    expect(uploadStatusLabel(undefined)).toBeNull();
+  });
+  test("an unknown state never prints as an enum", () => {
+    expect(uploadStatusLabel("awaiting_review")).toBe("Awaiting review");
+  });
+  test("the category slug becomes the product's own word", () => {
+    expect(uploadCategoryLabel("long_video")).toBe("Video");
+    expect(uploadCategoryLabel("flick")).toBe("Reel");
+    expect(uploadCategoryLabel("something_else")).toBe("Something else");
+    expect(uploadCategoryLabel("")).toBe("");
   });
 });

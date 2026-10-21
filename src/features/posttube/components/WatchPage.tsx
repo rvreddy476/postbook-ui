@@ -93,9 +93,9 @@ function SeriesPanel({ series, currentId }: { series: SeriesInfo; currentId: str
       <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between px-4 py-3 text-left" aria-expanded={open}>
         <span className="flex items-center gap-2">
           <ListVideo className="h-4 w-4 text-brand-text" />
-          <span className="text-[13px] font-bold text-brand-text">In this series · {title}</span>
+          <span className="text-sm font-bold text-brand-text">In this series · {title}</span>
           {typeof currentNum === "number" ? (
-            <span className="text-[12px] text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               Episode {currentNum} of {series.episodes.length}
             </span>
           ) : null}
@@ -103,7 +103,7 @@ function SeriesPanel({ series, currentId }: { series: SeriesInfo; currentId: str
         {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
       </button>
       {open ? (
-        <ol className="max-h-[320px] overflow-y-auto border-t border-border">
+        <ol className="max-h-[40vh] overflow-y-auto border-t border-border">
           {series.episodes.map((ep) => {
             const isCurrent = ep.post_id === currentId;
             const thumb = ep.thumbnail_url || (ep.cover_media_id ? mediaServeUrl(ep.cover_media_id) : null);
@@ -114,16 +114,16 @@ function SeriesPanel({ series, currentId }: { series: SeriesInfo; currentId: str
                   aria-current={isCurrent ? "page" : undefined}
                   className={`flex items-center gap-3 px-3 py-2 hover:bg-brand-secondary ${isCurrent ? "bg-brand-secondary" : ""}`}
                 >
-                  <span className="w-6 shrink-0 text-center text-[12px] font-semibold tabular-nums text-muted-foreground">{ep.episode_num}</span>
+                  <span className="w-6 shrink-0 text-center text-xs font-semibold tabular-nums text-muted-foreground">{ep.episode_num}</span>
                   <span className="relative aspect-video w-[96px] shrink-0 overflow-hidden rounded-md bg-brand-secondary">
                     {thumb ? <img src={thumb} alt="" className="h-full w-full object-cover" loading="lazy" /> : null}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className={`line-clamp-2 text-[13px] leading-tight ${isCurrent ? "font-bold text-primary-ink" : "font-medium text-brand-text"}`}>
+                    <span className={`line-clamp-2 text-sm leading-tight ${isCurrent ? "font-bold text-primary-ink" : "font-medium text-brand-text"}`}>
                       {ep.title?.trim() || `Episode ${ep.episode_num}`}
                     </span>
                     {typeof ep.duration_ms === "number" && ep.duration_ms > 0 ? (
-                      <span className="block text-[11px] text-muted-foreground">{formatDuration(ep.duration_ms / 1000)}</span>
+                      <span className="block text-xs text-muted-foreground">{formatDuration(ep.duration_ms / 1000)}</span>
                     ) : null}
                   </span>
                 </Link>
@@ -585,11 +585,11 @@ function WatchPageContent({ videoId, listId = null, startSeconds = null }: Watch
     }
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
-        <h2 className="text-[18px] font-bold text-brand-text">{videoId ? "Video not found" : "No video selected"}</h2>
-        <p className="mt-2 text-[13px] text-muted-foreground">
+        <h2 className="text-lg font-bold text-brand-text">{videoId ? "Video not found" : "No video selected"}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
           {videoId ? "This video may still be processing or has been removed." : "Browse PostTube to find videos to watch."}
         </p>
-        <Link href="/posttube" className="mt-5 rounded-full bg-primary-ink px-5 py-2.5 text-[13px] font-semibold text-primary-foreground hover:bg-primary-hover">
+        <Link href="/posttube" className="mt-5 rounded-full bg-primary-ink px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover">
           Back to Watch
         </Link>
       </div>
@@ -644,8 +644,8 @@ function WatchPageContent({ videoId, listId = null, startSeconds = null }: Watch
     <div className="w-full text-center">
       {countdownActive && nextTarget ? (
         <div className="flex flex-col items-center gap-3">
-          <p className="text-[12px] uppercase tracking-wider opacity-70">Up next in {autoplay.remaining}s</p>
-          <p className="text-[15px] font-semibold">{nextTarget.label}</p>
+          <p className="text-xs uppercase tracking-wider opacity-70">Up next in {autoplay.remaining}s</p>
+          <p className="text-base font-semibold">{nextTarget.label}</p>
           <div className="h-1 w-56 overflow-hidden rounded-full bg-white/25">
             <div
               className="h-full bg-brand-accent transition-all duration-1000"
@@ -653,18 +653,18 @@ function WatchPageContent({ videoId, listId = null, startSeconds = null }: Watch
             />
           </div>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={() => dispatch({ type: "cancel" })} className="rounded-full border border-white/50 px-4 py-2 text-[13px] font-semibold hover:bg-white/10">
+            <button type="button" onClick={() => dispatch({ type: "cancel" })} className="rounded-full border border-white/50 px-4 py-2 text-sm font-semibold hover:bg-white/10">
               Cancel
             </button>
-            <button type="button" onClick={() => dispatch({ type: "playNow" })} className="rounded-full bg-brand-accent px-4 py-2 text-[13px] font-semibold text-white hover:opacity-90">
+            <button type="button" onClick={() => dispatch({ type: "playNow" })} className="rounded-full bg-brand-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
               Play now
             </button>
           </div>
         </div>
       ) : nextTarget ? (
         <div className="flex flex-col items-center gap-2">
-          <p className="text-[12px] uppercase tracking-wider opacity-70">Up next</p>
-          <Link href={nextTarget.href} className="rounded-full bg-brand-accent px-4 py-2 text-[13px] font-semibold text-white hover:opacity-90">
+          <p className="text-xs uppercase tracking-wider opacity-70">Up next</p>
+          <Link href={nextTarget.href} className="rounded-full bg-brand-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
             {nextTarget.label}
           </Link>
         </div>
@@ -953,29 +953,29 @@ function WatchPageContent({ videoId, listId = null, startSeconds = null }: Watch
           <div className="w-full max-w-[380px] overflow-hidden rounded-2xl border border-border bg-brand-card shadow-2xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
             {reportSubmitted ? (
               <div className="p-6 text-center">
-                <h3 className="text-[15px] font-bold text-brand-text">Report submitted</h3>
-                <p className="mt-1 text-[13px] text-muted-foreground">Our team will review this content shortly.</p>
-                <button type="button" onClick={() => setReportOpen(false)} className="mt-4 w-full rounded-full bg-primary-ink py-2.5 text-[13px] font-semibold text-primary-foreground">
+                <h3 className="text-base font-bold text-brand-text">Report submitted</h3>
+                <p className="mt-1 text-sm text-muted-foreground">Our team will review this content shortly.</p>
+                <button type="button" onClick={() => setReportOpen(false)} className="mt-4 w-full rounded-full bg-primary-ink py-2.5 text-sm font-semibold text-primary-foreground">
                   Done
                 </button>
               </div>
             ) : (
               <>
                 <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
-                  <h3 className="text-[14px] font-bold text-brand-text">Report video</h3>
-                  <button type="button" onClick={() => setReportOpen(false)} aria-label="Close" className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-brand-secondary">
+                  <h3 className="text-sm font-bold text-brand-text">Report video</h3>
+                  <button type="button" onClick={() => setReportOpen(false)} aria-label="Close" className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:bg-brand-secondary">
                     ×
                   </button>
                 </div>
                 <div className="px-5 py-4">
-                  <p className="mb-3 text-[12px] text-muted-foreground">Why are you reporting this?</p>
+                  <p className="mb-3 text-xs text-muted-foreground">Why are you reporting this?</p>
                   <div className="space-y-1.5">
                     {REPORT_REASONS.map((reason) => (
                       <button
                         key={reason.value}
                         type="button"
                         onClick={() => setReportReason(reason.value)}
-                        className={`w-full rounded-xl px-3.5 py-2.5 text-left text-[13px] transition ${
+                        className={`w-full rounded-xl px-3.5 py-2.5 text-left text-sm transition ${
                           reportReason === reason.value ? "bg-primary-ink font-medium text-primary-foreground" : "bg-brand-secondary text-brand-text hover:bg-brand-divider"
                         }`}
                       >
@@ -997,7 +997,7 @@ function WatchPageContent({ videoId, listId = null, startSeconds = null }: Watch
                       setReportSubmitted(true);
                     }}
                     disabled={!reportReason || reportMutation.isPending}
-                    className="w-full rounded-full bg-danger py-2.5 text-[13px] font-semibold text-primary-foreground disabled:opacity-40"
+                    className="w-full rounded-full bg-danger py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-40"
                   >
                     {reportMutation.isPending ? "Submitting..." : "Submit report"}
                   </button>

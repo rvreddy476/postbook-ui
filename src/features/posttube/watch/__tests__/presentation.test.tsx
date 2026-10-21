@@ -52,12 +52,12 @@ describe("the RUTUBE layout", () => {
     expect(css).toContain("--tube-side-w: 402px");
     expect(css).toMatch(/@media \(min-width: 1100px\) \{\s*\.tube-watch__grid \{[^}]*grid-template-columns: minmax\(0, 1fr\) var\(--tube-side-w\);[^}]*grid-template-areas: "player side" "primary side"/);
     expect(css).toMatch(/\.tube-watch\[data-theater\] \.tube-watch__grid \{ grid-template-areas: "player player" "primary side"; \}/);
-    expect(css).toMatch(/\.tube-details__title \{[^}]*font-size: 20px/);
+    expect(css).toMatch(/\.tube-details__title \{[^}]*font-size: var\(--type-xl\)/);
     expect(css).not.toContain("tube-rail");
     expect(css).not.toContain("tube-comments-column");
-    // hover-only controls, 11px time, one seek bar
+    // hover-only controls, 12px time (the scale's floor), one seek bar
     expect(playerCss).toMatch(/\.tube-player__controls \{[^}]*opacity: 0/);
-    expect(playerCss).toMatch(/\.tube-player__time \{[^}]*font-size: 11px/);
+    expect(playerCss).toMatch(/\.tube-player__time \{[^}]*font-size: var\(--type-xs\)/);
     expect(playerCss).toMatch(/\.tube-seek__track \{[^}]*height: 3px/);
   });
 
@@ -255,8 +255,8 @@ describe("chapters and up next", () => {
     expect(html).toContain("1.5K views · ");
     expect(html).toContain('class="tube-upnext__duration">2:05<');
     expect(css).toMatch(/\.tube-upnext__thumb \{[^}]*width: 168px; height: 94px/);
-    expect(css).toMatch(/\.tube-upnext__name \{[^}]*font-size: 14px/);
-    expect(css).toMatch(/\.tube-upnext__meta \{[^}]*font-size: 12px/);
+    expect(css).toMatch(/\.tube-upnext__name \{[^}]*font-size: var\(--type-sm\)/);
+    expect(css).toMatch(/\.tube-upnext__meta \{[^}]*font-size: var\(--type-xs\)/);
   });
 
   test("collection mode: Playing from, the position, prev / next hrefs keep the list", () => {

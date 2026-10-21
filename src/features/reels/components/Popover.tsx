@@ -148,14 +148,14 @@ export function MenuRow({
       role="menuitem"
       disabled={disabled}
       onClick={onClick}
-      className={`flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-medium transition hover:bg-brand-secondary disabled:opacity-40 ${
+      className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium transition hover:bg-brand-secondary disabled:opacity-40 ${
         danger ? "text-danger" : "text-brand-text"
       }`}
     >
       {icon ? <span className="shrink-0 text-current/80">{icon}</span> : null}
       <span className="min-w-0 flex-1">
         <span className="block truncate">{label}</span>
-        {hint ? <span className="block truncate text-[11px] font-normal text-muted-foreground">{hint}</span> : null}
+        {hint ? <span className="block truncate text-xs font-normal text-muted-foreground">{hint}</span> : null}
       </span>
       {trailing}
     </button>

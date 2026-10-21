@@ -79,7 +79,7 @@ export function ReelScrubber({ currentMs, durationMs, bufferedMs, onSeek, onScru
       onClick={(e) => e.stopPropagation()}
     >
       {dragMs !== null ? (
-        <div className="absolute bottom-6 -translate-x-1/2 rounded-md bg-black/80 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-white" style={{ left: `${pct}%` }}>
+        <div className="absolute bottom-6 -translate-x-1/2 rounded-md bg-black/80 px-2 py-0.5 text-xs font-semibold tabular-nums text-white" style={{ left: `${pct}%` }}>
           {formatClock(shown)} / {formatClock(durationMs)}
         </div>
       ) : null}

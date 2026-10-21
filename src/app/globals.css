@@ -19,6 +19,32 @@
 @theme inline {
   --font-sans: var(--font-outfit), Outfit, system-ui, sans-serif;
   --font-mono: var(--font-mono-face), 'Space Mono', monospace;
+
+  /*
+    Type scale: text-2xs … text-4xl read the --type-* variables declared
+    in src/ui/theme.css (the one source). `inline` so the utility carries
+    `font-size: var(--type-sm)` itself and resolves on the element, exactly
+    like a feature stylesheet that writes the same var. Values and the
+    rules for using them are documented beside the variables.
+  */
+  --text-2xs: var(--type-2xs);
+  --text-2xs--line-height: var(--type-2xs-lh);
+  --text-xs: var(--type-xs);
+  --text-xs--line-height: var(--type-xs-lh);
+  --text-sm: var(--type-sm);
+  --text-sm--line-height: var(--type-sm-lh);
+  --text-base: var(--type-base);
+  --text-base--line-height: var(--type-base-lh);
+  --text-lg: var(--type-lg);
+  --text-lg--line-height: var(--type-lg-lh);
+  --text-xl: var(--type-xl);
+  --text-xl--line-height: var(--type-xl-lh);
+  --text-2xl: var(--type-2xl);
+  --text-2xl--line-height: var(--type-2xl-lh);
+  --text-3xl: var(--type-3xl);
+  --text-3xl--line-height: var(--type-3xl-lh);
+  --text-4xl: var(--type-4xl);
+  --text-4xl--line-height: var(--type-4xl-lh);
 }
 
 @theme {
@@ -123,6 +149,12 @@
   --color-send: rgb(var(--send));
   --color-send-hover: rgb(var(--send-hover));
   --color-receipt-seen: rgb(var(--receipt-seen));
+
+  /* Share-target brand marks; values in src/ui/theme.css. */
+  --color-brand-whatsapp: rgb(var(--brand-whatsapp));
+  --color-brand-telegram: rgb(var(--brand-telegram));
+  --color-brand-x: rgb(var(--brand-x));
+  --color-brand-facebook: rgb(var(--brand-facebook));
 
   /* Gradient stops and the page tint; values in src/ui/theme.css. */
   --color-brand-lift: rgb(var(--brand-lift));
@@ -251,6 +283,10 @@
     --playhead: var(--theme-playhead);
     --follow-seal: var(--theme-follow-seal);
     --follow-seal-plus: var(--theme-follow-seal-plus);
+    --brand-whatsapp: var(--theme-brand-whatsapp);
+    --brand-telegram: var(--theme-brand-telegram);
+    --brand-x: var(--theme-brand-x);
+    --brand-facebook: var(--theme-brand-facebook);
   }
 
   .dark {
@@ -296,6 +332,10 @@
     --playhead: var(--theme-playhead);
     --follow-seal: var(--theme-follow-seal);
     --follow-seal-plus: var(--theme-follow-seal-plus);
+    --brand-whatsapp: var(--theme-brand-whatsapp);
+    --brand-telegram: var(--theme-brand-telegram);
+    --brand-x: var(--theme-brand-x);
+    --brand-facebook: var(--theme-brand-facebook);
   }
 
   html,
