@@ -1,6 +1,7 @@
 "use client";
 
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { pollWhileEmpty } from "@/lib/pollWhileEmpty";
 import { useMemo } from "react";
 import { upcomingOnly } from "@/features/live/discovery";
 import { useLiveCategories, useLiveNow, useUpcomingStreams } from "@/hooks/useLiveV2";
@@ -68,6 +69,7 @@ export function useStripFeed(value: string, limit = 20, enabled = true) {
     getNextPageParam: (last) => last.next_cursor,
     staleTime: 2 * 60 * 1000,
     enabled,
+    refetchInterval: pollWhileEmpty, // empty home grid: check again every 30 s
   });
 }
 
