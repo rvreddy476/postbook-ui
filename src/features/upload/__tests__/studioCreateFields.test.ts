@@ -18,7 +18,7 @@ describe("studioCreateFields (the direct-create publish path)", () => {
   });
 
   test("empty optional fields are left out rather than sent blank", () => {
-    const f = studioCreateFields(form({ title: "t", category: "", tags: [], recordingDate: "" }));
+    const f = studioCreateFields(form({ title: "t", category: "", tags: [] }));
     expect("category" in f).toBe(false);
     expect("tags" in f).toBe(false);
     expect("recording_date" in f).toBe(false);

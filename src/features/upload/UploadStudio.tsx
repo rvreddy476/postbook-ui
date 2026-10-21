@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, CheckCircle2, Copy, ExternalLink, AlertTriangle, Check, LayoutPanelTop, ArrowLeft, Save, CloudUpload } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, CheckCircle2, ChevronLeft, ChevronRight, CloudUpload, Copy, ExternalLink, LayoutPanelTop, Save } from "lucide-react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useGlobalToast } from "@/contexts/ToastContext";
 import { AppShell } from "@/features/reels/components/AppShell";
 import { ChannelCreatePrompt, studioNeedsChannel } from "@/features/posttube/channelGate/ChannelGate";
 import { useMyChannel } from "@/hooks/useChannels";
 import { followUpNotice, hubEditHref, publishFailure } from "./studioApi";
-import { CONTENT_TYPE_META, STEP_META, type ContentType } from "./tokens";
+import { CONTENT_TYPE_META, STEP_META, isShortStudio, stepIntro, type ContentType } from "./tokens";
 import { useUploadStudio, classifyVideo } from "./useUploadStudio";
 import { StudioToolbar } from "./components/StudioToolbar";
 import { PreviewPanel } from "./components/PreviewPanel";
@@ -39,6 +39,7 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
   const failure = publishFailure(studio.publishMutation.error);
   const publishError = failure?.message ?? null;
   const toast = useGlobalToast();
+  const short = isShortStudio(contentType);
 
   // A reel or short over the shorts cap publishes as a long video, which
   // needs a channel; the page's own gate only covered long uploads.
@@ -103,7 +104,8 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
   const handlePublish = () => {
     // Re-entry guard: ignore clicks while a publish is in flight or already done.
     // Without this, the (now longer) upload-on-publish window let users fire
-    // multiple publishes / create duplicate posts.
+    // multiple publishes / create duplicate posts. The publish attempt (and
+    // its Idempotency-Key) is made in the mutation on the first press.
     if (navigationLocked || form.publishSuccess) return;
     if (channelMissing) {
       requestAnimationFrame(() => channelPromptRef.current?.focus());
@@ -180,24 +182,26 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
   // link. Requiring it previously could leave a successful publish stuck on the
   // form (re-clickable) if the create/draft response omitted the id.
   if (form.publishSuccess) {
+    const scheduled = form.scheduleAt !== null;
     return (
       <AppShell sectionLabel="Upload">
-        <div className="flex h-full items-center justify-center bg-brand-secondary">
+        <div className="upload-studio">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 16 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className="mx-auto max-w-[480px] text-center px-6"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="mx-auto max-w-[480px] px-1 py-10 text-center"
           >
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-success/20 to-success/5 ring-8 ring-success/5">
-              <CheckCircle2 className="h-10 w-10 text-success" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+              <CheckCircle2 className="h-8 w-8 text-success" aria-hidden="true" />
             </div>
-            <h2 className="mt-6 text-[22px] font-bold text-brand-text">
-              {config.label} published!
+            <h2 className="mt-5 text-[20px] font-bold text-brand-text">
+              {config.label} {scheduled ? "scheduled" : "published"}
             </h2>
-            <p className="mt-2 text-[14px] text-muted-foreground leading-relaxed max-w-sm mx-auto">
-              Your video is being processed and will be available to viewers shortly.
-              This usually takes a few minutes.
+            <p className="mx-auto mt-2 max-w-sm text-[13px] leading-relaxed text-muted-foreground">
+              {scheduled
+                ? "It goes live at the time you chose, once processing has finished."
+                : "It is processing now and will be watchable in a few minutes."}
             </p>
             {form.publishedEpisodeNum !== null && form.seriesChoice.kind !== "none" && (
               <p className="mt-2 text-[13px] text-muted-foreground" data-series-result>
@@ -205,21 +209,22 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
               </p>
             )}
             {form.publishWarning && (
-              <p className="mt-3 rounded-xl border border-warning/20 bg-warning/5 px-4 py-3 text-[12px] text-warning dark:text-warning">
+              <p className="upload-banner text-left" data-variant="warning" role="status">
                 {form.publishWarning}
               </p>
             )}
 
             {postUrl && (
-              <div className="mt-6 flex items-center gap-2 rounded-xl border border-brand-text/10 bg-brand-card px-4 py-3 shadow-xs">
-                <span className="flex-1 truncate text-left text-[13px] text-muted-foreground font-mono">{postUrl}</span>
+              <div className="mt-6 flex items-center gap-2 rounded-xl border border-border bg-brand-card px-3 py-2">
+                <span className="flex-1 truncate text-left font-mono text-[12px] text-muted-foreground">{postUrl}</span>
                 <button
                   type="button"
                   onClick={() => navigator.clipboard.writeText(postUrl)}
-                  className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-brand-secondary hover:text-muted-foreground transition-colors"
+                  className="upload-icon-button"
+                  aria-label="Copy link"
                   title="Copy link"
                 >
-                  <Copy className="h-4 w-4" />
+                  <Copy aria-hidden="true" />
                 </button>
               </div>
             )}
@@ -227,10 +232,10 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
             {isLongVideo && form.publishedPostId && (
               <Link
                 href={hubEditHref(form.publishedPostId, "elements")}
-                className="mt-4 flex items-center gap-3 rounded-xl border border-brand-text/10 bg-brand-card px-4 py-3 text-left shadow-xs transition-colors hover:bg-brand-secondary"
+                className="mt-3 flex items-center gap-3 rounded-xl border border-border bg-brand-card px-4 py-3 text-left transition-colors hover:bg-brand-secondary"
                 data-link="hub-elements"
               >
-                <LayoutPanelTop className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <LayoutPanelTop className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                 <span className="min-w-0">
                   <span className="block text-[13px] font-semibold text-brand-text">Add an end screen and cards</span>
                   <span className="block text-[11px] text-muted-foreground">In Creator Hub, next to chapters</span>
@@ -238,20 +243,13 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
               </Link>
             )}
 
-            <div className="mt-8 flex items-center justify-center gap-3">
-              <Link
-                href={isLongVideo ? "/posttube" : "/reels"}
-                className="flex items-center gap-1.5 rounded-xl border border-brand-text/10 bg-brand-card px-5 py-2.5 text-[13px] font-medium text-muted-foreground hover:bg-brand-secondary transition-colors shadow-xs"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Go to {isLongVideo ? "Posttube" : "Reels"}
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <Link href={isLongVideo ? "/posttube" : "/reels"} className="upload-button">
+                <ExternalLink aria-hidden="true" />
+                Go to {isLongVideo ? "PostTube" : "Reels"}
               </Link>
-              <button
-                type="button"
-                onClick={studio.clearFile}
-                className="rounded-xl bg-primary-ink px-5 py-2.5 text-[13px] font-semibold text-on-primary hover:bg-primary-ink transition-colors shadow-xs"
-              >
-                Upload Another
+              <button type="button" onClick={studio.clearFile} className="upload-button upload-button-primary">
+                Upload another
               </button>
             </div>
           </motion.div>
@@ -260,36 +258,36 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
     );
   }
 
-
-  const stepIntro = {
-    video: ["Select a video", "Start with a file from your device. You'll review everything before publishing."],
-    details: ["Give your video some context", "A title is required. A description, cover and tags are optional."],
-    audience: ["Choose your audience", "Review who this content is for and any disclosures that apply."],
-    engage: ["Set up the conversation", "Choose how viewers can comment, react and remix."],
-    enrich: ["Add the finishing touches", "Optional captions, chapters and metadata help viewers explore your video."],
-    publish: ["Review and publish", "Choose a topic, check visibility and decide when your video goes live."],
-  }[form.currentStep];
+  const intro = stepIntro(form.currentStep, contentType);
   const validationGroups = showValidationErrors && isLastStep ? allErrors : attemptedNext && currentStepErrors.length ? [{ step: form.currentStep, errors: currentStepErrors }] : [];
+  const noun = short ? "reel" : contentType === "podcast" ? "podcast" : "video";
+  const primaryLabel = busy ? "Please wait…" : isLastStep ? `${form.scheduleAt !== null ? "Schedule" : "Publish"} ${noun}` : "Continue";
+  const draftSaved = !!form.draftId && studio.saveDraftMutation.isSuccess;
 
   return <AppShell sectionLabel="Upload">
     <div className="upload-studio">
       <header className="upload-page-head">
-        <div>
-          <Link href={contentType === "reel" || contentType === "short" ? "/reels" : "/posttube/hub"} className="upload-back"><ArrowLeft aria-hidden="true" />{contentType === "reel" || contentType === "short" ? "Reels" : "Creator Hub"}</Link>
-          <h1>{contentType === "podcast" ? "Upload a podcast" : contentType === "reel" || contentType === "short" ? "Create a reel" : "Upload a video"}</h1>
-          <p>Add details, choose your audience and publish.</p>
+        <div className="min-w-0">
+          <Link href={short ? "/reels" : "/posttube/hub"} className="upload-back"><ArrowLeft aria-hidden="true" />{short ? "Reels" : "Creator Hub"}</Link>
+          <h1>{contentType === "podcast" ? "Upload a podcast" : short ? "Create a reel" : "Upload a video"}</h1>
+          <p>{short ? "Publishes to Reels" : "Publishes to your PostTube channel"} · {steps.length} steps</p>
         </div>
-        <span className="upload-session-status"><CloudUpload aria-hidden="true" />{form.draftId ? "Draft created" : "Not published"}</span>
+        <span className="upload-session-status" data-saved={draftSaved || undefined}>
+          {draftSaved ? <Check aria-hidden="true" /> : <CloudUpload aria-hidden="true" />}
+          {form.draftId ? (draftSaved ? "Draft saved" : "Draft created") : "Not saved yet"}
+        </span>
       </header>
       <StudioToolbar steps={steps} currentStep={form.currentStep} currentStepIndex={currentStepIndex} form={form} disabled={navigationLocked}
         onStepClick={(step) => { setAttemptedNext(false); setShowValidationErrors(false); goToStep(step); }} />
       <div className="upload-workspace">
         <section className="upload-form-card" aria-labelledby="upload-step-title">
           <div className="upload-step-heading">
-            <div><span className="upload-eyebrow">Step {currentStepIndex + 1} of {steps.length}</span>
-              <h2 id="upload-step-title" ref={headingRef} tabIndex={-1}>{stepIntro[0]}</h2>
-              <p>{stepIntro[1]}</p></div>
-            <span className="upload-required-note">* Required</span>
+            <div className="min-w-0">
+              <span className="upload-eyebrow">Step {currentStepIndex + 1} of {steps.length} · {STEP_META[form.currentStep].label}</span>
+              <h2 id="upload-step-title" ref={headingRef} tabIndex={-1}>{intro.title}</h2>
+              <p>{intro.body}</p>
+            </div>
+            <span className="upload-required-note"><span className="upload-required" aria-hidden="true">*</span> Required</span>
           </div>
           {validationGroups.length ? <div ref={validationRef} tabIndex={-1} className="upload-validation" role="alert" aria-labelledby="upload-validation-title">
             <strong id="upload-validation-title"><AlertTriangle aria-hidden="true" />{isLastStep ? "A few things need attention before publishing" : "Let's finish this step"}</strong>
@@ -307,27 +305,30 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
               onCreated={() => { void channelQuery.refetch(); studio.publishMutation.reset(); }}
             />
           </div> : null}
-          <fieldset className="upload-step-fields" disabled={navigationLocked} aria-busy={navigationLocked || undefined}>{renderStep()}</fieldset>
+          <fieldset className="upload-step-fields" disabled={navigationLocked} aria-busy={navigationLocked || undefined}>
+            <legend className="upload-sr-only">{intro.title}</legend>
+            {renderStep()}
+          </fieldset>
           {busy ? <div className="upload-transfer-status" role="status">
             <CloudUpload aria-hidden="true" /><div><strong>{studio.saveDraftMutation.isPending ? "Saving your draft…" : form.uploadPhase === "uploading" ? "Uploading your video…" : "Finishing publication…"}</strong>
             <span>Keep this page open. Your progress will appear here.</span>
             {form.uploadPhase === "uploading" ? <progress max={100} value={form.uploadProgress} aria-label="Video upload progress" /> : null}
             </div>{form.uploadPhase === "uploading" ? <b>{form.uploadProgress}%</b> : null}
           </div> : null}
-          {saveError ? <p className="upload-field-error" role="alert"><AlertTriangle aria-hidden="true" />Your draft couldn't be saved. {saveError} Your form is still here; try saving again.</p> : null}
+          {saveError ? <p className="upload-field-error" role="alert"><AlertTriangle aria-hidden="true" />Your draft couldn&apos;t be saved. {saveError} Your form is still here; try saving again.</p> : null}
           {studio.saveDraftMutation.isSuccess && !busy ? <p className="upload-save-note" role="status"><Check aria-hidden="true" />Draft saved. Save again after making changes.</p> : null}
           <footer className="upload-form-footer">
             <div className="upload-footer-secondary">
               {!isFirstStep ? <button type="button" className="upload-button" disabled={navigationLocked} onClick={() => { setAttemptedNext(false); setShowValidationErrors(false); prevStep(); }}><ChevronLeft aria-hidden="true" />Back</button> : !form.videoFile ? <span className="upload-muted">Choose a file to continue</span> : null}
-              {form.videoFile ? <button type="button" className="upload-button upload-save" disabled={navigationLocked} onClick={() => studio.saveDraftMutation.mutate()}><Save aria-hidden="true" />Save draft</button> : null}
+              {form.videoFile ? <button type="button" className="upload-button upload-button-quiet upload-save" disabled={navigationLocked} onClick={() => studio.saveDraftMutation.mutate()}><Save aria-hidden="true" />Save draft</button> : null}
             </div>
             <button type="button" className="upload-button upload-button-primary" disabled={navigationLocked}
               onClick={isLastStep ? handlePublish : handleNext}>
-              {busy ? "Please wait…" : isLastStep ? form.scheduleAt !== null ? "Schedule video" : "Publish video" : "Continue"}{!isLastStep ? <ChevronRight aria-hidden="true" /> : null}
+              {primaryLabel}{!isLastStep && !busy ? <ChevronRight aria-hidden="true" /> : null}
             </button>
           </footer>
         </section>
-        <PreviewPanel form={form} patch={patch} contentType={contentType} steps={steps} />
+        <PreviewPanel form={form} contentType={contentType} steps={steps} channelName={channelQuery.data?.name ?? null} />
       </div>
     </div>
   </AppShell>;

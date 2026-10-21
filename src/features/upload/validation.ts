@@ -1,7 +1,12 @@
 import { validateChapterRows } from "@/features/posttube/hub/chaptersModel";
 
 import type { StudioFormState } from "./types";
-import type { StepId } from "./tokens";
+import { isShortStudio, type StepId } from "./tokens";
+
+/** A topic is required for long video and podcasts; for reels it is optional (founder, 2026-10-21). */
+export function topicRequired(form: Pick<StudioFormState, "contentType">): boolean {
+  return !isShortStudio(form.contentType);
+}
 
 export interface FieldError {
   field: string;
@@ -78,7 +83,7 @@ function getPublishErrors(form: StudioFormState): FieldError[] {
   if (!form.videoFile && !form.mediaId) {
     errors.push({ field: "videoFile", message: "Please select a video to publish" });
   }
-  if (!form.category.trim()) {
+  if (topicRequired(form) && !form.category.trim()) {
     errors.push({ field: "category", message: "Choose a topic to help viewers find your video." });
   }
   // NOTE: the video is uploaded and transcoded on Publish (not on selection),
@@ -123,7 +128,7 @@ export function isStepComplete(
       }
       return false;
     case "publish":
-      return form.category.length > 0 && (form.videoFile !== null || form.mediaId !== null);
+      return (!topicRequired(form) || form.category.length > 0) && (form.videoFile !== null || form.mediaId !== null);
     default:
       return false;
   }

@@ -1,11 +1,8 @@
 import type { ContentType, StepId } from "./tokens";
 import type {
   ReelVisibility,
-  LicenseType,
-  CommentModeration,
   RemixSetting,
   CommentAccess,
-  CoverFrameResult,
   CopyrightCheck,
   AudioTrack,
 } from "@/features/reels/types";
@@ -51,8 +48,6 @@ export interface StudioFormState {
   coverPreviewUrl: string | null;
   customCoverFile: File | null;
   customCoverPreviewUrl: string | null;
-  /** @deprecated kept for backward compat during transition; not used for new uploads */
-  coverResult: CoverFrameResult | null;
 
   /* ── Audio ──────────────────────── */
   audioTrack: AudioTrack | null;
@@ -71,33 +66,29 @@ export interface StudioFormState {
   /* ── Engage step ────────────────── */
   commentsEnabled: boolean;
   commentAccess: CommentAccess;
-  commentModeration: CommentModeration;
   likesEnabled: boolean;
   remixSetting: RemixSetting;
 
-  /* ── Enrich step (long/podcast) ── */
-  autoChapters: boolean;
-  featuredPlaces: boolean;
-  autoConcepts: boolean;
+  /* ── Extras step (long/podcast) ── */
   language: string;
   subtitlesFile: File | null;
   subtitleTracks: MediaSubtitleTrack[];
   subtitleUploadState: "idle" | "uploading" | "done" | "error";
   subtitleUploadError: string | null;
-  recordingDate: string;
-  recordingLocation: string;
   /** The place shown on the post (location_name); placeId set when picked from search. */
   locationName: string;
   locationPlaceId: string | null;
-  license: LicenseType;
-  allowEmbedding: boolean;
 
   /* ── Publish step ───────────────── */
   visibility: ReelVisibility;
   scheduleAt: string | null;
   category: string;
+  /**
+   * share_to_postbook on the post: whether the video may also appear in the
+   * home Feed. The server's default is true; an explicit false keeps it out
+   * of the Feed (post-service handler.go createPost + distribution.go).
+   */
   crossPostPostbook: boolean;
-  crossPostPosttube: boolean;
   publishToFeed: boolean;
 
   /* ── Series + chapters (long videos; applied after publish) ── */
@@ -148,7 +139,6 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   coverPreviewUrl: null,
   customCoverFile: null,
   customCoverPreviewUrl: null,
-  coverResult: null,
   audioTrack: null,
   audioStartMs: 0,
   originalAudioVolume: 1.0,
@@ -160,28 +150,19 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   aiGenerated: false,
   commentsEnabled: true,
   commentAccess: "everyone",
-  commentModeration: "basic",
   likesEnabled: true,
   remixSetting: "allow",
-  autoChapters: true,
-  featuredPlaces: true,
-  autoConcepts: true,
   language: "en",
   subtitlesFile: null,
   subtitleTracks: [],
   subtitleUploadState: "idle",
   subtitleUploadError: null,
-  recordingDate: "",
-  recordingLocation: "",
   locationName: "",
   locationPlaceId: null,
-  license: "standard",
-  allowEmbedding: true,
   visibility: "public",
   scheduleAt: null,
   category: "",
-  crossPostPostbook: false,
-  crossPostPosttube: false,
+  crossPostPostbook: true,
   publishToFeed: true,
   seriesChoice: { kind: "none" },
   seriesEpisodeNum: null,

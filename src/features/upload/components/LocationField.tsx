@@ -103,7 +103,7 @@ export function LocationField({
               setOpen(false);
             }
           }}
-          className="h-11 w-full rounded-xl border border-brand-text/10 bg-brand-secondary pl-9 pr-10 text-[14px] text-brand-text placeholder:text-muted-foreground outline-hidden transition-all focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10"
+          className="upload-input upload-input-icon"
         />
         <span className="absolute right-3 top-1/2 -translate-y-1/2">
           {loading ? (

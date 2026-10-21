@@ -90,14 +90,14 @@ describe("accessible upload surfaces", () => {
     expect(html).not.toContain("overflow-x-auto");
   });
   test("empty preview is useful guidance, with no fake content link or black player", () => {
-    const html = renderToStaticMarkup(<PreviewPanel form={form()} patch={noop} contentType="long" steps={STEP_SCHEMAS.long} />);
+    const html = renderToStaticMarkup(<PreviewPanel form={form()} contentType="long" steps={STEP_SCHEMAS.long} />);
     expect(html).toContain("Before you publish");
     expect(html).toContain("These three items are required");
     expect(html).not.toContain("<video");
     expect(html).not.toContain("Content link");
   });
   test("preview has real native controls and a selected poster", () => {
-    const html = renderToStaticMarkup(<PreviewPanel form={form({ videoPreviewUrl: "blob:video", coverPreviewUrl: "blob:cover", title: "Mountain walk" })} patch={noop} contentType="long" steps={STEP_SCHEMAS.long} />);
+    const html = renderToStaticMarkup(<PreviewPanel form={form({ videoPreviewUrl: "blob:video", coverPreviewUrl: "blob:cover", title: "Mountain walk" })} contentType="long" steps={STEP_SCHEMAS.long} />);
     expect(html).toContain('poster="blob:cover"');
     expect(html).toContain('controls=""');
     expect(html).toContain("Mountain walk");

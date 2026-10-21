@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { Upload, FileVideo, X, CheckCircle2, AlertCircle, Film, Clock, HardDrive } from "lucide-react";
 import type { StudioFormState } from "../types";
-import { type ContentType } from "../tokens";
+import { isShortStudio, type ContentType } from "../tokens";
 import { uploadLimits } from "../fileRules";
 
 interface VideoStepProps {
@@ -45,7 +45,7 @@ export function VideoStep({ form, onFileSelected, clearFile, contentType, showEr
         aria-invalid={!!error} aria-describedby={error ? "upload-file-error upload-file-limits" : "upload-file-limits"}
         onClick={() => fileRef.current?.click()}><Upload aria-hidden="true" />{checking ? "Checking file…" : "Select file"}</button>
       <span className="upload-local-note">Selecting a file does not upload or publish it.</span>
-    </div> : <div className="upload-selected-file">
+    </div> : <div className="upload-selected-file" data-vertical={isShortStudio(contentType) || undefined}>
       {form.videoPreviewUrl ? <video src={form.videoPreviewUrl} controls muted playsInline preload="metadata" aria-label="Selected video preview" /> : null}
       <div className="upload-file-row">
         <FileVideo aria-hidden="true" />

@@ -30,9 +30,11 @@ interface StudioSoundViewProps {
 /*
   The Audio section's body. With a sound chosen: its name and creator, a
   preview that plays it alone, Change, Remove, and the two levels — the
-  reel's own audio and the sound. With none: the reel uses its own audio,
-  Add sound, and only that level is shown. A sound that could not be loaded
-  is one plain line; the studio carries on as if none was chosen.
+  reel's own audio and the sound, mixed. With none: the reel uses its own
+  audio as it is, so there is nothing to mix and no level is shown (the
+  original-audio slider without a sound did nothing a viewer could hear
+  differently, 2026-10-21). A sound that could not be loaded is one plain
+  line; the studio carries on as if none was chosen.
 */
 export function StudioSoundView({ form, patch, notice, onRemove, preview, onTogglePreview, onOpenPicker, pickerButtonRef, pickerOpen = false }: StudioSoundViewProps) {
   const track = form.audioTrack;
@@ -86,20 +88,22 @@ export function StudioSoundView({ form, patch, notice, onRemove, preview, onTogg
           pickerButton
         )}
       </div>
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <Volume2 className="h-3.5 w-3.5 text-brand-text/50" />
-          <span className="text-[12px] text-brand-text/60">Original Audio</span>
-          <span className="ml-auto text-[11px] font-mono text-brand-text/50">{Math.round(form.originalAudioVolume * 100)}%</span>
+      {track && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Volume2 className="h-3.5 w-3.5 text-brand-text/50" />
+            <span className="text-[12px] text-brand-text/60">Original audio</span>
+            <span className="ml-auto text-[11px] font-mono text-brand-text/50">{Math.round(form.originalAudioVolume * 100)}%</span>
+          </div>
+          <input
+            type="range" min={0} max={1} step={0.05}
+            aria-label="Original audio volume"
+            value={form.originalAudioVolume}
+            onChange={(e) => patch({ originalAudioVolume: Number(e.target.value) })}
+            className="w-full accent-brand-text"
+          />
         </div>
-        <input
-          type="range" min={0} max={1} step={0.05}
-          aria-label="Original audio volume"
-          value={form.originalAudioVolume}
-          onChange={(e) => patch({ originalAudioVolume: Number(e.target.value) })}
-          className="w-full accent-brand-text"
-        />
-      </div>
+      )}
       {track && (
         <div>
           <div className="flex items-center gap-2 mb-2">

@@ -20,13 +20,14 @@ const rows = (...r: [string, string][]): ChapterDraft[] => r.map(([clock, title]
 /* ── (a) Creator Hub preferences ─────────────────────────── */
 
 describe("mergePublishDefaults", () => {
-  test("a fresh draft takes every preference: visibility, topic, comments off, language, license", () => {
+  test("a fresh draft takes the upload preferences: visibility, topic, comments off, language (license is not asked at upload)", () => {
     const patch = mergePublishDefaults(longForm(), defaults({ visibility: "unlisted", topic: "science-tech", comments: false, language: "te", license: "cc-by" }));
-    expect(patch).toEqual({ visibility: "unlisted", category: "science-tech", commentsEnabled: false, language: "te", license: "creative_commons" });
+    expect(patch).toEqual({ visibility: "unlisted", category: "science-tech", commentsEnabled: false, language: "te" });
+    expect("license" in patch).toBe(false);
   });
 
   test("never overrides what the draft already has", () => {
-    const form = longForm({ visibility: "private", category: "music", commentsEnabled: false, language: "hi", license: "creative_commons" });
+    const form = longForm({ visibility: "private", category: "music", commentsEnabled: false, language: "hi" });
     expect(mergePublishDefaults(form, defaults({ visibility: "unlisted", topic: "science-tech", comments: true, language: "te", license: "standard" }))).toEqual({});
   });
 
