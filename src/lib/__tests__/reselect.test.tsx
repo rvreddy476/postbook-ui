@@ -10,14 +10,14 @@ describe("refresh only when the viewer asks", () => {
     expect(read("../../features/video-shell/VideoSidebar.tsx")).toMatch(/if \(current && item\.href\) announceReselect\(item\.href\)/);
   });
 
-  test("Reels refreshes by reselect only (no button, founder 21 Oct); PostTube home has a button and reselect", () => {
+  test("Reels and PostTube home refresh by reselect only — no refresh buttons (founder, 21 Oct)", () => {
     const reels = read("../../features/reels/components/ReelsScreen.tsx");
     const home = read("../../features/posttube/components/HomePage.tsx");
     expect(reels).toContain('useReselect("/reels"');
     expect(reels).not.toContain('aria-label="Refresh reels"');
     expect(reels).toContain("<MoreVertical");
     expect(home).toContain('useReselect("/posttube"');
-    expect(home).toContain('aria-label="Refresh videos"');
+    expect(home).not.toContain('aria-label="Refresh videos"');
   });
 });
 
