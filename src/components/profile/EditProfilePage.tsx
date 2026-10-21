@@ -6,6 +6,7 @@ import { useAuthUser } from "@/store/auth"
 import { useMyProfile, useUpdateProfile, useUpdateAvatar, useUpdateCover } from "@/hooks/useEditProfile"
 import { Button } from "@/components/ui/button"
 import { BasicInfoSection, type BasicInfoForm } from "./edit/BasicInfoSection"
+import { defaultProfileThemeColor } from "./profileThemeColor"
 import { AvatarCoverSection } from "./edit/AvatarCoverSection"
 import { SocialLinksSection } from "./edit/SocialLinksSection"
 import { AboutSectionsPanel } from "./edit/AboutSectionsPanel"
@@ -79,7 +80,7 @@ export function EditProfilePage() {
         dob: "",
         status_text: "",
         status_emoji: "",
-        profile_theme_color: "#1A73E8",
+        profile_theme_color: "",
         cta_label: "",
         cta_url: "",
         timezone: "",
@@ -104,7 +105,7 @@ export function EditProfilePage() {
                 dob: profile.dob ? profile.dob.split("T")[0] : "",
                 status_text: profile.status_text ?? "",
                 status_emoji: profile.status_emoji ?? "",
-                profile_theme_color: profile.profile_theme_color ?? "#1A73E8",
+                profile_theme_color: profile.profile_theme_color || defaultProfileThemeColor(),
                 cta_label: profile.cta_label ?? "",
                 cta_url: profile.cta_url ?? "",
                 timezone: profile.timezone ?? "",
@@ -138,7 +139,7 @@ export function EditProfilePage() {
             location: form.location || null,
             status_text: form.status_text || null,
             status_emoji: form.status_emoji || null,
-            profile_theme_color: form.profile_theme_color || "#1A73E8",
+            profile_theme_color: form.profile_theme_color || defaultProfileThemeColor(),
             cta_label: form.cta_label || null,
             cta_url: form.cta_url || null,
             timezone: form.timezone || null,
@@ -235,7 +236,7 @@ export function EditProfilePage() {
                                     <Icon className={`w-4 h-4 ${isActive ? "text-brand-card" : "text-brand-text/60 group-hover:text-brand-text"}`} />
                                 </div>
                                 <div className="flex-1 text-left">
-                                    <div className={`text-[10px] font-black tracking-[0.15em] leading-none ${isActive ? "text-brand-card" : "text-brand-text"}`}>{tab.label}</div>
+                                    <div className={`text-xs font-black tracking-[0.15em] leading-none ${isActive ? "text-brand-card" : "text-brand-text"}`}>{tab.label}</div>
                                 </div>
                                 {isActive && (
                                     <motion.div layoutId="active-indicator" className="absolute right-3 text-white">

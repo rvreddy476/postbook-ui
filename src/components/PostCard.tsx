@@ -268,7 +268,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const showLikeTotal = !post.no_likes && likesCount > 0;
   const showCommentTotal = !post.no_comments && commentsCount > 0;
   const hasSummary = showLikeTotal || showCommentTotal || sharesCount > 0;
-  const actionButton = 'flex flex-1 min-w-0 min-h-10 items-center justify-center gap-1.5 rounded-lg px-2 text-[13px] font-semibold transition-colors duration-200 hover:bg-brand-secondary active:scale-[0.98]';
+  const actionButton = 'flex flex-1 min-w-0 min-h-10 items-center justify-center gap-1.5 rounded-lg px-2 text-[13px] font-semibold transition-colors duration-200 hover:bg-brand-secondary active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
   const hasVoted = pollData?.viewer_votes && pollData.viewer_votes.length > 0;
   const pollEnded = pollData?.has_ended;
   const showResults = hasVoted || pollEnded;
@@ -307,12 +307,14 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       <div className="post-card-header px-3 sm:px-4 pt-2.5 sm:pt-3 pb-1.5 sm:pb-2 flex items-center justify-between">
         <div className="post-card-author flex min-w-0 items-center gap-3">
           <div className="relative">
-            <div className="post-card-avatar w-11 h-11 rounded-full overflow-hidden ring-2 ring-brand-divider hover:ring-primary-outline transition-all shrink-0">
+            <div className="post-card-avatar w-11 h-11 rounded-full overflow-hidden bg-brand-secondary ring-2 ring-brand-divider hover:ring-primary-outline transition-all shrink-0">
               {avatar ? (
                 <img
                   onError={onImageError}
                   src={resolveImageUrl(avatar, { dataSaver, size: "small" })}
                   alt=""
+                  width={44}
+                  height={44}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -326,12 +328,12 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             <div className="flex flex-wrap items-center gap-x-2">
               <h4 className="truncate text-[14px] font-bold text-brand-text hover:text-primary-ink cursor-pointer transition-colors">{name}</h4>
               {post.feeling && (
-                <span className="text-xs text-brand-text/60">
+                <span className="text-xs text-muted-foreground">
                   — feeling {post.feeling} <Smile className="w-3 h-3 inline text-warning" />
                 </span>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-brand-text/40 mt-0.5">
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
               <Link href={`/post/${post.id}`} className="hover:underline">
                 <time dateTime={post.created_at} title={postTimeTitle(post.created_at)}>
                   {postTimeLabel(post.created_at)}
@@ -476,13 +478,13 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         const textContent = (
           <p
             className={`leading-relaxed whitespace-pre-wrap ${hasStyledBg ? `font-semibold ${align === 'center' ? 'text-center' : 'text-left'}` : 'text-[15px] text-brand-text'}`}
-            style={hasStyledBg ? { color: textColor || '#ffffff', fontSize: `${scale * 1.25}rem` } : undefined}
+            style={hasStyledBg ? { color: textColor || 'rgb(var(--theme-on-bubble))', fontSize: `${scale * 1.25}rem` } : undefined}
           >
             {post.text.split(/(#[\p{L}\p{M}\p{N}_]+|@\w+)/gu).map((part, i) => {
               if (part.startsWith('#')) {
                 const tag = part.slice(1);
                 return (
-                  <Link key={i} href={`/hashtag/${tag}`} className={hasStyledBg ? 'underline underline-offset-2' : 'text-brand-text hover:text-brand-text/80 font-medium'} style={hasStyledBg ? { color: textColor || '#ffffff' } : undefined}>
+                  <Link key={i} href={`/hashtag/${tag}`} className={hasStyledBg ? 'underline underline-offset-2' : 'text-brand-text hover:text-brand-text/80 font-medium'} style={hasStyledBg ? { color: textColor || 'rgb(var(--theme-on-bubble))' } : undefined}>
                     {part}
                   </Link>
                 );
@@ -490,7 +492,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               if (part.startsWith('@')) {
                 const username = part.slice(1);
                 return (
-                  <Link key={i} href={`/u/${username}`} className={hasStyledBg ? 'underline underline-offset-2' : 'text-brand-text hover:text-brand-text/80 font-medium'} style={hasStyledBg ? { color: textColor || '#ffffff' } : undefined}>
+                  <Link key={i} href={`/u/${username}`} className={hasStyledBg ? 'underline underline-offset-2' : 'text-brand-text hover:text-brand-text/80 font-medium'} style={hasStyledBg ? { color: textColor || 'rgb(var(--theme-on-bubble))' } : undefined}>
                     {part}
                   </Link>
                 );
@@ -604,13 +606,15 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                       />
                       <div className="absolute inset-0 pointer-events-none flex flex-col justify-end p-6 bg-linear-to-t from-black/60 via-transparent to-transparent">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/50">
+                          <div className="w-9 h-9 rounded-full overflow-hidden bg-brand-secondary border-2 border-white/50">
                             {avatar ? (
                               <img
                                 onError={onImageError}
                                 src={resolveImageUrl(avatar, { dataSaver, size: "small" })}
                                 className="w-full h-full object-cover"
                                 alt=""
+                                width={36}
+                                height={36}
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-brand-secondary text-brand-text/55 font-bold text-sm">
@@ -674,12 +678,14 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               <>
                 <button
                   onClick={() => setActiveMediaIndex((prev) => (prev > 0 ? prev - 1 : post.media!.length - 1))}
+                  aria-label="Previous"
                   className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-brand-card/90 backdrop-blur-xs text-brand-text shadow-lg hover:bg-brand-card transition-all"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => setActiveMediaIndex((prev) => (prev < post.media!.length - 1 ? prev + 1 : 0))}
+                  aria-label="Next"
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-brand-card/90 backdrop-blur-xs text-brand-text shadow-lg hover:bg-brand-card transition-all"
                 >
                   <ChevronRight className="w-5 h-5" />
@@ -704,10 +710,12 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           </div>
         )}
 
-        {/* Action Bar (Pillar for Reels, Horizontal row for others) */}
+        {/* Action bar: a pillar on a reel (the /post permalink and the profile Reels
+            tab render shorts through this card), a row on everything else. Both
+            say Like / Comment / Share / Save, the words the row and Android use. */}
         {isReel ? (
           <div className="absolute bottom-4 right-2 sm:right-3 flex flex-col gap-3 z-10">
-            {/* Spark (was Heart) */}
+            {/* Like */}
             {!post.no_likes && (
               <div className="rounded-xl bg-brand-card/95"><FeedReactionControl post={post} align="end" /></div>
             )}
@@ -726,33 +734,34 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   <MessageCircle className={`w-5 h-5 ${showComments ? 'fill-current' : ''}`} />
                 </div>
                 {commentsCount > 0 && (
-                  <span className={`text-[10px] sm:text-[11px] font-bold drop-shadow-md ${showComments ? 'text-brand-text' : 'text-brand-text/80'}`}>
+                  <span className={`text-xs font-bold drop-shadow-md ${showComments ? 'text-brand-text' : 'text-brand-text/80'}`}>
                     {commentsCount}
                   </span>
                 )}
               </button>
             )}
 
-            {/* Echo (was Share) */}
+            {/* Share */}
             <button
               onClick={handleShare}
-              aria-label="Echo"
+              aria-label="Share"
               className="flex flex-col items-center gap-1 group"
             >
               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-lg bg-brand-card/90 backdrop-blur-xs text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5 transition-all">
                 <Repeat2 className="w-5 h-5" />
               </div>
               {sharesCount > 0 && (
-                <span className="text-[10px] sm:text-[11px] font-bold text-brand-text/80 drop-shadow-md">
+                <span className="text-xs font-bold text-brand-text/80 drop-shadow-md">
                   {sharesCount}
                 </span>
               )}
             </button>
 
-            {/* Stash (Bookmark) */}
+            {/* Save */}
             <button
               onClick={handleBookmark}
-              aria-label="Stash"
+              aria-label={bookmarked ? 'Saved' : 'Save'}
+              aria-pressed={bookmarked}
               className="flex flex-col items-center gap-1 group"
             >
               <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${bookmarked
@@ -768,7 +777,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             {/* The counts, on their own line: likes on the left, comments
                 and shares on the right. Nothing when there is nothing. */}
             {hasSummary && (
-              <div className="post-card-summary px-3 sm:px-4 pt-2.5 pb-2 flex items-center justify-between gap-3 text-[13px] text-brand-text/60">
+              <div className="post-card-summary px-3 sm:px-4 pt-2.5 pb-2 flex items-center justify-between gap-3 text-[13px] text-muted-foreground">
                 {showLikeTotal ? (
                   <span className="flex min-w-0 items-center gap-1.5">
                     <span aria-hidden="true" className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-primary-ink text-primary-foreground">

@@ -111,6 +111,7 @@ import ReactionsSheet from './thread/ReactionsSheet'
 import SeenBySheet from './thread/SeenBySheet'
 import { VoiceRecorder } from './thread/VoiceRecorder'
 import { StickerGifPanel, useStickerGifAvailability } from './thread/StickerGifPanel'
+import { OfflineBanner } from './thread/OfflineBanner'
 import './chat-bubbles.css'
 import {
   ArrowLeft, Phone, Video, MoreHorizontal, ChevronDown, ChevronUp,
@@ -1079,6 +1080,7 @@ export default function DmChat({
             <button
               onClick={onToggleDetails}
               title={detailsOpen ? 'Hide thread details' : 'Show thread details'}
+              aria-label={detailsOpen ? 'Hide thread details' : 'Show thread details'}
               aria-pressed={!!detailsOpen}
               className={`hidden h-10 w-10 items-center justify-center rounded-full transition-colors duration-200 active:scale-95 xl:flex ${detailsOpen ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/60 hover:bg-brand-secondary hover:text-brand-text'}`}
             >
@@ -1099,7 +1101,7 @@ export default function DmChat({
             placeholder="Search in this chat"
             className="min-w-0 flex-1 bg-transparent py-1 text-[13px] text-brand-text outline-hidden placeholder:text-brand-text/40"
           />
-          <span className="text-[11px] tabular-nums text-brand-text/50">
+          <span className="text-xs tabular-nums text-muted-foreground">
             {searchHits.length ? `${Math.min(searchIndex, searchHits.length - 1) + 1}/${searchHits.length}` : threadSearch.trim().length >= 2 ? '0' : ''}
           </span>
           <button type="button" aria-label="Older match" disabled={searchHits.length < 2} onClick={() => setSearchIndex((i) => Math.min(i + 1, searchHits.length - 1))} className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 hover:bg-brand-secondary disabled:opacity-30"><ChevronUp className="h-4 w-4" /></button>
@@ -1107,6 +1109,8 @@ export default function DmChat({
           <button type="button" aria-label="Close search" onClick={() => setThreadSearch(null)} className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 hover:bg-brand-secondary"><X className="h-4 w-4" /></button>
         </div>
       )}
+
+      <OfflineBanner />
 
       {/* Pinned message bar: one pin at a time; a tap jumps to it and steps to the next. */}
       {shownPin && (
@@ -1121,7 +1125,7 @@ export default function DmChat({
         >
           <Pin className="w-4 h-4 text-brand-text/50 shrink-0 rotate-45" />
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold text-brand-text/60 tracking-wider">
+            <p className="text-xs font-bold text-muted-foreground tracking-wider">
               {pins.length > 1 ? `Pinned message ${pinIndex % pins.length + 1} of ${pins.length}` : 'Pinned message'}
             </p>
             <p className="text-[12px] text-brand-highlight truncate">{shownPinText}</p>
@@ -1298,7 +1302,7 @@ export default function DmChat({
                 {kindChat.afterBubble(msg)}
 
                 {msg.isEdited && !msg.isDeleted && (
-                  <p className="text-[10px] text-brand-text/40 mt-0.5 px-1">Edited</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 px-1">Edited</p>
                 )}
 
                 {/* Reactions: tap a chip to see who reacted. */}
@@ -1383,9 +1387,9 @@ export default function DmChat({
           </div>
 
           {reactionPickerFor === contextMenu.messageId ? (
-            <div className="overflow-hidden rounded-2xl border border-brand-divider shadow-xl">
+            <div className="w-[min(320px,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-brand-divider shadow-xl">
               <Suspense fallback={
-                <div className="flex h-[320px] w-[320px] items-center justify-center bg-brand-card">
+                <div className="flex h-[320px] w-[min(320px,calc(100vw-1.5rem))] items-center justify-center bg-brand-card">
                   <span className="text-xs font-medium text-brand-text/40">Loading emojis…</span>
                 </div>
               }>
@@ -1395,6 +1399,7 @@ export default function DmChat({
                   theme="auto"
                   previewPosition="none"
                   skinTonePosition="none"
+                  dynamicWidth
                   perLine={8}
                   maxFrequentRows={1}
                 />
@@ -1476,13 +1481,13 @@ export default function DmChat({
         /* Composer: emoji · stickers/GIFs · text (multi-line) · gallery · voice · send */
         <div className="relative shrink-0 border-t border-brand-divider bg-brand-card px-3 py-2.5">
           {showEmojiPicker && (
-            <div ref={emojiPanelRef} className="absolute bottom-full left-3 mb-2 overflow-hidden rounded-2xl border border-brand-divider shadow-xl">
+            <div ref={emojiPanelRef} className="absolute bottom-full left-3 mb-2 w-[min(352px,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-brand-divider shadow-xl">
               <Suspense fallback={
-                <div className="flex h-[380px] w-[352px] items-center justify-center bg-brand-card">
+                <div className="flex h-[380px] w-[min(352px,calc(100vw-1.5rem))] items-center justify-center bg-brand-card">
                   <span className="text-xs font-medium text-brand-text/40">Loading emojis…</span>
                 </div>
               }>
-                <EmojiPicker data={data} onEmojiSelect={handleEmojiSelect} theme="auto" previewPosition="none" skinTonePosition="none" perLine={9} maxFrequentRows={2} />
+                <EmojiPicker data={data} onEmojiSelect={handleEmojiSelect} theme="auto" previewPosition="none" skinTonePosition="none" dynamicWidth perLine={9} maxFrequentRows={2} />
               </Suspense>
             </div>
           )}

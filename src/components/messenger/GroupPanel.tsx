@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { AnimatePresence } from 'framer-motion'
-import { Avatar, getInitials, getGroupColor } from './shared'
+import { Avatar, getInitials, getGroupColor, groupColorAlpha } from './shared'
 import CreatePortal from '@/components/CreatePortal'
 import GroupCreateModal from '@/components/groups/GroupCreateModal'
 import {
@@ -233,7 +233,7 @@ function ChatView({
     const el = document.getElementById(`gmsg-${msgId}`)
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      el.style.background = `${groupColor}15`
+      el.style.background = groupColorAlpha(groupColor, 0.08)
       setTimeout(() => { el.style.background = '' }, 1500)
     }
   }
@@ -244,7 +244,7 @@ function ChatView({
       {chat.pinnedMessage && (
         <div
           className="flex items-center gap-3 px-6 lg:px-10 py-2.5 border-b border-brand-divider cursor-pointer shrink-0 hover:bg-brand-secondary/80 transition-colors"
-          style={{ background: `${groupColor}06` }}
+          style={{ background: groupColorAlpha(groupColor, 0.03) }}
           onClick={() => scrollToMessage(chat.pinnedMessage!.message_id)}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={groupColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
@@ -262,6 +262,7 @@ function ChatView({
           <button
             onClick={(e) => { e.stopPropagation(); chat.handleUnpinMessage() }}
             title="Unpin message"
+            aria-label="Unpin message"
             className="text-brand-text/60 hover:text-brand-highlight hover:bg-brand-secondary rounded-md p-1 transition-colors shrink-0"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -364,7 +365,7 @@ function ChatView({
 
                     {/* Forwarded label */}
                     {msg.forwardedFromId && !msg.isDeleted && (
-                      <span className="text-[10px] text-brand-text/60 italic mb-0.5 ml-1">Forwarded</span>
+                      <span className="text-xs text-muted-foreground italic mb-0.5 ml-1">Forwarded</span>
                     )}
 
                     {/* Bubble */}
@@ -374,9 +375,11 @@ function ChatView({
                         borderRadius: 18,
                         borderTopLeftRadius: !mine && showAv ? 4 : 18,
                         borderBottomRightRadius: mine && showAv ? 4 : 18,
-                        background: msg.isDeleted ? '#f8fafc' : mine ? groupColor : '#fff',
-                        color: msg.isDeleted ? '#94a3b8' : mine ? '#fff' : '#1e293b',
-                        border: msg.isDeleted ? '1px solid #e2e8f0' : mine ? 'none' : '1px solid #e2e8f0',
+                        // Theme tokens, so a received bubble is a card in both
+                        // themes rather than a white slab on the dark ground.
+                        background: msg.isDeleted ? 'rgb(var(--brand-secondary))' : mine ? groupColor : 'rgb(var(--brand-card))',
+                        color: msg.isDeleted ? 'rgb(var(--text-muted))' : mine ? 'rgb(var(--theme-on-bubble))' : 'rgb(var(--brand-text))',
+                        border: mine && !msg.isDeleted ? 'none' : '1px solid var(--brand-divider)',
                       }}
                     >
                       {/*
@@ -404,24 +407,24 @@ function ChatView({
                             }
                           }}
                           className={`mb-2 flex gap-2 rounded-lg px-2 py-1.5 text-left ${quote.canNavigate ? 'cursor-pointer' : ''}`}
-                          style={{ background: mine ? 'rgba(255,255,255,0.16)' : `${groupColor}0f` }}
+                          style={{ background: mine ? 'rgb(var(--theme-on-bubble) / 0.16)' : groupColorAlpha(groupColor, 0.06) }}
                         >
                           <span
                             className="w-[3px] shrink-0 self-stretch rounded-full"
-                            style={{ background: mine ? 'rgba(255,255,255,0.7)' : groupColor }}
+                            style={{ background: mine ? 'rgb(var(--theme-on-bubble) / 0.7)' : groupColor }}
                           />
                           <span className="min-w-0">
                             {quote.senderId && (
                               <span
                                 className="block text-[11px] font-semibold leading-tight"
-                                style={{ color: mine ? 'rgba(255,255,255,0.85)' : groupColor }}
+                                style={{ color: mine ? 'rgb(var(--theme-on-bubble) / 0.85)' : groupColor }}
                               >
                                 {quote.senderId === myId ? 'You' : resolveSender(quote.senderId).name}
                               </span>
                             )}
                             <span
                               className="block line-clamp-2 text-[12px] leading-snug"
-                              style={{ color: mine ? 'rgba(255,255,255,0.75)' : '#64748b' }}
+                              style={{ color: mine ? 'rgb(var(--theme-on-bubble) / 0.75)' : 'rgb(var(--text-muted))' }}
                             >
                               {quote.text}
                             </span>
@@ -449,7 +452,7 @@ function ChatView({
 
                     {/* Edited indicator */}
                     {msg.isEdited && !msg.isDeleted && (
-                      <span className="text-[10px] text-brand-text/60 mt-0.5 px-1">(edited)</span>
+                      <span className="text-xs text-muted-foreground mt-0.5 px-1">(edited)</span>
                     )}
 
                     {/* Reactions */}
@@ -459,14 +462,16 @@ function ChatView({
                           <button
                             key={r.emoji}
                             onClick={() => chat.handleToggleReaction(msg.id, r.emoji)}
-                            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] transition-colors hover:bg-brand-secondary"
+                            aria-label={`${r.emoji} ${r.user_ids.length}`}
+                            aria-pressed={r.user_ids.includes(myId)}
+                            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] transition-colors hover:bg-brand-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             style={{
-                              border: r.user_ids.includes(myId) ? `1px solid ${groupColor}80` : '1px solid #e2e8f0',
-                              background: r.user_ids.includes(myId) ? `${groupColor}10` : '#fff',
+                              border: `1px solid ${r.user_ids.includes(myId) ? groupColorAlpha(groupColor, 0.5) : 'var(--brand-divider)'}`,
+                              background: r.user_ids.includes(myId) ? groupColorAlpha(groupColor, 0.06) : 'rgb(var(--brand-card))',
                             }}
                           >
                             <span>{r.emoji}</span>
-                            <span className="text-[10px] text-brand-text/60">{r.user_ids.length}</span>
+                            <span className="text-xs text-muted-foreground">{r.user_ids.length}</span>
                           </button>
                         ))}
                       </div>
@@ -474,9 +479,9 @@ function ChatView({
 
                     {/* Time + read receipt */}
                     <div className="flex items-center gap-1 mt-1 px-1">
-                      <span className="text-[11px] text-brand-text/60">{msg.time}</span>
+                      <span className="text-xs text-muted-foreground">{msg.time}</span>
                       {mine && msg.id === chat.lastSentMsgId && chat.readReceipts.has(msg.id) && (
-                        <span className="text-[10px] font-medium" style={{ color: groupColor }}>Seen</span>
+                        <span className="text-xs font-medium" style={{ color: groupColor }}>Seen</span>
                       )}
                     </div>
                   </div>
@@ -500,7 +505,8 @@ function ChatView({
               <button
                 key={emoji}
                 onClick={() => chat.handleToggleReaction(chat.contextMenu!.messageId, emoji)}
-                className="text-[18px] p-1 rounded-md hover:bg-brand-secondary transition-colors"
+                aria-label={`React with ${emoji}`}
+                className="text-[18px] p-1 rounded-md hover:bg-brand-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {emoji}
               </button>
@@ -534,7 +540,7 @@ function ChatView({
               </button>
               <button
                 onClick={() => chat.handleDelete(chat.contextMenu!.messageId)}
-                className="w-full text-left px-4 py-2 text-[13px] text-red-500 hover:bg-red-50 transition-colors"
+                className="w-full text-left px-4 py-2 text-[13px] text-danger hover:bg-danger/10 transition-colors"
               >
                 Delete
               </button>
@@ -774,7 +780,7 @@ function PostCard({
           {post.is_announcement && (
             <span
               className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]"
-              style={{ color: groupColor, background: `${groupColor}14`, borderColor: `${groupColor}33` }}
+              style={{ color: groupColor, background: groupColorAlpha(groupColor, 0.08), borderColor: groupColorAlpha(groupColor, 0.2) }}
             >
               <Megaphone className="h-3 w-3" strokeWidth={2} />
               Announcement
@@ -844,6 +850,7 @@ function PostCard({
         <button
           onClick={() => setShowComments(v => !v)}
           aria-expanded={showComments}
+          aria-label={`${formatCount(post.comment_count)} comments`}
           className={`${pillBase} ${showComments ? 'bg-brand-secondary text-brand-text' : 'text-brand-text/50 hover:bg-brand-secondary hover:text-brand-text'}`}
         >
           <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
@@ -854,6 +861,7 @@ function PostCard({
           onClick={() => onToggleEcho(post)}
           aria-pressed={echoed}
           title={echoed ? 'Undo echo' : 'Echo to your feed'}
+          aria-label={`${formatCount(post.echo_count)} echoes`}
           className={`${pillBase} ${echoed ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/50 hover:bg-brand-secondary hover:text-brand-text'}`}
         >
           <Repeat2 className="h-4 w-4" strokeWidth={1.75} />
@@ -1042,6 +1050,7 @@ function PostsView({
       {/* Floating new post button */}
       <button
         onClick={() => setShowCreatePost(true)}
+        aria-label="New post"
         className="fixed bottom-8 right-8 xl:right-12 z-100 w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all"
         style={{ backgroundColor: groupColor }}
         title="New post"
@@ -1162,7 +1171,7 @@ function MembersView({
           <div className="flex items-center gap-2">
             <span className="font-bold text-brand-text text-[13px] group-hover:text-brand-text transition-colors">{name}</span>
             {isAdmin && (
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md tracking-wider" style={{ color: groupColor, background: `${groupColor}15` }}>Admin</span>
+              <span className="text-xs font-bold px-1.5 py-0.5 rounded-md tracking-wider" style={{ color: groupColor, background: groupColorAlpha(groupColor, 0.08) }}>Admin</span>
             )}
             {isMod && (
               <span className="text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded-md tracking-wider">Mod</span>
@@ -1179,7 +1188,7 @@ function MembersView({
   return (
     <div className="flex-1 overflow-y-auto px-3 py-4 scrollbar-hide">
       <div className="flex items-center gap-2 px-3 mb-2">
-        <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse" />
+        <div className="w-2 h-2 rounded-full bg-success motion-safe:animate-pulse" />
         <div className="text-brand-highlight text-[11px] font-bold tracking-widest">
           Online ({online.length})
         </div>
@@ -1191,7 +1200,7 @@ function MembersView({
       {offline.length > 0 && (
         <>
           <div className="flex items-center gap-2 px-3 mb-2 mt-4">
-            <div className="w-2 h-2 rounded-full bg-slate-300" />
+            <div className="w-2 h-2 rounded-full bg-muted-foreground/40" />
             <div className="text-brand-text/60 text-[11px] font-bold tracking-widest">
               Offline ({offline.length})
             </div>
@@ -1286,6 +1295,7 @@ export default function GroupPanel(props: GroupPanelProps) {
           <div className="flex items-center gap-4">
             <button
               onClick={props.onClose}
+              aria-label="Back"
               className="md:hidden p-2 -ml-2 flex items-center justify-center text-brand-highlight hover:bg-brand-secondary hover:text-brand-text rounded-full transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -1295,8 +1305,8 @@ export default function GroupPanel(props: GroupPanelProps) {
             <div
               className="w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center shrink-0 shadow-xs"
               style={{
-                background: groupAvatarUrl ? '#fff' : groupColor,
-                border: groupAvatarUrl ? '1px solid #e2e8f0' : 'none',
+                background: groupAvatarUrl ? 'rgb(var(--brand-card))' : groupColor,
+                border: groupAvatarUrl ? '1px solid var(--brand-divider)' : 'none',
               }}
             >
               {groupAvatarUrl ? (
@@ -1346,7 +1356,7 @@ export default function GroupPanel(props: GroupPanelProps) {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setShowCreateGroupModal(true)}
-              className="hidden h-9 items-center gap-1.5 rounded-lg border border-brand-divider px-3 text-[12px] font-semibold text-brand-text transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 lg:inline-flex"
+              className="hidden h-9 items-center gap-1.5 rounded-lg border border-brand-divider px-3 text-[12px] font-semibold text-brand-text transition hover:border-primary-outline hover:bg-primary-tint hover:text-primary-ink lg:inline-flex"
               title="Create a new group"
             >
               <Plus className="h-4 w-4" />
@@ -1354,8 +1364,9 @@ export default function GroupPanel(props: GroupPanelProps) {
             </button>
             <button
               onClick={() => setShowCreateGroupModal(true)}
-              className="w-9 h-9 flex items-center justify-center text-brand-text/60 hover:bg-brand-secondary hover:text-brand-text rounded-lg transition-colors lg:hidden"
+              className="w-9 h-9 flex items-center justify-center text-brand-text/60 hover:bg-brand-secondary hover:text-brand-text rounded-lg transition-colors lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               title="Create a new group"
+              aria-label="Create a new group"
             >
               <Plus className="w-[18px] h-[18px]" />
             </button>
@@ -1364,7 +1375,10 @@ export default function GroupPanel(props: GroupPanelProps) {
             <div className="relative">
               <button
                 onClick={() => setShowMoreMenu(!showMoreMenu)}
-                className="w-9 h-9 flex items-center justify-center hover:bg-brand-secondary text-brand-text/60 hover:text-brand-highlight rounded-lg transition-colors"
+                aria-label="More options"
+                aria-haspopup="menu"
+                aria-expanded={showMoreMenu}
+                className="w-9 h-9 flex items-center justify-center hover:bg-brand-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-brand-text/60 hover:text-brand-highlight rounded-lg transition-colors"
               >
                 <MoreVertical className="w-[18px] h-[18px]" />
               </button>
@@ -1405,7 +1419,7 @@ export default function GroupPanel(props: GroupPanelProps) {
                         }
                       }
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-red-500 hover:bg-red-50 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-danger hover:bg-danger/10 transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
                     Leave group
@@ -1429,7 +1443,7 @@ export default function GroupPanel(props: GroupPanelProps) {
 
       {editingName && (
         <div className="fixed inset-0 z-2000 flex items-center justify-center bg-black/40 backdrop-blur-xs">
-          <div className="bg-brand-card rounded-2xl p-6 w-[360px] shadow-xl">
+          <div role="dialog" aria-modal="true" aria-label="Edit group name" className="bg-brand-card rounded-2xl p-6 w-[min(360px,calc(100vw-2rem))] shadow-xl">
             <h3 className="text-[16px] font-semibold text-brand-text mb-4">Edit group name</h3>
             <input
               value={newGroupName}
@@ -1470,7 +1484,7 @@ export default function GroupPanel(props: GroupPanelProps) {
       {/* ── Add member modal ── */}
       {showAddMember && (
         <div className="fixed inset-0 z-2000 flex items-center justify-center bg-black/40 backdrop-blur-xs">
-          <div className="bg-brand-card rounded-2xl p-6 w-[360px] shadow-xl">
+          <div role="dialog" aria-modal="true" aria-label="Add member" className="bg-brand-card rounded-2xl p-6 w-[min(360px,calc(100vw-2rem))] shadow-xl">
             <h3 className="text-[16px] font-semibold text-brand-text mb-4">Add member</h3>
             <input
               value={addMemberId}

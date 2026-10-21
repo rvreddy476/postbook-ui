@@ -10,6 +10,7 @@ import { useSubmitReport, REPORT_REASONS } from '@/hooks/useReport';
 import { useGlobalToast } from '@/contexts/ToastContext';
 import { Smile, Send, MessageCircle, X, Check, CornerDownRight, Heart, Pin } from 'lucide-react';
 import api from '@/lib/api';
+import { postTimeLabel, postTimeTitle } from '@/lib/postTime';
 import type { CommentItem } from '@/types/profile';
 import CommentReactions from '@/components/comments/CommentReactions';
 import MentionInput from '@/components/comments/MentionInput';
@@ -61,22 +62,6 @@ interface CommentSectionProps {
    * only for the post's author, and only when the surface passes this.
    */
   creatorTools?: CommentCreatorTools;
-}
-
-function timeAgo(dateStr: string): string {
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diffMs = now - then;
-  const diffSec = Math.floor(diffMs / 1000);
-  if (diffSec < 60) return 'just now';
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin}m ago`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h ago`;
-  const diffDay = Math.floor(diffHr / 24);
-  if (diffDay < 7) return `${diffDay}d ago`;
-  if (diffDay < 30) return `${Math.floor(diffDay / 7)}w ago`;
-  return new Date(dateStr).toLocaleDateString();
 }
 
 function canEdit(createdAt: string): boolean {
@@ -136,9 +121,9 @@ function ReportDialog({
   if (submitted) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-xs">
-        <div ref={dialogRef} className="w-[340px] rounded-2xl bg-brand-card p-6 shadow-2xl text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-50">
-            <Check className="h-6 w-6 text-green-600" />
+        <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Report submitted" className="w-[min(340px,calc(100vw-2rem))] rounded-2xl bg-brand-card p-6 shadow-2xl text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
+            <Check className="h-6 w-6 text-success" />
           </div>
           <h3 className="text-[15px] font-bold text-brand-text">Report Submitted</h3>
           <p className="mt-1 text-[13px] text-brand-highlight">Thanks for helping keep our community safe. Our team will review this shortly.</p>
@@ -153,10 +138,10 @@ function ReportDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-xs">
-      <div ref={dialogRef} className="w-[380px] rounded-2xl bg-brand-card shadow-2xl overflow-hidden">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Report" className="w-[min(380px,calc(100vw-2rem))] rounded-2xl bg-brand-card shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between border-b border-brand-divider px-5 py-3.5">
           <h3 className="text-[14px] font-bold text-brand-text">Report</h3>
-          <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/60 transition hover:bg-brand-secondary">
+          <button onClick={onClose} aria-label="Close" className="flex h-11 w-11 -mr-2 items-center justify-center rounded-full text-brand-text/60 transition hover:bg-brand-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -337,11 +322,11 @@ export const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, postA
     >
       {/* Header row: small avatar + name + time */}
       <div className="flex items-center gap-2">
-        <img src={author.avatar} alt="" className={`${isReply ? 'w-5 h-5' : 'w-6 h-6'} rounded-full object-cover shrink-0`} />
+        <img src={author.avatar} alt="" className={`${isReply ? 'w-7 h-7' : 'w-8 h-8'} rounded-full object-cover shrink-0 bg-brand-secondary`} />
         <span className="text-[12px] font-semibold text-brand-text">{author.username ? `@${author.username}` : author.name}</span>
-        <span className="text-[11px] text-brand-text/60">{timeAgo(comment.created_at)}</span>
+        <time dateTime={comment.created_at} title={postTimeTitle(comment.created_at)} className="text-xs text-muted-foreground">{postTimeLabel(comment.created_at)}</time>
         {comment.pinned && !isReply ? (
-          <span data-comment-pinned className="inline-flex items-center gap-1 rounded-full bg-brand-secondary px-1.5 py-0.5 text-[10px] font-semibold text-brand-text/70"><Pin className="h-3 w-3" aria-hidden="true" /> Pinned</span>
+          <span data-comment-pinned className="inline-flex items-center gap-1 rounded-full bg-brand-secondary px-1.5 py-0.5 text-xs font-semibold text-muted-foreground"><Pin className="h-3 w-3" aria-hidden="true" /> Pinned</span>
         ) : null}
         {comment.hearted_by_author ? (
           <span data-comment-hearted role="img" aria-label="Loved by the creator" title="Loved by the creator" className="inline-flex items-center text-danger"><Heart className="h-3 w-3 fill-current" aria-hidden="true" /></span>
@@ -622,7 +607,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
       {submitError && <p role="alert" className="px-4 py-2 text-sm text-danger">Comment was not confirmed. Your draft is still here.</p>}
       <div className="shrink-0 border-t border-brand-divider bg-brand-card px-4 py-3">
         <div className="flex items-center gap-2.5">
-          <img src={avatarSrc} alt="" className="w-7 h-7 rounded-full object-cover shrink-0" />
+          <img src={avatarSrc} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 bg-brand-secondary" />
           <form onSubmit={handleSubmit} className="relative flex flex-1 items-center min-w-0">
             <button ref={emojiButtonRef} type="button" aria-label="Add emoji" aria-expanded={showEmojiPicker}
               onClick={() => setShowEmojiPicker(open => !open)}

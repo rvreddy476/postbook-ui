@@ -24,6 +24,7 @@ import { homeFeedKey, useHomeFeed, type HomeFeedOptions } from "@/hooks/useFeedP
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import { subscribeToPostUpdates } from "@/services/messageService";
 import { useFeedDelta } from "@/hooks/useFeedDelta";
+import { useDataSaver } from "@/hooks/useDataSaver";
 import { newestCreatedAtOf, uniqueFeedPosts, type FeedPage } from "./feed/feedPresentation";
 import "./feed/home-feed.css";
 import { installFeedReturnRefresh } from './feed/feedReturnRefresh';
@@ -79,7 +80,9 @@ export default function Feed({
 }) {
   const reduceMotion = useReducedMotion();
   const queryClient = useQueryClient();
+  const { effective: dataSaver } = useDataSaver();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const [newPostsDismissed, setNewPostsDismissed] = useState(false);
 
   const [tab, setTab] = useState<FeedTab>("for-you");
@@ -181,6 +184,31 @@ export default function Feed({
   const returnRefresh = useRef(loadNew);
   useEffect(() => { returnRefresh.current = loadNew; });
   useEffect(() => installFeedReturnRefresh(window, document, () => returnRefresh.current()), []);
+
+  /*
+    Load the next page as the end comes into view, the way IG, TikTok and
+    FB feeds do. The button below the stream stays: it is the only way on
+    when the reader asked for less data (data saver), after a failed page
+    (so a bad connection does not loop), and where IntersectionObserver is
+    missing. The stream is not virtualised — there is no list virtualiser
+    in use anywhere in the repo yet, and the cards vary in height and carry
+    video, so that is a separate piece of work.
+  */
+  const fetchNext = feed.fetchNextPage;
+  const autoLoad =
+    !!feed.hasNextPage && !feed.isFetchingNextPage && !feed.isFetchNextPageError && posts.length > 0 && !dataSaver;
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !autoLoad || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) void fetchNext();
+      },
+      { rootMargin: "600px 0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [autoLoad, fetchNext, posts.length]);
 
   return (
     <div className="home-feed">
@@ -307,29 +335,27 @@ export default function Feed({
               ))}
             </div>
             {feed.hasNextPage && posts.length > 0 && (
-              <div className="mt-6 flex justify-center">
-                <button
-                  type="button"
-                  className="home-feed-action home-feed-secondary"
-                  onClick={() => feed.fetchNextPage()}
-                  disabled={feed.isFetching}
-                >
+              <>
+                <div ref={sentinelRef} data-feed-sentinel aria-hidden="true" className="h-px" />
+                <div className="mt-6 flex justify-center" aria-live="polite">
                   {feed.isFetchingNextPage ? (
-                    <Loader2
-                      size={16}
-                      className="motion-safe:animate-spin"
-                      aria-hidden="true"
-                    />
+                    <p role="status" className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 size={16} className="motion-safe:animate-spin" aria-hidden="true" />
+                      Loading more…
+                    </p>
                   ) : (
-                    <ArrowDown size={16} aria-hidden="true" />
+                    <button
+                      type="button"
+                      className="home-feed-action home-feed-secondary"
+                      onClick={() => feed.fetchNextPage()}
+                      disabled={feed.isFetching}
+                    >
+                      <ArrowDown size={16} aria-hidden="true" />
+                      {feed.isFetchNextPageError ? "Retry loading more" : "Load more posts"}
+                    </button>
                   )}
-                  {feed.isFetchingNextPage
-                    ? "Loading more…"
-                    : feed.isFetchNextPageError
-                      ? "Retry loading more"
-                      : "Load more posts"}
-                </button>
-              </div>
+                </div>
+              </>
             )}
             {!feed.hasNextPage && !feed.isError && posts.length > 0 && (
               <p className="home-feed-end">

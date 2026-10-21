@@ -48,6 +48,7 @@ export function RequestsList({ items, busy, onAccept, onDecline }: RequestsListP
                 type="button"
                 disabled={busy}
                 onClick={() => onAccept(r.user_id)}
+                aria-label={`Confirm friend request from ${r.display_name}`}
                 className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Confirm
@@ -56,6 +57,7 @@ export function RequestsList({ items, busy, onAccept, onDecline }: RequestsListP
                 type="button"
                 disabled={busy}
                 onClick={() => onDecline(r.user_id)}
+                aria-label={`Delete friend request from ${r.display_name}`}
                 className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Delete

@@ -197,17 +197,17 @@ export function ProfileTabs({
                                 aria-selected={isActive}
                                 data-tab={tab.key}
                                 onClick={() => onTabChange(tab.key)}
-                                className={`relative flex items-center gap-2 px-4 py-3 text-[11px] font-bold tracking-[0.14em] whitespace-nowrap transition-all duration-200 group ${
+                                className={`relative flex items-center gap-2 px-4 py-3 text-xs font-bold tracking-[0.14em] whitespace-nowrap transition-all duration-200 group ${
                                     isActive
                                         ? "text-brand-text"
-                                        : "text-zinc-400 hover:text-zinc-700"
+                                        : "text-muted-foreground hover:text-brand-text"
                                 }`}
                             >
                                 <span
                                     className={`flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-300 ${
                                         isActive
                                             ? `${tab.activeColor} shadow-xs scale-110`
-                                            : `bg-transparent ${tab.inactiveColor} group-hover:bg-zinc-100`
+                                            : `bg-transparent ${tab.inactiveColor} group-hover:bg-brand-secondary`
                                     }`}
                                 >
                                     <Icon className="w-4 h-4" strokeWidth={2.25} />

@@ -60,7 +60,7 @@ interface ProfilePageProps {
 }
 
 // ── QR Code modal ─────────────────────────────────────────────────────────────
-function QRCodeModal({ onClose }: { onClose: () => void }) {
+function QRCodeModal({ username, onClose }: { username: string; onClose: () => void }) {
     const { data: qr, isLoading } = useQuery<ProfileQRCode>({
         queryKey: ["qr-code"],
         queryFn: () =>
@@ -78,10 +78,10 @@ function QRCodeModal({ onClose }: { onClose: () => void }) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-            <div className="bg-brand-card rounded-2xl shadow-2xl w-full max-w-sm">
+            <div role="dialog" aria-modal="true" aria-labelledby="profile-qr-title" className="bg-brand-card rounded-2xl shadow-2xl w-full max-w-sm">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-brand-divider">
-                    <h2 className="text-base font-bold text-brand-text">Your Profile QR Code</h2>
-                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-brand-secondary transition-colors">
+                    <h2 id="profile-qr-title" className="text-base font-bold text-brand-text">Your Profile QR Code</h2>
+                    <button onClick={onClose} aria-label="Close" className="flex h-10 w-10 -mr-2 items-center justify-center rounded-xl hover:bg-brand-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                         <X className="w-4 h-4 text-brand-highlight" />
                     </button>
                 </div>
@@ -93,14 +93,14 @@ function QRCodeModal({ onClose }: { onClose: () => void }) {
                     ) : (
                         <>
                             {/* QR placeholder styled box */}
-                            <div className="border-4 border-slate-900 rounded-2xl p-4 mx-auto w-48 h-48 flex flex-col items-center justify-center bg-brand-card">
+                            <div className="border-4 border-brand-text rounded-2xl p-4 mx-auto w-48 h-48 flex flex-col items-center justify-center bg-brand-card">
                                 <div className="grid grid-cols-5 gap-0.5">
                                     {Array.from({ length: 25 }).map((_, i) => (
                                         <div
                                             key={i}
                                             className={`w-7 h-7 rounded-xs ${
                                                 [0,1,2,3,4,5,9,10,14,15,19,20,21,22,23,24,7,12,17].includes(i)
-                                                    ? "bg-slate-900"
+                                                    ? "bg-brand-text"
                                                     : "bg-brand-card"
                                             }`}
                                         />
@@ -110,13 +110,10 @@ function QRCodeModal({ onClose }: { onClose: () => void }) {
 
                             <div className="text-center space-y-1">
                                 <p className="text-xs font-semibold text-brand-highlight">Share Profile</p>
-                                {qr?.profile_url && (
-                                    <p className="text-[11px] text-brand-text/60 break-all font-mono bg-brand-secondary rounded-lg px-3 py-1.5">
-                                        {qr.profile_url}
-                                    </p>
-                                )}
+                                {/* The handle, not the raw address: the link itself is what Copy link hands over. */}
+                                {username && <p className="text-sm font-semibold text-brand-text">@{username}</p>}
                                 {typeof qr?.scan_count === "number" && (
-                                    <p className="text-[11px] text-brand-text/60">
+                                    <p className="text-xs text-muted-foreground">
                                         Scanned{" "}
                                         <span className="font-bold text-brand-highlight">{qr.scan_count}</span>{" "}
                                         {qr.scan_count === 1 ? "time" : "times"}
@@ -126,9 +123,9 @@ function QRCodeModal({ onClose }: { onClose: () => void }) {
 
                             <button
                                 onClick={handleCopy}
-                                className="w-full py-2.5 rounded-xl bg-primary-ink text-white text-xs font-bold hover:bg-primary-ink transition-colors"
+                                className="w-full py-2.5 rounded-xl bg-primary-ink text-white text-xs font-bold hover:bg-primary-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
-                                {copied ? "Copied!" : "Copy Link"}
+                                {copied ? "Copied!" : "Copy link"}
                             </button>
                         </>
                     )}
@@ -164,7 +161,7 @@ function PinnedSection({ userId, isOwn }: { userId: string; isOwn: boolean }) {
         <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
                 <Pin className="w-3.5 h-3.5 text-brand-text" />
-                <span className="text-[10px] font-black tracking-[0.2em] text-brand-highlight">Pinned</span>
+                <span className="text-xs font-black tracking-[0.2em] text-brand-highlight">Pinned</span>
             </div>
             <div className="flex flex-wrap gap-2">
                 {pins.map((pin) => (
@@ -177,7 +174,7 @@ function PinnedSection({ userId, isOwn }: { userId: string; isOwn: boolean }) {
                             {pin.content_id}
                         </span>
                         <span
-                            className={`text-[9px] font-bold tracking-wider border px-1.5 py-0.5 rounded-md ${
+                            className={`text-xs font-bold tracking-wider border px-1.5 py-0.5 rounded-md ${
                                 CONTENT_TYPE_COLORS[pin.content_type] ?? "bg-brand-secondary text-brand-text/60 border-brand-divider"
                             }`}
                         >
@@ -189,6 +186,7 @@ function PinnedSection({ userId, isOwn }: { userId: string; isOwn: boolean }) {
                                 disabled={unpinMutation.isPending}
                                 className="ml-1 text-brand-text/30 hover:text-brand-text transition-colors disabled:opacity-40"
                                 title="Unpin"
+                                aria-label={`Unpin ${pin.content_type}`}
                             >
                                 <X className="w-3 h-3" />
                             </button>
@@ -326,7 +324,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
                             <div className="flex items-start justify-between gap-2">
                                 <p className="text-sm font-bold text-brand-text line-clamp-1">{item.title}</p>
                                 <span
-                                    className={`shrink-0 text-[9px] font-bold tracking-wider border px-1.5 py-0.5 rounded-md ${
+                                    className={`shrink-0 text-xs font-bold tracking-wider border px-1.5 py-0.5 rounded-md ${
                                         ITEM_TYPE_COLORS[item.item_type] ?? ITEM_TYPE_COLORS.other
                                     }`}
                                 >
@@ -341,7 +339,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
                                     href={item.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-text hover:underline"
+                                    className="inline-flex items-center gap-1 text-xs font-semibold text-brand-text hover:underline"
                                 >
                                     <ExternalLink className="w-3 h-3" />
                                     View
@@ -380,7 +378,7 @@ function ComingSoonTab({
             <p className="mt-2 text-sm text-brand-highlight max-w-md mx-auto">
                 {description}
             </p>
-            <span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-brand-card/80 backdrop-blur-sm px-3 py-1 text-[11px] font-bold tracking-[0.16em] text-brand-text shadow-xs">
+            <span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-brand-card/80 backdrop-blur-sm px-3 py-1 text-xs font-bold tracking-[0.16em] text-brand-text shadow-xs">
                 <Sparkles className="w-3 h-3" />
                 Coming soon
             </span>
@@ -844,7 +842,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
             )}
 
             {/* QR Code modal */}
-            {qrModalOpen && <QRCodeModal onClose={() => setQrModalOpen(false)} />}
+            {qrModalOpen && <QRCodeModal username={profile.username} onClose={() => setQrModalOpen(false)} />}
 
             {/* Share: the public /u/<username> address (resolves signed out). */}
             <ShareSheet

@@ -276,7 +276,7 @@ export function ProfileHeader({
             <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={handleFileSelect("cover_media_id")} />
 
             {/* 1. Cover Photo — half-height hero */}
-            <div className="relative h-[200px] sm:h-[280px] lg:h-[320px] w-full overflow-hidden">
+            <div className="relative aspect-[3/1] min-h-[160px] max-h-[320px] w-full overflow-hidden">
                 {pendingImage?.field === "cover_media_id" ? (
                     <ImageAdjustEditor
                         file={pendingImage.file}
@@ -405,7 +405,7 @@ export function ProfileHeader({
                                         return (
                                             <span
                                                 key={badge}
-                                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold tracking-wider border ${cfg.bg} ${cfg.color} whitespace-nowrap`}
+                                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold tracking-wider border ${cfg.bg} ${cfg.color} whitespace-nowrap`}
                                             >
                                                 <Icon className="h-3 w-3" />
                                                 {badge}
@@ -413,7 +413,7 @@ export function ProfileHeader({
                                         )
                                     })}
                                     {!isOwn && followsYou && (
-                                        <span className="text-[9px] font-bold text-brand-text/60 bg-brand-secondary px-2 py-0.5 rounded-md tracking-wider whitespace-nowrap">
+                                        <span className="text-xs font-semibold text-muted-foreground bg-brand-secondary px-2 py-0.5 rounded-md tracking-wider whitespace-nowrap">
                                             Follows you
                                         </span>
                                     )}
@@ -548,12 +548,12 @@ export function ProfileHeader({
                                 className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs p-5 border-l-[3px] border-l-violet-500"
                             >
                                 <div className="flex items-center justify-between mb-4">
-                                    <span className="text-[10px] font-bold tracking-[0.2em] text-brand-text/50">
+                                    <span className="text-xs font-bold tracking-[0.2em] text-muted-foreground">
                                         PostTube Channel
                                     </span>
                                     <Link
                                         href={`/posttube/channel/${channel.handle}`}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-text text-brand-card text-[10px] font-bold tracking-wider hover:opacity-90 transition-all"
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-text text-brand-card text-xs font-bold tracking-wider hover:opacity-90 transition-all"
                                     >
                                         <ExternalLink className="w-3 h-3" />
                                         View
@@ -570,7 +570,7 @@ export function ProfileHeader({
                                             <p className="text-lg font-black text-brand-text tracking-tight leading-none">
                                                 {formatCount(stat.value)}
                                             </p>
-                                            <span className="text-[9px] font-semibold tracking-[0.15em] text-brand-text/50">
+                                            <span className="text-xs font-semibold tracking-[0.15em] text-muted-foreground">
                                                 {stat.label}
                                             </span>
                                         </div>
@@ -604,10 +604,10 @@ export function ProfileHeader({
                     {channel && (
                         <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs p-4 border-l-[3px] border-l-violet-500">
                             <div className="flex items-center justify-between mb-3">
-                                <span className="text-[10px] font-bold tracking-[0.2em] text-brand-text/50">PostTube Channel</span>
+                                <span className="text-xs font-bold tracking-[0.2em] text-muted-foreground">PostTube Channel</span>
                                 <Link
                                     href={`/posttube/channel/${channel.handle}`}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-text text-brand-card text-[10px] font-bold tracking-wider hover:opacity-90 transition-all"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-text text-brand-card text-xs font-bold tracking-wider hover:opacity-90 transition-all"
                                 >
                                     <ExternalLink className="w-3 h-3" />
                                     View
@@ -634,7 +634,7 @@ export function ProfileHeader({
                 {profile.bio && (
                     <div className="pb-6">
                         <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs p-5 sm:p-6">
-                            <h3 className="text-[10px] font-bold tracking-[0.25em] text-brand-text/50 mb-2.5">Biography</h3>
+                            <h3 className="text-xs font-bold tracking-[0.25em] text-muted-foreground mb-2.5">Biography</h3>
                             <p className="text-[15px] not-italic font-normal leading-relaxed text-brand-text/80">
                                 {profile.bio}
                             </p>

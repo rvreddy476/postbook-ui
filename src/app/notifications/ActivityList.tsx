@@ -7,6 +7,7 @@ import type { InboxNotification } from '@/lib/notificationInbox'
 import { groupInboxByTime, type InboxTab } from '@/lib/activityInbox'
 import { notificationHasActor } from '@/lib/notificationPresentation'
 import { NotificationGlyph } from '@/components/notifications/NotificationGlyph'
+import { postTimeLabel, postTimeTitle } from '@/lib/postTime'
 
 const ICON = 'h-4 w-4 text-primary'
 
@@ -35,7 +36,7 @@ export const EMPTY_COPY: Record<Exclude<InboxTab, 'requests'>, string> = {
   followers: 'New followers and friend requests will show up here.',
 }
 
-function Row({ n, onOpen }: { n: InboxNotification; onOpen: (n: InboxNotification) => void }) {
+function Row({ n, onOpen, now }: { n: InboxNotification; onOpen: (n: InboxNotification) => void; now?: number }) {
   const qa = describeQA(n.type, n.server_title)
   // No one to show (no actor, or no name for it): the row's category glyph.
   const glyph = !qa && n.icon && !notificationHasActor(n.actor_id, n.actor_name) ? n.icon : undefined
@@ -59,8 +60,9 @@ function Row({ n, onOpen }: { n: InboxNotification; onOpen: (n: InboxNotificatio
       <span className="min-w-0 flex-1">
         <span className={`block text-sm text-foreground ${n.is_read ? '' : 'font-semibold'}`}>{qa ? qa.message : n.title}</span>
         {n.body ? <span className="mt-0.5 line-clamp-2 block text-sm text-muted-foreground">{n.body}</span> : null}
-        <time dateTime={n.created_at} className="mt-1 block text-xs text-muted-foreground">
-          {new Date(n.created_at).toLocaleString()}
+        {/* "2h", the way IG and TikTok say it; the full date and time on hover. */}
+        <time dateTime={n.created_at} title={postTimeTitle(n.created_at)} className="mt-1 block text-xs text-muted-foreground">
+          {postTimeLabel(n.created_at, now)}
         </time>
       </span>
     </div>
@@ -87,7 +89,7 @@ export function ActivityList({ notifications, onOpen, now }: { notifications: re
           <ul className="space-y-2">
             {g.items.map((n) => (
               <li key={n.id}>
-                <Row n={n} onOpen={onOpen} />
+                <Row n={n} onOpen={onOpen} now={now?.getTime()} />
               </li>
             ))}
           </ul>

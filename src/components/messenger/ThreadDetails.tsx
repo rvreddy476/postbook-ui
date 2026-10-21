@@ -77,13 +77,13 @@ export default function ThreadDetails({ peerId, conversationId, onClose }: Threa
   const shared = media ?? [];
 
   return (
-    <aside className="flex h-full w-[300px] shrink-0 flex-col overflow-y-auto border-l border-brand-divider bg-brand-bg">
+    <aside className="flex h-full w-full shrink-0 flex-col overflow-y-auto border-l border-brand-divider bg-brand-bg xl:w-[300px] 2xl:w-[340px]">
       <div className="flex items-center justify-between px-4 py-3.5">
         <h2 className="text-sm font-semibold -tracking-[0.014em] text-brand-text">Thread details</h2>
         <button
           onClick={onClose}
           aria-label="Close thread details"
-          className="flex h-7 w-7 items-center justify-center rounded-full text-brand-text/50 transition-colors hover:bg-brand-secondary hover:text-brand-text"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-brand-text/50 transition-colors hover:bg-brand-secondary hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <X className="h-4 w-4" />
         </button>
