@@ -44,14 +44,14 @@ const labels = (r: ReelItem, ctx: Partial<typeof PLAIN> = {}) => reelMoreRows(r,
 describe("reelMoreRows: a reel on the shared More model", () => {
   test("someone else's plain reel with text: the shared rows that can work, Auto scroll and Use this sound", () => {
     expect(labels(reel({ caption: "hi", reasonText: "r" }))).toEqual([
-      "Auto scroll", "Block A", "Copy link", "Description", "Don't recommend this channel", "Not interested", "Playback speed", "Report", "Share", "Use this sound",
+      "Auto scroll", "Block A", "Copy link", "Description", "Don't recommend this channel", "Not interested", "Playback speed", "Report", "Use this sound",
     ]);
   });
 
-  test("a reel with everything: every shared row, Save offline when the creator allows it", () => {
+  test("a reel with everything: every shared row, and no Save offline even when the creator allows it", () => {
     expect(labels(reel({ caption: "hi", downloadAllowed: true }), { audioTrackCount: 3, hasCaptions: true, qualityHeights: [360, 720, 1080] })).toEqual([
       "Audio track", "Auto scroll", "Block A", "Captions", "Copy link", "Description", "Don't recommend this channel",
-      "Not interested", "Playback speed", "Quality", "Report", "Save offline", "Share", "Use this sound",
+      "Not interested", "Playback speed", "Quality", "Report", "Use this sound",
     ]);
   });
 
@@ -84,18 +84,23 @@ describe("reelMoreRows: a reel on the shared More model", () => {
     expect(keys(reel({ caption: "c" }))).toContain("description");
   });
 
-  test("own reel: Audio tracks and Delete, Save offline, no feedback rows, and no Edit (a reel has no edit screen)", () => {
+  test("own reel: Audio tracks and Delete, no feedback rows, and no Edit (a reel has no edit screen)", () => {
     expect(labels(reel({ caption: "mine" }), { isOwn: true })).toEqual([
-      "Audio tracks", "Auto scroll", "Copy link", "Delete", "Description", "Playback speed", "Save offline", "Share", "Use this sound",
+      "Audio tracks", "Auto scroll", "Copy link", "Delete", "Description", "Playback speed", "Use this sound",
     ]);
     expect(keys(reel(), { isOwn: true })).not.toContain("edit");
   });
 
-  test("sharing off: no Share; offline copies off: no Save offline for a viewer; no private storage: no row for anyone", () => {
-    expect(keys(reel({ shareHidden: true }))).not.toContain("share");
-    expect(keys(reel({ downloadAllowed: false }))).not.toContain("offline");
-    expect(keys(reel({ downloadAllowed: true }))).toContain("offline");
-    expect(keys(reel({ downloadAllowed: true }), { canOffline: false })).not.toContain("offline");
+  test("no Share and no Save offline row, for viewers and owners, whatever the reel allows", () => {
+    for (const isOwn of [false, true]) {
+      for (const r of [reel(), reel({ shareHidden: true }), reel({ downloadAllowed: true }), reel({ downloadAllowed: false })]) {
+        for (const canOffline of [false, true]) {
+          const got: string[] = keys(r, { isOwn, canOffline });
+          expect(got).not.toContain("share");
+          expect(got).not.toContain("offline");
+        }
+      }
+    }
   });
 
   test("the cut rows never appear, whatever the reel carries", () => {

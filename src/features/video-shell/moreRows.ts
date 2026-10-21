@@ -14,16 +14,13 @@
                     never on your own content
     Playback speed  always
     Quality         only when there is more than one rendition
-    Share           hidden when the post has sharing off
+
+  Not in More (founder, 21 Oct): Share (on the reel rail and the watch
+  action row) and Save offline (stored copies are managed on the Offline page).
 
   Context rows — the only allowed differences:
     Auto scroll     reels only (a property of the reels stage)
     Use this sound  a reel that has a usable sound
-    Save offline / Remove offline copy
-                    the post allows it, or you own it (a stored copy can
-                    always be removed) — and this browser
-                    has private storage to keep it in. It is never a file
-                    download: the copy lives inside the app (features/offline)
     Audio tracks / Delete / Edit
                     your own content, where that screen exists
 
@@ -126,11 +123,12 @@ export function moreRows({ surface, post, viewer, can }: MoreRowsInput): MoreRow
   shared("speed", "Playback speed");
   if (post.renditionCount > 1) shared("quality", "Quality");
   if (!own) shared("report", "Report");
-  if (!post.shareHidden) shared("share", "Share");
+  // No Share and no Save offline in More (founder, 21 Oct): Share is already
+  // on the reel rail and the watch page's action row; saved copies are
+  // managed on the Offline page.
 
   if (surface === "reels") context("auto-scroll", "Auto scroll");
   if (surface === "reels" && post.usableSound) context("use-sound", "Use this sound");
-  if (can.offline && (post.downloadAllowed || own || post.offlineSaved)) context("offline", post.offlineSaved ? "Remove offline copy" : "Save offline");
   if (own && can.manageAudio) context("manage-audio", "Audio tracks");
   if (own && can.delete) context("delete", "Delete");
   if (own && can.edit) context("edit", "Edit");
