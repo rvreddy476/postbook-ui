@@ -221,13 +221,19 @@ export async function patchListing(productId: string, body: PatchListingBody): P
   return unwrap((await api.patch(`${BASE}/products/${encodeURIComponent(productId)}`, body)).data)
 }
 
-/** POST /products/:id/variants (addVariantReq) — SKU and paise; options are set by the matrix PATCH. */
-export async function addVariant(productId: string, body: { sku: string; mrp_minor: number; selling_price_minor: number }): Promise<{ id: string }> {
+/** POST /products/:id/variants (addVariantReq) — SKU, paise and the opening stock; options are set by the matrix PATCH. */
+export async function addVariant(productId: string, body: { sku: string; mrp_minor: number; selling_price_minor: number; stock_qty?: number }): Promise<{ id: string }> {
   return unwrap<{ id: string }>((await api.post(`${BASE}/products/${encodeURIComponent(productId)}/variants`, body)).data)
 }
 
-/** PATCH /variants/:id — price by variant id, never product id. */
-export async function patchVariant(variantId: string, body: { mrp_minor?: number; selling_price_minor?: number; sku?: string }): Promise<void> {
+/**
+ * PATCH /variants/:id — price by variant id, never product id.
+ *
+ * On an approved listing a price (or SKU, option, image) change is 409
+ * REVALIDATION_REQUIRED until re-sent with `revalidate: true`, exactly as
+ * PATCH /products/:id; the SKU itself is 409 SKU_LOCKED once approved.
+ */
+export async function patchVariant(variantId: string, body: { mrp_minor?: number; selling_price_minor?: number; sku?: string; revalidate?: boolean }): Promise<void> {
   await api.patch(`${BASE}/variants/${encodeURIComponent(variantId)}`, body)
 }
 
@@ -255,18 +261,26 @@ export async function fetchGallery(productId: string): Promise<GalleryWire[]> {
   return galleryItems((await api.get(`${BASE}/products/${encodeURIComponent(productId)}/media`)).data)
 }
 
-/** POST /products/:id/media {media_ids}: REPLACES the gallery in the order given; the first is the cover. */
-export async function setGallery(productId: string, mediaIds: string[]): Promise<GalleryWire[]> {
-  return galleryItems((await api.post(`${BASE}/products/${encodeURIComponent(productId)}/media`, { media_ids: mediaIds })).data)
+/**
+ * POST /products/:id/media {media_ids}: REPLACES the gallery in the order given; the first is the cover.
+ *
+ * Every gallery write on an APPROVED listing is reviewed content: 409
+ * REVALIDATION_REQUIRED (fields: ["gallery"]) until re-sent with
+ * `revalidate` — the same acknowledgement PATCH /products/:id takes. DELETE
+ * carries no body, so it takes `?revalidate=true`.
+ */
+export async function setGallery(productId: string, mediaIds: string[], revalidate = false): Promise<GalleryWire[]> {
+  return galleryItems((await api.post(`${BASE}/products/${encodeURIComponent(productId)}/media`, { media_ids: mediaIds, ...(revalidate ? { revalidate: true } : {}) })).data)
 }
 
 /** PUT /products/:id/media/order {media_ids}: a permutation of the existing gallery. */
-export async function reorderGallery(productId: string, mediaIds: string[]): Promise<GalleryWire[]> {
-  return galleryItems((await api.put(`${BASE}/products/${encodeURIComponent(productId)}/media/order`, { media_ids: mediaIds })).data)
+export async function reorderGallery(productId: string, mediaIds: string[], revalidate = false): Promise<GalleryWire[]> {
+  return galleryItems((await api.put(`${BASE}/products/${encodeURIComponent(productId)}/media/order`, { media_ids: mediaIds, ...(revalidate ? { revalidate: true } : {}) })).data)
 }
 
-export async function deleteGalleryImage(productId: string, mediaId: string): Promise<GalleryWire[]> {
-  return galleryItems((await api.delete(`${BASE}/products/${encodeURIComponent(productId)}/media/${encodeURIComponent(mediaId)}`)).data)
+export async function deleteGalleryImage(productId: string, mediaId: string, revalidate = false): Promise<GalleryWire[]> {
+  const query = revalidate ? "?revalidate=true" : ""
+  return galleryItems((await api.delete(`${BASE}/products/${encodeURIComponent(productId)}/media/${encodeURIComponent(mediaId)}${query}`)).data)
 }
 
 // ── Stock ───────────────────────────────────────────────────────

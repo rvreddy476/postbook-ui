@@ -79,6 +79,18 @@ export function notPatchableFrom(err: unknown): { message: string; patchable: st
   }
 }
 
+/**
+ * 409 SKU_LOCKED → the message for the SKU control. The server locks a
+ * variant's SKU once the listing is approved (editable while a draft); the
+ * old server dropped the change silently, so this is the first time the
+ * editor can say why the code did not take.
+ */
+export function skuLockedFrom(err: unknown): string | null {
+  const { status, code, message } = apiEnvelope(err)
+  if (status !== 409 || code !== "SKU_LOCKED") return null
+  return message || "The SKU cannot be changed once a listing is approved. Archive this variant and add a new one."
+}
+
 /** 422 PRODUCT_INCOMPLETE → the gaps, keyed by code with the label the gate set. */
 export function incompleteFrom(err: unknown): { code: string; label: string; reason: string }[] | null {
   const { status, code, details } = apiEnvelope(err)
@@ -186,10 +198,16 @@ export const emptyBasics: ListingBasics = {
   returnPolicy: "7_days",
 }
 
+/**
+ * The choices are the database's own vocabulary: products.return_policy_type
+ * is CHECK (… IN ('no_return','7_days','15_days','30_days','custom')). This
+ * list carried "14_days", which the CHECK refuses, so choosing it made every
+ * save fail with a constraint error the seller could do nothing about.
+ */
 export const RETURN_POLICIES = [
   { value: "no_return", label: "No returns" },
   { value: "7_days", label: "7 days" },
-  { value: "14_days", label: "14 days" },
+  { value: "15_days", label: "15 days" },
   { value: "30_days", label: "30 days" },
 ] as const
 

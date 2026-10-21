@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test"
 import type { AttributeSchema } from "../model/attributes"
 import {
   EDITOR_STEPS,
+  RETURN_POLICIES,
   arrangeGroups,
   attributeErrorsFrom,
   attributeValuesFromProduct,
@@ -12,6 +13,7 @@ import {
   listingColumns,
   notPatchableFrom,
   revalidationFrom,
+  skuLockedFrom,
   singleVariantPayload,
   stepForGap,
   toAttributePayload,
@@ -39,6 +41,12 @@ describe("the write routes' refusals", () => {
     expect(revalidationFrom(refusal(409, "REVALIDATION_REQUIRED", { fields: ["title", 3] }))).toEqual({ fields: ["title"] })
     expect(revalidationFrom(refusal(409, "REVALIDATION_REQUIRED"))).toEqual({ fields: [] })
     expect(revalidationFrom(refusal(409, "CONFLICT"))).toBeNull()
+  })
+  it("409 SKU_LOCKED → the server's sentence for the SKU control, nothing for anything else", () => {
+    expect(skuLockedFrom(refusal(409, "SKU_LOCKED", { field: "sku" }, "the SKU cannot be changed once a listing has been approved"))).toBe("the SKU cannot be changed once a listing has been approved")
+    expect(skuLockedFrom(refusal(409, "SKU_LOCKED", {}, ""))).toMatch(/cannot be changed/)
+    expect(skuLockedFrom(refusal(409, "SKU_TAKEN"))).toBeNull()
+    expect(skuLockedFrom(refusal(400, "SKU_LOCKED"))).toBeNull()
   })
   it("400 FIELD_NOT_PATCHABLE → the message and the allowlist", () => {
     expect(notPatchableFrom(refusal(400, "FIELD_NOT_PATCHABLE", { fields: ["slug"], patchable: ["title", "hsn_code"] }, "no"))).toEqual({ message: "no", patchable: ["title", "hsn_code"] })
@@ -127,8 +135,16 @@ describe("the built-in columns", () => {
       weight_grams: 180,
       length_cm: 30,
     })
-    expect(listingColumns("cat", { ...emptyBasics, title: "T", taxClassId: "t", returnPolicy: "14_days" }).return_policy_days).toBe(14)
+    expect(listingColumns("cat", { ...emptyBasics, title: "T", taxClassId: "t", returnPolicy: "15_days" }).return_policy_days).toBe(15)
     expect("hsn_code" in listingColumns("cat", { ...emptyBasics, title: "T", taxClassId: "t" })).toBe(false)
+  })
+  it("offers only return windows the database CHECK accepts", () => {
+    // products.return_policy_type CHECK (migration 001 / setup.sql): a choice
+    // outside this set makes every save fail at the constraint.
+    const allowed = ["no_return", "7_days", "15_days", "30_days", "custom"]
+    for (const p of RETURN_POLICIES) expect(allowed).toContain(p.value)
+    expect(RETURN_POLICIES.map((p) => p.value)).toContain("15_days")
+    expect(RETURN_POLICIES.map((p) => p.value)).not.toContain("14_days")
   })
 })
 

@@ -56,7 +56,7 @@ import {
 import { AttributeField } from "../components/sell/AttributeField"
 import { CategoryPicker, pathTo } from "../components/sell/CategoryPicker"
 import { ListingImages } from "../components/sell/ListingImages"
-import { Field, Notice, PageHead, Panel, RowsSkeleton, Select, StepRail, TextField, Textarea } from "../components/sell/primitives"
+import { Field, Notice, PageHead, Panel, RevalidationPanel, RowsSkeleton, Select, StepRail, TextField, Textarea } from "../components/sell/primitives"
 import { NotTradingYet } from "../components/sell/SellerShell"
 import { useListingDraft } from "../components/sell/useListingDraft"
 import { VariationMatrix } from "../components/sell/VariationMatrix"
@@ -191,7 +191,7 @@ function Editor({ initialProductId }: { initialProductId: string | null }) {
       matrix: varying ? { axes: matrix.axes, rows } : undefined,
       single: varying
         ? undefined
-        : { variantId: singleVariantId, sku: offer.sku.trim(), mrpMinor: parseMinor(offer.mrp) ?? 0, priceMinor: parseMinor(offer.price) ?? 0, dirty: offerDirty },
+        : { variantId: singleVariantId, sku: offer.sku.trim(), mrpMinor: parseMinor(offer.mrp) ?? 0, priceMinor: parseMinor(offer.price) ?? 0, stockQty: offer.stock.trim() === "" ? 0 : Number(offer.stock.trim()), dirty: offerDirty },
     })
     if (id) {
       setOfferDirty(false)
@@ -430,24 +430,6 @@ function ReviewStep({ productId, notice, onSubmit, submitting, onFix }: { produc
         </Button>
       </div>
     </Panel>
-  )
-}
-
-function RevalidationPanel({ prompt }: { prompt: { fields: string[]; confirm: () => void; cancel: () => void } }) {
-  return (
-    <Notice tone="warning">
-      <p>
-        This listing is already approved. {prompt.fields.length > 0 ? `Changing ${prompt.fields.join(", ")} sends it back for review` : "Saving this change sends it back for review"}; it stops showing in the shop until a reviewer approves it again.
-      </p>
-      <div className="shop-sell-actions">
-        <Button type="button" size="sm" onClick={prompt.confirm}>
-          Save and send for review
-        </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={prompt.cancel}>
-          Leave it as it is
-        </Button>
-      </div>
-    </Notice>
   )
 }
 
