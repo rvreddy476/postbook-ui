@@ -33,6 +33,7 @@ import { hasPlayableSubtitle } from "@/features/reels/playback/useSubtitleTrack"
 import { OfflineBadge, useOfflineRow, useOfflineSource, type OfflineNotice } from "@/features/offline";
 import { feedFromSearch } from "@/features/reels/feed";
 import { patchReelEverywhere, reelFeedKey, useReelFeed } from "@/features/reels/hooks/useReelFeed";
+import { useReselect } from "@/lib/reselect";
 import { FollowingEmpty } from "@/features/reels/explore/FollowingEmpty";
 import {
   useBlockAuthor,
@@ -181,6 +182,24 @@ export function ReelsScreen() {
     setIndex(0);
     setDirection(1);
   }, [feedKind]);
+
+  // Refresh only when the viewer asks (founder, 21 Oct: never under someone
+  // watching): the button, or clicking Reels / For You while already here.
+  // The current reels stay on screen until the fresh list arrives, then the
+  // stage goes back to the first (newest) reel.
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshFeed = useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await feed.refetch();
+      setDirection(1);
+      setIndex(0);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [feed, refreshing]);
+  useReselect("/reels", () => void refreshFeed());
 
   // Load ahead so the last swipe never lands on a spinner.
   useEffect(() => {
@@ -715,11 +734,16 @@ export function ReelsScreen() {
               ) : (
                 <StateCard
                   title="No reels yet"
-                  hint="Be the first — reels are short videos up to 5 minutes."
+                  hint="Be the first — reels are short videos up to 5 minutes. New ones show up here by themselves."
                   action={
-                    <Link href="/reels/create" className="reel-state-action">
-                      <Clapperboard className="h-4 w-4" /> Create a reel
-                    </Link>
+                    <span className="flex flex-wrap justify-center gap-2">
+                      <Link href="/reels/create" className="reel-state-action">
+                        <Clapperboard className="h-4 w-4" /> Create a reel
+                      </Link>
+                      <button type="button" onClick={() => void refreshFeed()} disabled={refreshing} className="reel-state-action" data-reels-refresh>
+                        <RefreshCw className={`h-4 w-4${refreshing ? " animate-spin" : ""}`} /> Refresh
+                      </button>
+                    </span>
                   }
                 />
               )}
@@ -824,6 +848,18 @@ export function ReelsScreen() {
                           </button>
                           {desktop ? moreMenuFor("below") : null}
                         </div>
+                        <button
+                          type="button"
+                          aria-label="Refresh reels"
+                          title="Refresh"
+                          aria-busy={refreshing || undefined}
+                          disabled={refreshing}
+                          onClick={() => void refreshFeed()}
+                          className="reel-frame-action"
+                          data-reels-refresh
+                        >
+                          <RefreshCw size={22} aria-hidden className={refreshing ? "animate-spin" : undefined} />
+                        </button>
                         <button type="button" aria-label={desktop ? "Theater mode" : "Full screen"} onClick={() => (desktop ? void enterTheater() : enterPhoneFullscreen())} className="reel-frame-action">
                           <Maximize size={24} aria-hidden />
                         </button>

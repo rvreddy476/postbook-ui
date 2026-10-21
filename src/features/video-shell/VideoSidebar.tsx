@@ -8,6 +8,7 @@ import Avatar from "@/components/ui/Avatar";
 import { REELS_SIDEBAR_COPYRIGHT, isNavItemCurrent, videoNav, type VideoApp, type VideoChrome, type VideoNavItem } from "./nav";
 import { useUnreadCount } from "@/hooks/useActivityNotifications";
 import { unreadBadgeText } from "@/lib/activityInbox";
+import { announceReselect } from "@/lib/reselect";
 import { useChannelSubscriptionsList } from "./useChannelSubscriptionsList";
 import { useVideoShell } from "./useVideoShell";
 import { VideoMorePanel } from "./VideoMorePanel";
@@ -119,7 +120,16 @@ function SidebarBody({ app, chrome = "header", expanded, drawer = false, id, onN
     }
     return (
       <li key={item.key}>
-        <Link href={item.href ?? "/"} className={cls} aria-current={current ? "page" : undefined} onClick={onNavigate}>
+        <Link
+          href={item.href ?? "/"}
+          className={cls}
+          aria-current={current ? "page" : undefined}
+          onClick={() => {
+            // Clicking the page you are on refreshes it (lib/reselect.ts).
+            if (current && item.href) announceReselect(item.href);
+            onNavigate?.();
+          }}
+        >
           {inner}
         </Link>
       </li>
