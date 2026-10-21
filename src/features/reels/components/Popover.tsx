@@ -155,7 +155,7 @@ export function MenuRow({
       {icon ? <span className="shrink-0 text-current/80">{icon}</span> : null}
       <span className="min-w-0 flex-1">
         <span className="block truncate">{label}</span>
-        {hint ? <span className="block truncate text-[11px] font-normal text-text-muted">{hint}</span> : null}
+        {hint ? <span className="block truncate text-[11px] font-normal text-muted-foreground">{hint}</span> : null}
       </span>
       {trailing}
     </button>

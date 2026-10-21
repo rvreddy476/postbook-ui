@@ -18,7 +18,7 @@ export default function MopeduAdminLayout({ children }: { children: React.ReactN
   if (user && !userHasAdminRole(user)) return <section className="workspace-denied" role="alert">
     <AlertTriangle size={32} aria-hidden/>
     <h1 className="text-2xl font-bold">Access denied</h1>
-    <p className="mt-3 text-sm text-text-muted">You need an admin role to view the Mopedu console. Ask the platform team to grant <code>rider:admin</code> on your account.</p>
+    <p className="mt-3 text-sm text-muted-foreground">You need an admin role to view the Mopedu console. Ask the platform team to grant <code>rider:admin</code> on your account.</p>
   </section>
   const label = MOPEDU_LINKS.find(link => workspaceLinkCurrent(path,link.href,MOPEDU_LINKS))?.label || "Overview"
   return <section>

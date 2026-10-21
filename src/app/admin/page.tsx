@@ -300,7 +300,7 @@ export default function AdminPage() {
         <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
           {metricCards.map((card) => (
             <div key={card.label} className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-4 shadow-xs">
-              <p className="text-xs font-semibold text-text-muted">
+              <p className="text-xs font-semibold text-muted-foreground">
                 {card.label}
               </p>
               <p className="mt-2 text-[26px] font-bold text-brand-text">
@@ -659,7 +659,7 @@ export default function AdminPage() {
                           <span className="rounded-full bg-brand-tint px-3 py-1 text-xs font-semibold text-primary-ink">
                             {entry.action}
                           </span>
-                          <span className="rounded-full bg-brand-secondary px-3 py-1 text-xs font-semibold text-text-muted">
+                          <span className="rounded-full bg-brand-secondary px-3 py-1 text-xs font-semibold text-muted-foreground">
                             {entry.entity_type}
                           </span>
                           <span className="text-[11px] text-brand-text/45">{formatDate(entry.created_at)}</span>

@@ -194,7 +194,7 @@ export default function MopeduCronRunsPage() {
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
+                <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-muted-foreground">
                   <tr>
                     <th className="px-4 py-3">Started</th>
                     <th className="px-4 py-3">Job</th>
