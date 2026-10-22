@@ -415,12 +415,11 @@ const parseResponsePayload = async (res: Response): Promise<unknown> => {
  */
 const chatClient = {
   async request<TResponse = any>(path: string, options: RequestInit = {}, background = false) {
-    const user = getSessionUser();
     const accessToken = await getAccessToken();
     const headers = new Headers(options.headers);
-    if (user) {
-      headers.set('X-User-Id', user.id);
-    }
+    // The access token is the whole identity: the proxy forwards it to
+    // chat-message-service, which verifies it itself. No X-User-Id — the
+    // proxy would not forward one, and nothing here should name a user.
     if (accessToken) {
       headers.set('Authorization', `Bearer ${accessToken}`);
     }
@@ -449,7 +448,20 @@ export const chatRequest = <TResponse = any>(path: string, options: RequestInit 
   chatClient.request<TResponse>(path, options, background);
 
 /**
- * Connect to the WS Gateway via Proxy Token
+ * Connect to the WS Gateway with the user's own access token.
+ *
+ * The proxy used to mint a 24-hour HS256 chat token here from a secret it
+ * shared with the chat services; the web server holds no such secret any
+ * more (security sweep 2026-10-21 #3). The socket presents the same RS256
+ * access token every REST call carries. The browser WebSocket API has no
+ * Authorization header and the gateway refuses query-string tokens in
+ * production, so the token rides in the `bearer.<token>` subprotocol the
+ * gateway reads (ws-gateway readSubprotocolBearerToken); "bearer" is listed
+ * first so the server can select it and the browser accepts the upgrade.
+ *
+ * Access tokens are short-lived: when one expires the gateway closes the
+ * socket, the retry below asks for the current token again and
+ * ensureAccessToken refreshes it when needed.
  */
 export const connectToHub = async (onMsg: (m: Message) => void) => {
   if (!canUseBrowserApis() || typeof WebSocket === 'undefined') return;
@@ -462,32 +474,15 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
   }
 
   try {
-    // Fetch a signed chat token from the proxy
-    const headers = new Headers({ 'X-User-Id': user.id });
     const accessToken = await getAccessToken();
-    if (accessToken) {
-      headers.set('Authorization', `Bearer ${accessToken}`);
+    if (!accessToken) {
+      closeChatSocket('No access token for the chat socket');
+      return;
     }
-    const tokenRes = await fetch(`${API_BASE}/token`, { headers });
-    const tokenPayload = await parseResponsePayload(tokenRes);
-    if (!tokenRes.ok) {
-      const message = getErrorMessage(tokenPayload, 'Could not acquire chat token');
-      if (tokenRes.status === 401 || /invalid token/i.test(message)) {
-        closeChatSocket(message);
-      }
-      throw new Error(message);
-    }
-    const token =
-      tokenPayload &&
-      typeof tokenPayload === 'object' &&
-      typeof (tokenPayload as { token?: unknown }).token === 'string'
-        ? (tokenPayload as { token: string }).token
-        : null;
-    if (!token) throw new Error("Could not acquire chat token");
 
     if (socket) socket.close();
 
-    socket = new WebSocket(`${wsUrlForPath(WS_PATH)}?access_token=${encodeURIComponent(token)}`);
+    socket = new WebSocket(wsUrlForPath(WS_PATH), ['bearer', `bearer.${accessToken}`]);
 
     socket.onmessage = (e) => {
       const data = JSON.parse(e.data);

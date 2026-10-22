@@ -109,11 +109,9 @@ Create `.env.local`. Only `API_GATEWAY_URL` is needed for most work.
 API_GATEWAY_URL=http://localhost:8080       # the proxy's upstream
 AUTH_SERVICE_URL=http://localhost:8081
 CHAT_BACKEND_URL=http://localhost:8092/v1/chat
-CHAT_PROXY_SIGNING_SECRET=local_dev_jwt_change_me
 PROFILE_SERVICE_URL=
 POST_SERVICE_URL=
 GRAPH_SERVICE_URL=
-JWT_KID=
 
 # --- Public (inlined into the bundle) ---
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
@@ -131,9 +129,10 @@ NEXT_PUBLIC_ENABLE_STUB_PAYMENTS=           # dev only; see below
 
 ## Auth / chat runtime notes
 
-- `CHAT_PROXY_SIGNING_SECRET` must match the `JWT_SECRET` used by
-  `chat-message-service` and `chat-ws-gateway`, or `/api/chat/*` and the chat
-  WebSocket return 401.
+- `/api/chat/*` forwards the signed-in user's own access token to
+  `chat-message-service`, and the chat WebSocket opens with that same token in
+  the `bearer.<token>` subprotocol. The web server holds no chat signing
+  secret (the old `CHAT_PROXY_SIGNING_SECRET` is retired).
 - The client persists a per-browser device id in localStorage as
   `postbook_device_id` and sends it at login.
 - Session state lives in localStorage under `postbook_session` and
