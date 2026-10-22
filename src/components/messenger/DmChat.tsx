@@ -115,7 +115,7 @@ import { OfflineBanner } from './thread/OfflineBanner'
 import './chat-bubbles.css'
 import {
   ArrowLeft, Phone, Video, MoreHorizontal, ChevronDown, ChevronUp,
-  Send, Pin, PinOff, Reply, Pencil, Trash2, X, Check, CheckCheck, Loader2, PanelRight,
+  Send, Pin, PinOff, Reply, Pencil, Trash2, X, Check, CheckCheck, Loader2,
   Smile, SmilePlus, ImagePlus, Copy, Forward, Flag, Undo2, Sticker, Search, Users, Timer, Clock,
   type LucideIcon,
 } from 'lucide-react'
@@ -132,10 +132,7 @@ interface DmChatProps {
   /** The peer's last-active time from the inbox row (CONTRACT §1 peer). */
   userLastActiveAt?: string | null
   onBack: () => void
-  /** Optional third column, supplied by the messenger page only. */
-  detailsOpen?: boolean
-  onToggleDetails?: () => void
-  /** Reports the resolved conversation id so the details panel can read it. */
+  /** Reports the resolved conversation id to the messenger page. */
   onConversationReady?: (id: string) => void
   /**
    * Open this existing conversation instead of finding the direct thread
@@ -176,7 +173,7 @@ const ACTION_ICONS: Record<MessageAction, LucideIcon> = {
 // Component
 // ---------------------------------------------------------------------------
 export default function DmChat({
-  userId, userName, userAvatar, userOnline, userLastSeen, userLastActiveAt, onBack, detailsOpen, onToggleDetails,
+  userId, userName, userAvatar, userOnline, userLastSeen, userLastActiveAt, onBack,
   onConversationReady, conversationId: openConversationId, group, focusMessageId, onChatRemoved, onToast,
 }: DmChatProps) {
   const currentUser = getSession()
@@ -1076,17 +1073,6 @@ export default function DmChat({
           >
             <MoreHorizontal className="h-[18px] w-[18px]" strokeWidth={1.75} />
           </button>
-          {onToggleDetails && (
-            <button
-              onClick={onToggleDetails}
-              title={detailsOpen ? 'Hide thread details' : 'Show thread details'}
-              aria-label={detailsOpen ? 'Hide thread details' : 'Show thread details'}
-              aria-pressed={!!detailsOpen}
-              className={`hidden h-10 w-10 items-center justify-center rounded-full transition-colors duration-200 active:scale-95 xl:flex ${detailsOpen ? 'bg-primary-tint text-primary-ink' : 'text-brand-text/60 hover:bg-brand-secondary hover:text-brand-text'}`}
-            >
-              <PanelRight className="h-4 w-4" />
-            </button>
-          )}
         </div>
       </div>
 

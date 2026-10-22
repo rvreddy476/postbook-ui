@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { getGroupColor } from './shared'
 import DmChat from './DmChat'
-import ThreadDetails from './ThreadDetails'
 import MessengerTopBar from './MessengerTopBar'
 import NewMessageSheet from './NewMessageSheet'
 import NewChannelSheet from './NewChannelSheet'
@@ -124,7 +123,6 @@ export default function PostbookMessenger() {
   const [activeGroupChat, setActiveGroupChat] = useState<OpenGroupChat | null>(null)
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null)
   const [activeChannelId, setActiveChannelId] = useState<string | null>(null)
-  const [showDetails, setShowDetails] = useState(true)
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [showCreateGroup, setShowCreateGroup] = useState(false)
   const [showNewMessage, setShowNewMessage] = useState(false)
@@ -935,8 +933,6 @@ export default function PostbookMessenger() {
             userOnline={activeDm.isOnline ?? false}
             userLastActiveAt={activeDm.lastActiveAt ?? null}
             onBack={() => setActiveDm(null)}
-            detailsOpen={showDetails}
-            onToggleDetails={() => setShowDetails((v) => !v)}
             onConversationReady={setActiveConversationId}
             conversationId={urlConversation?.peerId === activeDm.id ? urlConversation.conversationId : undefined}
             focusMessageId={focusMessageId}
@@ -980,17 +976,6 @@ export default function PostbookMessenger() {
           <EmptyState />
         )}
       </div>
-
-      {/* Third column: who you are talking to. DMs only, from xl. */}
-      {activeDm && showDetails && (
-        <div className="hidden xl:flex">
-          <ThreadDetails
-            peerId={activeDm.id}
-            conversationId={activeConversationId}
-            onClose={() => setShowDetails(false)}
-          />
-        </div>
-      )}
 
       {showCreateGroup && (
         <CreateGroupPanel
