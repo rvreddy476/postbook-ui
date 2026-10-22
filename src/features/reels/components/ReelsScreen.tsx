@@ -754,7 +754,7 @@ export function ReelsScreen() {
               ) : (
                 <StateCard
                   title="No reels yet"
-                  hint="Be the first — reels are short videos up to 5 minutes. New ones show up here by themselves."
+                  hint="Be the first — reels are short videos up to 10 minutes. New ones show up here by themselves."
                   action={
                     <span className="flex flex-wrap justify-center gap-2">
                       <Link href="/reels/create" className="reel-state-action">
