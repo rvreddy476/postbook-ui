@@ -292,7 +292,13 @@ export default function DmChat({
   const { data: profiles } = useBatchProfiles(profileIds)
   // Waiting request: who they are ("@asha"), and whether my one message is already in.
   const requestTarget = who(profiles?.get(userId)?.username, userName)
-  const requestAlreadySent = requestOutgoing && messages.some((m) => m.senderId === myId && !m.isDeleted)
+  // Their reply accepts the request (the server promotes the thread on it), so
+  // the wait ends the moment one of their messages is here, without a reload.
+  const requestStillPending = requestOutgoing && !messages.some((m) => m.senderId !== myId && !m.isDeleted)
+  const requestAlreadySent = requestStillPending && messages.some((m) => m.senderId === myId && !m.isDeleted)
+  // Either side replying ends a request (the server promotes the thread), so the
+  // request-only composer rules stop as soon as both have spoken.
+  const requestThreadNow = isRequestThread && !(messages.some((m) => m.senderId === myId && !m.isDeleted) && messages.some((m) => m.senderId !== myId && !m.isDeleted))
 
   const nameOf = useCallback((id: string): string => {
     if (id === myId) return 'You'
@@ -680,7 +686,7 @@ export default function DmChat({
   const handleSend = useCallback(async (opts?: { kindChecked?: boolean }) => {
     const text = input.trim()
     if (!text || !convIdRef.current) return
-    if (requestOutgoing) {
+    if (requestStillPending) {
       // The server refuses these too; saying so here saves a round trip.
       const guard = requestComposerGuard(text, requestAlreadySent)
       if (!guard.ok) {
@@ -714,7 +720,7 @@ export default function DmChat({
         if (prev.some(m => m.id === real.id)) return prev.filter(m => m.id !== optimisticId)
         return prev.map(m => (m.id === optimisticId ? toDisplay(real) : m))
       })
-      if (requestOutgoing) {
+      if (requestStillPending) {
         toast({
           type: 'success',
           title: 'Message request sent',
@@ -725,10 +731,10 @@ export default function DmChat({
       console.error('[DmChat] send failed:', err)
       setMessages(prev => prev.filter(m => m.id !== optimisticId))
       setInput(text)
-      const requestText = isRequestThread ? requestSendErrorText(err, requestTarget) : null
+      const requestText = requestThreadNow ? requestSendErrorText(err, requestTarget) : null
       setAttachError(requestText || (err as Error)?.message || "Couldn't send that message.")
     }
-  }, [input, myId, replyingTo, isRequestThread, requestOutgoing, requestAlreadySent, requestTarget, toast, kindChat])
+  }, [input, myId, replyingTo, requestThreadNow, requestStillPending, requestAlreadySent, requestTarget, toast, kindChat])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey && !(e.nativeEvent as KeyboardEvent).isComposing) {
@@ -995,7 +1001,7 @@ export default function DmChat({
   )
   const hasText = input.trim().length > 0
   // A waiting request of mine: what is wrong with the draft, shown as it is typed.
-  const requestGuard = requestOutgoing && hasText ? requestComposerGuard(input.trim(), requestAlreadySent) : null
+  const requestGuard = requestStillPending && hasText ? requestComposerGuard(input.trim(), requestAlreadySent) : null
   const requestInputProblem = requestGuard && !requestGuard.ok ? requestGuard.problem : null
   const canSendText = hasText && !requestInputProblem
   const searchHits = useMemo(() => (threadSearch === null ? [] : searchThread(messages, threadSearch)), [messages, threadSearch])
@@ -1054,7 +1060,7 @@ export default function DmChat({
 
         <div className="flex shrink-0 items-center gap-0.5">
           {/* No calls before a request I sent is accepted (DM consent §5). */}
-          {!isGroup && !requestOutgoing && (
+          {!isGroup && !requestStillPending && (
             <>
               <button title="Voice call" aria-label="Voice call" onClick={() => initiateCall(peerAsUser, 'audio')} className="flex h-10 w-10 items-center justify-center rounded-full text-brand-text/60 transition-colors hover:bg-brand-secondary hover:text-brand-text active:scale-95">
                 <Phone className="h-[18px] w-[18px]" strokeWidth={1.75} />
@@ -1273,7 +1279,7 @@ export default function DmChat({
                     msg={msg}
                     kind={kind}
                     mine={isMe}
-                    blur={shouldBlurMedia(msg, myId, { filterOn: sensitiveFilterOn, isRequestThread })}
+                    blur={shouldBlurMedia(msg, myId, { filterOn: sensitiveFilterOn, isRequestThread: requestThreadNow })}
                     postView={msg.postId ? postCardView(msg.postId, { status: postCards.status, posts: postCards.data }) : undefined}
                     onRetryPost={() => void postCards.refetch()}
                     onOpenPost={(postId) => setViewer({ startPostId: postId, postIds: sharedPostIds })}
@@ -1415,9 +1421,9 @@ export default function DmChat({
       )}
 
       {/* A request I sent, still waiting: one text message, no links, until they accept. */}
-      {requestOutgoing && (
-        <div role="status" className="flex shrink-0 items-start gap-2 border-t border-brand-divider bg-primary-tint px-5 py-2.5 text-[12px] text-primary-ink">
-          <Clock className="mt-px h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
+      {requestStillPending && (
+        <div role="status" className="flex shrink-0 items-center justify-center gap-1.5 px-5 py-2 text-center text-xs text-muted-foreground">
+          <Clock className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
           <span>
             {requestAlreadySent
               ? requestComposerProblemText('already_sent', requestTarget)
@@ -1498,7 +1504,7 @@ export default function DmChat({
                 >
                   <Smile className="h-[18px] w-[18px]" strokeWidth={1.75} />
                 </button>
-                {stickerGif.available && !isRequestThread && (
+                {stickerGif.available && !requestThreadNow && (
                   <button
                     onClick={() => { setShowStickers(v => !v); setShowEmojiPicker(false) }}
                     aria-label="Stickers and GIFs"
@@ -1516,14 +1522,14 @@ export default function DmChat({
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
                   onBlur={() => { if (convIdRef.current && input) sendTypingStop(convIdRef.current) }}
-                  placeholder={requestAlreadySent ? 'Waiting for them to accept' : isRequestThread ? 'Write a message request' : 'Message…'}
+                  placeholder={requestAlreadySent ? 'Waiting for a reply' : requestThreadNow ? 'Write a message request' : 'Message…'}
                   disabled={requestAlreadySent}
                   aria-label="Message"
                   className="min-w-0 flex-1 resize-none bg-transparent px-1 py-2.5 text-[14px] leading-5 text-brand-text outline-hidden placeholder:text-brand-text/40"
                 />
               </>
             )}
-            {!hasText && !isRequestThread && (
+            {!hasText && !requestThreadNow && (
               <>
                 {!recording && (
                   <button
@@ -1550,7 +1556,7 @@ export default function DmChat({
             )}
             <input ref={fileInputRef} type="file" accept="image/*,video/*" onChange={handleMediaUpload} className="hidden" />
 
-            {(hasText || isRequestThread) && !recording && (
+            {(hasText || requestThreadNow) && !recording && (
               <button
                 onClick={() => void handleSend()}
                 disabled={!canSendText}
@@ -1561,7 +1567,7 @@ export default function DmChat({
               </button>
             )}
           </div>
-          {requestOutgoing && !requestAlreadySent && hasText && (
+          {requestStillPending && !requestAlreadySent && hasText && (
             <div className="flex items-center justify-between gap-3 px-3 pt-1.5 text-[11px]">
               <span className={requestInputProblem ? 'text-danger' : 'text-brand-text/50'}>
                 {requestInputProblem ? requestComposerProblemText(requestInputProblem, requestTarget) : 'Text only, no links.'}

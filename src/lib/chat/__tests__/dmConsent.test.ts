@@ -158,7 +158,7 @@ describe('request composer guard (one text message, ≤500, no links)', () => {
 
   test('words', () => {
     expect(requestWaitingBanner('@asha')).toBe(
-      'Your request is waiting. You can send one message (text only, no links) until @asha accepts.',
+      'One text message until @asha replies. No links.',
     )
     expect(requestComposerProblemText('link', '@asha')).toBe("Links can't be sent until @asha accepts.")
     expect(requestComposerProblemText('too_long', '@asha')).toBe('A request can be up to 500 characters.')
@@ -205,7 +205,7 @@ describe('server errors in words', () => {
   })
 
   test('a refused send in a waiting request', () => {
-    expect(requestSendErrorText(new ChatApiError('x', 409, 'AWAITING_REQUEST_ACCEPTANCE'), target)).toContain('once @asha accepts')
+    expect(requestSendErrorText(new ChatApiError('x', 409, 'AWAITING_REQUEST_ACCEPTANCE'), target)).toContain('once @asha replies')
     expect(requestSendErrorText(new ChatApiError('message request first message is invalid: links are not allowed', 422, 'INVALID_REQUEST_MESSAGE'), target)).toBe(
       "Links can't be sent until @asha accepts.",
     )

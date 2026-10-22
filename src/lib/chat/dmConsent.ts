@@ -215,7 +215,7 @@ export function requestComposerGuard(text: string, alreadySent: boolean): { ok: 
 export function requestComposerProblemText(problem: RequestComposerProblem, target: string): string {
   switch (problem) {
     case 'already_sent':
-      return `Your message is on its way. You can send more once ${target} accepts.`
+      return `Request sent. You can send more once ${target} replies.`
     case 'too_long':
       return `A request can be up to ${REQUEST_MESSAGE_MAX} characters.`
     case 'link':
@@ -231,7 +231,7 @@ export function requestCharsLeft(text: string): number {
 }
 
 export function requestWaitingBanner(target: string): string {
-  return `Your request is waiting. You can send one message (text only, no links) until ${target} accepts.`
+  return `One text message until ${target} replies. No links.`
 }
 
 /** Mine and still waiting: a request thread I created. */
