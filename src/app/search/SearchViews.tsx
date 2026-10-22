@@ -234,7 +234,7 @@ export function SignedOutRecentsNote({ signInHref }: { signInHref: string }) {
 export function StartPrompt() {
   return (
     <div className="srch-state" data-state="start">
-      <h2 className="srch-state__title">Search Momentum</h2>
+      <h2 className="srch-state__title">Search VChat</h2>
       <p className="srch-state__text">Find people, videos, reels, sounds and hashtags. Type and press Enter.</p>
     </div>
   );

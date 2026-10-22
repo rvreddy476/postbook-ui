@@ -24,7 +24,7 @@ import { nameLine } from "../model/people"
 import { DATING_BASE } from "../model/profile"
 import type { BlockedPerson, TrustedContacts } from "../model/safety"
 
-export const MOBILE_SAFETY_LINE = "The panic button and live location sharing are in the Momentum mobile app only."
+export const MOBILE_SAFETY_LINE = "The panic button and live location sharing are in the VChat mobile app only."
 
 export function BlockList({ blocks, busyId, onUnblock }: { blocks: BlockedPerson[]; busyId: string; onUnblock: (b: BlockedPerson) => void }) {
   if (blocks.length === 0) return <p className="pulse-text pulse-text--muted">You haven&apos;t blocked anyone.</p>
@@ -112,7 +112,7 @@ function Trusted({ matches }: { matches: Match[] }) {
       {full ? (
         <Notice tone="muted">You have {data.max} trusted contacts, the most allowed. Remove one to add another.</Notice>
       ) : candidates.length === 0 ? (
-        <p className="pulse-field__help">You can add one of your matches here. To add a Momentum connection instead, use the mobile app.</p>
+        <p className="pulse-field__help">You can add one of your matches here. To add a VChat connection instead, use the mobile app.</p>
       ) : (
         <form
           className="pulse-form"
@@ -122,7 +122,7 @@ function Trusted({ matches }: { matches: Match[] }) {
             put.mutate({ contactId: pick, shareLocationOnPanic: true }, { onSuccess: () => setPick(""), onError: fail })
           }}
         >
-          <Field id="pulse-trusted-pick" label="Add a match as a trusted contact" help="To add a Momentum connection instead, use the mobile app.">
+          <Field id="pulse-trusted-pick" label="Add a match as a trusted contact" help="To add a VChat connection instead, use the mobile app.">
             <select id="pulse-trusted-pick" className="pulse-input" value={pick} onChange={(e) => setPick(e.target.value)}>
               <option value="">Choose a match</option>
               {candidates.map((c) => (

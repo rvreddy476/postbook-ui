@@ -184,7 +184,7 @@ export const PRIVACY_TOGGLES: readonly { key: PrivacyKey; label: string; help: s
   { key: "blurPhotosUntilMatch", label: "Blur my photos until we match", help: "People see a blurred version until you both spark." },
   { key: "hideLastActive", label: "Hide when I was last active", help: "Nobody sees your activity status." },
   { key: "incognito", label: "Incognito", help: "Only people you spark can see your profile." },
-  { key: "echoesConsent", label: "Show my Momentum activity", help: "Adds a little of your public activity to your profile." },
+  { key: "echoesConsent", label: "Show my VChat activity", help: "Adds a little of your public activity to your profile." },
   { key: "verifiedOnlyFilter", label: "Show me verified people only", help: "Your deck holds only people who passed the face check." },
 ].sort((a, b) => a.label.localeCompare(b.label)) as { key: PrivacyKey; label: string; help: string }[]
 

@@ -112,7 +112,7 @@ describe("settings hub: rendering", () => {
         expect(src).toMatch(/logoutUser\(\)\s+window\.location\.assign\("\/api\/auth\/logout"\)/)
     })
 
-    test("the hub's CSS uses Momentum tokens only — no hex colours", () => {
+    test("the hub's CSS uses VChat tokens only — no hex colours", () => {
         const css = readFileSync(resolve(appDir, "settings/_components/settings-hub.css"), "utf8")
         expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/)
         expect(css).toContain("rgb(var(--danger))")

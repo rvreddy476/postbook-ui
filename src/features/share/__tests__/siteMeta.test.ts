@@ -117,7 +117,7 @@ describe("postCard", () => {
     expect(card.video).toBeNull();
     expect(card.type).toBe("article");
     expect(card.title).toBe("Reel by Raghu");
-    expect(card.description).toBe("A reel by Raghu on Clee Studio");
+    expect(card.description).toBe("A reel by Raghu on VChat");
   });
 
   test("a text post with a photo uses the photo; the caption is the title", () => {
@@ -130,7 +130,7 @@ describe("postCard", () => {
     const card = postCard(photo, withApi, `/post/${POST_ID}`)!;
     expect(card.title).toBe("Bench day");
     expect(card.image).toEqual({ url: `https://api.cleestudio.com/v1/media/${COVER_ID}/serve`, width: 800, height: 600, alt: "Bench day" });
-    expect(card.description).toBe("A post by @raghu on Clee Studio");
+    expect(card.description).toBe("A post by @raghu on VChat");
   });
 
   test("anything the public may not see is no card at all", () => {
@@ -194,7 +194,7 @@ describe("profileCard", () => {
   test("a private account: its name, no bio, no picture", () => {
     const card = profileCard({ username: "raghu", display_name: "Raghu", bio: "secret", avatar_media_id: COVER_ID, is_private: true, follower_count: 3 }, withApi)!;
     expect(card.title).toBe("Raghu (@raghu)");
-    expect(card.description).toBe("3 followers · Raghu on Clee Studio");
+    expect(card.description).toBe("3 followers · Raghu on VChat");
     expect(card.image).toBeNull();
     expect(JSON.stringify(card)).not.toContain("secret");
   });
@@ -214,7 +214,7 @@ describe("channelCard", () => {
     expect(full.image?.url).toBe(`https://api.cleestudio.com/v1/media/${VIDEO_ID}/serve`);
     expect(full.path).toBe("/posttube/channel/raghu.builds");
     const bare = channelCard({ handle: "raghu.builds", subscriber_count: 1500, video_count: 1 }, withApi, pathFor)!;
-    expect(bare.description).toBe("1.5K subscribers · 1 video on Clee Studio");
+    expect(bare.description).toBe("1.5K subscribers · 1 video on VChat");
     expect(bare.image).toBeNull();
     expect(channelCard({ handle: "" }, withApi, pathFor)).toBeNull();
   });
@@ -225,7 +225,7 @@ describe("soundCard", () => {
     const sound = { id: POST_ID, title: "Night drive", artist: "Raghu", usage_count: 42, source_post_id: VIDEO_ID, status: "ready" };
     const pub = soundCard(sound, publicVideo(), withApi)!;
     expect(pub.title).toBe("Night drive · Raghu");
-    expect(pub.description).toBe("Raghu · 42 reels use this sound on Clee Studio");
+    expect(pub.description).toBe("Raghu · 42 reels use this sound on VChat");
     expect(pub.type).toBe("music.song");
     expect(pub.image?.url).toBe(`https://api.cleestudio.com/v1/media/${COVER_ID}/serve`);
     const priv = soundCard(sound, { ...publicVideo(), visibility: "private" }, withApi)!;
@@ -239,11 +239,11 @@ describe("hashtagCard", () => {
   test("the tag, its count, the first public post's cover", () => {
     const card = hashtagCard("#Workshop", 2300, publicVideo(), withApi)!;
     expect(card.title).toBe("#Workshop");
-    expect(card.description).toBe("2.3K posts tagged #Workshop on Clee Studio");
+    expect(card.description).toBe("2.3K posts tagged #Workshop on VChat");
     expect(card.path).toBe("/hashtag/Workshop");
     expect(card.image?.url).toBe(`https://api.cleestudio.com/v1/media/${COVER_ID}/serve`);
     expect(hashtagCard("bench", null, { ...publicVideo(), visibility: "private" }, withApi)!.image).toBeNull();
-    expect(hashtagCard("bench", null, null, withApi)!.description).toBe("Posts tagged #bench on Clee Studio");
+    expect(hashtagCard("bench", null, null, withApi)!.description).toBe("Posts tagged #bench on VChat");
     expect(hashtagCard("a b", null, null, withApi)).toBeNull();
     expect(hashtagCard("a/b", null, null, withApi)).toBeNull();
   });

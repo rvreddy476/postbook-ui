@@ -58,13 +58,13 @@ describe("post, reel and watch pages", () => {
   test("a members-only, private or missing post: the neutral card, nothing of it named", async () => {
     stub({ [`/v1/posts/${ID}`]: { status: 200, body: { data: { id: ID, text: "For members", visibility: "public", tier_required_id: "gold", cover_media_id: COVER } } } });
     const members = await postMeta({ params: Promise.resolve({ postId: ID }) });
-    expect(members.title).toEqual({ absolute: "Content on Clee Studio" });
+    expect(members.title).toEqual({ absolute: "Content on VChat" });
     expect(JSON.stringify(members)).not.toContain("members");
     expect(JSON.stringify(members)).not.toContain(COVER);
 
     stub({});
     const gone = await postMeta({ params: Promise.resolve({ postId: ID }) });
-    expect(gone.title).toEqual({ absolute: "Content on Clee Studio" });
+    expect(gone.title).toEqual({ absolute: "Content on VChat" });
     expect(gone.robots).toEqual({ index: false });
   });
 
@@ -72,7 +72,7 @@ describe("post, reel and watch pages", () => {
     const seen = stub({});
     const m = await postMeta({ params: Promise.resolve({ postId: "../admin" }) });
     expect(seen).toHaveLength(0);
-    expect(m.title).toEqual({ absolute: "Content on Clee Studio" });
+    expect(m.title).toEqual({ absolute: "Content on VChat" });
   });
 
   test("an API that does not answer costs the preview, not the page", async () => {
@@ -80,7 +80,7 @@ describe("post, reel and watch pages", () => {
       throw new Error("ECONNREFUSED");
     }) as unknown as typeof fetch;
     const m = await postMeta({ params: Promise.resolve({ postId: ID }) });
-    expect(m.title).toEqual({ absolute: "Content on Clee Studio" });
+    expect(m.title).toEqual({ absolute: "Content on VChat" });
   });
 });
 
@@ -95,7 +95,7 @@ describe("profile and channel pages", () => {
 
   test("a profile the public may not see is the neutral card; a bad handle asks nothing", async () => {
     stub({});
-    expect((await profileMeta({ params: Promise.resolve({ username: "nobody" }) })).title).toEqual({ absolute: "Content on Clee Studio" });
+    expect((await profileMeta({ params: Promise.resolve({ username: "nobody" }) })).title).toEqual({ absolute: "Content on VChat" });
     const seen = stub({});
     await profileMeta({ params: Promise.resolve({ username: "a%2Fb" }) });
     expect(seen).toHaveLength(0);
@@ -125,7 +125,7 @@ describe("sound and hashtag pages", () => {
 
   test("a sound the public may not hear is the neutral card", async () => {
     stub({});
-    expect((await soundMeta({ params: Promise.resolve({ id: SOUND }) })).title).toEqual({ absolute: "Content on Clee Studio" });
+    expect((await soundMeta({ params: Promise.resolve({ id: SOUND }) })).title).toEqual({ absolute: "Content on VChat" });
   });
 
   test("a tag: its count and the first public post's cover, from one public read", async () => {
@@ -133,7 +133,7 @@ describe("sound and hashtag pages", () => {
     const m = await hashtagMeta({ params: Promise.resolve({ tag: "%23workshop" }) });
     expect(seen[0].url).toContain("/v1/hashtags/workshop/posts?limit=1");
     expect(m.title).toEqual({ absolute: "#workshop" });
-    expect(m.description).toBe("12 posts tagged #workshop on Clee Studio");
+    expect(m.description).toBe("12 posts tagged #workshop on VChat");
     expect(ogOf(m).images[0].url).toContain(`/v1/media/${COVER}/serve`);
   });
 

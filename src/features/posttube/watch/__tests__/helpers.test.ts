@@ -193,13 +193,13 @@ describe("collection prev / next", () => {
 
 describe("description linkify", () => {
   test("urls, hashtags and timestamps", () => {
-    const segs = descriptionSegments("See https://example.com/x). #Momentum at 1:02:03 and 0:45, not 12:345.");
+    const segs = descriptionSegments("See https://example.com/x). #VChat at 1:02:03 and 0:45, not 12:345.");
     expect(segs).toEqual([
       { kind: "text", text: "See " },
       { kind: "url", text: "https://example.com/x", href: "https://example.com/x" },
       { kind: "text", text: ")." },
       { kind: "text", text: " " },
-      { kind: "hashtag", text: "#Momentum", tag: "Momentum" },
+      { kind: "hashtag", text: "#VChat", tag: "VChat" },
       { kind: "text", text: " at " },
       { kind: "timestamp", text: "1:02:03", ms: 3_723_000 },
       { kind: "text", text: " and " },

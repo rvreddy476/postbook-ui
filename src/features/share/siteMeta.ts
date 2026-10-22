@@ -23,7 +23,7 @@
 import type { Metadata } from "next";
 
 /** The name a preview card names as its site. */
-export const SHARE_SITE_NAME = "Clee Studio";
+export const SHARE_SITE_NAME = "VChat";
 
 /** What a preview says when the content is not for the public (or not there). */
 export const NEUTRAL_TITLE = `Content on ${SHARE_SITE_NAME}`;

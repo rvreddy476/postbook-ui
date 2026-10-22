@@ -71,7 +71,7 @@ describe("empty box", () => {
     const out = html(<SignedOutRecentsNote signInHref="/login?next=%2Fsearch&amp;redirect=%2Fsearch" />);
     expect(out).toContain("Sign in");
     expect(out).toContain('data-section="signed-out"');
-    expect(html(<StartPrompt />)).toContain("Search Momentum");
+    expect(html(<StartPrompt />)).toContain("Search VChat");
   });
 });
 

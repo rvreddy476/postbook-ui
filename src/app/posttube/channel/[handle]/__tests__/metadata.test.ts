@@ -33,8 +33,8 @@ describe("channel page metadata", () => {
     // A refused answer is never read, whatever its body says.
     answer(404, { data: { handle: "raghu.builds", name: "Raghu Builds", about: "Workshop videos" } });
     const m = await meta("raghu.builds");
-    expect(m.title).toEqual({ absolute: "Content on Clee Studio" });
-    expect(m.description).toBe("Open the link to see it on Clee Studio.");
+    expect(m.title).toEqual({ absolute: "Content on VChat" });
+    expect(m.description).toBe("Open the link to see it on VChat.");
     expect(JSON.stringify(m)).not.toContain("Raghu Builds");
     expect(JSON.stringify(m)).not.toContain("Workshop");
     expect(m.alternates?.types?.["application/rss+xml"]).toEqual([{ url: "/posttube/channel/raghu.builds/feed.xml", title: "RSS feed" }]);
@@ -56,7 +56,7 @@ describe("channel page metadata", () => {
     }) as unknown as typeof fetch;
     for (const handle of ["..", "a%2Fb", "%3Cscript%3E"]) {
       const m = await meta(handle);
-      expect(m.title).toEqual({ absolute: "Content on Clee Studio" });
+      expect(m.title).toEqual({ absolute: "Content on VChat" });
       expect(m.alternates).toBeUndefined();
     }
     expect(calls).toBe(0);

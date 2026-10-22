@@ -52,8 +52,8 @@ export const CONSENT_COPY: readonly ConsentCopy[] = (
     },
     {
       type: "echoes",
-      title: "Momentum activity on your profile",
-      body: "Shows a little of your public Momentum activity on your Pulse profile. Off unless you turn it on.",
+      title: "VChat activity on your profile",
+      body: "Shows a little of your public VChat activity on your Pulse profile. Off unless you turn it on.",
     },
     {
       type: "sensitive_community",

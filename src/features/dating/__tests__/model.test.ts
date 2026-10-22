@@ -469,7 +469,7 @@ describe("selfie verification", () => {
 })
 
 describe("premium", () => {
-  const wire = { purchase: { id: "p1", product: "pass_30d", amount_minor: 39900, currency: "INR", status: "confirming" }, client_session: { provider: "razorpay", order_id: "order_1", key_id: "rzp_test_x", merchant_display_name: "Momentum Dating" } }
+  const wire = { purchase: { id: "p1", product: "pass_30d", amount_minor: 39900, currency: "INR", status: "confirming" }, client_session: { provider: "razorpay", order_id: "order_1", key_id: "rzp_test_x", merchant_display_name: "VChat Dating" } }
 
   test("the purchase request carries a product and a key, and no price", () => {
     expect(Object.keys(purchaseBody("pass_30d", "k1")).sort()).toEqual(["idempotency_key", "product"])

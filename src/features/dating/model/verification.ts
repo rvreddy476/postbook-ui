@@ -219,4 +219,4 @@ export function notReadyDelay(retriesSoFar: number): number | null {
 }
 
 export const MOBILE_ONLY_COPY =
-  "Selfie verification is done in the Momentum mobile app. Open Pulse there to finish this step, then come back."
+  "Selfie verification is done in the VChat mobile app. Open Pulse there to finish this step, then come back."
