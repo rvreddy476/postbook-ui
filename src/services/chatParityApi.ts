@@ -58,6 +58,7 @@ import {
   type RequestsPage,
 } from '@/lib/chat/requestsLane'
 import { gifWireBody, type GifSendPayload } from '@/lib/chat/giphy'
+import { locationMessageBody, type ChatLocation } from '@/lib/chat/location'
 
 const enc = encodeURIComponent
 
@@ -245,6 +246,13 @@ export const sendGifMessage = (conversationId: string, gif: GifSendPayload) =>
 /** Photo or video with the kind the picker knew (media responses gain media.kind). */
 export const sendMediaKindMessage = (conversationId: string, mediaId: string, reply?: ReplyRef) =>
   postMessage(conversationId, { type: 'media', media_id: mediaId, ...(reply ?? {}) })
+
+/**
+ * A shared location (23 Oct 2026): rounded to 5 decimals, label/address
+ * capped. A pending request refuses it server-side, like media.
+ */
+export const sendLocationMessage = (conversationId: string, loc: ChatLocation) =>
+  postMessage(conversationId, locationMessageBody(loc))
 
 export type DeleteScope = 'everyone' | 'me'
 

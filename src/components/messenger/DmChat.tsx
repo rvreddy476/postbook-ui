@@ -50,6 +50,7 @@ import {
   fetchReadSummary,
   getConversationPrefs,
   sendGifMessage,
+  sendLocationMessage,
   sendMediaKindMessage,
   sendStickerMessage,
   sendTypingStop,
@@ -81,7 +82,7 @@ import {
   requestWaitingBanner,
   who,
 } from '@/lib/chat/dmConsent'
-import { presenceLabel } from '@/lib/chat/inbox'
+import { lastSeenLabel } from '@/lib/chat/inbox'
 import { JOIN_NOTE_HISTORY_TEXT, joinNoteText } from '@/lib/chat/joinNote'
 import { bubbleClass, parseBubbleStyle } from '@/lib/chat/bubbleStyle'
 import { decodeConversationReceipts, mergeWatermark, tickLabel, tickState, type TickState } from '@/lib/chat/tickState'
@@ -117,13 +118,15 @@ import ReportMessageSheet from './thread/ReportMessageSheet'
 import ReactionsSheet from './thread/ReactionsSheet'
 import SeenBySheet from './thread/SeenBySheet'
 import { VoiceRecorder } from './thread/VoiceRecorder'
+import { LocationSheet } from './thread/LocationSheet'
+import type { ChatLocation } from '@/lib/chat/location'
 import { StickerGifPanel, useStickerGifAvailability } from './thread/StickerGifPanel'
 import { OfflineBanner } from './thread/OfflineBanner'
 import './chat-bubbles.css'
 import {
   ArrowLeft, Phone, Video, MoreHorizontal, ChevronDown, ChevronUp,
   Send, Pin, PinOff, Reply, Pencil, Trash2, X, Check, CheckCheck, Loader2,
-  Smile, SmilePlus, ImagePlus, Copy, Forward, Flag, Undo2, Sticker, Search, Users, Timer, Clock,
+  Smile, SmilePlus, ImagePlus, Copy, Forward, Flag, Undo2, Sticker, Search, Users, Timer, Clock, MapPin,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -241,6 +244,7 @@ export default function DmChat({
     lastActiveAt: userLastActiveAt ?? null,
   })
   const [showSettings, setShowSettings] = useState(false)
+  const [showLocation, setShowLocation] = useState(false)
   const [viewer, setViewer] = useState<{ startPostId: string; postIds: string[] } | null>(null)
   const [forwarding, setForwarding] = useState<DisplayMessage | null>(null)
   const [reporting, setReporting] = useState<DisplayMessage | null>(null)
@@ -463,7 +467,9 @@ export default function DmChat({
     })
     const unsub = subscribeToPresenceUpdates((evt) => {
       if (evt.user_id !== userId) return
-      setPeerPresence((prev) => ({ isOnline: evt.online, lastActiveAt: evt.last_active_at ?? (evt.online ? prev.lastActiveAt : new Date().toISOString()) }))
+      // An offline frame without last_active_at means the peer hides their
+      // last seen: show nothing rather than inventing "last seen just now".
+      setPeerPresence((prev) => ({ isOnline: evt.online, lastActiveAt: evt.last_active_at ?? (evt.online ? prev.lastActiveAt : null) }))
     })
     return () => { cancelled = true; unsub() }
   }, [isGroup, userId])
@@ -988,8 +994,20 @@ export default function DmChat({
     catch { setAttachError(gif.is_sticker ? "Couldn't send the sticker." : "Couldn't send the GIF.") }
   }, [appendSent])
 
+  // Shared location (23 Oct 2026): the sheet gets one fix and confirms; a
+  // refusal (a pending request, a paused chat) surfaces in the sheet.
+  const sendLocation = useCallback(async (loc: ChatLocation) => {
+    if (!convIdRef.current) throw new Error("Couldn't send your location. Try again.")
+    try {
+      appendSent(await sendLocationMessage(convIdRef.current, loc))
+      setShowLocation(false)
+    } catch {
+      throw new Error("Couldn't send your location. Try again.")
+    }
+  }, [appendSent])
+
   // ---- Header line
-  const peerPresenceText = isGroup ? null : presenceLabel(peerPresence)
+  const peerPresenceText = isGroup ? null : lastSeenLabel(peerPresence)
   const statusText = useMemo(() => {
     if (anyTyping) {
       if (presence?.is_big_group) return 'Someone is typing…'
@@ -1594,6 +1612,16 @@ export default function DmChat({
                     <ImagePlus className="h-[18px] w-[18px]" strokeWidth={1.75} />
                   </button>
                 )}
+                {!recording && (
+                  <button
+                    onClick={() => setShowLocation(true)}
+                    disabled={!conversationId}
+                    aria-label="Share location"
+                    className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-brand-text/50 transition-colors hover:text-brand-text disabled:opacity-40"
+                  >
+                    <MapPin className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                  </button>
+                )}
                 <div className={`mb-0.5 ${recording ? 'flex-1' : ''}`}>
                   {voiceBusy ? (
                     <span className="flex h-9 w-9 items-center justify-center text-brand-text/50"><Loader2 className="h-4 w-4 animate-spin" /></span>
@@ -1635,6 +1663,11 @@ export default function DmChat({
       )}
 
       {/* Chat settings: a page over the thread. */}
+      {/* Share location: never offered in a request thread (the composer hides it there too). */}
+      {showLocation && conversationId && !requestThreadNow && (
+        <LocationSheet onClose={() => setShowLocation(false)} onSend={sendLocation} />
+      )}
+
       {showSettings && conversationId && (
         <div className="absolute inset-0 z-30 flex">
           <ChatSettingsPanel

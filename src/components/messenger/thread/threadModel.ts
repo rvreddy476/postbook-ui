@@ -212,7 +212,7 @@ export function lastOwnMessageId(messages: readonly DisplayMessage[], myId: stri
 
 /** What kind of bubble a message draws. */
 export type BubbleKind =
-  | 'deleted' | 'system' | 'call' | 'voice' | 'sticker' | 'gif' | 'post' | 'profile' | 'sound' | 'live'
+  | 'deleted' | 'system' | 'call' | 'voice' | 'sticker' | 'gif' | 'post' | 'profile' | 'sound' | 'live' | 'location'
   | 'image' | 'video' | 'audio' | 'attachment' | 'text'
 
 export function bubbleKind(msg: DisplayMessage, resolvedMediaKind?: string): BubbleKind {
@@ -227,6 +227,7 @@ export function bubbleKind(msg: DisplayMessage, resolvedMediaKind?: string): Bub
   if (t === 'profile' && msg.extras?.profileUserId) return 'profile'
   if (t === 'sound' && msg.extras?.soundId) return 'sound'
   if (t === 'live' && msg.extras?.streamId) return 'live'
+  if (t === 'location' && msg.extras?.location) return 'location'
   if (msg.mediaId) {
     const kind = (['image', 'video', 'audio'].includes(t) ? t : null) ?? msg.extras?.media?.kind ?? resolvedMediaKind
     if (kind === 'image' || kind === 'video' || kind === 'audio') return kind
@@ -237,7 +238,7 @@ export function bubbleKind(msg: DisplayMessage, resolvedMediaKind?: string): Bub
 
 /** Bubbles drawn without the coloured pill around them. */
 export function isBareBubble(kind: BubbleKind): boolean {
-  return kind === 'sticker' || kind === 'gif' || kind === 'post' || kind === 'profile' || kind === 'image' || kind === 'video'
+  return kind === 'sticker' || kind === 'gif' || kind === 'post' || kind === 'profile' || kind === 'image' || kind === 'video' || kind === 'location'
 }
 
 /** The call log line: "Missed video call", "Voice call · 3:05". */

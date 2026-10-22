@@ -7,6 +7,7 @@ import {
   inboxUnreadTotal,
   mergeInboxPages,
   orderInbox,
+  lastSeenLabel,
   presenceLabel,
   primaryRows,
   rowName,
@@ -93,6 +94,22 @@ describe('labels', () => {
     expect(presenceLabel(ago(9 * 86400_000), now)).toBeNull()
     expect(presenceLabel({ isOnline: null, lastActiveAt: null }, now)).toBeNull()
     expect(presenceLabel(null, now)).toBeNull()
+  })
+
+  // Founder, 23 Oct 2026: WhatsApp's header line, in local time.
+  test('last seen: online, today, yesterday, a date, then a dated year', () => {
+    const now = new Date(2026, 9, 18, 12, 0).getTime()
+    const seen = (y: number, mo: number, d: number, h: number, mi: number) =>
+      ({ isOnline: false as const, lastActiveAt: new Date(y, mo, d, h, mi).toISOString() })
+    expect(lastSeenLabel({ isOnline: true, lastActiveAt: null }, now)).toBe('online')
+    expect(lastSeenLabel(seen(2026, 9, 18, 9, 5), now)).toBe('last seen today at 09:05')
+    expect(lastSeenLabel(seen(2026, 9, 18, 0, 1), now)).toBe('last seen today at 00:01')
+    expect(lastSeenLabel(seen(2026, 9, 17, 23, 59), now)).toBe('last seen yesterday at 23:59')
+    expect(lastSeenLabel(seen(2026, 9, 12, 14, 5), now)).toBe('last seen 12 Oct at 14:05')
+    expect(lastSeenLabel(seen(2025, 11, 31, 23, 0), now)).toBe('last seen 31 Dec 2025')
+    // Privacy denied / never recorded: nothing.
+    expect(lastSeenLabel({ isOnline: null, lastActiveAt: null }, now)).toBeNull()
+    expect(lastSeenLabel(null, now)).toBeNull()
   })
 
   test('streak badge: only from 3 days, at risk flagged', () => {

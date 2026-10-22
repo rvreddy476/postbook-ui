@@ -11,6 +11,8 @@
   Pure functions only; the network layer is src/services/chatParityApi.ts.
 */
 
+import { decodeLocation, type ChatLocation } from './location'
+
 /* ------------------------------------------------------------------ */
 /*  Primitive readers                                                  */
 /* ------------------------------------------------------------------ */
@@ -644,6 +646,8 @@ export interface MessageExtras {
   profileUserId: string | null
   soundId: string | null
   streamId: string | null
+  /** A shared place (23 Oct 2026); null on every other type. */
+  location: ChatLocation | null
   replyKind: 'message' | 'note' | null
   media: MediaInfo | null
   call: CallInfo | null
@@ -685,6 +689,7 @@ export function decodeMessageExtras(raw: unknown): MessageExtras {
     profileUserId: first(r.profile_user_id),
     soundId: first(r.sound_id),
     streamId: first(r.stream_id),
+    location: decodeLocation(r.location),
     replyKind: r.reply_kind === 'note' ? 'note' : r.reply_kind === 'message' ? 'message' : null,
     media:
       mediaRaw || kind || sensitive !== null

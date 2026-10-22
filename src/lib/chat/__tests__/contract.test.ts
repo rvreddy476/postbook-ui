@@ -208,7 +208,7 @@ describe('shared, reactions, read summary, stickers, gifs, forward', () => {
 describe('message extras (§2.2)', () => {
   test('a plain old message has neutral extras', () => {
     const x = decodeMessageExtras({ msg_id: 'm', type: 'text', text: 'hi' })
-    expect(x).toEqual({ forwarded: false, voice: null, sticker: null, gif: null, profileUserId: null, soundId: null, streamId: null, replyKind: null, media: null, call: null, senderDisplayName: null })
+    expect(x).toEqual({ forwarded: false, voice: null, sticker: null, gif: null, profileUserId: null, soundId: null, streamId: null, replyKind: null, media: null, call: null, senderDisplayName: null, location: null })
   })
   test('voice, sticker, gif, profile, sound, live, forwarded, note reply, media', () => {
     const x = decodeMessageExtras({

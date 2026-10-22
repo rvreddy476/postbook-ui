@@ -7,12 +7,13 @@ import { EyeOff, Music2, Phone, PhoneMissed, Radio, UserRound, Video } from 'luc
 import { PostMessageCard } from '../PostMessageCard'
 import type { PostCardView } from '../postCards'
 import { VoiceBubble } from './VoiceBubble'
+import { LocationBubble } from './LocationMap'
 import { callLogText, type BubbleKind, type DisplayMessage } from './threadModel'
 
 /*
   The inside of one bubble, for every message type the contract names
   (CONTRACT §2.2, §9): text, photo, video, voice, sticker, GIF, shared post,
-  profile, sound, LIVE, call log. Sensitive media is blurred until tapped.
+  profile, sound, LIVE, location, call log. Sensitive media is blurred until tapped.
 */
 
 const media = (id: string) => `/v1/media/${id}/serve`
@@ -155,6 +156,8 @@ export function MessageBody({
           </span>
         </Link>
       )
+    case 'location':
+      return <LocationBubble location={msg.extras!.location!} />
     case 'image':
     case 'video': {
       const src = media(msg.mediaId!)

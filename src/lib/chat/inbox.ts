@@ -203,6 +203,35 @@ export function presenceLabel(p: Pick<ChatPeer, 'isOnline' | 'lastActiveAt'> | n
   return null
 }
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n))
+const localDayStart = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+
+/**
+ * The thread header's presence line, WhatsApp style (founder, 23 Oct 2026):
+ * "online" while the person has a live connection, otherwise "last seen
+ * today at 14:05", "last seen yesterday at 14:05", "last seen 12 Oct at
+ * 14:05", and "last seen 12 Oct 2025" from an earlier year. Local time. Null
+ * when privacy denies it or nothing was ever recorded; typing replaces it at
+ * the call site.
+ */
+export function lastSeenLabel(p: Pick<ChatPeer, 'isOnline' | 'lastActiveAt'> | null | undefined, now = Date.now()): string | null {
+  if (!p) return null
+  if (p.isOnline === true) return 'online'
+  const t = ts(p.lastActiveAt)
+  if (!t) return null
+  const seen = new Date(t)
+  const today = new Date(now)
+  const days = Math.round((localDayStart(today) - localDayStart(seen)) / 86_400_000)
+  const time = `${pad2(seen.getHours())}:${pad2(seen.getMinutes())}`
+  // A clock a little ahead of this device's still reads as today.
+  if (days <= 0) return `last seen today at ${time}`
+  if (days === 1) return `last seen yesterday at ${time}`
+  const date = `${seen.getDate()} ${MONTHS[seen.getMonth()]}`
+  if (seen.getFullYear() === today.getFullYear()) return `last seen ${date} at ${time}`
+  return `last seen ${date} ${seen.getFullYear()}`
+}
+
 /** Online dot: only an explicit true. */
 export function showOnlineDot(p: Pick<ChatPeer, 'isOnline'> | null | undefined): boolean {
   return p?.isOnline === true
@@ -236,6 +265,7 @@ const TYPE_PREVIEW: Record<string, string> = {
   profile: 'Shared a profile',
   sound: 'Shared a sound',
   live: 'Shared a LIVE',
+  location: '📍 Location',
   call: 'Call',
 }
 
