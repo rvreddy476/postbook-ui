@@ -21,20 +21,12 @@ export function useAggregatedProfile(username: string) {
     return useQuery({
         queryKey: ["aggregated-profile", username],
         queryFn: async () => {
-            // Auth headers forwarded to the BFF. The token comes from memory
-            // now, not localStorage; the user id still comes from the cached
-            // session record, which is not a credential and proves nothing on
-            // its own.
-            const headers: Record<string, string> = { "Content-Type": "application/json" }
+            // Only the access token (from memory) goes to the BFF; the
+            // gateway derives the viewer from it. No user id header: a
+            // client-supplied id proves nothing and the BFF ignores one.
+            const headers: Record<string, string> = { Accept: "application/json" }
             const accessToken = await ensureAccessToken()
             if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`
-            try {
-                const sessionRaw = localStorage.getItem("postbook_session")
-                if (sessionRaw) {
-                    const session = JSON.parse(sessionRaw) as { id?: string }
-                    if (session.id) headers["X-User-Id"] = session.id
-                }
-            } catch { /* ignore */ }
 
             let res: Response
             try {

@@ -24,9 +24,11 @@ export default function MutualFriendsCard({ viewerId, profileId, isOwn }: Mutual
     } = useQuery({
         queryKey: ["mutualFriends", viewerId, profileId],
         queryFn: async () => {
-            const res = await api.get<{ data: MutualFriendsResponse }>(
-                `/v1/graph/mutuals?user_id=${viewerId}&other_id=${profileId}&limit=6`
-            )
+            // The viewer is the token's user (graph refuses a user_id naming
+            // anyone else); `viewerId` only keys the cache.
+            const res = await api.get<{ data: MutualFriendsResponse }>(`/v1/graph/mutuals`, {
+                params: { other_id: profileId, limit: 6 },
+            })
             return res.data.data
         },
         enabled: !isOwn && !!viewerId && !!profileId,

@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 import api from "@/lib/api"
+import { relationshipFromGraph } from "@/lib/graphApi"
 import type { UserProfile, UserLink, GraphCounts, ContentCounts, Relationship, UserProfileBatchResponse } from "@/types/profile"
 
 // Backend returns user_id, frontend expects id
@@ -64,10 +65,14 @@ export function useRelationship(viewerId: string | null, targetId: string | unde
     return useQuery({
         queryKey: ["relationship", viewerId, targetId],
         queryFn: async () => {
-            const res = await api.get<{ data: Relationship }>(`/v1/graph/relationship`, {
-                params: { user_id: viewerId, other_id: targetId },
+            // Only other_id: the viewer is the token's user, and graph refuses
+            // a user_id naming anyone else (400 VIEWER_BOUND). `viewerId`
+            // keys the cache and gates the call. The wire shape (`follows`,
+            // crossed legacy block fields) maps to the UI Relationship.
+            const res = await api.get<{ data: Record<string, unknown> }>(`/v1/graph/relationship`, {
+                params: { other_id: targetId },
             })
-            return res.data.data
+            return relationshipFromGraph(res.data.data)
         },
         staleTime: 60 * 1000,
         enabled: !!viewerId && !!targetId && viewerId !== targetId,

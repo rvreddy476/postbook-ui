@@ -2,7 +2,7 @@
 
 import { useRef, useCallback, useState, useEffect } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import type { UserProfile, UserLink, Relationship, ContentCounts, GraphCounts, Channel } from "@/types/profile"
+import type { UserProfile, UserLink, Relationship, GraphCounts } from "@/types/profile"
 import { getBadges, BADGE_CREATOR, BADGE_BUSINESS } from "@/types/profile"
 import {
     BadgeCheck,
@@ -14,23 +14,17 @@ import {
     Camera,
     Loader2,
     ImageIcon,
-    FileText,
-    Users,
     Settings,
     MessageSquare,
     CheckCircle2,
     ExternalLink,
     Eye,
     Lock,
-    Film,
-    Clapperboard,
-    Play,
     Crown,
     Sun,
     Moon,
 } from "lucide-react"
 import { motion } from "framer-motion"
-import Link from "next/link"
 import api from "@/lib/api"
 import { uploadMedia } from "@/lib/mediaUpload"
 import TierPicker from "@/components/monetization/TierPicker"
@@ -51,8 +45,6 @@ interface ProfileHeaderProps {
     coverUrl?: string
     isMuted?: boolean
     graphCounts: GraphCounts
-    contentCounts: ContentCounts
-    channel: Channel | null
     onFollow: () => void
     onUnfollow: () => void
     onRemoveFromCircle: () => void
@@ -93,12 +85,6 @@ function formatJoinDate(dateStr: string): string {
     return `Joined ${d.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`
 }
 
-function formatCount(n: number): string {
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
-    return n.toString()
-}
-
 export function ProfileHeader({
     profile,
     links,
@@ -108,8 +94,6 @@ export function ProfileHeader({
     coverUrl,
     isMuted,
     graphCounts,
-    contentCounts,
-    channel,
     onFollow,
     onUnfollow,
     onRemoveFromCircle,
@@ -329,9 +313,14 @@ export function ProfileHeader({
                 </div>
             </div>
 
-            {/* 2. Identity row: Profile Pic | Intro | Stats — sits cleanly below the cover */}
-            <div className="max-w-[1200px] mx-auto px-6 sm:px-8">
-                <div className={`grid grid-cols-1 ${channel ? "md:grid-cols-[auto_1fr_auto]" : "md:grid-cols-[auto_1fr]"} gap-6 lg:gap-10 -mt-14 sm:-mt-16 pb-8 items-start`}>
+            {/*
+              2. Identity row: Profile Pic | Intro — sits below the cover.
+              Both tracks may shrink (`minmax(0,1fr)`, `min-w-0`), so a long
+              name never widens the row past the page. No PostTube channel
+              card here: the channel lives in PostTube.
+            */}
+            <div className="max-w-[1200px] mx-auto px-4 sm:px-8">
+                <div className="grid grid-cols-1 md:grid-cols-[auto_minmax(0,1fr)] gap-6 lg:gap-10 -mt-14 sm:-mt-16 pb-8 items-start">
 
                     {/* Left: Profile Picture */}
                     <motion.div
@@ -384,20 +373,35 @@ export function ProfileHeader({
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: 0.05 }}
-                        className="w-full md:pt-18 space-y-3"
+                        className="@container w-full min-w-0 md:pt-18 space-y-3"
                     >
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 w-full">
-                            {/* Left: Name, handle & badges on a single line */}
-                            <div className="flex flex-row items-center gap-3 justify-center md:justify-start flex-wrap md:flex-nowrap min-w-0">
-                                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-brand-text whitespace-nowrap">
+                        {/*
+                          Name and actions side by side only when the intro
+                          column is wide enough for both (container query,
+                          not the viewport: the column's width depends on the
+                          shell and sidebar). Otherwise the actions take
+                          their own row below the name. The name truncates
+                          with an ellipsis rather than running under them.
+                        */}
+                        <div
+                            data-testid="profile-identity-row"
+                            className="flex flex-col @3xl:flex-row @3xl:items-start @3xl:justify-between gap-4 w-full min-w-0"
+                        >
+                            {/* Left: Name, then handle & badges */}
+                            <div className="flex flex-col items-center md:items-start gap-1.5 min-w-0 max-w-full @3xl:flex-1">
+                                <h1
+                                    title={profile.display_name}
+                                    className="max-w-full truncate text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-brand-text"
+                                >
                                     {profile.display_name}
                                 </h1>
+                                <div className="flex items-center gap-x-3 gap-y-1.5 justify-center md:justify-start flex-wrap min-w-0 max-w-full">
                                 {profile.username && (
-                                    <span className="text-brand-text/50 font-semibold tracking-wide text-sm sm:text-base whitespace-nowrap">
+                                    <span className="min-w-0 max-w-full truncate text-muted-foreground font-semibold tracking-wide text-sm sm:text-base">
                                         @{profile.username}
                                     </span>
                                 )}
-                                <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
                                     {badges.map((badge) => {
                                         const cfg = badgeConfig[badge]
                                         if (!cfg) return null
@@ -418,6 +422,7 @@ export function ProfileHeader({
                                         </span>
                                     )}
                                 </div>
+                                </div>
                             </div>
 
                             {/*
@@ -433,7 +438,7 @@ export function ProfileHeader({
                               Requested, or disabled with the reason; a
                               tap opens the thread.
                             */}
-                            <div className="flex items-center justify-center md:justify-end gap-2 shrink-0">
+                            <div className="flex flex-wrap items-center justify-center md:justify-start @3xl:justify-end @3xl:shrink-0 gap-2 min-w-0">
                                 <ProfileActions
                                     isOwn={isOwn}
                                     signedIn={signedIn}
@@ -523,10 +528,10 @@ export function ProfileHeader({
                                     href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 text-brand-text/75 hover:underline transition-colors"
+                                    className="flex min-w-0 max-w-full items-center gap-1.5 text-brand-text/75 hover:underline transition-colors"
                                 >
-                                    <Globe size={13} />
-                                    {profile.website.replace(/^https?:\/\//, "")}
+                                    <Globe size={13} className="shrink-0" />
+                                    <span className="truncate">{profile.website.replace(/^https?:\/\//, "")}</span>
                                 </a>
                             )}
                             {profile.created_at && (
@@ -537,97 +542,6 @@ export function ProfileHeader({
                             )}
                         </div>
                     </motion.div>
-
-                    {/* Right: Stats cards — unified card system */}
-                    {channel && (
-                        <div className="hidden md:flex flex-col gap-4 w-[330px] lg:w-[360px] md:pt-18">
-                            <motion.div
-                                initial={{ opacity: 0, y: 12 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.3, delay: 0.15 }}
-                                className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs p-5 border-l-[3px] border-l-violet-500"
-                            >
-                                <div className="flex items-center justify-between mb-4">
-                                    <span className="text-xs font-bold tracking-[0.2em] text-muted-foreground">
-                                        PostTube Channel
-                                    </span>
-                                    <Link
-                                        href={`/posttube/channel/${channel.handle}`}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-text text-brand-card text-xs font-bold tracking-wider hover:opacity-90 transition-all"
-                                    >
-                                        <ExternalLink className="w-3 h-3" />
-                                        View
-                                    </Link>
-                                </div>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {[
-                                        { icon: Play, label: "Subscribers", value: channel.subscriber_count, key: "subs", color: "text-violet-500" },
-                                        { icon: Film, label: "Videos", value: contentCounts.video, key: "videos", color: "text-sky-500" },
-                                        { icon: Clapperboard, label: "Reels", value: contentCounts.reel, key: "flicks", color: "text-rose-500" },
-                                    ].map((stat) => (
-                                        <div key={stat.key} className="flex flex-col items-center text-center gap-1">
-                                            <stat.icon size={16} className={stat.color} />
-                                            <p className="text-lg font-black text-brand-text tracking-tight leading-none">
-                                                {formatCount(stat.value)}
-                                            </p>
-                                            <span className="text-xs font-semibold tracking-[0.15em] text-muted-foreground">
-                                                {stat.label}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </motion.div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Mobile: Social Graph (stacked below on small screens) */}
-                <div className="md:hidden space-y-3 mb-6">
-                    {/* Spec §4.1 — Posts + Friends only on user profile. - Commented out per user request
-                    <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs p-4">
-                        <div className="grid grid-cols-2 gap-2">
-                            {[
-                                { icon: FileText, label: "Posts", value: contentCounts.total, color: "text-sky-500" },
-                                { icon: Users, label: "Friends", value: graphCounts.friend_count, color: "text-emerald-500" },
-                            ].map((stat) => (
-                                <div key={stat.label} className="flex flex-col items-center text-center gap-1">
-                                    <stat.icon size={15} className={stat.color} />
-                                    <p className="text-base font-black text-brand-text leading-none">{formatCount(stat.value)}</p>
-                                    <span className="text-[8px] font-semibold tracking-[0.12em] text-brand-text/50">{stat.label}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    */}
-
-                    {/* Mobile: PostTube Channel Stats */}
-                    {channel && (
-                        <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs p-4 border-l-[3px] border-l-violet-500">
-                            <div className="flex items-center justify-between mb-3">
-                                <span className="text-xs font-bold tracking-[0.2em] text-muted-foreground">PostTube Channel</span>
-                                <Link
-                                    href={`/posttube/channel/${channel.handle}`}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-text text-brand-card text-xs font-bold tracking-wider hover:opacity-90 transition-all"
-                                >
-                                    <ExternalLink className="w-3 h-3" />
-                                    View
-                                </Link>
-                            </div>
-                            <div className="grid grid-cols-3 gap-2">
-                                {[
-                                    { icon: Play, label: "Subscribers", value: channel.subscriber_count, color: "text-violet-500" },
-                                    { icon: Film, label: "Videos", value: contentCounts.video, color: "text-sky-500" },
-                                    { icon: Clapperboard, label: "Reels", value: contentCounts.reel, color: "text-rose-500" },
-                                ].map((stat) => (
-                                    <div key={stat.label} className="flex flex-col items-center text-center gap-1">
-                                        <stat.icon size={15} className={stat.color} />
-                                        <p className="text-base font-black text-brand-text leading-none">{formatCount(stat.value)}</p>
-                                        <span className="text-[8px] font-semibold tracking-[0.12em] text-brand-text/50">{stat.label}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 {/* 3. Bio Row */}

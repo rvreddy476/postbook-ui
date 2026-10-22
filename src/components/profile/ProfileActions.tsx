@@ -182,7 +182,7 @@ export function ProfileActions({
 
     if (isOwn) {
         return (
-            <div className="flex flex-wrap items-center justify-center gap-2 md:justify-end" data-testid="profile-actions-owner">
+            <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start @3xl:justify-end" data-testid="profile-actions-owner">
                 <button type="button" onClick={onEditProfile} className={BTN_PRIMARY}>
                     <Pencil className="h-4 w-4" aria-hidden />
                     Edit profile
@@ -237,7 +237,7 @@ export function ProfileActions({
     }
 
     return (
-        <div className="flex flex-wrap items-center justify-center gap-2 md:justify-end" data-testid="profile-actions-visitor">
+        <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start @3xl:justify-end" data-testid="profile-actions-visitor">
             {followButton}
             {!blocked ? connectionSlot : null}
             {!blocked ? messageSlot : null}

@@ -33,7 +33,6 @@ import {
 import { useContentCounts } from "@/hooks/useProfilePosts"
 import { useBlockUser, useUnblockUser } from "@/hooks/useBlocking"
 import { useMuteUser, useUnmuteUser } from "@/hooks/useMuting"
-import { useUserChannels } from "@/hooks/useChannels"
 import { useToast } from "@/components/ui/toast"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
@@ -403,8 +402,6 @@ export function ProfilePage({ username }: ProfilePageProps) {
     const { toast, ToastContainer } = useToast()
     const { data, isLoading, error: profileError, refetch: refetchProfile, isRefetching } = useAggregatedProfile(username)
     const profile_ = data?.profile ?? null
-    const { data: userChannels } = useUserChannels(profile_?.id)
-    const primaryChannel = userChannels?.[0] ?? null
     const { data: directCounts } = useContentCounts(profile_?.id)
 
     // Sticky tabs with IntersectionObserver
@@ -648,8 +645,12 @@ export function ProfilePage({ username }: ProfilePageProps) {
     const isPrivateView = viewState === "private"
 
     return (
-        <div className="w-full pb-28 md:pb-12">
-            {/* Header: Cover + 3-col grid + Bio */}
+        // overflow-x-clip: nothing on the profile can make the shell's
+        // scroller scroll sideways and slide the page under the fixed
+        // sidebar (it clips without becoming a scroll container, so the
+        // sticky tab bar still sticks).
+        <div className="w-full min-w-0 overflow-x-clip pb-28 md:pb-12">
+            {/* Header: Cover + identity row + Bio */}
             <ProfileHeader
                 profile={profile}
                 links={links}
@@ -659,8 +660,6 @@ export function ProfilePage({ username }: ProfilePageProps) {
                 coverUrl={coverUrl}
                 isMuted={isMuted}
                 graphCounts={graphCounts}
-                contentCounts={contentCounts}
-                channel={primaryChannel}
                 onFollow={handleFollow}
                 onUnfollow={handleUnfollow}
                 onRemoveFromCircle={handleRemoveFromCircle}

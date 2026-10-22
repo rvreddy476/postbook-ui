@@ -217,6 +217,12 @@ describe("sort control, tabs, counts, share", () => {
     expect(owner).toContain("liked");
   });
 
+  test("Q&A is parked until after launch: hidden for visitors and the owner", () => {
+    expect(visibleProfileTabKeys({ isOwn: false })).not.toContain("qa");
+    expect(visibleProfileTabKeys({ isOwn: true })).not.toContain("qa");
+    expect(visibleProfileTabKeys({ isOwn: false }).slice(0, 3)).toEqual(["posts", "about", "connections"]);
+  });
+
   test("counts render Following and Followers", () => {
     const html = renderToStaticMarkup(<ProfileCounts followerCount={1234} followingCount={1} />);
     expect(html).toContain('data-count="following">1<');

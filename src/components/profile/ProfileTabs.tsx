@@ -128,6 +128,10 @@ const tabDefinitions: TabDef[] = [
     },
 ]
 
+// Q&A is parked until after launch: the tab (and ProfileQASection) stay in
+// the code, hidden from every profile until this flips.
+const QA_TAB_ENABLED = false
+
 /**
  * The tabs a viewer sees. Videos and Reels are always there (an empty grid
  * says so, with a sort control once there is content) rather than appearing
@@ -139,6 +143,7 @@ export function visibleProfileTabKeys({ isOwn, hasMedia = false }: { isOwn: bool
         .filter((tab) => {
             if (tab.selfOnly && !isOwn) return false
             if (tab.key === "media" && !hasMedia) return false
+            if (tab.key === "qa" && !QA_TAB_ENABLED) return false
             return true
         })
         .map((tab) => tab.key)
@@ -167,12 +172,18 @@ export function ProfileTabs({
         }
         check()
         el.addEventListener("scroll", check, { passive: true })
-        return () => el.removeEventListener("scroll", check)
+        window.addEventListener("resize", check)
+        return () => {
+            el.removeEventListener("scroll", check)
+            window.removeEventListener("resize", check)
+        }
     }, [visibleTabs.length])
 
+    // The row scrolls sideways inside its own box on a narrow screen;
+    // min-w-0 keeps it from widening the page instead.
     return (
-        <div className={`py-1 border-b border-brand-divider/60 ${isSticky ? "" : ""}`}>
-            <div className="relative">
+        <div className={`min-w-0 py-1 border-b border-brand-divider/60 ${isSticky ? "" : ""}`}>
+            <div className="relative min-w-0">
                 {canScrollLeft && (
                     <div className="absolute left-0 top-0 bottom-0 w-8 bg-linear-to-r from-brand-card to-transparent z-10 pointer-events-none" />
                 )}
@@ -184,7 +195,7 @@ export function ProfileTabs({
                     ref={scrollRef}
                     role="tablist"
                     aria-label="Profile sections"
-                    className="flex overflow-x-auto scrollbar-hide gap-1"
+                    className="flex min-w-0 max-w-full overflow-x-auto overscroll-x-contain scrollbar-hide gap-1"
                 >
                     {visibleTabs.map((tab) => {
                         const isActive = activeTab === tab.key

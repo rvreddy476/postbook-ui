@@ -98,8 +98,8 @@ export function useBlockedUsers(enabled = true) {
             if (candidates.length === 0) {
                 return { items: [], meta: { limit: GRAPH_BATCH_MAX, offset: 0, total: 0, has_next: false } }
             }
+            // The viewer is the token's user; graph refuses a viewer_id naming anyone else.
             const batch = await api.post<Record<string, unknown>>(GRAPH_ROUTES.relationshipsBatch, {
-                viewer_id: viewerId,
                 target_ids: candidates,
             })
             const blocked = blockedByViewer(batch.data)

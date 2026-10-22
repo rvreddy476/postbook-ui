@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
+import { API_GATEWAY_URL } from "@/app/api/auth/_lib/session"
 import { relationshipFromGraph } from "@/lib/graphApi"
 import type { Relationship } from "@/types/profile"
 
-const PROFILE_SERVICE_URL = process.env.PROFILE_SERVICE_URL || "http://localhost:8098"
-const GRAPH_SERVICE_URL = process.env.GRAPH_SERVICE_URL || "http://localhost:8083"
-const POST_SERVICE_URL = process.env.POST_SERVICE_URL || "http://localhost:8084"
+/*
+  The profile page's aggregate read: profile, links, counts and the viewer's
+  relationship in one round trip.
+
+  Every call goes through the API GATEWAY with the caller's own
+  `Authorization: Bearer` header and nothing else that names a user. The
+  gateway verifies the token, derives the viewer from it, stamps the
+  internal service key graph-service requires, and strips any identity
+  header a client sent. This route used to call graph/profile/post-service
+  directly with a viewer id copied from a client `X-User-Id` header: graph
+  refused the keyless call (so the relationship came back null and the page
+  showed "Follow" to someone already following), and anyone could claim to
+  be another viewer and read that viewer's block and follow flags.
+*/
 
 interface AggregatedProfile {
     profile: Record<string, unknown> | null
@@ -23,70 +35,76 @@ interface AggregatedProfile {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-async function fetchJSON<T>(url: string, headers?: Record<string, string>): Promise<T | null> {
-    return (await fetchWithStatus<T>(url, headers)).data
+/** The caller's bearer header, or null. Only this crosses to the gateway. */
+function bearerOf(request: Request): string | null {
+    const auth = request.headers.get("authorization")
+    return auth && /^Bearer\s+\S+/i.test(auth) ? auth : null
+}
+
+async function fetchJSON<T>(path: string, auth: string | null): Promise<T | null> {
+    return (await fetchWithStatus<T>(path, auth)).data
 }
 
 async function fetchWithStatus<T>(
-    url: string,
-    headers?: Record<string, string>,
+    path: string,
+    auth: string | null,
 ): Promise<{ data: T | null; status: number }> {
+    const headers: Record<string, string> = { Accept: "application/json" }
+    if (auth) headers["Authorization"] = auth
     try {
-        const res = await fetch(url, {
-            headers: { "Content-Type": "application/json", ...headers },
-            next: { revalidate: 0 },
+        const res = await fetch(`${API_GATEWAY_URL}${path}`, {
+            headers,
+            cache: "no-store",
         })
         if (!res.ok) return { data: null, status: res.status }
         const body = await res.json()
-        return { data: body.data ?? body, status: res.status }
+        return { data: body?.data ?? body, status: res.status }
     } catch {
         return { data: null, status: 0 }
     }
 }
 
 /**
- * The viewer's relationship to the profile, from graph-service.
- * profile-service's /v1/profiles/:id/relationship is retired (410).
+ * The signed-in viewer's relationship to `userId`, from graph-service via
+ * the gateway. No `user_id` is sent: the actor is the token's user, and
+ * graph refuses an explicit id naming anyone else (400 VIEWER_BOUND).
  */
-async function fetchRelationship(viewerId: string, userId: string) {
+async function fetchRelationship(auth: string, userId: string) {
     const raw = await fetchJSON<Record<string, unknown>>(
-        `${GRAPH_SERVICE_URL}/v1/graph/relationship?user_id=${encodeURIComponent(viewerId)}&other_id=${encodeURIComponent(userId)}`
+        `/v1/graph/relationship?other_id=${encodeURIComponent(userId)}`,
+        auth,
     )
     return relationshipFromGraph(raw)
 }
+
+const PRIVATE_HEADERS = { "Cache-Control": "private, no-store", "Vary": "Authorization" }
 
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ username: string }> }
 ) {
     const { username } = await params
-    const viewerId = request.headers.get("X-User-Id")
+    // Never a client X-User-Id: the gateway derives the viewer from this.
+    const auth = bearerOf(request)
 
-    // The viewer goes to every service call, so profile-service's block gate
-    // (either direction → 404, indistinguishable from a missing account)
-    // applies to this page as it does to the API.
-    const fwdHeaders: Record<string, string> = {}
-    if (viewerId) fwdHeaders["X-User-Id"] = viewerId
-
-    // Step 1: Resolve username or user ID → profile
-    const isUUID = UUID_RE.test(username)
-    const profileUrl = isUUID
-        ? `${PROFILE_SERVICE_URL}/v1/profiles/${encodeURIComponent(username)}`
-        : `${PROFILE_SERVICE_URL}/v1/profiles/by-username/${encodeURIComponent(username)}`
+    // Step 1: Resolve username or user ID → profile. The viewer's token goes
+    // with it, so profile-service's block gate (either direction → 404,
+    // indistinguishable from a missing account) applies here as on the API.
+    const profilePath = UUID_RE.test(username)
+        ? `/v1/profiles/${encodeURIComponent(username)}`
+        : `/v1/profiles/by-username/${encodeURIComponent(username)}`
     const { data: profile, status: profileStatus } = await fetchWithStatus<Record<string, unknown>>(
-        profileUrl,
-        fwdHeaders,
+        profilePath,
+        auth,
     )
     if (!profile) {
         // One exception to the gate's silence: the viewer blocked THIS
         // account. They already know, and the page must offer Unblock. A
         // block the other way stays a plain not-found.
-        if (profileStatus === 404 && viewerId) {
-            const blockedByViewer = await viewerBlockedProfile(profileUrl, viewerId)
+        if (profileStatus === 404 && auth) {
+            const blockedByViewer = await viewerBlockedProfile(profilePath, auth)
             if (blockedByViewer) {
-                return NextResponse.json({ data: blockedByViewer }, {
-                    headers: { "Cache-Control": "private, no-store", "Vary": "X-User-Id, Authorization" },
-                })
+                return NextResponse.json({ data: blockedByViewer }, { headers: PRIVATE_HEADERS })
             }
         }
         return NextResponse.json({ error: "User not found" }, { status: 404 })
@@ -97,23 +115,20 @@ export async function GET(
     if (profile.user_id && !profile.id) {
         profile.id = profile.user_id
     }
+    const id = encodeURIComponent(userId)
 
     // Step 2: Fan out all remaining calls in parallel
     const [links, graphCounts, contentCounts, relationship] = await Promise.all([
-        fetchJSON<Record<string, unknown>[]>(
-            `${PROFILE_SERVICE_URL}/v1/profiles/${userId}/links`,
-            fwdHeaders
-        ),
+        fetchJSON<Record<string, unknown>[]>(`/v1/profiles/${id}/links`, auth),
         // Use profile's denormalized counts as primary source; fall back to graph service
         fetchJSON<{ follower_count: number; following_count: number; friend_count: number }>(
-            `${GRAPH_SERVICE_URL}/v1/graph/counts/${userId}`
+            `/v1/graph/counts/${id}`,
+            auth,
         ),
-        fetchJSON<Record<string, number>>(
-            `${POST_SERVICE_URL}/v1/posts/by-author/${userId}/counts`
-        ),
-        viewerId && viewerId !== userId
-            ? fetchRelationship(viewerId, userId)
-            : Promise.resolve(null),
+        fetchJSON<Record<string, number>>(`/v1/posts/by-author/${id}/counts`, auth),
+        // On your own profile graph answers all-false; the page decides
+        // ownership from the session and ignores it there.
+        auth ? fetchRelationship(auth, userId) : Promise.resolve(null),
     ])
 
     // Use profile's denormalized counts as fallback
@@ -125,7 +140,7 @@ export async function GET(
     // Map to frontend field names
     const result: AggregatedProfile = {
         profile,
-        links: links ?? [],
+        links: Array.isArray(links) ? links : [],
         stats: {
             follower_count: graphCounts?.follower_count ?? profileFollowerCount,
             following_count: graphCounts?.following_count ?? profileFollowingCount,
@@ -138,15 +153,10 @@ export async function GET(
         relationship: relationship ?? null,
     }
 
-    const cacheControl = viewerId
-        ? "private, no-store"
-        : "public, s-maxage=10, stale-while-revalidate=30";
-
     return NextResponse.json({ data: result }, {
-        headers: {
-            "Cache-Control": cacheControl,
-            "Vary": "X-User-Id, Authorization",
-        },
+        headers: auth
+            ? PRIVATE_HEADERS
+            : { "Cache-Control": "public, s-maxage=10, stale-while-revalidate=30", "Vary": "Authorization" },
     })
 }
 
@@ -156,14 +166,15 @@ export async function GET(
  * needs (id, username, display name, relationship.blocked), or null.
  */
 async function viewerBlockedProfile(
-    profileUrl: string,
-    viewerId: string,
+    profilePath: string,
+    auth: string,
 ): Promise<AggregatedProfile | null> {
-    const anon = await fetchJSON<Record<string, unknown>>(profileUrl)
+    // Read signed out: does the account exist for a stranger?
+    const anon = await fetchJSON<Record<string, unknown>>(profilePath, null)
     if (!anon) return null
     const userId = (anon.user_id ?? anon.id) as string | undefined
-    if (!userId || userId === viewerId) return null
-    const relationship = await fetchRelationship(viewerId, userId)
+    if (!userId) return null
+    const relationship = await fetchRelationship(auth, userId)
     if (!relationship?.blocked) return null
     return {
         profile: {

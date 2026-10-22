@@ -729,10 +729,12 @@ export function batchRelationshipsKey(viewerId: string, targetIds: string[]) {
  * the UI Relationship. Shared by useBatchRelationships and the paged
  * connection lists, which ask once per page.
  */
-export async function fetchRelationshipsBatch(viewerId: string, targetIds: string[]): Promise<Map<string, Relationship>> {
+export async function fetchRelationshipsBatch(_viewerId: string, targetIds: string[]): Promise<Map<string, Relationship>> {
     const capped = targetIds.slice(0, 100)
+    // No viewer_id: graph binds the viewer to the signed-in user on edge
+    // traffic (400 VIEWER_BOUND for anyone else). The caller's viewer id
+    // only keys its cache.
     const res = await api.post<RelationshipBatchResponse>("/v1/graph/relationships/batch", {
-        viewer_id: viewerId,
         target_ids: capped,
     })
     // graph-service returns a bare { "<uuid>": {...} } map (no
