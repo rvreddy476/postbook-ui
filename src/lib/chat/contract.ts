@@ -102,7 +102,7 @@ export function decodePeer(raw: unknown): ChatPeer | null {
 /* ------------------------------------------------------------------ */
 
 export type InboxLane = 'primary' | 'requests' | 'archived'
-export type OwnStatus = 'sent' | 'read'
+export type OwnStatus = 'sent' | 'delivered' | 'read'
 
 export interface ChatStreak {
   days: number
@@ -167,7 +167,7 @@ export function decodeStreak(raw: unknown): ChatStreak | null {
 }
 
 function decodeOwnStatus(v: unknown): OwnStatus | null {
-  return v === 'sent' || v === 'read' ? v : null
+  return v === 'sent' || v === 'delivered' || v === 'read' ? v : null
 }
 
 function decodeMember(raw: unknown): InboxMember | null {

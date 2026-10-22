@@ -12,6 +12,24 @@ import { getSession, logoutUser } from "@/services/authService"
 import CallOverlay from "@/components/CallOverlay"
 import { CurrentLocationProvider } from "@/features/maps/CurrentLocation"
 import WebPushRoot from "@/features/webPush/WebPushRoot"
+import { applyReadTickColour, loadReadTickColour, parseReadTickColour, READ_TICK_COLOUR_STORAGE_KEY } from "@/lib/chat/readTickColour"
+
+/**
+ * ReadTickColour applies the viewer's "Read tick colour" (a device
+ * preference) by re-pointing the one --receipt-seen token, and follows a
+ * change made in another tab. Renders nothing.
+ */
+function ReadTickColour() {
+    useEffect(() => {
+        applyReadTickColour(loadReadTickColour())
+        const onStorage = (e: StorageEvent) => {
+            if (e.key === READ_TICK_COLOUR_STORAGE_KEY) applyReadTickColour(parseReadTickColour(e.newValue))
+        }
+        window.addEventListener("storage", onStorage)
+        return () => window.removeEventListener("storage", onStorage)
+    }, [])
+    return null
+}
 
 /**
  * SessionReconciler makes the httpOnly refresh cookie the single authority
@@ -102,6 +120,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <ToastProvider>
                 <SessionReconciler />
                 <PresenceHeartbeat />
+                <ReadTickColour />
                 {/* Global on purpose. Importing CallOverlay is what registers
                     the signalling listener (callService subscribes at module
                     load), and both were mounted only on the "/" route — so on

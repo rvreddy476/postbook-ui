@@ -109,6 +109,8 @@ describe('labels', () => {
     expect(rowPreview(seen, ME)).toEqual({ text: 'You: ok', status: 'Seen' })
     const sent = row({ id: 'a', last_message: { type: 'voice', preview: '', sender_id: ME, own_status: 'sent' } })
     expect(rowPreview(sent, ME)).toEqual({ text: 'You: Voice message', status: 'Sent' })
+    const delivered = row({ id: 'a', last_message: { type: 'text', preview: 'ok', sender_id: ME, own_status: 'delivered' } })
+    expect(rowPreview(delivered, ME)).toEqual({ text: 'You: ok', status: 'Delivered' })
     const theirs = row({ id: 'a', last_message: { type: 'sticker', sender_id: 'u2' } })
     expect(rowPreview(theirs, ME)).toEqual({ text: 'Sticker', status: null })
     const g = decodeInboxRow({ id: 'g', type: 'group', members: [{ user_id: 'u2', display_name: 'Asha Rao' }], last_message: { preview: 'hi', sender_id: 'u2' } }, ME)!

@@ -6,6 +6,7 @@ import {
     Activity,
     ArrowLeft,
     BellRing,
+    Check,
     CheckCheck,
     Ellipsis,
     EyeOff,
@@ -24,6 +25,13 @@ import {
 import AppShell from "@/components/AppShell"
 import { BUBBLE_STYLES, BUBBLE_STYLE_LABELS, bubbleClass, bubbleSwatchClass, type BubbleStyle } from "@/lib/chat/bubbleStyle"
 import { useMessagingSettings, useUpdateMessagingSettings } from "@/hooks/useMessagingSettings"
+import {
+    READ_TICK_COLOURS,
+    READ_TICK_COLOUR_LABELS,
+    loadReadTickColour,
+    saveReadTickColour,
+    type ReadTickColour,
+} from "@/lib/chat/readTickColour"
 import {
     addKeyword,
     callChoices,
@@ -250,6 +258,12 @@ export default function MessagingSettingsPage() {
                                         serverError={errors.chat_bubble_style}
                                         onSave={(style) => save("chat_bubble_style", { chat_bubble_style: style })}
                                     />
+                                </li>
+                            </Group>
+
+                            <Group title="Read tick colour">
+                                <li>
+                                    <ReadTickColourPicker />
                                 </li>
                             </Group>
 
@@ -565,6 +579,59 @@ function KeywordEditor({
                     >
                         {busy ? "Saving…" : "Save"}
                     </button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+/**
+ * Read tick colour: five swatches, each an existing theme token, saved on this
+ * device as soon as one is picked (there is no account field for it). The
+ * preview ticks draw from the same `text-receipt-seen` token every chat does.
+ */
+function ReadTickColourPicker() {
+    const labelId = useId()
+    const [choice, setChoice] = useState<ReadTickColour>(() => loadReadTickColour())
+
+    return (
+        <div className="settings-hub__block">
+            <div className="msg-settings__row">
+                <RowIcon icon={CheckCheck} />
+                <RowText id={labelId} label="Read tick colour" hint="The colour of the two ticks once your message has been read. Saved on this device." />
+            </div>
+            <div className="msg-settings__panel">
+                <div className="msg-settings__swatches" role="radiogroup" aria-labelledby={labelId}>
+                    {READ_TICK_COLOURS.map((option) => (
+                        <span key={option} className="msg-settings__swatch-item">
+                            <button
+                                type="button"
+                                role="radio"
+                                aria-checked={choice === option}
+                                aria-label={READ_TICK_COLOUR_LABELS[option]}
+                                className={`msg-settings__swatch msg-settings__tick-swatch--${option}`}
+                                onClick={() => {
+                                    setChoice(option)
+                                    saveReadTickColour(option)
+                                }}
+                            />
+                            <span aria-hidden>{READ_TICK_COLOUR_LABELS[option]}</span>
+                        </span>
+                    ))}
+                </div>
+                <div className="msg-settings__preview" aria-label="Preview">
+                    <p className="msg-settings__bubble msg-settings__bubble--out msg-settings__tick-row">
+                        <span>Sent</span>
+                        <Check size={16} strokeWidth={2.25} className="msg-settings__tick-grey" aria-hidden />
+                    </p>
+                    <p className="msg-settings__bubble msg-settings__bubble--out msg-settings__tick-row">
+                        <span>Delivered</span>
+                        <CheckCheck size={16} strokeWidth={2.25} className="msg-settings__tick-grey" aria-hidden />
+                    </p>
+                    <p className="msg-settings__bubble msg-settings__bubble--out msg-settings__tick-row">
+                        <span>Read</span>
+                        <CheckCheck size={16} strokeWidth={2.25} className="text-receipt-seen" aria-hidden />
+                    </p>
                 </div>
             </div>
         </div>

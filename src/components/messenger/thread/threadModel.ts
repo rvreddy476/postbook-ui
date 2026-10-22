@@ -6,6 +6,7 @@
 
 import type { Message, PinnedMessage, PinUpdateEvent } from '@/services/messageService'
 import type { MessageExtras } from '@/lib/chat/contract'
+import type { TickStatus } from '@/lib/chat/tickState'
 
 export interface DisplayMessage {
   id: string
@@ -27,6 +28,8 @@ export interface DisplayMessage {
   expiresAt?: string
   reactions?: { emoji: string; user_ids: string[] }[]
   extras?: MessageExtras
+  /** Message ticks: the server's status on MY messages (history only). */
+  status?: TickStatus
 }
 
 export function formatTime(iso: string): string {
@@ -59,6 +62,7 @@ export function toDisplay(msg: Message): DisplayMessage {
     expiresAt: msg.expires_at,
     reactions: msg.reactions,
     extras: msg.extras,
+    status: msg.status,
   }
 }
 

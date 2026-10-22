@@ -14,6 +14,8 @@ import {
   subscribeToReactions,
   subscribeToTyping,
   subscribeToReadReceipts,
+  subscribeToDeliveryReceipts,
+  ackDelivered,
   subscribeToMessageEdits,
   subscribeToMessageDeletes,
   subscribeToPinUpdates,
@@ -32,11 +34,14 @@ import {
   ReactionUpdate,
   TypingEvent,
   ReadReceiptEvent,
+  type DeliveryReceiptEvent,
   MessageEditedEvent,
   MessageDeletedEvent,
   PinUpdateEvent,
   DisappearingTimerEvent,
   PinnedMessage,
+  readMyJoin,
+  type MyJoin,
 } from '@/services/messageService'
 import {
   deleteMessageScoped,
@@ -77,7 +82,9 @@ import {
   who,
 } from '@/lib/chat/dmConsent'
 import { presenceLabel } from '@/lib/chat/inbox'
+import { JOIN_NOTE_HISTORY_TEXT, joinNoteText } from '@/lib/chat/joinNote'
 import { bubbleClass, parseBubbleStyle } from '@/lib/chat/bubbleStyle'
+import { decodeConversationReceipts, mergeWatermark, tickLabel, tickState, type TickState } from '@/lib/chat/tickState'
 import type { GifSendPayload } from '@/lib/chat/giphy'
 import { InboxAvatar } from './inbox/InboxAvatar'
 import { MessageBody } from './thread/MessageBody'
@@ -198,6 +205,8 @@ export default function DmChat({
   const [messages, setMessages] = useState<DisplayMessage[]>([])
   const [olderCursor, setOlderCursor] = useState<string | null>(null)
   const [loadingOlder, setLoadingOlder] = useState(false)
+  /** A group newcomer's own join, shown above the history that starts there. */
+  const [myJoin, setMyJoin] = useState<MyJoin | null>(null)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -215,7 +224,10 @@ export default function DmChat({
   const [replyingTo, setReplyingTo] = useState<DisplayMessage | null>(null)
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set())
   const [readReceipts, setReadReceipts] = useState<Map<string, string[]>>(new Map())
+  // Message ticks: the read watermark (DM: the peer's; group: every other
+  // member's, server aggregate) and the delivered one, both ms.
   const [peerLastReadAt, setPeerLastReadAt] = useState<number | null>(null)
+  const [deliveredUpTo, setDeliveredUpTo] = useState<number | null>(null)
   // Every pin in the chat, newest first; the bar shows pins[pinIndex].
   const [pins, setPins] = useState<PinnedMessage[]>([])
   const [pinIndex, setPinIndex] = useState(0)
@@ -286,8 +298,10 @@ export default function DmChat({
       ...remoteTypingIds, ...Array.from(typingUsers), ...profileCardIds, ...groupSenderIds,
       // The waiting-request banner names them by @handle.
       ...(requestOutgoing && userId ? [userId] : []),
+      // "Asha added you": the adder may have left the group since.
+      ...(myJoin?.addedByUserId && !memberById.get(myJoin.addedByUserId)?.displayName ? [myJoin.addedByUserId] : []),
     ])),
-    [remoteTypingIds, typingUsers, profileCardIds, groupSenderIds, requestOutgoing, userId]
+    [remoteTypingIds, typingUsers, profileCardIds, groupSenderIds, requestOutgoing, userId, myJoin, memberById]
   )
   const { data: profiles } = useBatchProfiles(profileIds)
   // Waiting request: who they are ("@asha"), and whether my one message is already in.
@@ -347,6 +361,7 @@ export default function DmChat({
     setChatSource(null)
     setMessages([])
     setOlderCursor(null)
+    setMyJoin(null)
     setPins([])
     setPinIndex(0)
     setDisappearAfterMs(null)
@@ -375,7 +390,12 @@ export default function DmChat({
         if (!cancelled) {
           // The shared disappearing timer rides on the conversation itself; the settings read below confirms it.
           setDisappearAfterMs(decodeDisappearMs(convRes.data?.disappear_after_ms ?? (convRes as { disappear_after_ms?: unknown }).disappear_after_ms))
-          setPeerLastReadAt(!group && peer?.last_read_at ? Date.parse(peer.last_read_at) : null)
+          setMyJoin(group ? readMyJoin(convRes) : null)
+          // Message ticks: the viewer-scoped watermarks (read withheld = null);
+          // a DM also keeps the peer's last_read_at as before.
+          const receipts = decodeConversationReceipts(convRes.data ?? convRes)
+          setPeerLastReadAt(mergeWatermark(receipts.readUpTo, !group ? peer?.last_read_at : null))
+          setDeliveredUpTo(receipts.deliveredUpTo)
           if (peerRaw) {
             setPeerPresence((prev) => ({
               isOnline: typeof peerRaw.is_online === 'boolean' ? peerRaw.is_online : prev.isOnline,
@@ -397,6 +417,9 @@ export default function DmChat({
             const last = displayed[displayed.length - 1]
             markConversationRead(conversationId, last.id).catch(() => { })
             clearUnreadBadge(conversationId, last.ts)
+            // Message ticks: history reached this device — ack the newest from others.
+            const newestTheirs = [...displayed].reverse().find(m => m.senderId !== myId)
+            if (newestTheirs) ackDelivered(conversationId, newestTheirs.id, newestTheirs.ts)
           } else {
             clearUnreadBadge(conversationId)
           }
@@ -551,14 +574,25 @@ export default function DmChat({
 
   useEffect(() => subscribeToReadReceipts((evt: ReadReceiptEvent) => {
     if (evt.conversation_id !== convIdRef.current || evt.user_id === myId) return
-    setReadReceipts(prev => {
-      const next = new Map(prev)
-      const readers = next.get(evt.message_id) || []
-      if (!readers.includes(evt.user_id)) next.set(evt.message_id, [...readers, evt.user_id])
-      return next
-    })
-    const at = Date.parse(evt.read_at)
-    if (!Number.isNaN(at)) setPeerLastReadAt(prev => (prev === null || at > prev ? at : prev))
+    // A group moves only on the server's aggregate ("every other member read
+    // up to"); one member's read never turns a group tick coloured.
+    if (isGroup && !evt.aggregate) return
+    if (!evt.aggregate && evt.message_id && evt.user_id) {
+      setReadReceipts(prev => {
+        const next = new Map(prev)
+        const readers = next.get(evt.message_id) || []
+        if (!readers.includes(evt.user_id)) next.set(evt.message_id, [...readers, evt.user_id])
+        return next
+      })
+    }
+    const upTo = evt.read_up_to ?? null
+    setPeerLastReadAt(prev => mergeWatermark(prev, upTo ?? evt.read_at))
+  }), [myId, isGroup])
+
+  // Message ticks: a recipient's device received messages (never privacy-gated).
+  useEffect(() => subscribeToDeliveryReceipts((evt: DeliveryReceiptEvent) => {
+    if (evt.conversation_id !== convIdRef.current || evt.user_id === myId) return
+    if (evt.delivered_up_to !== null) setDeliveredUpTo(prev => mergeWatermark(prev, evt.delivered_up_to))
   }), [myId])
 
   useEffect(() => subscribeToReactions((evt: ReactionUpdate) => {
@@ -978,12 +1012,17 @@ export default function DmChat({
 
   const lastOwnId = useMemo(() => lastOwnMessageId(messages, myId), [messages, myId])
 
-  const isSeenByPeer = useCallback((msg: DisplayMessage): boolean => {
-    if (readReceipts.has(msg.id)) return true
-    if (peerLastReadAt === null) return false
-    const sentAt = Date.parse(msg.ts)
-    return !Number.isNaN(sentAt) && sentAt <= peerLastReadAt
-  }, [readReceipts, peerLastReadAt])
+  // Message ticks (lib/chat/tickState): sent / delivered / read for my messages.
+  const tickOf = useCallback((msg: DisplayMessage): TickState => tickState({
+    isMine: msg.senderId === myId,
+    pending: msg.id.startsWith('opt-'),
+    ts: msg.ts,
+    status: !isGroup && readReceipts.has(msg.id) ? 'read' : msg.status,
+    deliveredUpTo,
+    readUpTo: peerLastReadAt,
+  }), [myId, isGroup, readReceipts, deliveredUpTo, peerLastReadAt])
+
+  const isSeenByPeer = useCallback((msg: DisplayMessage): boolean => tickOf(msg) === 'read', [tickOf])
 
   // Group "Seen by N" for my last message.
   useEffect(() => {
@@ -993,7 +1032,7 @@ export default function DmChat({
       void fetchReadSummary(convIdRef.current!, lastOwnId).then((s) => { if (!cancelled) setSeenByCount(s ? s.count : null) }).catch(() => undefined)
     }, 400)
     return () => { cancelled = true; clearTimeout(t) }
-  }, [isGroup, lastOwnId, readReceipts])
+  }, [isGroup, lastOwnId, readReceipts, peerLastReadAt])
 
   const findMessage = useCallback((msgId: string) => messages.find(m => m.id === msgId), [messages])
   const mediaKinds = useMediaKinds(
@@ -1139,6 +1178,15 @@ export default function DmChat({
         )}
         {!loading && !olderCursor && messages.length > 0 && !isGroup && (
           <ThreadIntro userId={userId} fallbackName={userName} fallbackAvatar={headerAvatar} />
+        )}
+        {/* My history starts at my join (WhatsApp): say how, once the start is loaded. */}
+        {!loading && !error && !olderCursor && isGroup && myJoin && (
+          <div role="note" className="flex flex-col items-center px-6 py-3 text-center">
+            <p className="text-xs text-muted-foreground">
+              {joinNoteText(myJoin, myJoin.addedByUserId ? nameOf(myJoin.addedByUserId) : null, typeof navigator !== 'undefined' ? navigator.language : undefined)}
+            </p>
+            <p className="text-xs text-muted-foreground">{JOIN_NOTE_HISTORY_TEXT}</p>
+          </div>
         )}
         {loading && (
           <div className="flex items-center justify-center flex-1 h-full">
@@ -1316,15 +1364,21 @@ export default function DmChat({
                 {groupEnd && (
                   <div className="mt-1 flex items-center gap-1.5 px-0.5 text-[11px] font-medium text-brand-text/50">
                     {msg.time}
-                    {isMe && !msg.isDeleted && !isGroup && (
-                      msg.id.startsWith('opt-') ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : isSeenByPeer(msg) ? (
-                        <span className="flex items-center text-receipt-seen" title="Seen"><CheckCheck className="h-4 w-4" strokeWidth={2.25} /></span>
-                      ) : (
-                        <span className="flex items-center text-brand-text/40" title="Sent"><Check className="h-3.5 w-3.5" strokeWidth={2.25} /></span>
-                      )
-                    )}
+                    {isMe && !msg.isDeleted && (() => {
+                      // Message ticks: one grey = sent, two grey = delivered, two in the read colour = read.
+                      const tick = tickOf(msg)
+                      if (tick === 'pending') return <Loader2 className="h-3 w-3 animate-spin" aria-label={tickLabel(tick)} />
+                      if (tick === 'read') {
+                        return <span className="flex items-center text-receipt-seen" title={tickLabel(tick)} role="img" aria-label={tickLabel(tick)}><CheckCheck className="h-4 w-4" strokeWidth={2.25} aria-hidden /></span>
+                      }
+                      if (tick === 'delivered') {
+                        return <span className="flex items-center text-brand-text/40" title={tickLabel(tick)} role="img" aria-label={tickLabel(tick)}><CheckCheck className="h-4 w-4" strokeWidth={2.25} aria-hidden /></span>
+                      }
+                      if (tick === 'sent') {
+                        return <span className="flex items-center text-brand-text/40" title={tickLabel(tick)} role="img" aria-label={tickLabel(tick)}><Check className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden /></span>
+                      }
+                      return null
+                    })()}
                   </div>
                 )}
                 {/* "Seen" under my last message (DM), "Seen by N" in a group. */}

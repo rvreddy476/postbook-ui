@@ -11,6 +11,8 @@ import {
   type MessageExtras,
 } from '@/lib/chat/contract';
 import { decodeRequestRemovedFrame } from '@/lib/chat/requestsLane';
+import { decodeDeliveryReceiptFrame, decodeReadReceiptFrame, parseTickStatus, type TickStatus } from '@/lib/chat/tickState';
+import { createDeliveredAckBatcher } from '@/lib/chat/deliveredAck';
 
 export interface Message {
   id: string;
@@ -48,6 +50,8 @@ export interface Message {
   expires_at?: string;
   /** Chat-parity fields (CONTRACT §2.2), decoded tolerantly; absent fields are neutral. */
   extras?: MessageExtras;
+  /** Message ticks: on MY messages in history, "sent" | "delivered" | "read". */
+  status?: TickStatus;
 }
 
 export interface ReactionUpdate {
@@ -66,9 +70,25 @@ export interface TypingEvent {
 
 export interface ReadReceiptEvent {
   conversation_id: string;
+  /** The reader; "" on a group aggregate frame. */
   user_id: string;
   message_id: string;
   read_at: string;
+  /** Message ticks: the aggregate read watermark (ms), null when absent. */
+  read_up_to?: number | null;
+  /** A group frame: "every other member read up to read_up_to", no reader named. */
+  aggregate?: boolean;
+}
+
+/** Message ticks: a recipient's device received messages (never privacy-gated). */
+export interface DeliveryReceiptEvent {
+  conversation_id: string;
+  user_id: string;
+  message_id: string;
+  /** ms, null when absent. */
+  delivered_at: number | null;
+  /** The aggregate watermark for me (every other member received up to it), ms. */
+  delivered_up_to: number | null;
 }
 
 export interface MessageEditedEvent {
@@ -142,6 +162,7 @@ const normalizeMessage = (raw: Record<string, any>): Message => ({
   created_at: raw.created_at as string,
   expires_at: typeof raw.expires_at === 'string' && raw.expires_at ? raw.expires_at : undefined,
   extras: decodeMessageExtras(raw),
+  status: parseTickStatus(raw.status) ?? undefined,
 });
 
 /** Exported for the parity API (paged reads) and tests. */
@@ -183,6 +204,12 @@ const callSignalListeners = new Set<(signal: CallSignal) => void>();
 const feedUpdateListeners = new Set<(f: FeedUpdate) => void>();
 const typingListeners = new Set<(e: TypingEvent) => void>();
 const readReceiptListeners = new Set<(e: ReadReceiptEvent) => void>();
+const deliveryReceiptListeners = new Set<(e: DeliveryReceiptEvent) => void>();
+// Message ticks: received messages are acknowledged per conversation, at most
+// once a second, coalesced to the newest (lib/chat/deliveredAck).
+const deliveredAcks = createDeliveredAckBatcher({
+  send: (conversationId, ack) => markConversationDelivered(conversationId, ack),
+});
 const messageEditedListeners = new Set<(e: MessageEditedEvent) => void>();
 const messageDeletedListeners = new Set<(e: MessageDeletedEvent) => void>();
 const postUpdateListeners = new Set<(u: PostInteractionUpdate) => void>();
@@ -507,6 +534,10 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
         onMsg(msg);
         localListeners.forEach(cb => cb(msg));
         getChannel()?.postMessage(msg);
+        // Message ticks: this device has it — tell the sender (any chat, open or not).
+        if (msg.id && msg.conversation_id && msg.sender_id && msg.sender_id !== getSessionUser()?.id) {
+          ackDelivered(msg.conversation_id, msg.id, msg.ts);
+        }
       } else if (data.type?.startsWith('call_') || data.type === 'ice_candidate') {
         const signal: CallSignal = data as CallSignal;
         callSignalListeners.forEach(cb => cb(signal));
@@ -530,13 +561,32 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
         };
         typingListeners.forEach(cb => cb(evt));
       } else if (data.type === 'read_receipt') {
-        const evt: ReadReceiptEvent = {
-          conversation_id: data.payload.conversation_id,
-          user_id: data.payload.user_id,
-          message_id: data.payload.message_id,
-          read_at: data.payload.read_at,
-        };
-        readReceiptListeners.forEach(cb => cb(evt));
+        // Direct {user_id, message_id, read_at, read_up_to}; group aggregate {aggregate, read_up_to}.
+        const decoded = decodeReadReceiptFrame(data);
+        if (decoded) {
+          const evt: ReadReceiptEvent = {
+            conversation_id: decoded.conversationId,
+            user_id: decoded.userId ?? '',
+            message_id: decoded.messageId ?? '',
+            read_at: typeof data.payload?.read_at === 'string' ? data.payload.read_at : '',
+            read_up_to: decoded.readUpTo,
+            aggregate: decoded.aggregate,
+          };
+          readReceiptListeners.forEach(cb => cb(evt));
+        }
+      } else if (data.type === 'delivery_receipt') {
+        // {conversation_id, user_id, message_id, delivered_at, delivered_up_to}.
+        const decoded = decodeDeliveryReceiptFrame(data);
+        if (decoded) {
+          const evt: DeliveryReceiptEvent = {
+            conversation_id: decoded.conversationId,
+            user_id: decoded.userId,
+            message_id: decoded.messageId,
+            delivered_at: decoded.deliveredAt,
+            delivered_up_to: decoded.deliveredUpTo,
+          };
+          deliveryReceiptListeners.forEach(cb => cb(evt));
+        }
       } else if (data.type === 'message_edited') {
         const evt: MessageEditedEvent = {
           conversation_id: data.payload.conversation_id,
@@ -756,6 +806,30 @@ export const markConversationRead = async (conversationId: string, messageId: st
   });
 };
 
+/**
+ * Message ticks: this device received messages in the conversation up to
+ * `messageId` / `ts` (the newest one's server timestamp). Background and
+ * best effort — a failed or rate-limited ack only leaves the sender's tick
+ * at one, it never interrupts the reader.
+ */
+export const markConversationDelivered = async (conversationId: string, ack: { messageId: string; ts?: string }) => {
+  const body: Record<string, string> = { up_to_message_id: ack.messageId };
+  if (ack.ts) body.ts = ack.ts;
+  try {
+    await chatClient.request(`/conversations/${encodeURIComponent(conversationId)}/delivered`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }, true);
+  } catch {
+    /* best effort */
+  }
+};
+
+/** Queue a delivered ack (batched: at most once a second per conversation). */
+export const ackDelivered = (conversationId: string, messageId: string, ts: string) => {
+  deliveredAcks.enqueue(conversationId, { messageId, ts });
+};
+
 export const sendTypingIndicator = async (conversationId: string) => {
   return chatClient.request(`/conversations/${conversationId}/typing`, {
     method: 'POST',
@@ -844,6 +918,40 @@ export interface Conversation {
   last_message?: Message | null;
   created_at: string;
   updated_at: string;
+  /** How I came into this group; only when my history starts at that join (see readMyJoin). */
+  my_join?: { joined_at?: string; method?: string; added_by_user_id?: string } | null;
+}
+
+/** The three ways into a group that earn the "you joined" note. */
+export type MyJoinMethod = 'invite_link' | 'added' | 'invitation';
+
+export interface MyJoin {
+  joinedAt: string;
+  method: MyJoinMethod;
+  /** Who added me / whose invitation I accepted; null when unknown (or a link). */
+  addedByUserId: string | null;
+}
+
+const MY_JOIN_METHODS: readonly string[] = ['invite_link', 'added', 'invitation'];
+
+/**
+ * Reads `my_join` off GET /conversations/:id (wrapped in `data` or bare).
+ * A group newcomer sees only what was sent after they joined (22 Oct 2026);
+ * the server sends my_join only then — never for the creator or a member with
+ * full history. Anything else (absent, empty strings, "created", an unknown
+ * method, a joined_at that is not a date) reads as null: no note.
+ */
+export function readMyJoin(body: unknown): MyJoin | null {
+  const o = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
+  const c = o.data && typeof o.data === 'object' ? (o.data as Record<string, unknown>) : o;
+  const raw = c.my_join;
+  if (!raw || typeof raw !== 'object') return null;
+  const j = raw as Record<string, unknown>;
+  const method = typeof j.method === 'string' ? j.method : '';
+  const joinedAt = typeof j.joined_at === 'string' ? j.joined_at : '';
+  if (!MY_JOIN_METHODS.includes(method) || !joinedAt || Number.isNaN(Date.parse(joinedAt))) return null;
+  const by = typeof j.added_by_user_id === 'string' && j.added_by_user_id ? j.added_by_user_id : null;
+  return { joinedAt, method: method as MyJoinMethod, addedByUserId: method === 'invite_link' ? null : by };
 }
 
 /** Lists conversations sitting in the Requests folder (is_request = true). */
@@ -896,6 +1004,11 @@ export const subscribeToTyping = (cb: (e: TypingEvent) => void) => {
 export const subscribeToReadReceipts = (cb: (e: ReadReceiptEvent) => void) => {
   readReceiptListeners.add(cb);
   return () => { readReceiptListeners.delete(cb); };
+};
+
+export const subscribeToDeliveryReceipts = (cb: (e: DeliveryReceiptEvent) => void) => {
+  deliveryReceiptListeners.add(cb);
+  return () => { deliveryReceiptListeners.delete(cb); };
 };
 
 export const subscribeToMessageEdits = (cb: (e: MessageEditedEvent) => void) => {

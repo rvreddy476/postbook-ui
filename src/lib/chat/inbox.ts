@@ -241,8 +241,8 @@ const TYPE_PREVIEW: Record<string, string> = {
 
 export interface RowPreview {
   text: string
-  /** "Seen" / "Sent" for my own last message, when the server said. */
-  status: 'Seen' | 'Sent' | null
+  /** "Seen" / "Delivered" / "Sent" for my own last message, when the server said. */
+  status: 'Seen' | 'Delivered' | 'Sent' | null
 }
 
 export function rowPreview(row: InboxRow, myId: string, opts: { sentRequestWaiting?: boolean } = {}): RowPreview {
@@ -260,7 +260,7 @@ export function rowPreview(row: InboxRow, myId: string, opts: { sentRequestWaiti
   }
   return {
     text: `You: ${body}`,
-    status: lm.ownStatus === 'read' && !row.isGroup ? 'Seen' : lm.ownStatus === 'sent' ? 'Sent' : null,
+    status: lm.ownStatus === 'read' && !row.isGroup ? 'Seen' : lm.ownStatus === 'delivered' ? 'Delivered' : lm.ownStatus === 'sent' ? 'Sent' : null,
   }
 }
 
