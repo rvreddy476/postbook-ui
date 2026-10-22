@@ -139,7 +139,7 @@ export function soundRefusalMessage(code: string | null | undefined): string {
     case "TOO_LONG":
     case "NOT_A_REEL":
     case "NOT_A_VIDEO":
-      return "Only reels up to 5 minutes can be used as a sound.";
+      return "Only reels up to 10 minutes can be used as a sound.";
     case "NO_AUDIO":
       return "This reel has no sound to use.";
     case "NOT_FOUND":

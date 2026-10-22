@@ -225,7 +225,7 @@ describe("words", () => {
   test("a refusal is explained by its code", () => {
     expect(soundRefusalMessage("SOUND_REUSE_NOT_ALLOWED")).toContain("turned off reuse");
     expect(soundRefusalMessage("NOT_READY")).toContain("still processing");
-    expect(soundRefusalMessage("TOO_LONG")).toContain("5 minutes");
+    expect(soundRefusalMessage("TOO_LONG")).toContain("10 minutes");
     expect(soundRefusalMessage("NO_AUDIO")).toContain("no sound");
     expect(soundRefusalMessage("RATE_LIMITED")).toContain("Try again later");
     expect(soundRefusalMessage("SOUND_UNAVAILABLE")).toBe("Please try again.");
