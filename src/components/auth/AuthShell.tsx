@@ -12,6 +12,7 @@ import {
   Users,
 } from "lucide-react";
 import "./auth.css";
+import { ActivityWallpaper } from "./ActivityWallpaper";
 import { authRedirect } from "./authRedirect";
 import { partnerForDestination } from "./portalRoles";
 import { RoleMenuLink } from "./RoleMenuLink";
@@ -71,6 +72,7 @@ export function AuthShell({
   const switchHref = partnerPortal ? partnerAuthHref(mode === "login" ? "register" : "login", businessIds, destination) : `${mode === "login" ? "/register" : "/login"}${destination === "/" ? "" : `?redirect=${encodeURIComponent(destination)}`}`;
   return (
     <div className="auth-page">
+      <ActivityWallpaper />
       <a href="#auth-form" className="auth-skip-link">
         Skip to form
       </a>

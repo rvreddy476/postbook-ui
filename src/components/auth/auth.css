@@ -1,8 +1,26 @@
-/* Layout only: colours and fonts inherit the central Momentum theme. */
+/* Layout only: colours and fonts inherit the central VChat theme. */
 .auth-page {
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
   min-height: 100dvh;
   background: rgb(var(--canvas));
   color: rgb(var(--brand-text));
+  --auth-wallpaper-strength: 0.16;
+}
+.dark .auth-page {
+  --auth-wallpaper-strength: 0.22;
+}
+/* The activity wallpaper (23 Oct 2026): behind everything, never in the way. */
+.auth-wallpaper {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.auth-wallpaper svg {
+  display: block;
 }
 .auth-header {
   max-width: 1480px;
