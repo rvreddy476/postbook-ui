@@ -1,0 +1,38 @@
+{
+  "data": [
+    {
+      "subscription_id": "5ab0c0de-0000-4000-8000-000000000020",
+      "subscriber": {
+        "id": "b0b00000-0000-4000-8000-000000000001",
+        "username": "ravi",
+        "display_name": "Ravi K",
+        "avatar_url": "/v1/media/aaaa0000-0000-4000-8000-000000000001/serve"
+      },
+      "tier": {
+        "id": "6f1c2a10-1111-4a3b-9c00-000000000002",
+        "name": "Superfan",
+        "price_paise": 19900
+      },
+      "status": "active",
+      "since": "2026-10-23T08:00:00Z",
+      "access_until": "2026-11-23T08:00:00Z"
+    },
+    {
+      "subscription_id": "5ab0c0de-0000-4000-8000-000000000021",
+      "subscriber": {
+        "id": "b0b00000-0000-4000-8000-000000000002"
+      },
+      "tier": {
+        "id": "6f1c2a10-1111-4a3b-9c00-000000000001",
+        "name": "Supporter",
+        "price_paise": 4900
+      },
+      "status": "past_due",
+      "since": "2026-09-01T08:00:00Z",
+      "access_until": "2026-10-28T08:00:00Z"
+    }
+  ],
+  "meta": {
+    "next_cursor": "MjAyNi0wOS0wMVQwODowMDowMFp8NWFiMGMwZGUtMDAwMC00MDAwLTgwMDAtMDAwMDAwMDAwMDIx"
+  }
+}

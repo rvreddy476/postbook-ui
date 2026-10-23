@@ -97,6 +97,8 @@ export interface FeedReelPost {
   altered_content?: boolean;
   /** Members only (post-service members_read.go): the level, on every gated row. */
   tier_required_id?: string | null;
+  /** That level's monthly price (post-service members_tiers.go); absent when unknown. */
+  tier_required_price_paise?: number | null;
   /** This viewer is not a member: caption, media, tags were cleared; the cover and title stay. */
   body_redacted?: boolean;
   /** The video's length, kept on a redacted row (its media is not). */
@@ -162,7 +164,7 @@ export interface ReelItem {
    * the stage draws the lock card, never a player or the caption. Absent on
    * every other reel.
    */
-  locked?: { tierRequiredId: string };
+  locked?: { tierRequiredId: string; requiredPricePaise?: number };
   /** The Action button: the pill above the caption. Absent when the reel has none (never on a locked reel). */
   action?: PostAction;
   media: {
@@ -298,7 +300,7 @@ export function toLockedReelItem(post: FeedReelPost): ReelItem | null {
     originalVolume: 1,
     overlayVolume: 1,
     soundReuseAllowed: false,
-    locked: { tierRequiredId: tier },
+    locked: { tierRequiredId: tier, ...(typeof post.tier_required_price_paise === "number" && post.tier_required_price_paise > 0 ? { requiredPricePaise: post.tier_required_price_paise } : {}) },
     media: {
       mediaId: "",
       width: 1080,

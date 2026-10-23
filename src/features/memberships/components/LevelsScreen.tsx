@@ -16,6 +16,8 @@ import { useAuthUser } from "@/store/auth"
 
 import { useCreateLevel, useEligibility, useMyLevels, usePatchLevel, useSetLevelActive } from "../hooks"
 import {
+  CREATOR_LEVELS_PATH,
+  CREATOR_MEMBERS_PATH,
   emptyTierForm,
   hasErrors,
   isMembershipsOff,
@@ -42,9 +44,28 @@ const input = "w-full rounded-xl border border-brand-divider bg-brand-bg px-3 py
 
 const NAV = [
   { href: "/monetization", label: "Dashboard" },
-  { href: "/monetization/tiers", label: "Memberships" },
+  { href: CREATOR_LEVELS_PATH, label: "Memberships" },
+  { href: CREATOR_MEMBERS_PATH, label: "Members" },
   { href: "/monetization/payouts", label: "Payouts" },
 ]
+
+/** The creator tools row, shared by the levels and members pages. */
+export function CreatorNav({ current }: { current: string }) {
+  return (
+    <nav aria-label="Creator tools" className="mb-6 flex gap-2 overflow-x-auto pb-1">
+      {NAV.map((n) => (
+        <Link
+          key={n.href}
+          href={n.href}
+          aria-current={n.href === current ? "page" : undefined}
+          className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold ${n.href === current ? "bg-brand-text text-brand-bg" : "bg-brand-card text-brand-text hover:bg-brand-secondary"}`}
+        >
+          {n.label}
+        </Link>
+      ))}
+    </nav>
+  )
+}
 
 export function LevelsScreen() {
   const me = useAuthUser()
@@ -66,18 +87,7 @@ export function LevelsScreen() {
           <h1 className="text-2xl font-bold text-brand-text">Memberships</h1>
           <p className="mt-1 text-sm text-muted-foreground">Up to {MAX_ACTIVE_LEVELS} levels, ₹29 to ₹2,999 a month, GST included. Members pay by reminder each month; nothing renews by itself.</p>
         </header>
-        <nav aria-label="Creator tools" className="mb-6 flex gap-2 overflow-x-auto pb-1">
-          {NAV.map((n) => (
-            <Link
-              key={n.href}
-              href={n.href}
-              aria-current={n.href === "/monetization/tiers" ? "page" : undefined}
-              className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold ${n.href === "/monetization/tiers" ? "bg-brand-text text-brand-bg" : "bg-brand-card text-brand-text hover:bg-brand-secondary"}`}
-            >
-              {n.label}
-            </Link>
-          ))}
-        </nav>
+        <CreatorNav current={CREATOR_LEVELS_PATH} />
 
         {off ? (
           <div role="status" className={`${card} mb-4 flex gap-3`}>
@@ -100,6 +110,11 @@ export function LevelsScreen() {
             <button type="button" className={primary} onClick={() => setEditing("new")} disabled={!canAdd} data-membership="add-level">
               <Plus className="h-4 w-4" aria-hidden="true" /> Add a level
             </button>
+            {all.length > 0 ? (
+              <Link href={CREATOR_MEMBERS_PATH} className={ghost} data-membership="see-members">
+                <Users className="h-3.5 w-3.5" aria-hidden="true" /> See your members
+              </Link>
+            ) : null}
             {active.length >= MAX_ACTIVE_LEVELS ? <span className="text-sm text-muted-foreground">You have {MAX_ACTIVE_LEVELS} active levels. Turn one off to add another.</span> : null}
           </div>
         ) : null}

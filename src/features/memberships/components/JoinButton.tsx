@@ -14,6 +14,8 @@ export interface JoinButtonProps {
   creatorId: string
   creatorName?: string
   requiredTierId?: string | null
+  /** The gated row's tier_required_price_paise, when it carried one. */
+  requiredPricePaise?: number | null
   className?: string
   children?: ReactNode
 }
@@ -21,7 +23,7 @@ export interface JoinButtonProps {
 const BUTTON = "inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover"
 
 /** "Join": opens the Join sheet; signed out, it goes to sign in and comes back here. */
-export function JoinButton({ creatorId, creatorName, requiredTierId, className = BUTTON, children = "Join" }: JoinButtonProps) {
+export function JoinButton({ creatorId, creatorName, requiredTierId, requiredPricePaise, className = BUTTON, children = "Join" }: JoinButtonProps) {
   const user = useAuthUser()
   const pathname = usePathname() || "/"
   const [open, setOpen] = useState(false)
@@ -38,7 +40,7 @@ export function JoinButton({ creatorId, creatorName, requiredTierId, className =
       <button type="button" className={className} onClick={() => setOpen(true)} data-membership="join-open">
         {children}
       </button>
-      <JoinSheet open={open} onClose={() => setOpen(false)} creatorId={creatorId} creatorName={creatorName} requiredTierId={requiredTierId} />
+      <JoinSheet open={open} onClose={() => setOpen(false)} creatorId={creatorId} creatorName={creatorName} requiredTierId={requiredTierId} requiredPricePaise={requiredPricePaise} />
     </>
   )
 }

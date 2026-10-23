@@ -809,6 +809,7 @@ export function ReelsScreen() {
                             creatorId={active.authorId}
                             creatorName={active.authorName}
                             tierRequiredId={active.locked.tierRequiredId}
+                            requiredPricePaise={active.locked.requiredPricePaise ?? null}
                             coverUrl={active.media.posterUrl}
                             title={active.title}
                             durationMs={active.media.durationMs}

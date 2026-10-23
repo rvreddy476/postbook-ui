@@ -5,8 +5,9 @@
   reels), the Creator Hub edit sheet and the post composer: Everyone, or a
   level — the lowest level that unlocks it; members of dearer levels see it
   too. Hosts draw it only when the creator has at least one active level
-  (useGateLevels), and apply it with PUT /v1/posts/:id/membership after the
-  create (or on save).
+  (useGateLevels), and send it as tier_required_id with the write itself:
+  the create, the draft, or the post PATCH (model.ts gateCreateField /
+  gatePatchField), so a members-only post is never public for a moment.
 */
 
 import { Check, Globe, Lock } from "lucide-react"

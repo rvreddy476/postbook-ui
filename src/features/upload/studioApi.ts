@@ -4,6 +4,7 @@ import { saveChapters, type HubPostPatch } from "@/features/posttube/hub/hubApi"
 
 import { creditsApply, creditsCreateFields, creditsDraftFields, creditsErrorProblem, type CreditsContext, type CreditsFields } from "@/features/posttube/credits/creditsModel";
 import { actionCreateFields, actionProblemFromError, type ActionWrite } from "@/features/action-button/model";
+import { gateCreateField, gatePatchField, tierGateMessage } from "@/features/memberships/model";
 
 import { studioSoundFields } from "./studioSound";
 import { isShortStudio } from "./tokens";
@@ -60,7 +61,24 @@ export function studioCreateFields(form: StudioFormState, opts: { longVideo?: bo
   if (publishAt) out.publish_at = publishAt;
   // The Action button: only when there is one (omitted = none on a create).
   Object.assign(out, actionCreateFields(form.action));
+  // Members only from birth (every content type, long_video and flick too): only when a level is chosen.
+  Object.assign(out, gateCreateField(form.tierRequiredId));
   return out;
+}
+
+/**
+ * The draft save's members-only level: always sent, so a level cleared in
+ * the studio is cleared on the draft too (PATCH /v1/reels/drafts/:id reads
+ * null as "open"). The publish then gates the post from birth.
+ */
+export function studioDraftGateField(form: Pick<StudioFormState, "tierRequiredId">): { tier_required_id: string | null } {
+  return gatePatchField(form.tierRequiredId);
+}
+
+/** A members-only refusal (INVALID_TIER, MEMBERSHIP_TIERS_UNAVAILABLE): the post was not created, and no other route will help. */
+export function isTierGateRefusal(err: unknown): boolean {
+  const code = (err as { response?: { data?: { error?: { code?: unknown } } } } | null)?.response?.data?.error?.code;
+  return typeof code === "string" && tierGateMessage(code) !== null;
 }
 
 /**
@@ -120,6 +138,9 @@ export function publishFailure(err: unknown): { code: string | null; message: st
   if (actionProblem) return { code, message: actionProblem.message };
   const creditProblem = creditsErrorProblem(code);
   if (creditProblem) return { code, message: creditProblem.message };
+  // Members only: the level is gone, or the levels could not be checked; nothing was posted.
+  const gate = tierGateMessage(code, "posted");
+  if (gate) return { code, message: gate };
   const message = typeof body?.message === "string" && body.message.trim() ? body.message.trim() : null;
   if (message) return { code, message: /[.!?]$/.test(message) ? message : `${message}.` };
   return { code, message: err instanceof Error && err.message ? err.message : "Something went wrong." };

@@ -810,7 +810,7 @@ function WatchPageContent({ videoId, listId = null, startSeconds = null }: Watch
         <div className="tube-watch__player">
           {playingOffline ? <OfflineBadge /> : null}
           {gated ? (
-            <MembershipCard channelName={channelName} poster={video.thumbnail_url || undefined} creatorId={video.author_id} tierRequiredId={detail?.tierRequiredId ?? null} />
+            <MembershipCard channelName={channelName} poster={video.thumbnail_url || undefined} creatorId={video.author_id} tierRequiredId={detail?.tierRequiredId ?? null} requiredPricePaise={detail?.tierRequiredPricePaise ?? null} />
           ) : (
             <TubeStage
               miniplayerOn={miniOn}

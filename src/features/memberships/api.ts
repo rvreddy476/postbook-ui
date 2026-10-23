@@ -11,12 +11,17 @@ import {
   createTierBody,
   entitlementParams,
   gateRequest,
+  membersListParams,
+  membershipUrl,
+  membersOnlyParams,
   paymentUrl,
   renewRequest,
   subscribeRequest,
   toAccess,
   toCheckout,
+  toCreatorMembersPage,
   toEligibility,
+  toMembershipDetail,
   toMyMemberships,
   toPaymentReading,
   toTier,
@@ -27,7 +32,9 @@ import {
   verifyRequest,
   type Access,
   type Checkout,
+  type CreatorMember,
   type Eligibility,
+  type MembershipDetail,
   type MyMembership,
   type PaymentReading,
   type Tier,
@@ -117,15 +124,31 @@ export async function fetchAccess(creatorId: string, tierId?: string | null): Pr
   return toAccess(res.data)
 }
 
-/** Members only on a post the caller wrote; null makes it public again. */
+/**
+  Members only on a post the caller wrote; null makes it public again. Only
+  where no other write fits: a create, a draft and the post PATCH all take
+  tier_required_id themselves (gateCreateField / gatePatchField).
+*/
 export async function setPostMembersOnly(postId: string, tierId: string | null): Promise<void> {
   const r = gateRequest(postId, tierId)
   await api.put(r.url, r.body)
 }
 
-/** GET /v1/posts/by-author/:id with no type: every kind, newest first. */
-export async function fetchAuthorRows(authorId: string, cursor?: string, limit = 50): Promise<{ rows: unknown[]; nextCursor?: string }> {
-  const res = await api.get(`/v1/posts/by-author/${encodeURIComponent(authorId)}`, { params: { limit: String(limit), ...(cursor ? { cursor } : {}) } })
+/** GET /v1/posts/by-author/:id?members_only=true: only the author's members-only posts, every kind, newest first. */
+export async function fetchMembersOnlyRows(authorId: string, cursor?: string, limit = 50): Promise<{ rows: unknown[]; nextCursor?: string }> {
+  const res = await api.get(`/v1/posts/by-author/${encodeURIComponent(authorId)}`, { params: membersOnlyParams(cursor, limit) })
   const data = (res.data as { data?: unknown; meta?: { next_cursor?: string } }) ?? {}
   return { rows: Array.isArray(data.data) ? data.data : [], nextCursor: data.meta?.next_cursor || undefined }
+}
+
+/** GET /memberships/:subscriptionId: the subscriber's own only (404 NOT_FOUND otherwise). */
+export async function fetchMembership(subscriptionId: string): Promise<MembershipDetail | null> {
+  const res = await api.get(membershipUrl(subscriptionId))
+  return toMembershipDetail(res.data)
+}
+
+/** GET /members: one page of the caller's members, as their creator. */
+export async function fetchCreatorMembers(cursor?: string, limit?: number): Promise<{ rows: CreatorMember[]; nextCursor?: string }> {
+  const res = await api.get(`${M}/members`, { params: membersListParams(cursor, limit) })
+  return toCreatorMembersPage(res.data)
 }

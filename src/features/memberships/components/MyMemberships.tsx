@@ -10,39 +10,61 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, ChevronRight, Loader2 } from "lucide-react"
+import { ArrowLeft, Check, ChevronRight, Loader2 } from "lucide-react"
 
 import { useBatchProfiles } from "@/hooks/useProfile"
 import type { UserProfile } from "@/types/profile"
 
 import { checkoutBusy } from "../checkout"
-import { changeLevelIntent, renewIntent, useCancelMembership, useCreatorLevels, useMembershipCheckout, useMyMemberships } from "../hooks"
-import { activeLevels, canCancel, canChangeLevel, formatDate, membershipErrorMessage, MY_MEMBERSHIPS_PATH, perMonth, STATUS_LABEL, statusLine, type MyMembership } from "../model"
+import { changeLevelIntent, renewIntent, useCancelMembership, useCreatorLevels, useMembership, useMembershipCheckout, useMyMemberships } from "../hooks"
+import {
+  activeLevels,
+  canCancel,
+  canChangeLevel,
+  downgradeLine,
+  fillPerson,
+  formatDate,
+  membershipErrorMessage,
+  MY_MEMBERSHIPS_PATH,
+  perMonth,
+  personName,
+  STATUS_LABEL,
+  statusLine,
+  toMembershipError,
+  unnamedCreatorIds,
+  type MembershipDetail,
+  type MyMembership,
+  type Person,
+} from "../model"
 import { PAYMENT_TERMS, StatusPanel } from "./JoinSheet"
 
 const card = "rounded-2xl border border-brand-divider bg-brand-card"
 const primary = "inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover disabled:opacity-50"
 const ghost = "inline-flex items-center justify-center gap-2 rounded-full border border-brand-divider px-4 py-2 text-sm font-semibold text-brand-text transition hover:bg-brand-secondary disabled:opacity-50"
 
-function creatorName(p: UserProfile | undefined): string {
-  return p?.display_name?.trim() || p?.username?.trim() || "Creator"
-}
-
-function Avatar({ profile }: { profile: UserProfile | undefined }) {
-  const src = profile?.avatar_media_id ? `/v1/media/${profile.avatar_media_id}/serve` : ""
+export function PersonAvatar({ person, fallback = "Creator" }: { person: Person | undefined; fallback?: string }) {
+  const src = person?.avatarUrl ?? ""
   return src ? (
     <img src={src} alt="" className="h-11 w-11 shrink-0 rounded-full bg-brand-secondary object-cover" />
   ) : (
     <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-secondary text-base font-semibold text-brand-text">
-      {creatorName(profile).slice(0, 1).toUpperCase()}
+      {personName(person, fallback).slice(0, 1).toUpperCase()}
     </span>
   )
 }
 
-function useCreatorProfiles(memberships: readonly MyMembership[]) {
-  const ids = useMemo(() => [...new Set(memberships.map((m) => m.creatorId).filter(Boolean))], [memberships])
+/**
+  The creators as the rows name them. The server names each one now; only
+  a row it could not name (its profile lookup failed: `creator` is {id})
+  goes to the web's own profile batch.
+*/
+function useCreators(memberships: readonly MyMembership[]): Map<string, Person> {
+  const ids = useMemo(() => unnamedCreatorIds(memberships), [memberships])
   const q = useBatchProfiles(ids)
-  return q.data ?? new Map<string, UserProfile>()
+  return useMemo(() => {
+    const profiles = q.data ?? new Map<string, UserProfile>()
+    return new Map(memberships.map((m) => [m.creatorId, fillPerson(m.creator, profiles.get(m.creatorId))]))
+  }, [memberships, q.data])
 }
 
 function Page({ children }: { children: React.ReactNode }) {
@@ -51,8 +73,8 @@ function Page({ children }: { children: React.ReactNode }) {
 
 export function MyMembershipsScreen() {
   const q = useMyMemberships()
-  const list = q.data ?? []
-  const profiles = useCreatorProfiles(list)
+  const list = useMemo(() => q.data ?? [], [q.data])
+  const creators = useCreators(list)
   return (
     <Page>
       <h1 className="text-2xl font-bold text-brand-text">Memberships</h1>
@@ -71,14 +93,14 @@ export function MyMembershipsScreen() {
         ) : (
           <ul className="space-y-2" data-membership="my-list">
             {list.map((m) => {
-              const p = profiles.get(m.creatorId)
+              const p = creators.get(m.creatorId) ?? m.creator
               return (
                 <li key={m.subscriptionId}>
                   <Link href={`${MY_MEMBERSHIPS_PATH}/${m.subscriptionId}`} className={`${card} flex items-center gap-3 px-4 py-3 hover:bg-brand-secondary`}>
-                    <Avatar profile={p} />
+                    <PersonAvatar person={p} />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-2">
-                        <span className="truncate text-base font-semibold text-brand-text">{creatorName(p)}</span>
+                        <span className="truncate text-base font-semibold text-brand-text">{personName(p)}</span>
                         <StatusChip m={m} />
                       </span>
                       <span className="block truncate text-sm text-muted-foreground">
@@ -104,10 +126,13 @@ function StatusChip({ m }: { m: MyMembership }) {
 }
 
 export function MembershipDetailScreen({ subscriptionId }: { subscriptionId: string }) {
-  const q = useMyMemberships()
-  const m = q.data?.find((x) => x.subscriptionId === subscriptionId) ?? null
-  const profiles = useCreatorProfiles(m ? [m] : [])
-  const p = m ? profiles.get(m.creatorId) : undefined
+  // GET /memberships/:id: the subscriber's own only; anyone else's (and an unknown id) is 404.
+  const q = useMembership(subscriptionId)
+  const m = q.data ?? null
+  const one = useMemo(() => (m ? [m] : []), [m])
+  const creators = useCreators(one)
+  const p = m ? creators.get(m.creatorId) ?? m.creator : undefined
+  const notFound = q.isError && toMembershipError(q.error).status === 404
 
   return (
     <Page>
@@ -118,26 +143,29 @@ export function MembershipDetailScreen({ subscriptionId }: { subscriptionId: str
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Loading…
         </p>
+      ) : notFound || (q.isSuccess && !m) ? (
+        <p className="text-sm text-muted-foreground">This membership isn&apos;t in your list any more. Memberships that ended over 30 days ago drop off.</p>
       ) : q.isError ? (
         <p role="alert" className="text-sm text-muted-foreground">
-          {membershipErrorMessage(q.error, "This membership couldn't load.")}
+          {membershipErrorMessage(q.error, "This membership couldn't load.")}{" "}
+          <button type="button" className="font-semibold text-primary-ink underline underline-offset-2" onClick={() => void q.refetch()}>
+            Try again
+          </button>
         </p>
-      ) : !m ? (
-        <p className="text-sm text-muted-foreground">This membership isn&apos;t in your list any more. Memberships that ended over 30 days ago drop off.</p>
-      ) : (
-        <MembershipDetail m={m} profile={p} />
-      )}
+      ) : m ? (
+        <MembershipDetailView m={m} creator={p ?? m.creator} />
+      ) : null}
     </Page>
   )
 }
 
-function MembershipDetail({ m, profile }: { m: MyMembership; profile: UserProfile | undefined }) {
+export function MembershipDetailView({ m, creator }: { m: MembershipDetail; creator: Person }) {
   const checkout = useMembershipCheckout()
   const cancel = useCancelMembership()
   const [confirmCancel, setConfirmCancel] = useState(false)
   const [cancelError, setCancelError] = useState<string | null>(null)
   const [changing, setChanging] = useState(false)
-  const name = creatorName(profile)
+  const name = personName(creator)
   const busy = checkoutBusy(checkout.state)
   const end = formatDate(m.accessUntil || m.currentPeriodEnd)
 
@@ -155,12 +183,12 @@ function MembershipDetail({ m, profile }: { m: MyMembership; profile: UserProfil
     <div data-membership="detail" className="space-y-4">
       <section className={`${card} p-5`}>
         <div className="flex items-center gap-3">
-          <Avatar profile={profile} />
+          <PersonAvatar person={creator} />
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-xl font-bold text-brand-text">{name}</h1>
-            {profile?.username ? (
-              <Link href={`/u/${profile.username}`} className="text-sm text-muted-foreground hover:underline">
-                @{profile.username}
+            {creator.username ? (
+              <Link href={`/u/${encodeURIComponent(creator.username)}`} className="text-sm text-muted-foreground hover:underline">
+                @{creator.username}
               </Link>
             ) : null}
           </div>
@@ -183,6 +211,24 @@ function MembershipDetail({ m, profile }: { m: MyMembership; profile: UserProfil
           ) : null}
         </dl>
         <p className="mt-3 text-sm text-muted-foreground">{statusLine(m)}</p>
+        {m.pendingDowngrade ? (
+          <p data-membership="pending-downgrade" role="status" className="mt-3 rounded-xl bg-brand-secondary px-3 py-2 text-sm text-brand-text">
+            {downgradeLine(m.pendingDowngrade)}
+          </p>
+        ) : null}
+        {m.tier.perks.length > 0 ? (
+          <div className="mt-4">
+            <h2 className="text-xs text-muted-foreground">What {m.tier.name} includes</h2>
+            <ul data-membership="perks" className="mt-1.5 space-y-1">
+              {m.tier.perks.map((perk, i) => (
+                <li key={i} className="flex gap-2 text-sm text-brand-text">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true" />
+                  <span className="min-w-0 break-words">{perk}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </section>
 
       <StatusPanel state={checkout.state} creator={name} />

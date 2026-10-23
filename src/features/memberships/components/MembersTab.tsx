@@ -2,8 +2,8 @@
 
 /*
   The Members tab on a channel and a profile: the creator's members-only
-  posts, shorts and videos. There is no members-only list route, so the
-  by-author pages are filtered on tier_required_id (useMembersOnlyRows). A
+  posts, shorts and videos, from by-author?members_only=true
+  (useMembersOnlyRows), paged by the same cursor. A
   non-member sees each item locked — title, cover blurred, lock — and Join;
   the server already redacted the body, which is what decides the lock.
 */

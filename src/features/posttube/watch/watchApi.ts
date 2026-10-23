@@ -70,6 +70,8 @@ export interface WatchPostRow extends HydratedPostRow {
   source?: string | null;
   like_count?: number | null;
   tier_required_id?: string | null;
+  /** That level's monthly price on a gated row; absent when unknown (post-service members_tiers.go). */
+  tier_required_price_paise?: number | null;
   /** Members only, this viewer is not a member: the body, media, chapters and credits were cleared (post-service members_read.go). */
   body_redacted?: boolean | null;
   no_comments?: boolean | null;
@@ -140,6 +142,8 @@ export interface WatchDetail {
   likeCount: number;
   /** The membership tier the post is gated behind; null = open. */
   tierRequiredId: string | null;
+  /** tier_required_price_paise: what that level costs a month; null when unknown. */
+  tierRequiredPricePaise: number | null;
   /** The server redacted the row for this viewer (not a member): locked whatever else says. */
   bodyRedacted: boolean;
   commentsOff: boolean;
@@ -179,6 +183,7 @@ export function normalizeWatchDetail(row: WatchPostRow, video: PostTubeVideo): W
     source: row.source === "live" ? "live" : "upload",
     likeCount,
     tierRequiredId: typeof row.tier_required_id === "string" && row.tier_required_id ? row.tier_required_id : null,
+    tierRequiredPricePaise: typeof row.tier_required_price_paise === "number" && row.tier_required_price_paise > 0 ? Math.trunc(row.tier_required_price_paise) : null,
     bodyRedacted: row.body_redacted === true,
     commentsOff: row.no_comments === true,
     shareHidden: row.hide_share === true,

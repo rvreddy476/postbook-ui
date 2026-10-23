@@ -94,8 +94,8 @@ export interface StudioFormState {
   publishToFeed: boolean;
   /**
    * Members only: the lowest membership level that sees it, or null for
-   * everyone. The create route does not take it; it is applied with PUT
-   * /v1/posts/:id/membership right after the create (features/memberships).
+   * everyone. Sent as tier_required_id with the create and the draft save,
+   * so the post is gated from birth (features/memberships gateCreateField).
    */
   tierRequiredId: string | null;
   /**

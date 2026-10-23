@@ -133,7 +133,7 @@ function DraftDetail({ row, detail }: { row: HubDraft; detail?: DraftsTableProps
       <div style={{ fontWeight: 600 }}>{d.title}</div>
       <div style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{d.caption || <span className="hub-hint">No description</span>}</div>
       <div className="hub-hint">
-        {[d.visibility ? `Visibility: ${d.visibility}` : "", d.created_at ? `Started ${formatDateTime(d.created_at)}` : "", d.media_id ? "Video attached" : "No video attached"].filter(Boolean).join(" · ")}
+        {[d.visibility ? `Visibility: ${d.visibility}` : "", d.tier_required_id ? "Members only" : "", d.created_at ? `Started ${formatDateTime(d.created_at)}` : "", d.media_id ? "Video attached" : "No video attached"].filter(Boolean).join(" · ")}
       </div>
       {d.status === "blocked" ? <div className="hub-note">This draft&apos;s scheduled publish was held and did not go out.</div> : null}
       <div className="hub-note">Saved drafts can&apos;t be reopened in the upload studio yet.</div>

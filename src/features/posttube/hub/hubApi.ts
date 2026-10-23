@@ -608,6 +608,8 @@ export interface HubPostPatch {
   production_house?: string | null;
   /** The Action button (contract 23 Oct 2026): {label, url} adds or changes it, null removes it, omitted = unchanged. */
   action?: ActionWrite | null;
+  /** Members only (post-service post_edit.go:97): a level id sets it, null clears it, omitted = unchanged. */
+  tier_required_id?: string | null;
 }
 
 /** The PATCH body: only the keys present (undefined dropped; "" kept — it clears). */
@@ -1365,6 +1367,8 @@ export interface HubDraft {
   schedule_at: string | null;
   published_post_id: string | null;
   blocked_reason: string | null;
+  /** Members only: the level it publishes gated on (migration 071); null = open. */
+  tier_required_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -1382,6 +1386,7 @@ export function normalizeDraft(raw: unknown): HubDraft | null {
     schedule_at: strOrNull(raw.schedule_at),
     published_post_id: strOrNull(raw.published_post_id),
     blocked_reason: strOrNull(raw.blocked_reason),
+    tier_required_id: strOrNull(raw.tier_required_id),
     created_at: str(raw.created_at),
     updated_at: str(raw.updated_at) || str(raw.created_at),
   };

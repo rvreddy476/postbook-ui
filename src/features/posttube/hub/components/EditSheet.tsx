@@ -3,11 +3,13 @@
 import { ChevronDown, Sparkles, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useGlobalToast } from "@/contexts/ToastContext";
 import { useAuthUser } from "@/store/auth";
 import { MembersOnlyChoices } from "@/features/memberships/components/MembersOnlyChoices";
-import { useGateLevels, useSetPostMembersOnly } from "@/features/memberships/hooks";
+import { invalidateGate, useGateLevels } from "@/features/memberships/hooks";
+import { gateEditField } from "@/features/memberships/model";
 import {
   HUB_COMMENT_ACCESSES,
   HUB_COMMENT_MODERATIONS,
@@ -167,9 +169,9 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
   const [form, setForm] = useState<DetailsForm>(base);
   const [creditsBase, setCreditsBase] = useState<CreditsForm>(() => creditsFormFrom(post.credits));
   const [creditsForm, setCreditsForm] = useState<CreditsForm>(creditsBase);
-  // Members only: its own route (PUT /v1/posts/:id/membership), saved with the rest.
+  // Members only: in the same PATCH (`tier_required_id`: a level sets it, null clears it, omitted leaves it).
   const { levels: gateLevels } = useGateLevels();
-  const setMembersOnly = useSetPostMembersOnly();
+  const qc = useQueryClient();
   const [gateBase, setGateBase] = useState<string | null>(post.tier_required_id ?? null);
   const [gate, setGate] = useState<string | null>(gateBase);
   // The Action button: in the same PATCH (`action`: null removes it, omitted leaves it).
@@ -225,7 +227,7 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
   const blocked = problems.length > 0 || creditIssues.length > 0 || actionIssue !== null;
   const gateChanged = gate !== gateBase;
   const dirty = Object.keys(patch).length > 0 || Object.keys(creditsPatch).length > 0 || Object.keys(actionPatch).length > 0 || scheduleChanged || gateChanged;
-  const busy = update.isPending || reschedule.isPending || setMembersOnly.isPending;
+  const busy = update.isPending || reschedule.isPending;
   const [saveError, setSaveError] = useState<string | null>(null);
   /** The server's last credits refusal (TOO_MANY_CREDITS, INVALID_GENRE, …), until the credits change. */
   const [creditServerProblem, setCreditServerProblem] = useState<CreditsProblem | null>(null);
@@ -242,8 +244,8 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
     if (!dirty || busy || scheduleInvalid || blocked) return;
     setSaveError(null);
     try {
-      // Credits and the Action button ride in the same PATCH; `credits` replaces the whole list.
-      const body: HubPostPatch = { ...patch, ...creditsPatch, ...actionPatch };
+      // Credits, the Action button and the members-only level ride in the same PATCH; `credits` replaces the whole list.
+      const body: HubPostPatch = { ...patch, ...creditsPatch, ...actionPatch, ...gateEditField(gateBase, gate) };
       if (base.visibility === "scheduled" && form.visibility !== "scheduled") {
         // Leaving "scheduled": publish now, then apply the chosen state.
         await reschedule.mutateAsync({ postId: post.id });
@@ -254,8 +256,8 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
         await reschedule.mutateAsync({ postId: post.id, publishAt: scheduleIso });
       }
       if (gateChanged) {
-        await setMembersOnly.mutateAsync({ postId: post.id, tierId: gate });
         setGateBase(gate);
+        invalidateGate(qc, post.id);
       }
       setBase(form);
       // The saved list comes back with each tag's status (a new link reads Pending).

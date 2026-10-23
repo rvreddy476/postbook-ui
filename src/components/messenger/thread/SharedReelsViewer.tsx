@@ -210,7 +210,7 @@ export default function SharedReelsViewer({ conversationId, startPostId, postIds
     // Members only and the viewer is not one: the lock card, never a player.
     body = (
       <div className="relative h-full w-full">
-        <StageLock creatorId={reel.authorId} creatorName={reel.authorName} tierRequiredId={reel.locked.tierRequiredId} coverUrl={reel.media.posterUrl} title={reel.title} durationMs={reel.media.durationMs} />
+        <StageLock creatorId={reel.authorId} creatorName={reel.authorName} tierRequiredId={reel.locked.tierRequiredId} requiredPricePaise={reel.locked.requiredPricePaise ?? null} coverUrl={reel.media.posterUrl} title={reel.title} durationMs={reel.media.durationMs} />
       </div>
     )
   } else if (reel) {

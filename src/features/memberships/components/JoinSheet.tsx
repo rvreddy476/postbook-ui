@@ -18,26 +18,31 @@ import { ComposeSheet } from "@/features/post-compose/components/ComposeSheet"
 
 import { checkoutBusy, type CheckoutPhase } from "../checkout"
 import { joinIntent, useCreatorLevels, useMembershipCheckout } from "../hooks"
-import { levelsThatUnlock, membershipErrorMessage, MY_MEMBERSHIPS_PATH, perMonth, type Tier } from "../model"
+import { joinChoices, membershipErrorMessage, MY_MEMBERSHIPS_PATH, perMonth, type Tier } from "../model"
 
 export interface JoinSheetProps {
   open: boolean
   onClose: () => void
   creatorId: string
   creatorName?: string
-  /** The level the locked item needs: only it and dearer levels are offered. */
+  /** The level the locked item needs: it and dearer levels are highlighted, and the sheet starts on it. */
   requiredTierId?: string | null
+  /** The row's tier_required_price_paise, when it carried one: what decides which levels unlock it. */
+  requiredPricePaise?: number | null
 }
 
 export const PAYMENT_TERMS = "Prices include GST. Renewal isn't automatic: we remind you before it ends and you pay to keep access. Payments aren't refunded once access has started."
 
-export function JoinSheet({ open, onClose, creatorId, creatorName, requiredTierId = null }: JoinSheetProps) {
+export function JoinSheet({ open, onClose, creatorId, creatorName, requiredTierId = null, requiredPricePaise = null }: JoinSheetProps) {
   const levels = useCreatorLevels(open ? creatorId : null)
-  const offered = useMemo(() => levelsThatUnlock(levels.data ?? [], requiredTierId), [levels.data, requiredTierId])
+  const choices = useMemo(() => joinChoices(levels.data ?? [], requiredTierId, requiredPricePaise), [levels.data, requiredTierId, requiredPricePaise])
+  const offered = choices.levels
   const [picked, setPicked] = useState<string | null>(null)
   const checkout = useMembershipCheckout()
   const { reset } = checkout
-  const chosen = offered.find((t) => t.id === picked) ?? offered[0] ?? null
+  const chosen = offered.find((t) => t.id === picked) ?? choices.lowest ?? offered[0] ?? null
+  const unlocking = new Set(choices.unlocking)
+  const chosenMisses = !!chosen && choices.unlocking.length > 0 && !unlocking.has(chosen.id)
   const who = creatorName?.trim() || "this creator"
 
   // A fresh open starts on the cheapest level that unlocks, with no stale verdict.
@@ -85,12 +90,22 @@ export function JoinSheet({ open, onClose, creatorId, creatorName, requiredTierI
             <p className="py-6 text-sm text-muted-foreground">{`${creatorName?.trim() || "This creator"} doesn't offer memberships right now.`}</p>
           ) : (
             <>
-              <p className="text-sm text-muted-foreground">Members see members-only posts, shorts and videos{requiredTierId ? ", including this one" : ""}.</p>
+              <p className="text-sm text-muted-foreground">Members see members-only posts, shorts and videos{choices.unlocking.length > 0 ? " at their level" : requiredTierId ? ", including this one" : ""}.</p>
+              {choices.line ? (
+                <p data-membership="unlock-line" className="flex items-center gap-2 text-sm font-semibold text-brand-text">
+                  <Lock className="h-4 w-4 shrink-0 text-primary-ink" aria-hidden="true" /> {choices.line}
+                </p>
+              ) : null}
               <div role="radiogroup" aria-label="Membership levels" className="space-y-2">
                 {offered.map((t) => (
-                  <LevelChoice key={t.id} tier={t} checked={chosen?.id === t.id} onPick={() => setPicked(t.id)} disabled={busy} />
+                  <LevelChoice key={t.id} tier={t} checked={chosen?.id === t.id} unlocks={unlocking.has(t.id)} onPick={() => setPicked(t.id)} disabled={busy} />
                 ))}
               </div>
+              {chosenMisses ? (
+                <p role="status" className="text-sm text-muted-foreground">
+                  {chosen.name} doesn&apos;t open this one. {choices.line}.
+                </p>
+              ) : null}
               <p className="text-xs text-muted-foreground">{PAYMENT_TERMS}</p>
             </>
           )
@@ -100,13 +115,14 @@ export function JoinSheet({ open, onClose, creatorId, creatorName, requiredTierI
   )
 }
 
-function LevelChoice({ tier, checked, onPick, disabled }: { tier: Tier; checked: boolean; onPick: () => void; disabled: boolean }) {
+function LevelChoice({ tier, checked, unlocks, onPick, disabled }: { tier: Tier; checked: boolean; unlocks: boolean; onPick: () => void; disabled: boolean }) {
   return (
     <button
       type="button"
       role="radio"
       aria-checked={checked}
       data-level={tier.id}
+      data-unlocks={unlocks ? "" : undefined}
       data-autofocus={checked ? "" : undefined}
       disabled={disabled}
       onClick={onPick}
@@ -114,7 +130,14 @@ function LevelChoice({ tier, checked, onPick, disabled }: { tier: Tier; checked:
     >
       <span className="flex items-start gap-3">
         <span className="min-w-0 flex-1">
-          <span className="block text-base font-semibold text-brand-text">{tier.name}</span>
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="text-base font-semibold text-brand-text">{tier.name}</span>
+            {unlocks ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary-tint px-2 py-0.5 text-xs font-semibold text-primary-ink">
+                <Lock className="h-3 w-3" aria-hidden="true" /> Unlocks this
+              </span>
+            ) : null}
+          </span>
           <span className="block text-sm text-muted-foreground">{perMonth(tier.pricePaise)}</span>
         </span>
         <span aria-hidden="true" className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${checked ? "border-primary bg-primary text-primary-foreground" : "border-brand-divider"}`}>

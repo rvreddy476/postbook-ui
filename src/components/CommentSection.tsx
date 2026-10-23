@@ -21,7 +21,7 @@ import CommentMenu, { commentMenuItems, type CommentMenuAction } from '@/compone
 import { applyPin, pinnedFirst, type CommentCreatorTools } from '@/components/comments/creatorTools';
 import { findReplyPages, focusTarget, isMissingComment, type ReplyPage } from '@/components/comments/focusComment';
 import { CommentsLock } from '@/features/memberships/components/LockCards';
-import { isMembersOnlyError } from '@/features/memberships/model';
+import { isMembersOnlyError, membersOnlyGate } from '@/features/memberships/model';
 
 export type { CommentCreatorTools } from '@/components/comments/creatorTools';
 
@@ -454,6 +454,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
   const loadError = source.isError;
   // A members-only post's thread, for a non-member: 403 MEMBERS_ONLY (post-service post_edit.go).
   const membersOnly = loadError && isMembersOnlyError(source.error);
+  // The refusal names the gate (details {creator_id, tier_required_id}): Join opens on that creator and level.
+  const membersGate = membersOnly ? membersOnlyGate(source.error) : null;
 
   const addComment = useAddComment();
 
@@ -566,7 +568,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
   if (membersOnly) {
     return (
       <div className="flex flex-col h-full bg-brand-card">
-        <CommentsLock creatorId={postAuthorId} />
+        <CommentsLock creatorId={membersGate?.creatorId || postAuthorId} tierRequiredId={membersGate?.tierRequiredId ?? null} />
       </div>
     );
   }

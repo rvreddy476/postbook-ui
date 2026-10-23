@@ -11,6 +11,7 @@ import type {
   HubTagsMode,
   HubVisibility,
 } from "./hubApi";
+import { tierGateMessage } from "@/features/memberships/model";
 
 /*
   Pure helpers for the Creator Hub: the SVG path builders behind the
@@ -478,6 +479,9 @@ export const COMMENT_SORT_LABEL: Record<HubCommentSort, string> = {
 /* ── Server codes → words ───────────────────────────────── */
 
 const HUB_ERROR_TEXT: Record<string, string> = {
+  // Members only on an edit (post-service writeTierGateError): nothing was saved.
+  INVALID_TIER: tierGateMessage("INVALID_TIER", "saved")!,
+  MEMBERSHIP_TIERS_UNAVAILABLE: tierGateMessage("MEMBERSHIP_TIERS_UNAVAILABLE", "saved")!,
   INVALID_LICENSE: "That license is not one we offer.",
   INVALID_RECORDING_DATE: "The recording date can't be in the future.",
   INVALID_RECORDING_LOCATION: "The recording location is too long (100 characters at most).",

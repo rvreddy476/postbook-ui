@@ -279,6 +279,8 @@ export interface PostDetail {
     // the card draws the lock (features/memberships). duration_ms is the
     // longest video's length, kept on a redacted row.
     tier_required_id?: string | null
+    /** That level's monthly price on every gated row; absent when it could not be read (post-service members_tiers.go). */
+    tier_required_price_paise?: number | null
     body_redacted?: boolean
     duration_ms?: number
     /** Age-restricted (post-service age_gate.go): never embeddable. */

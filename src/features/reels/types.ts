@@ -104,6 +104,8 @@ export interface ReelDraft {
   moderation_status?: ModerationStatus;
   processing_status?: Record<string, string>;
   copyright_status?: CopyrightCheck;
+  /** Members only: the level the draft publishes gated on (post-service store/postgres/drafts.go ReelDraft); absent = open. */
+  tier_required_id?: string | null;
   created_at: string;
   updated_at: string;
 }

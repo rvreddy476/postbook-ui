@@ -287,6 +287,8 @@ export async function updateDraft(
     production_house: string | null;
     /* The Action button (contract 23 Oct 2026): {label, url}, or null to remove it. */
     action: { label: string; url: string } | null;
+    /* Members only (post-service service/drafts.go:79, migration 071): a level id sets, null clears; the publish gates the post from birth. */
+    tier_required_id: string | null;
   }>
 ): Promise<ReelDraft> {
   const res = await api.patch<ApiResponse<ReelDraft>>(`/v1/reels/drafts/${draftId}`, params);

@@ -260,7 +260,7 @@ export function AgeGateCard({ gate, videoId }: { gate: AgeGate; videoId: string 
   opens the Join sheet (features/memberships); once the payment lands the
   entitlement is read again and the player takes this card's place.
 */
-export function MembershipCard({ channelName, poster, creatorId, tierRequiredId }: { channelName: string; poster?: string; creatorId: string; tierRequiredId?: string | null }) {
+export function MembershipCard({ channelName, poster, creatorId, tierRequiredId, requiredPricePaise }: { channelName: string; poster?: string; creatorId: string; tierRequiredId?: string | null; requiredPricePaise?: number | null }) {
   return (
     <div data-membership="video-lock" className="tube-gate" style={poster ? { backgroundImage: `linear-gradient(rgb(var(--reel-stage) / .8), rgb(var(--reel-stage) / .9)), url("${poster}")`, backgroundSize: "cover" } : undefined}>
       <span className="tube-gate__icon">
@@ -268,7 +268,7 @@ export function MembershipCard({ channelName, poster, creatorId, tierRequiredId 
       </span>
       <p className="tube-gate__title">Members only</p>
       <p className="tube-gate__hint">{channelName} shares this video with members. Join to watch it.</p>
-      <JoinButton creatorId={creatorId} creatorName={channelName} requiredTierId={tierRequiredId} className="tube-gate__cta" />
+      <JoinButton creatorId={creatorId} creatorName={channelName} requiredTierId={tierRequiredId} requiredPricePaise={requiredPricePaise} className="tube-gate__cta" />
     </div>
   );
 }

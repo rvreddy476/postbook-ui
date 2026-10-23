@@ -18,10 +18,12 @@ interface LockProps {
   creatorId: string
   creatorName?: string
   tierRequiredId?: string | null
+  /** The row's tier_required_price_paise: lets the Join sheet highlight the levels that unlock it. */
+  requiredPricePaise?: number | null
 }
 
 /** A post card's body when it is locked. */
-export function PostLock({ creatorId, creatorName, tierRequiredId, durationMs = 0 }: LockProps & { durationMs?: number }) {
+export function PostLock({ creatorId, creatorName, tierRequiredId, requiredPricePaise, durationMs = 0 }: LockProps & { durationMs?: number }) {
   const who = creatorName?.trim()
   const length = formatDuration(durationMs)
   return (
@@ -35,7 +37,7 @@ export function PostLock({ creatorId, creatorName, tierRequiredId, durationMs = 
         {length ? ` Video · ${length}` : ""}
       </p>
       <div className="mt-4">
-        <JoinButton creatorId={creatorId} creatorName={creatorName} requiredTierId={tierRequiredId} />
+        <JoinButton creatorId={creatorId} creatorName={creatorName} requiredTierId={tierRequiredId} requiredPricePaise={requiredPricePaise} />
       </div>
     </div>
   )
@@ -59,6 +61,7 @@ export function StageLock({
   creatorId,
   creatorName,
   tierRequiredId,
+  requiredPricePaise,
   coverUrl,
   title,
   durationMs = 0,
@@ -78,20 +81,20 @@ export function StageLock({
       {title ? <p className="mship-stage-lock__hint">{title}</p> : null}
       <p className="mship-stage-lock__hint">{who ? `${who} shares this ${what} with members. Join to watch it.` : `Join to watch this ${what}.`}</p>
       {length ? <p className="mship-stage-lock__meta">{length}</p> : null}
-      <JoinButton creatorId={creatorId} creatorName={creatorName} requiredTierId={tierRequiredId} />
+      <JoinButton creatorId={creatorId} creatorName={creatorName} requiredTierId={tierRequiredId} requiredPricePaise={requiredPricePaise} />
     </div>
   )
 }
 
 /** The comments panel on a members-only post, for a non-member (403 MEMBERS_ONLY). */
-export function CommentsLock({ creatorId, creatorName, tierRequiredId }: LockProps) {
+export function CommentsLock({ creatorId, creatorName, tierRequiredId, requiredPricePaise }: LockProps) {
   return (
     <div data-membership="comments-lock" role="status" className="flex flex-col items-center justify-center gap-3 px-6 py-10 text-center">
       <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-secondary text-muted-foreground">
         <MessageCircle className="h-5 w-5" aria-hidden="true" />
       </span>
       <p className="text-sm font-semibold text-brand-text">Only members can read and write comments</p>
-      <JoinButton creatorId={creatorId} creatorName={creatorName} requiredTierId={tierRequiredId} />
+      <JoinButton creatorId={creatorId} creatorName={creatorName} requiredTierId={tierRequiredId} requiredPricePaise={requiredPricePaise} />
     </div>
   )
 }

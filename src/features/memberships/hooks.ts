@@ -17,9 +17,11 @@ import {
   changeLevel,
   createLevel,
   fetchAccess,
-  fetchAuthorRows,
   fetchCreatorLevels,
+  fetchCreatorMembers,
   fetchEligibility,
+  fetchMembership,
+  fetchMembersOnlyRows,
   fetchMyLevels,
   fetchMyMemberships,
   patchLevel,
@@ -39,6 +41,8 @@ export const MEMBERSHIP_KEYS = {
   creatorLevels: (creatorId: string) => ["memberships", "creator-levels", creatorId] as const,
   eligibility: (creatorId: string) => ["memberships", "eligibility", creatorId] as const,
   mine: ["memberships", "mine"] as const,
+  one: (subscriptionId: string) => ["memberships", "one", subscriptionId] as const,
+  creatorMembers: ["memberships", "creator-members"] as const,
   membersTab: (authorId: string) => ["memberships", "members-tab", authorId] as const,
   /** The old root, kept so anything still keyed on it is refreshed too. */
   access: (creatorId: string, tierId: string | null) => ["monetization-entitlement", creatorId, tierId] as const,
@@ -130,45 +134,84 @@ export function useMyMemberships(enabled = true) {
   return useQuery({ queryKey: MEMBERSHIP_KEYS.mine, queryFn: fetchMyMemberships, enabled, retry, staleTime: 15_000 })
 }
 
+/** One of my memberships (GET /memberships/:id): a 404 is "not yours / not there", not retried. */
+export function useMembership(subscriptionId: string | null | undefined) {
+  return useQuery({
+    queryKey: MEMBERSHIP_KEYS.one(subscriptionId ?? ""),
+    queryFn: () => fetchMembership(subscriptionId!),
+    enabled: !!subscriptionId,
+    retry,
+    staleTime: 15_000,
+  })
+}
+
+function refreshMine(qc: QueryClient) {
+  void qc.invalidateQueries({ queryKey: MEMBERSHIP_KEYS.mine })
+  void qc.invalidateQueries({ queryKey: ["memberships", "one"] })
+}
+
 export function useCancelMembership() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (subscriptionId: string) => cancelMembership(subscriptionId),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: MEMBERSHIP_KEYS.mine })
+      refreshMine(qc)
       void qc.invalidateQueries({ queryKey: ["monetization-entitlement"] })
     },
   })
 }
 
+/* ── a creator's members ────────────────────────────────────────── */
+
+/** The caller's members, newest first, by meta.next_cursor. */
+export function useCreatorMembers(enabled = true) {
+  return useInfiniteQuery({
+    queryKey: MEMBERSHIP_KEYS.creatorMembers,
+    queryFn: ({ pageParam }) => fetchCreatorMembers(pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor,
+    enabled,
+    retry,
+    staleTime: 30_000,
+  })
+}
+
 /* ── the members-only gate on a post ────────────────────────────── */
 
+/**
+  After a write that set or cleared a gate (a create, a draft publish, the
+  post PATCH, or the PUT): every read that shows it, refetched.
+*/
+export function invalidateGate(qc: QueryClient, postId?: string | null) {
+  void qc.invalidateQueries({ queryKey: ["memberships", "members-tab"] })
+  void qc.invalidateQueries({ queryKey: ["posttube"] })
+  void qc.invalidateQueries({ queryKey: ["hub"] })
+  void qc.invalidateQueries({ queryKey: ["home-feed"] })
+  void qc.invalidateQueries({ queryKey: ["profile-posts"] })
+  if (postId) void qc.invalidateQueries({ queryKey: ["post-detail", postId] })
+}
+
+/** PUT /v1/posts/:id/membership — only where no create, draft or PATCH fits. */
 export function useSetPostMembersOnly() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ postId, tierId }: { postId: string; tierId: string | null }) => setPostMembersOnly(postId, tierId),
-    onSuccess: (_void, { postId }) => {
-      void qc.invalidateQueries({ queryKey: ["memberships", "members-tab"] })
-      void qc.invalidateQueries({ queryKey: ["posttube"] })
-      void qc.invalidateQueries({ queryKey: ["hub"] })
-      void qc.invalidateQueries({ queryKey: ["post-detail", postId] })
-      void qc.invalidateQueries({ queryKey: ["profile-posts"] })
-    },
+    onSuccess: (_void, { postId }) => invalidateGate(qc, postId),
   })
 }
 
 /* ── the Members tab ────────────────────────────────────────────── */
 
 /**
-  The creator's members-only items. There is no members-only list route,
-  so the by-author pages (every kind) are filtered here; a page with no
-  gated rows still advances the cursor.
+  The creator's members-only items: GET by-author?members_only=true, the
+  same cursor paging. The rows are still read through gatedRows, so a row
+  without a gate never shows here.
 */
 export function useMembersOnlyRows(authorId: string | null | undefined, enabled = true) {
   return useInfiniteQuery({
     queryKey: MEMBERSHIP_KEYS.membersTab(authorId ?? ""),
     queryFn: async ({ pageParam }) => {
-      const page = await fetchAuthorRows(authorId!, pageParam)
+      const page = await fetchMembersOnlyRows(authorId!, pageParam)
       return { items: gatedRows(page.rows), nextCursor: page.nextCursor }
     },
     initialPageParam: undefined as string | undefined,
@@ -267,7 +310,8 @@ export function useMembershipCheckout() {
         if (isTierChange(result)) {
           if (result.kind === "scheduled") {
             dispatch({ type: "scheduled", effectiveAt: result.effectiveAt })
-            void qc.invalidateQueries({ queryKey: MEMBERSHIP_KEYS.mine })
+            // The detail page shows the booked downgrade from its own read.
+            refreshMine(qc)
             return
           }
           if (result.kind !== "checkout") {

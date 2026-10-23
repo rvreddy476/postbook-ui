@@ -15,12 +15,19 @@
     POST  /subscriptions/:id/renew                  → checkout (kind renewal)
     POST  /subscriptions/:id/upgrade                {tier_id} → checkout | {status:"scheduled"|"upgraded"}
     POST  /subscriptions/:id/cancel                 {} → keeps access until the period ends
-    GET   /memberships                              my memberships
+    GET   /memberships                              my memberships, each naming its creator
+    GET   /memberships/:subscriptionId              one of mine (+ perks, pending downgrade); 404 otherwise
+    GET   /members?cursor=&limit=                   my members, as their creator (limit ≤ 50)
     GET   /memberships/payments/:paymentId          confirming | paid | failed
     POST  /memberships/payments/:paymentId/verify   advisory: never grants access
     GET   /entitlements?creator_id=&tier_id=        does the caller have access
-  and post-service:
-    PUT   /v1/posts/:postId/membership              {tier_required_id: uuid | null}
+  and post-service (23 Oct 2026: the gate is written WITH the post):
+    POST  /v1/posts                                 tier_required_id: uuid (absent = open), every type
+    PATCH /v1/posts/:id                             tier_required_id: uuid sets, null clears
+    PATCH /v1/reels/drafts/:id, POST …/publish      tier_required_id: uuid sets, null clears
+    /v1/posts/drafts                                payload.tier_required_id (absent = open)
+    GET   /v1/posts/by-author/:id?members_only=true the Members tab
+    PUT   /v1/posts/:postId/membership              {tier_required_id: uuid | null} (only where nothing else fits)
 
   Go sends zero values ("" / 0 / null) where a field is empty, so every
   decoder treats absent, null and "" alike (`??` alone lets "" through).
@@ -113,17 +120,68 @@ export function activeLevels(tiers: readonly Tier[]): Tier[] {
 }
 
 /**
-  The levels a viewer may join to unlock something gated on `requiredTierId`:
-  that level and every dearer one (a member at a higher level sees what a
-  lower level sees). Nothing required, or a required level that is not on
-  sale any more: every active level.
+  What a gated item costs to open, in paise a month: the row's own
+  tier_required_price_paise when the server sent it (post-service
+  members_tiers.go attachTierPrices), else the price of its level when that
+  level is in the list; null when neither is known.
 */
-export function levelsThatUnlock(tiers: readonly Tier[], requiredTierId?: string | null): Tier[] {
-  const active = activeLevels(tiers)
-  if (!requiredTierId) return active
+export function requiredPriceOf(tiers: readonly Tier[], requiredTierId?: string | null, requiredPricePaise?: number | null): number | null {
+  if (typeof requiredPricePaise === "number" && Number.isFinite(requiredPricePaise) && requiredPricePaise > 0) return Math.trunc(requiredPricePaise)
+  if (!requiredTierId) return null
   const required = tiers.find((t) => t.id === requiredTierId)
-  if (!required) return active
-  return active.filter((t) => t.pricePaise >= required.pricePaise)
+  return required ? required.pricePaise : null
+}
+
+/** The unlock rule: a level opens an item when it costs at least what the item's level costs (a dearer member sees what a cheaper one sees). */
+export function unlocksAt(tier: Pick<Tier, "pricePaise">, requiredPrice: number | null): boolean {
+  return requiredPrice !== null && tier.pricePaise >= requiredPrice
+}
+
+/**
+  The levels a viewer may join to unlock something gated on `requiredTierId`
+  (at `requiredPricePaise` when the row says): that level and every dearer
+  one. Nothing required, or a price that cannot be known: every active level.
+*/
+export function levelsThatUnlock(tiers: readonly Tier[], requiredTierId?: string | null, requiredPricePaise?: number | null): Tier[] {
+  const active = activeLevels(tiers)
+  const price = requiredPriceOf(tiers, requiredTierId, requiredPricePaise)
+  if (price === null) return active
+  return active.filter((t) => unlocksAt(t, price))
+}
+
+export interface JoinChoices {
+  /** Every active level, cheapest first: joining any of them is a membership. */
+  levels: Tier[]
+  /** The ids of the levels that open the item; empty when nothing is required or it cannot be known. */
+  unlocking: string[]
+  /** The cheapest level that opens it: the sheet starts on it. */
+  lowest: Tier | null
+  /** "Unlocks with Gold or higher"; null when there is nothing to say. */
+  line: string | null
+}
+
+/**
+  The Join sheet's levels for a locked item. Every active level is shown;
+  the ones that open the item are highlighted and the sheet starts on the
+  cheapest of them. Nothing required (a profile's Join), or no price known
+  and its level not listed: nothing highlighted, the cheapest first.
+*/
+export function joinChoices(tiers: readonly Tier[], requiredTierId?: string | null, requiredPricePaise?: number | null): JoinChoices {
+  const levels = activeLevels(tiers)
+  const price = requiredTierId || requiredPricePaise ? requiredPriceOf(tiers, requiredTierId, requiredPricePaise) : null
+  const unlocking = price === null ? [] : levels.filter((t) => unlocksAt(t, price))
+  const lowest = unlocking[0] ?? null
+  // A price above every level on sale (its level was turned off): say so rather than sell a level that opens nothing.
+  const line = lowest ? unlockLine(lowest, levels) : price !== null && levels.length > 0 ? NO_LEVEL_UNLOCKS : null
+  return { levels, unlocking: unlocking.map((t) => t.id), lowest, line }
+}
+
+export const NO_LEVEL_UNLOCKS = "None of the levels on offer unlocks this right now."
+
+/** "Unlocks with Gold or higher" ("Unlocks with Gold" when no dearer level is offered). */
+export function unlockLine(lowest: Pick<Tier, "name" | "pricePaise">, levels: readonly Pick<Tier, "pricePaise">[]): string {
+  const dearer = levels.some((l) => l.pricePaise > lowest.pricePaise)
+  return dearer ? `Unlocks with ${lowest.name} or higher` : `Unlocks with ${lowest.name}`
 }
 
 /* ── the level form ──────────────────────────────────────────────── */
@@ -379,6 +437,55 @@ export function toPaymentReading(body: unknown): PaymentReading {
   }
 }
 
+/* ── people (creators and members) ───────────────────────────────── */
+
+/**
+  A creator or a member as the membership reads name them
+  (membership_reads.go MembershipPerson): the id always; username,
+  display_name and avatar_url only when identity-profile answered.
+*/
+export interface Person {
+  id: string
+  username: string
+  displayName: string
+  avatarUrl: string
+}
+
+/** An avatar URL the page may load: a site path or http(s); anything else is none. */
+function safeImageUrl(v: unknown): string {
+  const s = str(v)
+  if (!s) return ""
+  if (s.startsWith("/") && !s.startsWith("//")) return s
+  return /^https?:\/\//i.test(s) ? s : ""
+}
+
+export function toPerson(raw: unknown): Person {
+  const w = obj(raw)
+  return { id: str(w.id), username: str(w.username), displayName: str(w.display_name), avatarUrl: safeImageUrl(w.avatar_url) }
+}
+
+/** Whether the server named the person (else the screen falls back to its own profile lookup). */
+export const isNamed = (p: Pick<Person, "username" | "displayName">) => !!(p.username || p.displayName)
+
+/**
+  An id-only person (the server's lookup failed) filled from the web's own
+  profile batch; a person the server named is left as it is.
+*/
+export function fillPerson(p: Person, profile?: { username?: string | null; display_name?: string | null; avatar_media_id?: string | null } | null): Person {
+  if (isNamed(p) || !profile) return p
+  const avatar = str(profile.avatar_media_id)
+  return {
+    id: p.id,
+    username: str(profile.username),
+    displayName: str(profile.display_name),
+    avatarUrl: p.avatarUrl || (avatar ? `/v1/media/${encodeURIComponent(avatar)}/serve` : ""),
+  }
+}
+
+export function personName(p: Pick<Person, "username" | "displayName"> | null | undefined, fallback = "Creator"): string {
+  return p?.displayName || p?.username || fallback
+}
+
 /* ── my memberships ──────────────────────────────────────────────── */
 
 export type MembershipStatus = "pending_payment" | "active" | "cancelled_at_period_end" | "paused" | "past_due" | "grace" | "cancelled" | "expired"
@@ -388,6 +495,8 @@ const STATUSES: ReadonlySet<string> = new Set(["pending_payment", "active", "can
 export interface MyMembership {
   subscriptionId: string
   creatorId: string
+  /** The creator as the server named them; only `id` when its profile lookup failed. */
+  creator: Person
   tier: { id: string; name: string; pricePaise: number }
   status: MembershipStatus
   currentPeriodEnd: string
@@ -396,18 +505,24 @@ export interface MyMembership {
   renewAvailable: boolean
 }
 
-/** service.MembershipView (membership_payments.go:462). */
+function statusOf(v: unknown): MembershipStatus {
+  const status = str(v)
+  return (STATUSES.has(status) ? status : "expired") as MembershipStatus
+}
+
+/** service.MembershipView (membership_reads.go:107), creator per MembershipPerson (:88). */
 export function toMyMembership(raw: unknown): MyMembership | null {
   const w = obj(raw)
   const subscriptionId = str(w.subscription_id)
   if (!subscriptionId) return null
   const tier = obj(w.tier)
-  const status = str(w.status)
+  const creator = toPerson(w.creator)
   return {
     subscriptionId,
-    creatorId: str(obj(w.creator).id),
+    creatorId: creator.id,
+    creator,
     tier: { id: str(tier.id), name: str(tier.name), pricePaise: Math.max(0, int(tier.price_paise)) },
-    status: (STATUSES.has(status) ? status : "expired") as MembershipStatus,
+    status: statusOf(w.status),
     currentPeriodEnd: time(w.current_period_end),
     accessUntil: time(w.access_until),
     renewAvailable: w.renew_available === true,
@@ -418,6 +533,96 @@ export function toMyMemberships(body: unknown): MyMembership[] {
   return arr(unwrap(body))
     .map(toMyMembership)
     .filter((m): m is MyMembership => !!m)
+}
+
+/** The creators a list did not name: only these go to the fallback profile lookup. */
+export function unnamedCreatorIds(list: readonly Pick<MyMembership, "creator">[]): string[] {
+  return [...new Set(list.filter((m) => m.creator.id && !isNamed(m.creator)).map((m) => m.creator.id))]
+}
+
+export interface PendingDowngrade {
+  tierId: string
+  tierName: string
+  pricePaise: number
+  effectiveAt: string
+}
+
+/** GET /memberships/:subscriptionId: a list row plus the level's perks and a booked downgrade. */
+export interface MembershipDetail extends MyMembership {
+  tier: { id: string; name: string; pricePaise: number; perks: string[] }
+  pendingDowngrade: PendingDowngrade | null
+}
+
+/** service.MembershipDetailView (membership_reads.go:182); PendingDowngrade (:173), null when none. */
+export function toMembershipDetail(body: unknown): MembershipDetail | null {
+  const w = obj(unwrap(body))
+  const row = toMyMembership(w)
+  if (!row) return null
+  const pending = w.pending_downgrade == null ? null : obj(w.pending_downgrade)
+  const pendingId = pending ? str(pending.tier_id) : ""
+  return {
+    ...row,
+    tier: { ...row.tier, perks: stringList(obj(w.tier).perks) },
+    pendingDowngrade: pending && pendingId ? { tierId: pendingId, tierName: str(pending.tier_name), pricePaise: Math.max(0, int(pending.price_paise)), effectiveAt: time(pending.effective_at) } : null,
+  }
+}
+
+export function membershipUrl(subscriptionId: string): string {
+  return `/v1/monetization/memberships/${encodeURIComponent(subscriptionId)}`
+}
+
+/** "Moves to Fan (₹49 a month) on 23 Nov 2026" — the booked downgrade in words. */
+export function downgradeLine(d: PendingDowngrade): string {
+  const level = d.tierName || "a lower level"
+  const price = d.pricePaise > 0 ? ` (${perMonth(d.pricePaise)})` : ""
+  const when = formatDate(d.effectiveAt)
+  return when ? `Moves to ${level}${price} on ${when}. Nothing is charged now.` : `Moves to ${level}${price} at your next renewal. Nothing is charged now.`
+}
+
+/* ── a creator's members ─────────────────────────────────────────── */
+
+export interface CreatorMember {
+  subscriptionId: string
+  subscriber: Person
+  tier: { id: string; name: string; pricePaise: number }
+  status: MembershipStatus
+  since: string
+  accessUntil: string
+}
+
+/** service.MemberView (membership_reads.go:254). */
+export function toCreatorMember(raw: unknown): CreatorMember | null {
+  const w = obj(raw)
+  const subscriptionId = str(w.subscription_id)
+  const subscriber = toPerson(w.subscriber)
+  if (!subscriptionId || !subscriber.id) return null
+  const tier = obj(w.tier)
+  return {
+    subscriptionId,
+    subscriber,
+    tier: { id: str(tier.id), name: str(tier.name), pricePaise: Math.max(0, int(tier.price_paise)) },
+    status: statusOf(w.status),
+    since: time(w.since),
+    accessUntil: time(w.access_until),
+  }
+}
+
+/** One page of GET /members: rows and meta.next_cursor ("" / absent on the last page). */
+export function toCreatorMembersPage(body: unknown): { rows: CreatorMember[]; nextCursor?: string } {
+  const rows = arr(unwrap(body))
+    .map(toCreatorMember)
+    .filter((m): m is CreatorMember => !!m)
+  const next = str(obj(obj(body).meta).next_cursor)
+  return next ? { rows, nextCursor: next } : { rows }
+}
+
+export const MAX_MEMBERS_PAGE = 50
+export const MEMBERS_PAGE = 30
+
+/** GET /members params: limit 1..50 (the server refuses 0 or less and caps at 50), the cursor only when there is one. */
+export function membersListParams(cursor?: string | null, limit: number = MEMBERS_PAGE): Record<string, string> {
+  const n = Math.min(MAX_MEMBERS_PAGE, Math.max(1, Math.floor(Number.isFinite(limit) ? limit : MEMBERS_PAGE)))
+  return cursor ? { limit: String(n), cursor } : { limit: String(n) }
 }
 
 /** Live access right now (the statuses that grant it; pending_payment does not). */
@@ -528,12 +733,20 @@ export interface GatedRow {
   id: string
   authorId: string
   tierRequiredId: string
+  /** tier_required_price_paise: what its level costs a month; null when the server could not read it. */
+  requiredPricePaise: number | null
   bodyRedacted: boolean
   contentType: string
   title: string
   coverMediaId: string
   durationMs: number
   createdAt: string
+}
+
+/** A row's tier_required_price_paise (post-service store/postgres/posts.go:144, omitempty): a positive whole number, else null. */
+export function requiredPriceOfRow(raw: unknown): number | null {
+  const v = obj(raw).tier_required_price_paise
+  return typeof v === "number" && Number.isFinite(v) && v > 0 ? Math.trunc(v) : null
 }
 
 /** A post row (post-service by-author / feed) → its gated view; null when the row is not members-only. */
@@ -548,6 +761,7 @@ export function toGatedRow(raw: unknown): GatedRow | null {
     id,
     authorId: str(w.author_id),
     tierRequiredId: tier,
+    requiredPricePaise: requiredPriceOfRow(w),
     bodyRedacted: w.body_redacted === true,
     contentType: str(w.content_type) || "post",
     title: title.slice(0, 140),
@@ -588,6 +802,39 @@ export function formatDuration(ms: number): string {
 }
 
 /* ── the members-only gate on a post ─────────────────────────────── */
+
+/**
+  The gate on a create (POST /v1/posts handler.go:556, a reel draft's
+  publish, a composer draft's payload): the level when there is one, else
+  nothing at all — absent is open, and an empty create body stays as it was
+  (the create's Idempotency-Key is bound to the body).
+*/
+export function gateCreateField(tierId: string | null | undefined): { tier_required_id?: string } {
+  const id = typeof tierId === "string" ? tierId.trim() : ""
+  return id ? { tier_required_id: id } : {}
+}
+
+/**
+  The gate on an edit (PATCH /v1/posts/:id post_edit.go:97, PATCH
+  /v1/reels/drafts/:id service/drafts.go:79): always sent — a level sets it, null
+  clears it. Send it only when the gate changed.
+*/
+export function gatePatchField(tierId: string | null | undefined): { tier_required_id: string | null } {
+  const id = typeof tierId === "string" ? tierId.trim() : ""
+  return { tier_required_id: id || null }
+}
+
+/** An edit's gate field: nothing when the level did not change (omitted = unchanged), else the PATCH field. */
+export function gateEditField(before: string | null | undefined, after: string | null | undefined): { tier_required_id?: string | null } {
+  const was = typeof before === "string" ? before.trim() : ""
+  const now = typeof after === "string" ? after.trim() : ""
+  return was === now ? {} : gatePatchField(now)
+}
+
+/** By-author params for the Members tab: ?members_only=true with the same cursor paging (handler.go:1353). */
+export function membersOnlyParams(cursor?: string | null, limit = 50): Record<string, string> {
+  return { limit: String(limit), members_only: "true", ...(cursor ? { cursor } : {}) }
+}
 
 /** PUT /v1/posts/:id/membership (post-service handler.go:1105): a level id sets, null clears. */
 export function gateRequest(postId: string, tierId: string | null): { url: string; body: { tier_required_id: string | null } } {
@@ -708,6 +955,9 @@ const ERROR_COPY: Record<string, string> = {
   RENEWAL_ALREADY_PAID: "This period is already paid.",
   SUBSCRIPTION_STATE_CHANGED: "Your membership changed while this was running. Nothing was charged. Try again.",
   REFUND_NOT_ALLOWED: "This payment can't be refunded.",
+  INVALID_TIER: "That level isn't available any more — pick another.",
+  MEMBERSHIP_TIERS_UNAVAILABLE: "Couldn't check your membership levels. Nothing was saved — try again.",
+  INVALID_CURSOR: "The list moved on. Reload to see it from the top.",
 }
 
 export const NETWORK_COPY = "The connection dropped. Check your network and try again."
@@ -737,10 +987,46 @@ export function keepKeyAfter(err: unknown): boolean {
   return e.status === 0 || e.status >= 500
 }
 
-/** post-service's comment refusal on a members-only post (post_edit.go:509). */
+/** post-service's comment refusal on a members-only post (post_edit.go:556). */
 export function isMembersOnlyError(err: unknown): boolean {
   const e = toMembershipError(err)
   return e.status === 403 && e.code === "MEMBERS_ONLY"
+}
+
+/**
+  The gate a MEMBERS_ONLY refusal names (error.details {creator_id,
+  tier_required_id}, post_edit.go:556), so the Join prompt opens on the
+  right creator and level. null when it is not that refusal or names no
+  creator; tierRequiredId is null when only the creator came.
+*/
+export function membersOnlyGate(err: unknown): { creatorId: string; tierRequiredId: string | null } | null {
+  if (!isMembersOnlyError(err)) return null
+  const details = obj(obj(obj(obj(obj(err).response).data).error).details)
+  const creatorId = str(details.creator_id)
+  if (!creatorId) return null
+  return { creatorId, tierRequiredId: str(details.tier_required_id) || null }
+}
+
+/* ── the gate refusals on a write ────────────────────────────────── */
+
+export const TIER_GATE_CODES = ["INVALID_TIER", "MEMBERSHIP_TIERS_UNAVAILABLE"] as const
+
+/**
+  post-service's members-only refusals on every write (handler.go:1184
+  writeTierGateError): 400 INVALID_TIER — the level is not one of the
+  author's active levels; 503 MEMBERSHIP_TIERS_UNAVAILABLE — they could not
+  be checked, and nothing was written. `verb` names what did not happen:
+  "posted" on a create or publish, "saved" on an edit or a draft.
+*/
+export function tierGateMessage(code: string | null | undefined, verb: "posted" | "saved" = "posted"): string | null {
+  if (code === "INVALID_TIER") return "That level isn't available any more — pick another."
+  if (code === "MEMBERSHIP_TIERS_UNAVAILABLE") return `Couldn't check your membership levels. Nothing was ${verb} — try again.`
+  return null
+}
+
+/** The same, read off an axios error. */
+export function tierGateError(err: unknown, verb: "posted" | "saved" = "posted"): string | null {
+  return tierGateMessage(toMembershipError(err).code, verb)
 }
 
 /* ── notifications ───────────────────────────────────────────────── */
@@ -761,13 +1047,16 @@ export const isMembershipNotification = (type: string): type is MembershipNotifi
 
 export const MY_MEMBERSHIPS_PATH = "/memberships"
 export const CREATOR_LEVELS_PATH = "/monetization/tiers"
+/** The creator's members list. The server still links the new-member notice to the levels page; we open this. */
+export const CREATOR_MEMBERS_PATH = "/monetization/members"
 
 const membershipPath = /^\/memberships\/[0-9a-f-]{36}$/i
 
 /**
   The six membership notices (notification-service membership_notify.go).
   The server's sentence names the other party and wins when sent; the
-  second line is ours. The creator's notice opens their levels page; every
+  second line is ours. The creator's notice opens their members list
+  (whatever link the server sent — it still says /monetization/tiers); every
   notice to the member opens that membership (the row's
   /memberships/{subscription_id}), or the list when the row has no link.
 */
@@ -784,7 +1073,7 @@ export function membershipNotificationCopy(
   const named = (withName: (n: string) => string, unnamed: string) => serverTitle ?? (who ? withName(who) : unnamed)
   switch (type) {
     case "membership_new_member":
-      return { title: named((n) => `${n} joined your membership`, "Someone joined your membership"), body: "See your levels and members.", link: CREATOR_LEVELS_PATH }
+      return { title: named((n) => `${n} joined your membership`, "Someone joined your membership"), body: "See who your members are.", link: CREATOR_MEMBERS_PATH }
     case "membership_joined":
       return { title: named((n) => `You're a member of ${n}`, "You're a member of a creator"), body: "Members-only posts and videos are open to you now.", link: memberLink }
     case "membership_renewed":

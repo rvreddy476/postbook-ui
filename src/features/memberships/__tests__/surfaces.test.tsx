@@ -212,7 +212,8 @@ describe("notifications", () => {
 
   test("all six types: the server's sentence wins, our second line, and the right destination", () => {
     expect(page.notifications.map((n) => [n.type, n.title, n.deep_link])).toEqual([
-      ["membership_new_member", "Ravi joined your membership", "/monetization/tiers"],
+      // The server still links /monetization/tiers; the web opens the members list.
+      ["membership_new_member", "Ravi joined your membership", "/monetization/members"],
       ["membership_joined", "You're a member of Asha", "/memberships/5ab0c0de-0000-4000-8000-000000000010"],
       ["membership_renewal_due", "Your Asha membership ends soon — renew to keep access", "/memberships/5ab0c0de-0000-4000-8000-000000000010"],
       // momentum:// becomes the web path.
@@ -222,11 +223,11 @@ describe("notifications", () => {
       ["membership_renewed", "Your membership with a creator was renewed", "/memberships"],
     ])
     expect(byType.membership_renewal_due.body).toBe("Renewal isn't automatic. Pay to keep your access.")
-    expect(byType.membership_new_member.body).toBe("See your levels and members.")
+    expect(byType.membership_new_member.body).toBe("See who your members are.")
   })
 
   test("the bell menus route membership notices too", () => {
-    expect(creditNotificationHref("membership_new_member", "/anything")).toBe("/monetization/tiers")
+    expect(creditNotificationHref("membership_new_member", "/monetization/tiers")).toBe("/monetization/members")
     expect(creditNotificationHref("membership_joined", "/memberships/5ab0c0de-0000-4000-8000-000000000010")).toBe("/memberships/5ab0c0de-0000-4000-8000-000000000010")
     expect(creditNotificationHref("membership_ended", undefined)).toBe("/memberships")
     expect(creditNotificationHref("follow", "/u/x")).toBeUndefined()

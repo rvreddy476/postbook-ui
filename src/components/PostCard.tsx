@@ -417,6 +417,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             creatorId={post.author_id}
             creatorName={authorProfile?.display_name || authorProfile?.username}
             tierRequiredId={post.tier_required_id ?? null}
+            requiredPricePaise={post.tier_required_price_paise ?? null}
             durationMs={post.duration_ms ?? 0}
           />
         </div>

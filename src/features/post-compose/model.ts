@@ -48,6 +48,7 @@ import {
   type ActionDraft,
   type ActionWrite,
 } from "@/features/action-button/model"
+import { gateCreateField, tierGateMessage } from "@/features/memberships/model"
 
 /* ─── Audience ─────────────────────────────────────────────────────── */
 
@@ -346,9 +347,9 @@ export interface PostDetailsForm {
   extraMentions: string[]
   /**
    * Members only: the lowest membership level that sees the post; absent or
-   * null for everyone. Never sent with the create or the draft (neither
-   * takes it): useComposeSubmit applies it with PUT /v1/posts/:id/membership
-   * once the post exists.
+   * null for everyone. Sent as tier_required_id with the create and in the
+   * draft's payload (23 Oct 2026), so the post is gated from birth and a
+   * draft keeps the level.
    */
   tierRequiredId?: string | null
   /** The Action button: a label and a link; absent or null for none. Sent with the create and the draft. */
@@ -456,6 +457,8 @@ export interface CreatePostBody {
   ai_generated: boolean
   link_url?: string
   action?: ActionWrite
+  /** Members only from birth (post-service handler.go:556); absent = open. */
+  tier_required_id?: string
 }
 
 export interface ComposeInput {
@@ -524,6 +527,7 @@ export function buildCreateRequest({ text, details, media, extras }: ComposeInpu
   if (link) body.link_url = link
   const action = actionCreateFields(details.action).action
   if (action) body.action = action
+  Object.assign(body, gateCreateField(details.tierRequiredId))
   return body
 }
 
@@ -559,6 +563,8 @@ export interface PostDraftPayload {
   location_lng?: number
   /** The Action button (contract 23 Oct 2026); the draft's PATCH replaces the payload, so none sent is none kept. */
   action?: ActionWrite
+  /** Members only (post-service post_drafts.go:118): checked and written on the post at publication; absent = open. */
+  tier_required_id?: string
 }
 
 /** POST / PATCH /v1/posts/drafts. */
@@ -616,6 +622,7 @@ export function buildDraftRequest({ text, details, media, extras }: ComposeInput
   if (create.activity) payload.activity = create.activity
   if (create.activity_detail) payload.activity_detail = create.activity_detail
   if (create.action) payload.action = create.action
+  if (create.tier_required_id) payload.tier_required_id = create.tier_required_id
   return { post_type: create.poll ? "poll" : "post", payload, schedule_at: null }
 }
 
@@ -678,6 +685,8 @@ export function toDraftPayload(raw: unknown): PostDraftPayload {
   if (lng !== null) out.location_lng = lng
   const action = draftFromWire(p.action)
   if (action) out.action = action
+  const tier = asString(p.tier_required_id).trim()
+  if (tier) out.tier_required_id = tier
   return out
 }
 
@@ -756,6 +765,8 @@ export function draftToCompose(row: PostDraftRow, fallbackLanguage: string = def
     extraHashtags: (p.hashtags ?? []).filter((t) => !ownTags.has(t.replace(/^#/, "").toLowerCase())),
     extraMentions: (p.mentions ?? []).filter((n) => !ownNames.has(n.replace(/^@/, "").toLowerCase())),
     ...(p.action ? { action: { label: p.action.label, url: p.action.url } } : {}),
+    // The level the draft was saved with; Members only reopens on it.
+    ...(p.tier_required_id ? { tierRequiredId: p.tier_required_id } : {}),
   }
   const isPoll = row.postType === "poll" || Boolean(p.poll)
   return {
@@ -886,6 +897,9 @@ const REFUSAL_COPY: Record<string, string> = {
 export function refusalCopy(code: string | null, message: string | null, fallback: string, err?: unknown): string {
   // An Action button refusal has its own words; with the error, ACTION_NOT_ELIGIBLE names what is missing.
   if (isActionErrorCode(code)) return actionProblemFromError(err)?.message ?? actionErrorMessage(code)
+  // Members only (INVALID_TIER / MEMBERSHIP_TIERS_UNAVAILABLE): the post was not created.
+  const gate = tierGateMessage(code, "posted")
+  if (gate) return gate
   if (code && REFUSAL_COPY[code]) return REFUSAL_COPY[code]
   return message || fallback
 }

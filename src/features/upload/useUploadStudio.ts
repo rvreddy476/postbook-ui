@@ -30,12 +30,12 @@ import { chapterRowsToWire } from "@/features/posttube/hub/chaptersModel";
 import { type FollowUpFailure, type StudioFormState, INITIAL_FORM_STATE } from "./types";
 import { validateSelectedFile, validateMediaDuration } from "./fileRules";
 import { freshStudioForm, mergePublishDefaults, takesPublishDefaults } from "./studioDefaults";
-import { applySeriesChoice, postPublishPatch, saveUploadChapters, scheduleIso, studioCreateFields, studioDraftActionField, studioDraftCreditFields, studioTakesCredits } from "./studioApi";
+import { applySeriesChoice, isTierGateRefusal, postPublishPatch, saveUploadChapters, scheduleIso, studioCreateFields, studioDraftActionField, studioDraftCreditFields, studioDraftGateField, studioTakesCredits } from "./studioApi";
 import { cachedCover, keepPublishAttempt, newPublishAttempt, type PublishAttempt } from "./publishAttempt";
 import { chosenSoundPatch, soundToAudioTrack, studioDraftSoundFields, studioSoundNotice, studioSoundStatus } from "./studioSound";
 import { useSoundInfo } from "@/features/reels/hooks/useSounds";
 import type { SoundInfo } from "@/features/reels/sounds";
-import { setPostMembersOnly } from "@/features/memberships/api";
+import { invalidateGate } from "@/features/memberships/hooks";
 
 /* ── Constants ─────────────────────────────────────────── */
 
@@ -517,6 +517,8 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         ...studioDraftCreditFields(form, classified === "long_video"),
         // The Action button; null removes one saved earlier in this draft.
         ...studioDraftActionField(form),
+        // Members only: the level the draft publishes gated on; null keeps it open.
+        ...studioDraftGateField(form),
       });
   }, [form, patch]);
 
@@ -598,7 +600,11 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
           const scheduleAt = scheduleIso(form.scheduleAt);
           const reel = await publishDraft(form.draftId, scheduleAt ? { schedule_at: scheduleAt } : undefined);
           return { reel, coverMediaId };
-        } catch { /* fall through to direct create */ }
+        } catch (err) {
+          // A members-only refusal would refuse the direct create too: say it, and post nothing.
+          if (isTierGateRefusal(err)) throw err;
+          /* otherwise fall through to direct create */
+        }
       }
 
       const hashtags = mergeHashtags(form.hashtags, form.caption);
@@ -621,15 +627,9 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
       const postId = reel.reel_id;
       const warnings: string[] = [];
 
-      // Members only first: the create route does not take the level, so the
-      // gate goes on before anything else runs after it.
-      if (postId && form.tierRequiredId) {
-        try {
-          await setPostMembersOnly(postId, form.tierRequiredId);
-        } catch {
-          warnings.push("Members only could not be set, so this video is open to everyone who can see it. Set it in Creator Hub, or delete the video.");
-        }
-      }
+      // Members only rode in with the create (or the draft): nothing to set
+      // after it, and no window where the post was open. Its lists refresh.
+      if (postId && form.tierRequiredId) invalidateGate(queryClient, postId);
 
       // The post row exists at create, scheduled or not, so the follow-ups
       // run for scheduled videos too (they were skipped before).
