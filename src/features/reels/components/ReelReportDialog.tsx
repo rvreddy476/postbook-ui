@@ -4,11 +4,16 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Flag, X } from "lucide-react";
 
-import { REPORT_REASONS, useSubmitReport } from "@/hooks/useReport";
+import { REPORT_REASONS, VIDEO_REPORT_REASONS, useSubmitReport, type ReportReason } from "@/hooks/useReport";
 import { useGlobalToast } from "@/contexts/ToastContext";
 
-/** What is being reported. Both go to trust-safety as entity_type "post". */
-export type ReportDialogTarget = "reel" | "post";
+/** What is being reported. All go to trust-safety as entity_type "post". */
+export type ReportDialogTarget = "reel" | "video" | "post";
+
+/** Reels and videos add the copyright reasons; a plain post keeps the shared list. */
+export function reportReasonsFor(targetType: ReportDialogTarget): { value: ReportReason; label: string }[] {
+  return targetType === "post" ? REPORT_REASONS : VIDEO_REPORT_REASONS;
+}
 
 interface ReelReportDialogProps {
   open: boolean;
@@ -22,7 +27,8 @@ interface ReelReportDialogProps {
 export function ReelReportDialog({ open, targetId, targetType = "reel", onClose }: ReelReportDialogProps) {
   const toast = useGlobalToast();
   const report = useSubmitReport();
-  const [reason, setReason] = useState<(typeof REPORT_REASONS)[number]["value"] | "">("");
+  const [reason, setReason] = useState<ReportReason | "">("");
+  const reasons = reportReasonsFor(targetType);
   const [details, setDetails] = useState("");
 
   const close = () => {
@@ -79,7 +85,7 @@ export function ReelReportDialog({ open, targetId, targetType = "reel", onClose 
               </button>
             </div>
             <div className="space-y-1">
-              {REPORT_REASONS.map((r) => (
+              {reasons.map((r) => (
                 <label key={r.value} className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm hover:bg-brand-secondary">
                   <input type="radio" name={`${targetType}-report-reason`} value={r.value} checked={reason === r.value} onChange={() => setReason(r.value)} className="accent-[rgb(var(--theme-brand-accent))]" />
                   {r.label}

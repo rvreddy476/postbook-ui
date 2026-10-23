@@ -9,7 +9,7 @@ import { AppShell } from "@/features/reels/components/AppShell";
 import { ChannelCreatePrompt, studioNeedsChannel } from "@/features/posttube/channelGate/ChannelGate";
 import { useMyChannel } from "@/hooks/useChannels";
 import { useGateLevels } from "@/features/memberships/hooks";
-import { followUpNotice, hubEditHref, publishFailure } from "./studioApi";
+import { followUpNotice, hubEditHref, publishFailure, publishedOutcome } from "./studioApi";
 import { CONTENT_TYPE_META, STEP_META, isShortStudio, stepIntro, type ContentType } from "./tokens";
 import { useUploadStudio, classifyVideo } from "./useUploadStudio";
 import { StudioToolbar } from "./components/StudioToolbar";
@@ -192,6 +192,8 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
   // form (re-clickable) if the create/draft response omitted the id.
   if (form.publishSuccess) {
     const scheduled = form.scheduleAt !== null;
+    // A long video the copyright title review held says so instead of "published".
+    const outcome = publishedOutcome({ label: short && isLongVideo ? "Video" : config.label, scheduled, review: form.publishedCopyrightReview });
     return (
       <AppShell sectionLabel="Upload">
         <div className="upload-studio">
@@ -201,17 +203,24 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="mx-auto max-w-[480px] px-1 py-10 text-center"
           >
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
-              <CheckCircle2 className="h-8 w-8 text-success" aria-hidden="true" />
-            </div>
-            <h2 className="mt-5 text-[20px] font-bold text-brand-text">
-              {short && isLongVideo ? "Video" : config.label} {scheduled ? "scheduled" : "published"}
+            {outcome.held ? (
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-warning/10">
+                <AlertTriangle className="h-8 w-8 text-warning" aria-hidden="true" />
+              </div>
+            ) : (
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+                <CheckCircle2 className="h-8 w-8 text-success" aria-hidden="true" />
+              </div>
+            )}
+            <h2 className="mt-5 text-[20px] font-bold text-brand-text" data-publish-outcome={outcome.held ? "copyright-review" : "published"}>
+              {outcome.title}
             </h2>
-            <p className="mx-auto mt-2 max-w-sm text-[13px] leading-relaxed text-muted-foreground">
-              {scheduled
-                ? "It goes live at the time you chose, once processing has finished."
-                : "It is processing now and will be watchable in a few minutes."}
-            </p>
+            <p className="mx-auto mt-2 max-w-sm text-[13px] leading-relaxed text-muted-foreground">{outcome.body}</p>
+            {outcome.held && form.publishedPostId ? (
+              <Link href={hubEditHref(form.publishedPostId, "details")} className="upload-button mt-4" data-link="hub-copyright-review">
+                Open in Creator Hub
+              </Link>
+            ) : null}
             {form.publishedEpisodeNum !== null && form.seriesChoice.kind !== "none" && (
               <p className="mt-2 text-[13px] text-muted-foreground" data-series-result>
                 Added to {form.seriesChoice.title.trim() || "your series"} as episode {form.publishedEpisodeNum}.
@@ -223,7 +232,8 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
               </p>
             )}
 
-            {postUrl && (
+            {/* A held video opens for its author only: no link to share yet. */}
+            {postUrl && !outcome.held && (
               <div className="mt-6 flex items-center gap-2 rounded-xl border border-border bg-brand-card px-3 py-2">
                 <span className="flex-1 truncate text-left font-mono text-[12px] text-muted-foreground">{postUrl}</span>
                 <button

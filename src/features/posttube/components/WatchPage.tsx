@@ -10,7 +10,7 @@ import ShareDialog from "@/components/ShareDialog";
 import { useToast } from "@/components/ui/toast";
 import { useDeletePost } from "@/hooks/usePostActions";
 import { useToggleLike } from "@/hooks/usePostReaction";
-import { useSubmitReport, REPORT_REASONS } from "@/hooks/useReport";
+import { useSubmitReport, VIDEO_REPORT_REASONS } from "@/hooks/useReport";
 import { useChannelByRef } from "@/hooks/useChannels";
 import { useDataSaver } from "@/hooks/useDataSaver";
 import { useMembershipAccess } from "@/features/memberships/hooks";
@@ -1021,7 +1021,7 @@ function WatchPageContent({ videoId, listId = null, startSeconds = null }: Watch
                 <div className="px-5 py-4">
                   <p className="mb-3 text-xs text-muted-foreground">Why are you reporting this?</p>
                   <div className="space-y-1.5">
-                    {REPORT_REASONS.map((reason) => (
+                    {VIDEO_REPORT_REASONS.map((reason) => (
                       <button
                         key={reason.value}
                         type="button"

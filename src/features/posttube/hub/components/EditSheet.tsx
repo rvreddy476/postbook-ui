@@ -36,8 +36,11 @@ import {
   fromLocalInput,
   parseClock,
   readableHubError,
+  readableHubFailure,
   toLocalInput,
 } from "../hubModel";
+import { COPYRIGHT_REVIEW, COPYRIGHT_REVIEW_EDIT_COPY, isCopyrightHeld } from "@/features/copyright/model";
+import { CopyrightReviewNotice } from "@/features/copyright/components/CopyrightReviewNotice";
 import { RECORDING_LOCATION_MAX, detailsPatch, detailsProblems, notYetPublished, toDetailsForm, type DetailsForm } from "../editForm";
 import {
   useCaptionTracks,
@@ -232,8 +235,11 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
   /** The server's last credits refusal (TOO_MANY_CREDITS, INVALID_GENRE, …), until the credits change. */
   const [creditServerProblem, setCreditServerProblem] = useState<CreditsProblem | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
+  /** The server refused the audience of a video in copyright review (409 COPYRIGHT_REVIEW). */
+  const [gateRefused, setGateRefused] = useState(false);
+  const gateLocked = isCopyrightHeld(post.copyright_review) || gateRefused;
 
-  const set = <K extends keyof DetailsForm>(k: K, v: DetailsForm[K]) => {
+  const set =<K extends keyof DetailsForm>(k: K, v: DetailsForm[K]) => {
     setSaveError(null);
     setForm((f) => ({ ...f, [k]: v }));
   };
@@ -285,7 +291,9 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
       // A credits refusal is said under its field in the Credits editor too.
       const creditProblem = creditsErrorProblem(code);
       setCreditServerProblem(creditProblem);
-      const message = creditProblem?.message ?? readableHubError(code, "Check the fields and try again.");
+      // A copyright refusal (COPYRIGHT_REVIEW on a held video's audience, UPLOADS_PAUSED on "publish now") names itself.
+      if (code === COPYRIGHT_REVIEW) setGateRefused(true);
+      const message = creditProblem?.message ?? readableHubFailure(err, "Check the fields and try again.");
       setSaveError(message);
       toast({ type: "error", title: "Could not save", description: message });
     }
@@ -321,6 +329,7 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
   return (
     <>
       <div className="hub-sheet-body">
+        {post.copyright_review ? <CopyrightReviewNotice postId={post.id} review={post.copyright_review} /> : null}
         <div className="hub-field">
           <label className="hub-label" htmlFor="hub-title">
             Title
@@ -457,6 +466,11 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
           <div className="hub-field" data-hub-members-only>
             <span className="hub-label">Members only</span>
             <MembersOnlyChoices levels={gateLevels} value={gate} onChange={(v) => { setSaveError(null); setGate(v); }} disabled={busy} />
+            {gateLocked ? (
+              <span className="hub-hint" data-copyright-gate>
+                {COPYRIGHT_REVIEW_EDIT_COPY}
+              </span>
+            ) : null}
           </div>
         ) : null}
 

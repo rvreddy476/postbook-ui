@@ -957,6 +957,9 @@ const ERROR_COPY: Record<string, string> = {
   REFUND_NOT_ALLOWED: "This payment can't be refunded.",
   INVALID_TIER: "That level isn't available any more — pick another.",
   MEMBERSHIP_TIERS_UNAVAILABLE: "Couldn't check your membership levels. Nothing was saved — try again.",
+  // PUT /v1/posts/:id/membership on a video in copyright review (post-service standing_errors.go:76).
+  // The same words as features/copyright COPYRIGHT_REVIEW_EDIT_COPY (a test keeps them equal; this file imports nothing).
+  COPYRIGHT_REVIEW: "This video is in copyright review — you can't change who can see it until it's cleared.",
   INVALID_CURSOR: "The list moved on. Reload to see it from the top.",
 }
 

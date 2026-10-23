@@ -1,6 +1,7 @@
 import api from "@/lib/api";
 
-import { saveChapters, type HubPostPatch } from "@/features/posttube/hub/hubApi";
+import { getPost, saveChapters, type HubPostDetail, type HubPostPatch } from "@/features/posttube/hub/hubApi";
+import { copyrightRefusalMessage, copyrightReviewCopy, isCopyrightHeld, isCopyrightRefusal, type CopyrightReview } from "@/features/copyright/model";
 
 import { creditsApply, creditsCreateFields, creditsDraftFields, creditsErrorProblem, type CreditsContext, type CreditsFields } from "@/features/posttube/credits/creditsModel";
 import { actionCreateFields, actionProblemFromError, type ActionWrite } from "@/features/action-button/model";
@@ -82,6 +83,51 @@ export function isTierGateRefusal(err: unknown): boolean {
 }
 
 /**
+  A refusal the direct create would meet as well, so a failed draft publish
+  must not fall through to it: a members-only refusal, or a copyright one
+  (403 UPLOADS_PAUSED, 409 COPYRIGHT_REVIEW — post-service standing_errors.go).
+*/
+export function isFinalPublishRefusal(err: unknown): boolean {
+  return isTierGateRefusal(err) || isCopyrightRefusal(err);
+}
+
+/**
+  The create response never carries the copyright title review, so after a
+  long video is published (now, not scheduled: a scheduled one is judged
+  when it goes live) the studio reads the detail back. The review when the
+  video is held (pending or blocked); null when it is live, never flagged,
+  or the read failed (the publish itself worked either way).
+*/
+export async function readPublishedCopyrightReview(
+  postId: string,
+  read: (id: string) => Promise<HubPostDetail | null> = getPost,
+): Promise<CopyrightReview | null> {
+  try {
+    const detail = await read(postId);
+    return detail?.copyright_review && isCopyrightHeld(detail.copyright_review) ? detail.copyright_review : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The success screen's heading and line: "<Video> published", or the review's message when the video is held. */
+export function publishedOutcome(opts: { label: string; scheduled: boolean; review: CopyrightReview | null }): { held: boolean; title: string; body: string } {
+  if (opts.review && isCopyrightHeld(opts.review)) {
+    const copy = copyrightReviewCopy(opts.review);
+    return {
+      held: true,
+      title: opts.review.state === "blocked" ? `${opts.label} blocked for copyright` : `${opts.label} in copyright review`,
+      body: copy.canRequest ? `${copy.message} You can request a review in Creator Hub.` : copy.message,
+    };
+  }
+  return {
+    held: false,
+    title: `${opts.label} ${opts.scheduled ? "scheduled" : "published"}`,
+    body: opts.scheduled ? "It goes live at the time you chose, once processing has finished." : "It is processing now and will be watchable in a few minutes.",
+  };
+}
+
+/**
  * The draft save's action: the button, or null so a button removed in the
  * studio is removed from the draft too (the draft PATCH reads null as
  * "remove", like the post edit).
@@ -133,6 +179,9 @@ export function publishFailure(err: unknown): { code: string | null; message: st
   if (!err) return null;
   const body = (err as { response?: { data?: { error?: { code?: unknown; message?: unknown } } } }).response?.data?.error;
   const code = typeof body?.code === "string" && body.code ? body.code : null;
+  // Copyright: long-video uploads paused (with the day it ends), or members-only on a video the review would hold.
+  const copyright = copyrightRefusalMessage(err, "create");
+  if (copyright) return { code, message: copyright };
   // An Action button refusal: our sentence, naming what is missing for ACTION_NOT_ELIGIBLE.
   const actionProblem = actionProblemFromError(err);
   if (actionProblem) return { code, message: actionProblem.message };

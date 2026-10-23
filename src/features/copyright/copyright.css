@@ -1,0 +1,53 @@
+/* Copyright title review notices (Creator Hub rows, the edit sheet, the
+   video's insights page). Colours are the theme's status tokens
+   (src/ui/theme.css); sizes are the type scale. */
+
+.cr-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgb(var(--warning) / 0.3);
+  background: rgb(var(--warning) / 0.1);
+  color: rgb(var(--brand-text));
+  font-size: var(--type-xs);
+  line-height: 1.45;
+}
+
+.cr-notice[data-tone="success"] {
+  border-color: rgb(var(--success) / 0.3);
+  background: rgb(var(--success) / 0.1);
+}
+
+.cr-notice[data-tone="danger"] {
+  border-color: rgb(var(--danger) / 0.3);
+  background: rgb(var(--danger) / 0.1);
+}
+
+.cr-notice__icon {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+  color: rgb(var(--warning));
+}
+
+.cr-notice[data-tone="success"] .cr-notice__icon { color: rgb(var(--success)); }
+.cr-notice[data-tone="danger"] .cr-notice__icon { color: rgb(var(--danger)); }
+
+.cr-notice__text { flex: 1; min-width: 0; }
+.cr-notice__text p { margin: 0; }
+.cr-notice__sub { margin-top: 2px !important; color: rgb(var(--text-muted)); }
+.cr-notice__action { flex: 0 0 auto; align-self: center; }
+
+/* A library row: the same notice, tighter, under the title. */
+.cr-notice--row {
+  margin-top: 6px;
+  padding: 5px 8px;
+  max-width: 420px;
+  white-space: normal;
+}
+
+.cr-count { text-align: right; }
+.cr-count[data-over] { color: rgb(var(--danger)); }

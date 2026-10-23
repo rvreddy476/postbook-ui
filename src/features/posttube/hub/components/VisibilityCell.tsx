@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useGlobalToast } from "@/contexts/ToastContext";
 import { searchUsers } from "@/services/userService";
 import { PRIVATE_SHARES_MAX, hubErrorCode, type HubLibraryRow, type HubPrivateShare, type HubVisibility } from "../hubApi";
-import { VISIBILITY_LABEL, fromLocalInput, readableHubError, toLocalInput, visibilityPlan } from "../hubModel";
+import { VISIBILITY_LABEL, fromLocalInput, readableHubError, readableHubFailure, toLocalInput, visibilityPlan } from "../hubModel";
 import { useApplyVisibility, usePrivateShares, useSetPrivateShares } from "../hooks/useHub";
 import { VisibilityPanel } from "./LibraryActions";
 import { VisibilityIcon, useAnchoredMenu, useDismiss } from "./Pills";
@@ -53,7 +53,8 @@ export function VisibilityCell({ row, ownerId }: { row: HubLibraryRow; ownerId: 
           setOpen(false);
           toast({ type: "success", title: plan.scheduleAt ? "Scheduled" : `Set to ${VISIBILITY_LABEL[plan.visibility ?? "public"]}` });
         },
-        onError: (err) => setError(readableHubError(hubErrorCode(err), "Could not change the visibility. Try again.")),
+        // "Publish now" on a scheduled long video can meet the uploads pause (UPLOADS_PAUSED, with its end date).
+        onError: (err) => setError(readableHubFailure(err, "Could not change the visibility. Try again.")),
       },
     );
   };

@@ -11,6 +11,7 @@ import type { ChapterDraft } from "@/features/posttube/hub/chaptersModel";
 import type { SeriesChoice } from "./studioApi";
 import { EMPTY_CREDITS_FORM, type CreditsForm } from "@/features/posttube/credits/creditsModel";
 import type { ActionDraft } from "@/features/action-button/model";
+import type { CopyrightReview } from "@/features/copyright/model";
 
 export type { ContentType, StepId, ChapterDraft, SeriesChoice };
 
@@ -126,6 +127,8 @@ export interface StudioFormState {
   followUpFailures: FollowUpFailure[];
   /** The episode the post became, when a series was chosen and the add worked. */
   publishedEpisodeNum: number | null;
+  /** A long video the copyright title review held at publish (read back from the detail); null = published. */
+  publishedCopyrightReview: CopyrightReview | null;
   trimStartMs: number;
   trimEndMs: number | null;
   computedVideoCategory: "flick" | "long_video" | null;
@@ -195,6 +198,7 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   publishWarning: null,
   followUpFailures: [],
   publishedEpisodeNum: null,
+  publishedCopyrightReview: null,
   trimStartMs: 0,
   trimEndMs: null,
   computedVideoCategory: null,

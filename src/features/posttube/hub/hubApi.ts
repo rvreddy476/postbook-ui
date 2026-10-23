@@ -10,6 +10,7 @@ import { readEndScreenPosition } from "@/features/posttube/watch/watchApi";
 import type { EndScreenKind, EndScreenPosition } from "@/features/posttube/endScreenGeometry";
 import type { CommentItem } from "@/types/profile";
 import { decodeAction, type ActionWrite, type PostAction } from "@/features/action-button/model";
+import { decodeCopyrightReview, type CopyrightReview } from "@/features/copyright/model";
 
 /*
   The Creator Hub's one adapter. Every request the hub sends and every
@@ -149,6 +150,8 @@ export interface HubLibraryRow {
   related_post_id: string | null;
   /** The Action button, when the row carries one (the author's copy, with its status). */
   action?: PostAction;
+  /** The copyright title review, when this video was ever flagged (the author's rows only; features/copyright). */
+  copyright_review?: CopyrightReview;
 }
 
 export function normalizeVisibility(raw: unknown, scheduledAt?: string | null): HubVisibility {
@@ -194,8 +197,10 @@ export function normalizeLibraryRow(raw: unknown): HubLibraryRow | null {
   const processingStatus = str(raw.processing_status) || str(vm.upload_status) || "";
   const durationMs = num(videoMedia?.duration_ms);
   const action = decodeAction(raw.action);
+  const copyrightReview = decodeCopyrightReview(raw.copyright_review);
   return {
     ...(action ? { action } : {}),
+    ...(copyrightReview ? { copyright_review: copyrightReview } : {}),
     id: raw.id,
     title: str(raw.title).trim() || firstLine(str(raw.text)) || "Untitled",
     text: str(raw.text),
@@ -480,6 +485,8 @@ export interface HubPostDetail {
   tier_required_id?: string;
   /** The Action button: the author's copy carries the url and, when it is not live, the status. Absent = none. */
   action?: PostAction;
+  /** The copyright title review (the author's direct read only; absent when never flagged). */
+  copyright_review?: CopyrightReview;
 }
 
 /** `related_post` on the detail: `{id, title, thumbnail_url, duration_seconds, channel_name}` or null. */
@@ -560,6 +567,7 @@ export function normalizePostDetail(raw: unknown): HubPostDetail | null {
     credits: decodeCreditsInfo(raw),
     ...(str(raw.tier_required_id) ? { tier_required_id: str(raw.tier_required_id) } : {}),
     ...(row.action ? { action: row.action } : {}),
+    ...(row.copyright_review ? { copyright_review: row.copyright_review } : {}),
   };
 }
 

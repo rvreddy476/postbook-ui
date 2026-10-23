@@ -12,6 +12,7 @@ import type {
   HubVisibility,
 } from "./hubApi";
 import { tierGateMessage } from "@/features/memberships/model";
+import { COPYRIGHT_REVIEW_EDIT_COPY, copyrightRefusalMessage, uploadsPausedCopy } from "@/features/copyright/model";
 
 /*
   Pure helpers for the Creator Hub: the SVG path builders behind the
@@ -482,6 +483,10 @@ const HUB_ERROR_TEXT: Record<string, string> = {
   // Members only on an edit (post-service writeTierGateError): nothing was saved.
   INVALID_TIER: tierGateMessage("INVALID_TIER", "saved")!,
   MEMBERSHIP_TIERS_UNAVAILABLE: tierGateMessage("MEMBERSHIP_TIERS_UNAVAILABLE", "saved")!,
+  // Copyright title review (post-service standing_errors.go): a held video keeps its audience;
+  // "publish now" on a scheduled long video meets the uploads pause (readableHubFailure adds its date).
+  COPYRIGHT_REVIEW: COPYRIGHT_REVIEW_EDIT_COPY,
+  UPLOADS_PAUSED: uploadsPausedCopy(null),
   INVALID_LICENSE: "That license is not one we offer.",
   INVALID_RECORDING_DATE: "The recording date can't be in the future.",
   INVALID_RECORDING_LOCATION: "The recording location is too long (100 characters at most).",
@@ -517,6 +522,28 @@ const HUB_ERROR_TEXT: Record<string, string> = {
 export function readableHubError(code: string | null | undefined, fallback = "Something went wrong. Try again."): string {
   if (!code) return fallback;
   return HUB_ERROR_TEXT[code.toUpperCase()] ?? fallback;
+}
+
+/** The envelope's code (`{error:{code}}`, a bare `{code}` or `{error:"CODE"}`), as hubApi.hubErrorCode reads it. */
+function envelopeCode(err: unknown): string | null {
+  const data = (err as { response?: { data?: unknown } } | null)?.response?.data;
+  if (!data || typeof data !== "object") return null;
+  const d = data as Record<string, unknown>;
+  if (d.error && typeof d.error === "object") {
+    const code = (d.error as Record<string, unknown>).code;
+    return typeof code === "string" && code ? code : null;
+  }
+  if (typeof d.error === "string" && /^[A-Z0-9_]+$/.test(d.error)) return d.error;
+  return typeof d.code === "string" && d.code ? d.code : null;
+}
+
+/**
+  readableHubError off the error itself: a copyright refusal first (the
+  uploads pause names the day it ends, from error.details.until), then the
+  code's sentence, then the fallback.
+*/
+export function readableHubFailure(err: unknown, fallback = "Something went wrong. Try again."): string {
+  return copyrightRefusalMessage(err, "edit") ?? readableHubError(envelopeCode(err), fallback);
 }
 
 /* ── Bulk edit: the contract C fields ───────────────────── */

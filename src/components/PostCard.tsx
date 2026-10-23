@@ -875,7 +875,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       <ReelReportDialog
         open={showReportDialog}
         targetId={post.id}
-        targetType={isReel ? 'reel' : 'post'}
+        targetType={isReel ? 'reel' : post.content_type === 'long_video' ? 'video' : 'post'}
         onClose={() => setShowReportDialog(false)}
       />
     </article>

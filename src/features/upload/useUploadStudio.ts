@@ -30,7 +30,7 @@ import { chapterRowsToWire } from "@/features/posttube/hub/chaptersModel";
 import { type FollowUpFailure, type StudioFormState, INITIAL_FORM_STATE } from "./types";
 import { validateSelectedFile, validateMediaDuration } from "./fileRules";
 import { freshStudioForm, mergePublishDefaults, takesPublishDefaults } from "./studioDefaults";
-import { applySeriesChoice, isTierGateRefusal, postPublishPatch, saveUploadChapters, scheduleIso, studioCreateFields, studioDraftActionField, studioDraftCreditFields, studioDraftGateField, studioTakesCredits } from "./studioApi";
+import { applySeriesChoice, isFinalPublishRefusal, postPublishPatch, readPublishedCopyrightReview, saveUploadChapters, scheduleIso, studioCreateFields, studioDraftActionField, studioDraftCreditFields, studioDraftGateField, studioTakesCredits } from "./studioApi";
 import { cachedCover, keepPublishAttempt, newPublishAttempt, type PublishAttempt } from "./publishAttempt";
 import { chosenSoundPatch, soundToAudioTrack, studioDraftSoundFields, studioSoundNotice, studioSoundStatus } from "./studioSound";
 import { useSoundInfo } from "@/features/reels/hooks/useSounds";
@@ -601,8 +601,8 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
           const reel = await publishDraft(form.draftId, scheduleAt ? { schedule_at: scheduleAt } : undefined);
           return { reel, coverMediaId };
         } catch (err) {
-          // A members-only refusal would refuse the direct create too: say it, and post nothing.
-          if (isTierGateRefusal(err)) throw err;
+          // A members-only or copyright refusal (uploads paused) would refuse the direct create too: say it, and post nothing.
+          if (isFinalPublishRefusal(err)) throw err;
           /* otherwise fall through to direct create */
         }
       }
@@ -695,8 +695,15 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         }
       }
 
+      // Copyright title review: the create response never says whether the
+      // video was held, so a long video published now is read back.
+      // A reel over the shorts cap publishes as a long video too.
+      const publishedLong = isLongVideo || classifyVideo(form.videoDurationSec, form.videoWidth, form.videoHeight) === "long_video";
+      const publishedCopyrightReview = publishedLong && postId && !scheduleIso(form.scheduleAt) ? await readPublishedCopyrightReview(postId) : null;
+
       patch({
         publishedPostId: postId,
+        publishedCopyrightReview,
         publishSuccess: true,
         publishWarning: warnings.length > 0 ? warnings.join(" ") : null,
         followUpFailures,

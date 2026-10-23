@@ -6,6 +6,7 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 import { formatCount, formatDuration } from "@/features/posttube/model";
 import { ActionTaps } from "@/features/action-button/components/ActionPill";
 import { statusExplanation } from "@/features/action-button/model";
+import { CopyrightReviewNotice } from "@/features/copyright/components/CopyrightReviewNotice";
 import { isShortType, watchHref, type HubLibraryRow } from "../hubApi";
 import { formatDateTime, rowDate, type LibrarySortKey, type SortDir } from "../hubModel";
 import { useContentInsights, useInView } from "../hooks/useHub";
@@ -132,6 +133,7 @@ export function LibraryTable({ rows, selected, onToggle, onToggleAll, sortKey, s
                       </Link>
                       <div className="hub-row-meta">{rowMeta(row)}</div>
                       <RowAction row={row} />
+                      {row.copyright_review ? <CopyrightReviewNotice postId={row.id} review={row.copyright_review} variant="row" /> : null}
                       <RowHoverActions row={row} onEdit={actions.onEdit} onCopyLink={actions.onCopyLink} onDelete={actions.onDelete} />
                     </span>
                   </div>

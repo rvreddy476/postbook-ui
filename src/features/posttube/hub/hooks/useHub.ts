@@ -57,6 +57,7 @@ import {
   type HubLibraryKind,
   type HubLibraryPage,
   type HubLibraryRow,
+  type HubPostDetail,
   type HubPostPatch,
   type HubVisibility,
   type InboxContent,
@@ -393,7 +394,13 @@ export function useUpdatePost() {
   return useMutation({
     mutationFn: ({ postId, patch }: { postId: string; patch: HubPostPatch }) => updatePost(postId, patch),
     onSuccess: (detail, { postId, patch }) => {
-      if (detail) qc.setQueryData(HUB_KEYS.post(postId), detail);
+      if (detail) {
+        // The edit's answer may not carry the author's copyright review (only the direct read is
+        // promised to): keep the one already read rather than dropping the notice.
+        const cached = qc.getQueryData<HubPostDetail | null>(HUB_KEYS.post(postId));
+        const review = detail.copyright_review ?? cached?.copyright_review;
+        qc.setQueryData(HUB_KEYS.post(postId), review ? { ...detail, copyright_review: review } : detail);
+      }
       const rowPatch: Partial<HubLibraryRow> = {};
       if (patch.title !== undefined) rowPatch.title = patch.title || "Untitled";
       if (patch.text !== undefined) rowPatch.text = patch.text;

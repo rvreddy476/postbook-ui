@@ -14,6 +14,7 @@ import { HubHead } from "./HubFrame";
 import { HubError, HubSkeleton, InsightsEmpty } from "./HubEmpty";
 import { PillGroup } from "./Pills";
 import { downloadCsv, insightsCsvFilename, insightsCsvRows, toCsv } from "../insightsCsv";
+import { CopyrightReviewNotice } from "@/features/copyright/components/CopyrightReviewNotice";
 
 function readPeriod(v: string | null): InsightsPeriod {
   return (INSIGHTS_PERIODS as readonly string[]).includes(v ?? "") ? (v as InsightsPeriod) : "28d";
@@ -185,6 +186,11 @@ export function ContentInsightsPage({ postId }: { postId: string }) {
         }
         actions={<PillGroup label="Period" value={period} options={PERIOD_OPTIONS} onChange={setPeriod} />}
       />
+      {post.data?.copyright_review ? (
+        <div style={{ marginBottom: 12 }}>
+          <CopyrightReviewNotice postId={post.data.id} review={post.data.copyright_review} />
+        </div>
+      ) : null}
 
       {insights.isPending ? (
         <HubSkeleton rows={4} height={64} />
