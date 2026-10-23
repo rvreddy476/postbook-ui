@@ -28,6 +28,12 @@ export interface UserProfile {
     intro_media_type?: string
     cta_label?: string
     cta_url?: string
+    /**
+     * The profile Action button (contract 23 Oct 2026), the posts' read
+     * shape; features/action-button useProfileAction reads it (and asks the
+     * channel when a payload has no `action` key at all).
+     */
+    action?: unknown
     member_since_badge?: boolean
     timezone?: string
     follower_count: number
@@ -277,6 +283,12 @@ export interface PostDetail {
     duration_ms?: number
     /** Age-restricted (post-service age_gate.go): never embeddable. */
     age_restricted?: boolean
+    /**
+     * The Action button (contract 23 Oct 2026), decoded by
+     * features/action-button decodeAction: {id, label, label_text, domain,
+     * href}; the author's copy adds url and status. Absent = none.
+     */
+    action?: unknown
     /*
       Declared labels and author settings, as post-service sends them on the
       post read and feed-service passes them through on a feed row

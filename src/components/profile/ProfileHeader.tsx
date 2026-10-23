@@ -28,6 +28,8 @@ import { motion } from "framer-motion"
 import api from "@/lib/api"
 import { uploadMedia } from "@/lib/mediaUpload"
 import { ProfileJoinButton } from "@/features/memberships/components/JoinButton"
+import { ActionPill } from "@/features/action-button/components/ActionPill"
+import { useProfileAction } from "@/features/action-button/hooks"
 import { FriendRequestButton } from "@/components/connections/FriendRequestButton"
 import MessageButton from "@/components/connections/MessageButton"
 import { ImageAdjustEditor } from "@/components/media/ImageAdjustEditor"
@@ -113,6 +115,8 @@ export function ProfileHeader({
     signInHref,
 }: ProfileHeaderProps) {
     const qc = useQueryClient()
+    // The profile's Action button, beside Follow and Message (edited on Branding).
+    const profileAction = useProfileAction(profile)
     const avatarInputRef = useRef<HTMLInputElement>(null)
     const coverInputRef = useRef<HTMLInputElement>(null)
 
@@ -481,6 +485,8 @@ export function ProfileHeader({
                                         />
                                     }
                                 />
+                                {/* The profile's Action button: it opens /l/<id> (the leaving page). The owner also sees one that is blocked or under review. */}
+                                <ActionPill action={profileAction} isAuthor={isOwn} variant="profile" />
                                 {/* Join: only a creator with an active membership level, never your own page. */}
                                 {!isOwn && (
                                     <ProfileJoinButton

@@ -74,6 +74,7 @@ import { WatchMoreMenu, watchMoreRows } from "../watch/components/WatchMoreMenu"
 import { WatchActions } from "../watch/components/WatchActions";
 import "@/features/reels/components/reels-screen.css";
 import { withShareRef } from "@/features/share/shareRef";
+import { ActionPill } from "@/features/action-button/components/ActionPill";
 import "./tube.css";
 import "../watch/watch.css";
 
@@ -887,6 +888,8 @@ function WatchPageContent({ videoId, listId = null, startSeconds = null }: Watch
         </div>
 
         <div className="tube-watch__primary">
+          {/* The Action button, under the player (the end screen's own link keeps working). Never on a locked video. */}
+          {detail?.action ? <ActionPill action={detail.action} isAuthor={isOwner} locked={gated} variant="card" className="mt-3" /> : null}
           <WatchDetails
             title={video.title}
             authorId={video.author_id}

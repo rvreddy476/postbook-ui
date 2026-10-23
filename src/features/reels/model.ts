@@ -11,6 +11,7 @@
 
 import { disclosuresFromWire, type Disclosures } from "@/lib/disclosures";
 import { SHORTS_MAX_DURATION_MS } from "@/lib/videoLimits";
+import { decodeAction, type PostAction } from "@/features/action-button/model";
 
 /** The Shorts boundary (10 minutes, inclusive), from the one constant in lib/videoLimits. */
 export const REEL_MAX_DURATION_MS = SHORTS_MAX_DURATION_MS;
@@ -100,6 +101,8 @@ export interface FeedReelPost {
   body_redacted?: boolean;
   /** The video's length, kept on a redacted row (its media is not). */
   duration_ms?: number | null;
+  /** The Action button (features/action-button decodeAction); absent = none. */
+  action?: unknown;
 }
 
 /** The added sound a reel plays, normalised. */
@@ -160,6 +163,8 @@ export interface ReelItem {
    * every other reel.
    */
   locked?: { tierRequiredId: string };
+  /** The Action button: the pill above the caption. Absent when the reel has none (never on a locked reel). */
+  action?: PostAction;
   media: {
     mediaId: string;
     width: number;
@@ -321,7 +326,9 @@ export function toReelItem(post: FeedReelPost): ReelItem | null {
   const qualities = Object.keys(video.variants ?? {})
     .filter((k) => RUNG.test(k))
     .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+  const action = decodeAction(post.action);
   return {
+    ...(action ? { action } : {}),
     id: post.id,
     authorId: author?.id || post.author_id,
     authorName: author?.display_name || author?.username || "Someone",

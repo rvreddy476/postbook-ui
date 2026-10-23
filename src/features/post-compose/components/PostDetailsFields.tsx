@@ -1,10 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { AtSign, Check, Globe, Hash, Link as LinkIcon, Loader2, Lock, MapPin, SlidersHorizontal, UserCheck, Users, X } from "lucide-react"
+import { AtSign, Check, Globe, Hash, Link as LinkIcon, Loader2, Lock, MapPin, MousePointerClick, SlidersHorizontal, UserCheck, Users, X } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
 import { useMentionSearch } from "@/components/comments/useMentionSearch"
+import { ActionEditor, actionSummary } from "@/features/action-button/components/ActionEditor"
+import { useActionLabels } from "@/features/action-button/hooks"
+import { draftProblem } from "@/features/action-button/model"
 import { MembersOnlyChoices, membersOnlySummary } from "@/features/memberships/components/MembersOnlyChoices"
 import type { Tier } from "@/features/memberships/model"
 
@@ -184,7 +187,7 @@ function MentionPicker({ onPick, onClose }: { onPick: (username: string) => void
 
 /* ─── The rows and their sheets ────────────────────────────────────── */
 
-type Sheet = "location" | "link" | "audience" | "members" | "more" | "disclosure" | "alt" | "language"
+type Sheet = "location" | "link" | "action" | "audience" | "members" | "more" | "disclosure" | "alt" | "language"
 
 const AUDIENCE_ICON: Record<PostAudience, LucideIcon> = {
   public: Globe,
@@ -269,6 +272,9 @@ export function DetailRows({ details, onDetails, media, onAltText, disabled, ini
   const photos = media.filter((m) => m.kind === "image")
   const link = normalizeLink(details.link)
   const problem = linkProblem(details.link)
+  const actionLabels = useActionLabels()
+  const action = details.action ?? null
+  const actionIssue = draftProblem(action, actionLabels)
 
   return (
     <div data-compose="detail-rows" className="divide-y divide-brand-divider">
@@ -281,6 +287,15 @@ export function DetailRows({ details, onDetails, media, onAltText, disabled, ini
         disabled={disabled}
       />
       <DetailRow icon={LinkIcon} title="Add link" value={link} problem={problem} onClick={() => setSheet("link")} name="link" disabled={disabled} />
+      <DetailRow
+        icon={MousePointerClick}
+        title={action ? "Action button" : "Add action button"}
+        value={actionSummary(action, actionLabels)}
+        problem={actionIssue}
+        onClick={() => setSheet("action")}
+        name="action"
+        disabled={disabled}
+      />
       <DetailRow
         icon={AUDIENCE_ICON[details.visibility]}
         title={audienceRowLabel(details.visibility)}
@@ -319,6 +334,10 @@ export function DetailRows({ details, onDetails, media, onAltText, disabled, ini
         }}
       />
       <LinkSheet open={sheet === "link"} initial={details.link} onClose={close} onDone={(value) => { onDetails({ link: value.trim() }); close() }} />
+
+      <ComposeSheet open={sheet === "action"} title="Action button" onClose={close} footer={<SheetDone onClick={close} disabled={actionIssue !== null} />}>
+        <ActionEditor value={action} onChange={(next) => onDetails({ action: next })} labels={actionLabels} idPrefix="post-compose-action" surface="post" />
+      </ComposeSheet>
 
       <ComposeSheet open={sheet === "audience"} title="Who can view" onClose={close}>
         <div role="radiogroup" aria-label="Who can view this post">

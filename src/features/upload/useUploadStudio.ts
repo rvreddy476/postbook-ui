@@ -30,7 +30,7 @@ import { chapterRowsToWire } from "@/features/posttube/hub/chaptersModel";
 import { type FollowUpFailure, type StudioFormState, INITIAL_FORM_STATE } from "./types";
 import { validateSelectedFile, validateMediaDuration } from "./fileRules";
 import { freshStudioForm, mergePublishDefaults, takesPublishDefaults } from "./studioDefaults";
-import { applySeriesChoice, postPublishPatch, saveUploadChapters, scheduleIso, studioCreateFields, studioDraftCreditFields, studioTakesCredits } from "./studioApi";
+import { applySeriesChoice, postPublishPatch, saveUploadChapters, scheduleIso, studioCreateFields, studioDraftActionField, studioDraftCreditFields, studioTakesCredits } from "./studioApi";
 import { cachedCover, keepPublishAttempt, newPublishAttempt, type PublishAttempt } from "./publishAttempt";
 import { chosenSoundPatch, soundToAudioTrack, studioDraftSoundFields, studioSoundNotice, studioSoundStatus } from "./studioSound";
 import { useSoundInfo } from "@/features/reels/hooks/useSounds";
@@ -515,6 +515,8 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         schedule_at: scheduleIso(form.scheduleAt),
         // Credits replace what the draft holds; a topic that takes none clears them.
         ...studioDraftCreditFields(form, classified === "long_video"),
+        // The Action button; null removes one saved earlier in this draft.
+        ...studioDraftActionField(form),
       });
   }, [form, patch]);
 

@@ -11,6 +11,8 @@ export type ReportReason =
   | "violence"
   | "nudity"
   | "misinformation"
+  /** A fake job or a scam behind a post's or a profile's Action button (trust-safety, 23 Oct 2026). */
+  | "scam_link"
   | "other";
 
 export interface SubmitReportParams {
@@ -59,5 +61,12 @@ export const REPORT_REASONS: { value: ReportReason; label: string }[] = [
   { value: "violence", label: "Violence or threats" },
   { value: "nudity", label: "Nudity or sexual content" },
   { value: "misinformation", label: "Misinformation" },
+  { value: "scam_link", label: "Fake job or scam link" },
   { value: "other", label: "Other" },
 ];
+
+/**
+ * Comments have no Action button, so their menu leaves "Fake job or scam
+ * link" out; posts (reels and videos too) and profiles use REPORT_REASONS.
+ */
+export const COMMENT_REPORT_REASONS = REPORT_REASONS.filter((r) => r.value !== "scam_link");

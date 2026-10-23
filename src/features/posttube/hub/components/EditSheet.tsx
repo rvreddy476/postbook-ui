@@ -67,6 +67,9 @@ import { categoryTakesCredits, creditsEditPatch, creditsErrorProblem, creditsFor
 import { useGenres } from "../../credits/useCredits";
 import { HubError, HubSkeleton } from "./HubEmpty";
 import { SwitchRow, Toggle, VisibilityIcon } from "./Pills";
+import { ActionEditor } from "@/features/action-button/components/ActionEditor";
+import { ActionTaps } from "@/features/action-button/components/ActionPill";
+import { actionPatchFields, actionProblemFromError, draftFromAction, draftProblem, type ActionDraft, type ActionProblem, type ActionStatus } from "@/features/action-button/model";
 
 export type SheetTab = "details" | "elements" | "captions";
 
@@ -169,6 +172,11 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
   const setMembersOnly = useSetPostMembersOnly();
   const [gateBase, setGateBase] = useState<string | null>(post.tier_required_id ?? null);
   const [gate, setGate] = useState<string | null>(gateBase);
+  // The Action button: in the same PATCH (`action`: null removes it, omitted leaves it).
+  const [actionBase, setActionBase] = useState<ActionDraft | null>(() => draftFromAction(post.action));
+  const [actionDraft, setActionDraft] = useState<ActionDraft | null>(actionBase);
+  const [actionStatus, setActionStatus] = useState<ActionStatus | null>(post.action?.status ?? null);
+  const [actionServerProblem, setActionServerProblem] = useState<ActionProblem | null>(null);
   const genres = useGenres();
   const me = useAuthUser();
   const [frameClock, setFrameClock] = useState("0:05");
@@ -185,6 +193,11 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
     setCreditsForm(credits);
     setGateBase(post.tier_required_id ?? null);
     setGate(post.tier_required_id ?? null);
+    const action = draftFromAction(post.action);
+    setActionBase(action);
+    setActionDraft(action);
+    setActionStatus(post.action?.status ?? null);
+    setActionServerProblem(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [post.id]);
 
@@ -206,9 +219,12 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
   const creditIssues = showCredits ? creditsProblems(creditsForm) : [];
   // Credit issues are shown on their rows; they block Save like the others.
   const problems = detailsProblems(form, post.id);
-  const blocked = problems.length > 0 || creditIssues.length > 0;
+  const actionPatch = useMemo(() => actionPatchFields(actionBase, actionDraft), [actionBase, actionDraft]);
+  // Judged only once it moved: a saved button whose url the detail did not send stays as it is.
+  const actionIssue = "action" in actionPatch ? draftProblem(actionDraft) : null;
+  const blocked = problems.length > 0 || creditIssues.length > 0 || actionIssue !== null;
   const gateChanged = gate !== gateBase;
-  const dirty = Object.keys(patch).length > 0 || Object.keys(creditsPatch).length > 0 || scheduleChanged || gateChanged;
+  const dirty = Object.keys(patch).length > 0 || Object.keys(creditsPatch).length > 0 || Object.keys(actionPatch).length > 0 || scheduleChanged || gateChanged;
   const busy = update.isPending || reschedule.isPending || setMembersOnly.isPending;
   const [saveError, setSaveError] = useState<string | null>(null);
   /** The server's last credits refusal (TOO_MANY_CREDITS, INVALID_GENRE, …), until the credits change. */
@@ -226,8 +242,8 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
     if (!dirty || busy || scheduleInvalid || blocked) return;
     setSaveError(null);
     try {
-      // Credits ride in the same PATCH; `credits` replaces the whole list.
-      const body: HubPostPatch = { ...patch, ...creditsPatch };
+      // Credits and the Action button ride in the same PATCH; `credits` replaces the whole list.
+      const body: HubPostPatch = { ...patch, ...creditsPatch, ...actionPatch };
       if (base.visibility === "scheduled" && form.visibility !== "scheduled") {
         // Leaving "scheduled": publish now, then apply the chosen state.
         await reschedule.mutateAsync({ postId: post.id });
@@ -246,8 +262,23 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
       const credits = saved && body.credits !== undefined ? creditsFormFrom(saved.credits) : creditsForm;
       setCreditsBase(credits);
       setCreditsForm(credits);
+      if (body.action !== undefined) {
+        // The saved copy says the button's new status (a changed link starts live, or unchecked in dev).
+        const savedAction = saved ? draftFromAction(saved.action) : null;
+        const next = savedAction && savedAction.url ? savedAction : actionDraft;
+        setActionBase(next);
+        setActionDraft(next);
+        setActionStatus(saved?.action?.status ?? null);
+      }
       toast({ type: "success", title: "Saved" });
     } catch (err) {
+      const actionProblem = actionProblemFromError(err);
+      if (actionProblem) {
+        // Said under the Action button; the toast carries it too.
+        setActionServerProblem(actionProblem);
+        toast({ type: "error", title: "Could not save", description: actionProblem.message });
+        return;
+      }
       const code = hubErrorCode(err);
       // A credits refusal is said under its field in the Credits editor too.
       const creditProblem = creditsErrorProblem(code);
@@ -426,6 +457,25 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
             <MembersOnlyChoices levels={gateLevels} value={gate} onChange={(v) => { setSaveError(null); setGate(v); }} disabled={busy} />
           </div>
         ) : null}
+
+        <div className="hub-field" data-hub-action>
+          <span className="hub-label">Action button</span>
+          <ActionEditor
+            value={actionDraft}
+            onChange={(v) => {
+              setSaveError(null);
+              setActionServerProblem(null);
+              setActionDraft(v);
+            }}
+            savedStatus={actionStatus}
+            serverProblem={actionServerProblem}
+            disabled={busy}
+            idPrefix="hub-action"
+            surface={short ? "reel" : "video"}
+            showErrors={"action" in actionPatch}
+          />
+          {post.action ? <ActionTaps postId={post.id} className="hub-hint" /> : null}
+        </div>
 
         <MoreSettings form={form} set={set} open={moreOpen} onToggle={() => setMoreOpen((o) => !o)} notifyEditable={notifyEditable} relatedOptions={relatedOptions} related={post.related_post} />
 

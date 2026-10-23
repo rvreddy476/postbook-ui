@@ -32,9 +32,22 @@
     alt texts         per photo. The create route has no field for them —
                       they are written onto each uploaded asset first — and
                       a draft carries them as alt_texts {media_id: text}.
+    action            the Action button, {label, url} (features/action-button);
+                      sent only when there is one, in the create and in the
+                      draft payload alike. Not link_url, which stays as it is.
 */
 
 import type { PostRichText } from "@/components/studio/postStyle"
+import {
+  actionCreateFields,
+  actionErrorMessage,
+  actionProblemFromError,
+  draftFromWire,
+  draftProblem,
+  isActionErrorCode,
+  type ActionDraft,
+  type ActionWrite,
+} from "@/features/action-button/model"
 
 /* ─── Audience ─────────────────────────────────────────────────────── */
 
@@ -338,6 +351,8 @@ export interface PostDetailsForm {
    * once the post exists.
    */
   tierRequiredId?: string | null
+  /** The Action button: a label and a link; absent or null for none. Sent with the create and the draft. */
+  action?: ActionDraft | null
 }
 
 export function emptyDetails(language: string = defaultLanguage()): PostDetailsForm {
@@ -366,7 +381,7 @@ export function detailsProblem(details: PostDetailsForm): string | null {
   const link = linkProblem(details.link)
   if (link) return link
   if (details.title.trim().length > MAX_TITLE_LENGTH) return `A title can be at most ${MAX_TITLE_LENGTH} characters.`
-  return null
+  return draftProblem(details.action)
 }
 
 /** The cover after the media changed: kept on its photo when it can be, else the first. */
@@ -440,6 +455,7 @@ export interface CreatePostBody {
   is_branded: boolean
   ai_generated: boolean
   link_url?: string
+  action?: ActionWrite
 }
 
 export interface ComposeInput {
@@ -506,6 +522,8 @@ export function buildCreateRequest({ text, details, media, extras }: ComposeInpu
   if (tags.hashtags.length > 0) body.hashtags = tags.hashtags
   if (tags.mentions.length > 0) body.mentions = tags.mentions
   if (link) body.link_url = link
+  const action = actionCreateFields(details.action).action
+  if (action) body.action = action
   return body
 }
 
@@ -539,6 +557,8 @@ export interface PostDraftPayload {
   location_place_id?: string
   location_lat?: number
   location_lng?: number
+  /** The Action button (contract 23 Oct 2026); the draft's PATCH replaces the payload, so none sent is none kept. */
+  action?: ActionWrite
 }
 
 /** POST / PATCH /v1/posts/drafts. */
@@ -595,6 +615,7 @@ export function buildDraftRequest({ text, details, media, extras }: ComposeInput
   if (create.feeling) payload.feeling = create.feeling
   if (create.activity) payload.activity = create.activity
   if (create.activity_detail) payload.activity_detail = create.activity_detail
+  if (create.action) payload.action = create.action
   return { post_type: create.poll ? "poll" : "post", payload, schedule_at: null }
 }
 
@@ -655,6 +676,8 @@ export function toDraftPayload(raw: unknown): PostDraftPayload {
   const lng = asNumber(p.location_lng)
   if (lat !== null) out.location_lat = lat
   if (lng !== null) out.location_lng = lng
+  const action = draftFromWire(p.action)
+  if (action) out.action = action
   return out
 }
 
@@ -732,6 +755,7 @@ export function draftToCompose(row: PostDraftRow, fallbackLanguage: string = def
     language: p.language || fallbackLanguage,
     extraHashtags: (p.hashtags ?? []).filter((t) => !ownTags.has(t.replace(/^#/, "").toLowerCase())),
     extraMentions: (p.mentions ?? []).filter((n) => !ownNames.has(n.replace(/^@/, "").toLowerCase())),
+    ...(p.action ? { action: { label: p.action.label, url: p.action.url } } : {}),
   }
   const isPoll = row.postType === "poll" || Boolean(p.poll)
   return {
@@ -859,7 +883,9 @@ const REFUSAL_COPY: Record<string, string> = {
  * Hashtag and mention refusals arrive as INVALID_REQUEST/INVALID_DRAFT with
  * the server's message, which names the value.
  */
-export function refusalCopy(code: string | null, message: string | null, fallback: string): string {
+export function refusalCopy(code: string | null, message: string | null, fallback: string, err?: unknown): string {
+  // An Action button refusal has its own words; with the error, ACTION_NOT_ELIGIBLE names what is missing.
+  if (isActionErrorCode(code)) return actionProblemFromError(err)?.message ?? actionErrorMessage(code)
   if (code && REFUSAL_COPY[code]) return REFUSAL_COPY[code]
   return message || fallback
 }

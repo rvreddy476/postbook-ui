@@ -1,14 +1,18 @@
+import type { ReactNode } from "react";
+
 import type { ChannelBranding, ChannelLink, FieldErrors } from "./model";
 
 /* The props contract between the container (BrandingSettings) and the
    presentational screen (BrandingScreen + sections). Everything here is
-   plain data and callbacks so the screen renders without providers. */
+   plain data and callbacks so the screen renders without providers — except
+   the Action button card, which the container builds (it saves on its own). */
 
-export type SectionId = "identity" | "links" | "featured" | "feed";
+export type SectionId = "identity" | "links" | "action" | "featured" | "feed";
 
 export const SECTIONS: { id: SectionId; label: string }[] = [
   { id: "identity", label: "Identity" },
   { id: "links", label: "Links" },
+  { id: "action", label: "Action button" },
   { id: "featured", label: "Featured" },
   { id: "feed", label: "RSS feed" },
 ];
@@ -118,4 +122,6 @@ export type BrandingScreenProps =
       featured: FeaturedProps;
       feed: FeedProps;
       save: SaveBarProps;
+      /** The profile Action button card (features/action-button ProfileActionCard); its own Save. */
+      actionButton?: ReactNode;
     };

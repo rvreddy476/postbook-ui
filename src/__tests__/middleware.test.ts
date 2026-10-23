@@ -78,3 +78,15 @@ describe("middleware: sound and hashtag pages (audit T-34)", () => {
     expect(passes(visit("/hashtag/%23sunset"))).toBe(true);
   });
 });
+
+describe("middleware: the Action button's redirect page", () => {
+  test("/l/<id> passes signed out: a public post's button opens for a visitor", () => {
+    expect(passes(visit("/l/0f8a2c10-1111-4a3b-9c00-000000000001"))).toBe(true);
+  });
+
+  test("only /l/ is opened, not every path that starts with an l", () => {
+    const res = visit("/live");
+    expect(passes(res)).toBe(false);
+    expect(new URL(res.headers.get("location") as string).pathname).toBe("/login");
+  });
+});

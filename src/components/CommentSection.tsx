@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCommentsAround } from '@/hooks/useCommentsAround';
 import { usePostRoom } from '@/hooks/usePostRoom';
 import { useMyProfile, useUserProfile } from '@/hooks/useEditProfile';
-import { useSubmitReport, REPORT_REASONS } from '@/hooks/useReport';
+import { useSubmitReport, COMMENT_REPORT_REASONS } from '@/hooks/useReport';
 import { useGlobalToast } from '@/contexts/ToastContext';
 import { Smile, Send, MessageCircle, X, Check, CornerDownRight, Heart, Pin } from 'lucide-react';
 import api from '@/lib/api';
@@ -150,7 +150,7 @@ function ReportDialog({
         <div className="px-5 py-4">
           <p className="text-[12px] text-brand-highlight mb-3">Why are you reporting this {targetType}?</p>
           <div className="space-y-1.5">
-            {REPORT_REASONS.map((r) => (
+            {COMMENT_REPORT_REASONS.map((r) => (
               <button key={r.value} onClick={() => setSelectedReason(r.value)}
                 className={`w-full rounded-xl px-3.5 py-2.5 text-left text-[13px] transition ${
                   selectedReason === r.value

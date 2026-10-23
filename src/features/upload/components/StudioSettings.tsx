@@ -1,7 +1,8 @@
 "use client";
 
-import { AlertCircle, Calendar, Eye, EyeOff, Globe, Link2, Loader2, Lock, MessageSquare, Newspaper, Repeat2, ShieldAlert, Tag, UserCheck, Users } from "lucide-react";
+import { AlertCircle, Calendar, Eye, EyeOff, Globe, Link2, Loader2, Lock, MessageSquare, MousePointerClick, Newspaper, Repeat2, ShieldAlert, Tag, UserCheck, Users } from "lucide-react";
 
+import { ActionEditor } from "@/features/action-button/components/ActionEditor";
 import { MembersOnlyChoices } from "@/features/memberships/components/MembersOnlyChoices";
 import type { Tier } from "@/features/memberships/model";
 import { useVideoCategories } from "@/features/posttube/hooks/usePosttubeHome";
@@ -62,6 +63,22 @@ export function MembersOnlySetting({ form, patch, levels }: SettingProps & { lev
   return (
     <Section title="Members only" subtitle="Who can watch it in full" icon={Lock}>
       <MembersOnlyChoices levels={levels} value={form.tierRequiredId} onChange={(tierRequiredId) => patch({ tierRequiredId })} />
+    </Section>
+  );
+}
+
+/* ── Action button ──────────────────────────────────────── */
+
+/**
+  A button that opens a website ("Apply now · epfindia.gov.in"): above the
+  caption on a reel, under the player on a long video. Sent with the create
+  and the draft save as `action`; a refusal (not eligible yet, an unsafe
+  link) comes back as the publish error in plain words.
+*/
+export function ActionSetting({ form, patch, contentType, showErrors }: SettingProps & { contentType: ContentType; showErrors?: boolean }) {
+  return (
+    <Section title="Action button" subtitle="Optional. A button viewers tap to open a website" icon={MousePointerClick}>
+      <ActionEditor value={form.action} onChange={(action) => patch({ action })} idPrefix="upload-action" surface={isShortStudio(contentType) ? "reel" : "video"} showErrors={showErrors} />
     </Section>
   );
 }

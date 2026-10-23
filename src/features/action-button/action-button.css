@@ -1,0 +1,237 @@
+/* The Action button's pills. Colours are theme tokens (src/ui/theme.css via
+   globals.css) and, on a reel, the reel stage tokens; sizes are the type
+   scale. */
+
+.action-pill {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: background-color 120ms ease, opacity 120ms ease;
+}
+
+.action-pill__text {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: baseline;
+  gap: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.action-pill__label {
+  flex: 0 0 auto;
+  font-weight: 700;
+}
+
+.action-pill__sep,
+.action-pill__domain {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.action-pill__icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+/* Under a post's media and under the watch player: a full-width bar. */
+.action-pill--card {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--brand-divider);
+  border-radius: 12px;
+  background: rgb(var(--brand-secondary));
+  color: rgb(var(--brand-text));
+  font-size: var(--type-sm);
+  line-height: var(--type-sm-lh);
+}
+
+.action-pill--card:hover {
+  background: rgb(var(--brand-tint));
+}
+
+.action-pill--card .action-pill__label {
+  color: rgb(var(--brand-ink));
+}
+
+.action-pill--card .action-pill__sep,
+.action-pill--card .action-pill__domain {
+  color: rgb(var(--text-muted));
+}
+
+/* Above a reel's caption, on the dark stage. */
+.action-pill--reel {
+  max-width: 100%;
+  width: fit-content;
+  margin-bottom: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgb(var(--reel-on-stage) / 0.18);
+  color: rgb(var(--reel-on-stage));
+  font-size: var(--type-xs);
+  line-height: var(--type-xs-lh);
+  pointer-events: auto;
+  backdrop-filter: blur(8px);
+}
+
+.action-pill--reel:hover {
+  background: rgb(var(--reel-on-stage) / 0.28);
+}
+
+.action-pill--reel .action-pill__sep,
+.action-pill--reel .action-pill__domain {
+  color: rgb(var(--reel-on-stage) / 0.8);
+}
+
+.action-pill--reel .action-pill__icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Beside Follow and Message: the profile's own button shape. */
+.action-pill--profile {
+  height: 40px;
+  justify-content: center;
+  padding: 0 16px;
+  border: 1px solid var(--brand-divider);
+  border-radius: 12px;
+  background: rgb(var(--brand-card));
+  color: rgb(var(--brand-text));
+  font-size: var(--type-xs);
+  line-height: var(--type-xs-lh);
+  white-space: nowrap;
+}
+
+.action-pill--profile:hover {
+  background: rgb(var(--brand-secondary));
+}
+
+/* The author's own button that viewers don't see right now. */
+.action-pill--inactive {
+  margin: 0;
+  cursor: default;
+}
+
+.action-pill--inactive .action-pill__icon {
+  color: rgb(var(--warning));
+}
+
+.action-pill--inactive .action-pill__text {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  white-space: normal;
+}
+
+.action-pill--card.action-pill--inactive:hover {
+  background: rgb(var(--brand-secondary));
+}
+
+.action-pill--card.action-pill--inactive .action-pill__label {
+  color: rgb(var(--brand-text));
+}
+
+.action-pill--profile.action-pill--inactive {
+  height: auto;
+  min-height: 40px;
+  padding: 6px 12px;
+}
+
+/* The leaving page. */
+.leaving-page {
+  display: flex;
+  min-height: calc(100vh - 64px);
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: rgb(var(--canvas));
+}
+
+.leaving-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 24px;
+  border: 1px solid var(--brand-divider);
+  border-radius: 20px;
+  background: rgb(var(--brand-card));
+  color: rgb(var(--brand-text));
+  text-align: center;
+}
+
+.leaving-card__icon {
+  display: flex;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgb(var(--brand-tint));
+  color: rgb(var(--brand-ink));
+}
+
+.leaving-card__title {
+  margin: 0;
+  font-size: var(--type-xl);
+  line-height: var(--type-xl-lh);
+  font-weight: 700;
+}
+
+.leaving-card__domain {
+  margin: 8px 0 0;
+  overflow-wrap: anywhere;
+  font-size: var(--type-base);
+  line-height: var(--type-base-lh);
+  font-weight: 600;
+}
+
+.leaving-card__hint {
+  margin: 8px 0 0;
+  font-size: var(--type-sm);
+  line-height: var(--type-sm-lh);
+  color: rgb(var(--text-muted));
+}
+
+.leaving-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.leaving-card__button {
+  display: inline-flex;
+  height: 40px;
+  min-width: 120px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 18px;
+  border: 1px solid var(--brand-divider);
+  border-radius: 999px;
+  background: transparent;
+  color: rgb(var(--brand-text));
+  font-size: var(--type-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.leaving-card__button:hover {
+  background: rgb(var(--brand-secondary));
+}
+
+.leaving-card__button--primary {
+  border-color: transparent;
+  background: rgb(var(--brand-ink));
+  color: rgb(var(--on-primary));
+}
+
+.leaving-card__button--primary:hover {
+  background: rgb(var(--brand-ink-hover));
+}

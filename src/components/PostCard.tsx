@@ -28,6 +28,8 @@ import { embedCode, isEmbeddablePost } from '@/lib/postEmbed';
 import { onImageError, resolveImageUrl } from '@/lib/imageUrl';
 import { MembersBadge, PostLock } from '@/features/memberships/components/LockCards';
 import { membersLocked } from '@/features/memberships/model';
+import { ActionPill } from '@/features/action-button/components/ActionPill';
+import { decodeAction, visibleAction } from '@/features/action-button/model';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { postTimeLabel, postTimeTitle } from '@/lib/postTime';
 import { isDoubleTap, mediaFrameRatio, type Tap } from '@/components/feed/mediaFrame';
@@ -89,6 +91,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   // Members only: post-service redacts the row for a non-member (fail closed), so a body it sends is its yes.
   const locked = membersLocked({ tierRequiredId: post.tier_required_id, bodyRedacted: post.body_redacted, isOwner: isOwnPost, access: 'unknown', trustServedBody: true });
   const membersOnly = !!post.tier_required_id && !locked;
+  // The Action button (features/action-button): links to /l/<id>, never the raw url.
+  // A viewer sees only a live one; the author also sees theirs when it is blocked or under review.
+  const shownAction = visibleAction(decodeAction(post.action), { isAuthor: isOwnPost, locked });
 
   /*
     Double-tap a photo to like it. It only ever likes — a second double tap
@@ -719,6 +724,13 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 {activeMediaIndex + 1}/{post.media!.length}
               </div>
             )}
+          </div>
+        )}
+
+        {/* The Action button, under the media (or the text): "Apply now · domain". */}
+        {shownAction && (
+          <div className="post-card-action-button px-3 sm:px-4 pt-2.5" data-post-action-button>
+            <ActionPill action={shownAction} isAuthor={isOwnPost} variant="card" />
           </div>
         )}
 

@@ -1,5 +1,6 @@
 import { validateChapterRows } from "@/features/posttube/hub/chaptersModel";
 import { creditsProblems } from "@/features/posttube/credits/creditsModel";
+import { draftProblem } from "@/features/action-button/model";
 
 import type { StudioFormState } from "./types";
 import { isShortStudio, type StepId } from "./tokens";
@@ -104,6 +105,9 @@ function getPublishErrors(form: StudioFormState): FieldError[] {
     }
   }
   errors.push(...getSeriesErrors(form));
+  // The Action button: the server's link rules, said before Publish.
+  const action = draftProblem(form.action ?? null);
+  if (action) errors.push({ field: "action", message: action });
   return errors;
 }
 

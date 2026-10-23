@@ -10,6 +10,7 @@ import type { MediaSubtitleTrack } from "@/features/posttube/types";
 import type { ChapterDraft } from "@/features/posttube/hub/chaptersModel";
 import type { SeriesChoice } from "./studioApi";
 import { EMPTY_CREDITS_FORM, type CreditsForm } from "@/features/posttube/credits/creditsModel";
+import type { ActionDraft } from "@/features/action-button/model";
 
 export type { ContentType, StepId, ChapterDraft, SeriesChoice };
 
@@ -97,6 +98,11 @@ export interface StudioFormState {
    * /v1/posts/:id/membership right after the create (features/memberships).
    */
   tierRequiredId: string | null;
+  /**
+   * The Action button (features/action-button): a label and a link, or null
+   * for none. Sent with the create and the draft save (`action`).
+   */
+  action: ActionDraft | null;
 
   /* ── Series + chapters (long videos; applied after publish) ── */
   seriesChoice: SeriesChoice;
@@ -175,6 +181,7 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   crossPostPostbook: true,
   publishToFeed: true,
   tierRequiredId: null,
+  action: null,
   seriesChoice: { kind: "none" },
   seriesEpisodeNum: null,
   chapterRows: [],

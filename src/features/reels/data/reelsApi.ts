@@ -285,6 +285,8 @@ export async function updateDraft(
     genres: string[];
     release_year: number | null;
     production_house: string | null;
+    /* The Action button (contract 23 Oct 2026): {label, url}, or null to remove it. */
+    action: { label: string; url: string } | null;
   }>
 ): Promise<ReelDraft> {
   const res = await api.patch<ApiResponse<ReelDraft>>(`/v1/reels/drafts/${draftId}`, params);

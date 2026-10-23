@@ -509,7 +509,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
       toast({ type: 'success', title: 'Saved to drafts', description: 'Open Drafts from the create page to finish it.' });
       onClose();
     } catch (err: unknown) {
-      setError(refusalCopy(serverCode(err), serverMessage(err), "The draft couldn't be saved. Try again."));
+      setError(refusalCopy(serverCode(err), serverMessage(err), "The draft couldn't be saved. Try again.", err));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [background, canPost, compose, details, draftBlocked, feedMedia.media, isGroupMode, isSubmitting, journalTitle, mood, onClose, poll, richDoc, showJournal, showPoll, text, toast]);
@@ -646,7 +646,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
         toast({ type: 'error', title: 'Try again', description: message });
         return;
       }
-      setError(refusalCopy(serverCode(err), serverMessage(err), 'Failed to create post. Try again.'));
+      setError(refusalCopy(serverCode(err), serverMessage(err), 'Failed to create post. Try again.', err));
     } finally {
       setIsSubmitting(false);
     }

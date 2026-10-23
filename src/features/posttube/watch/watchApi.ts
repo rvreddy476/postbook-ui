@@ -13,6 +13,7 @@ import { parseStoryboardVtt, type StoryboardCue } from "./storyboard";
 import { normalizeSupport, type CreatorSupport } from "./thanks";
 import { upNextChipQuery, type UpNextChip } from "./upNext";
 import { decodeCreditsInfo, type VideoCreditsInfo } from "../credits/creditsModel";
+import { decodeAction, type PostAction } from "@/features/action-button/model";
 
 /*
   The watch page's adapter: every request the page makes that is not
@@ -99,6 +100,8 @@ export interface WatchPostRow extends HydratedPostRow {
   genres?: unknown;
   release_year?: unknown;
   production_house?: unknown;
+  /** The Action button (contract 23 Oct 2026); read by decodeAction. */
+  action?: unknown;
 }
 
 /** The creator's pick shown in the about card; only present when the viewer may see it. */
@@ -155,6 +158,8 @@ export interface WatchDetail {
   disclosures: Disclosures;
   /** Cast & crew, genres, year, production house; empty when the video has none. */
   credits: VideoCreditsInfo;
+  /** The Action button under the player; absent when the video has none. */
+  action?: PostAction;
 }
 
 /** A row + its card model → what the page reads. Missing keys fall back to what the card already knew. */
@@ -163,7 +168,9 @@ export function normalizeWatchDetail(row: WatchPostRow, video: PostTubeVideo): W
   const likeCount =
     typeof row.like_count === "number" && Number.isFinite(row.like_count) && row.like_count >= 0 ? row.like_count : video.like_count;
   const slug = typeof row.category === "string" ? row.category.trim() : "";
+  const action = decodeAction(row.action);
   return {
+    ...(action ? { action } : {}),
     video: { ...video, like_count: likeCount, viewer_has_disliked: row.viewer_disliked === true },
     viewerDisliked: row.viewer_disliked === true,
     viewerQueued: row.viewer_queued === true,

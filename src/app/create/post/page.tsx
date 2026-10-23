@@ -389,7 +389,7 @@ function CreatePostScreen() {
       const created = await compose.publish(submission());
       router.push(`/post/${created.id}`);
     } catch (publishError) {
-      setError(refusalCopy(serverCode(publishError), serverMessage(publishError), "Failed to create post. Try again."));
+      setError(refusalCopy(serverCode(publishError), serverMessage(publishError), "Failed to create post. Try again.", publishError));
     }
   };
 
@@ -401,7 +401,7 @@ function CreatePostScreen() {
       toast({ type: "success", title: draftId ? "Draft saved" : "Saved to drafts" });
       router.push("/create/drafts");
     } catch (saveError) {
-      setError(refusalCopy(serverCode(saveError), serverMessage(saveError), "The draft couldn't be saved. Try again."));
+      setError(refusalCopy(serverCode(saveError), serverMessage(saveError), "The draft couldn't be saved. Try again.", saveError));
     }
   };
 

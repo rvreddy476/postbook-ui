@@ -4,6 +4,7 @@ import { AlertCircle, Calendar, Clapperboard, Clock, Eye, Film, Lock } from "luc
 
 import { SeriesPicker } from "../components/SeriesPicker";
 import {
+  ActionSetting,
   CommentSettings,
   DisclosureSettings,
   FeedSetting,
@@ -122,6 +123,7 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
       )}
       {/* Reels never reach the home Feed (founder, 25 Sep), so the switch is long-video only. */}
       {short ? null : <FeedSetting form={form} patch={patch} contentType={contentType} />}
+      <ActionSetting form={form} patch={patch} contentType={contentType} showErrors={showErrors} />
     </div>
   );
 }

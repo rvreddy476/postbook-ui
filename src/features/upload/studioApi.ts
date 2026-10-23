@@ -3,6 +3,7 @@ import api from "@/lib/api";
 import { saveChapters, type HubPostPatch } from "@/features/posttube/hub/hubApi";
 
 import { creditsApply, creditsCreateFields, creditsDraftFields, creditsErrorProblem, type CreditsContext, type CreditsFields } from "@/features/posttube/credits/creditsModel";
+import { actionCreateFields, actionProblemFromError, type ActionWrite } from "@/features/action-button/model";
 
 import { studioSoundFields } from "./studioSound";
 import { isShortStudio } from "./tokens";
@@ -57,7 +58,18 @@ export function studioCreateFields(form: StudioFormState, opts: { longVideo?: bo
   }
   const publishAt = scheduleIso(form.scheduleAt);
   if (publishAt) out.publish_at = publishAt;
+  // The Action button: only when there is one (omitted = none on a create).
+  Object.assign(out, actionCreateFields(form.action));
   return out;
+}
+
+/**
+ * The draft save's action: the button, or null so a button removed in the
+ * studio is removed from the draft too (the draft PATCH reads null as
+ * "remove", like the post edit).
+ */
+export function studioDraftActionField(form: Pick<StudioFormState, "action">): { action: ActionWrite | null } {
+  return { action: actionCreateFields(form.action).action ?? null };
 }
 
 /**
@@ -103,6 +115,9 @@ export function publishFailure(err: unknown): { code: string | null; message: st
   if (!err) return null;
   const body = (err as { response?: { data?: { error?: { code?: unknown; message?: unknown } } } }).response?.data?.error;
   const code = typeof body?.code === "string" && body.code ? body.code : null;
+  // An Action button refusal: our sentence, naming what is missing for ACTION_NOT_ELIGIBLE.
+  const actionProblem = actionProblemFromError(err);
+  if (actionProblem) return { code, message: actionProblem.message };
   const creditProblem = creditsErrorProblem(code);
   if (creditProblem) return { code, message: creditProblem.message };
   const message = typeof body?.message === "string" && body.message.trim() ? body.message.trim() : null;

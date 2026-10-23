@@ -10,6 +10,7 @@ import { useCreateChannel, useMyChannel, useMyChannels, useUpdateChannel } from 
 import { useMyProfile } from "@/hooks/useEditProfile";
 import { uploadMedia } from "@/lib/mediaUpload";
 import { useAuthUser } from "@/store/auth";
+import { ProfileActionCard } from "@/features/action-button/components/ProfileActionCard";
 
 import { BrandingScreen } from "./BrandingScreen";
 import { useActiveSection, useFeaturedPicker, useHandleAvailability, useNameAvailability } from "./hooks";
@@ -306,6 +307,7 @@ export function BrandingSettings() {
         onSave,
         onReset,
       }}
+      actionButton={<ProfileActionCard saved={(channel as { action?: unknown }).action ?? null} />}
     />
   );
 }

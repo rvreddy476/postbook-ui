@@ -45,12 +45,13 @@ describe("the details", () => {
     expect(helpers).toContain('aria-label="Remove #market"')
   })
 
-  test("the rows: Location, Add link, who can view, More options", () => {
+  test("the rows: Location, Add link, Add action button, who can view, More options", () => {
     const html = renderToStaticMarkup(<DetailRows details={emptyDetails("en")} onDetails={noop} media={[]} onAltText={noop} />)
     const rows = [...html.matchAll(/data-row="([a-z-]+)"/g)].map((m) => m[1])
-    expect(rows).toEqual(["location", "link", "audience", "more"])
+    expect(rows).toEqual(["location", "link", "action", "audience", "more"])
     expect(html).toContain("Location")
     expect(html).toContain("Add link")
+    expect(html).toContain("Add action button")
     expect(html).toContain("Everyone can view this post")
     expect(html).toContain("More options")
   })

@@ -9,6 +9,7 @@ import { fetchCreatorCollections } from "@/features/posttube/library/libraryApi"
 import { readEndScreenPosition } from "@/features/posttube/watch/watchApi";
 import type { EndScreenKind, EndScreenPosition } from "@/features/posttube/endScreenGeometry";
 import type { CommentItem } from "@/types/profile";
+import { decodeAction, type ActionWrite, type PostAction } from "@/features/action-button/model";
 
 /*
   The Creator Hub's one adapter. Every request the hub sends and every
@@ -146,6 +147,8 @@ export interface HubLibraryRow {
   hide_like_count: boolean;
   default_comment_sort: HubCommentSort;
   related_post_id: string | null;
+  /** The Action button, when the row carries one (the author's copy, with its status). */
+  action?: PostAction;
 }
 
 export function normalizeVisibility(raw: unknown, scheduledAt?: string | null): HubVisibility {
@@ -190,7 +193,9 @@ export function normalizeLibraryRow(raw: unknown): HubLibraryRow | null {
   const coverId = strOrNull(raw.cover_media_id);
   const processingStatus = str(raw.processing_status) || str(vm.upload_status) || "";
   const durationMs = num(videoMedia?.duration_ms);
+  const action = decodeAction(raw.action);
   return {
+    ...(action ? { action } : {}),
     id: raw.id,
     title: str(raw.title).trim() || firstLine(str(raw.text)) || "Untitled",
     text: str(raw.text),
@@ -473,6 +478,8 @@ export interface HubPostDetail {
   credits: VideoCreditsInfo;
   /** Members only: the lowest membership level that sees it; absent when it is for everyone. */
   tier_required_id?: string;
+  /** The Action button: the author's copy carries the url and, when it is not live, the status. Absent = none. */
+  action?: PostAction;
 }
 
 /** `related_post` on the detail: `{id, title, thumbnail_url, duration_seconds, channel_name}` or null. */
@@ -552,6 +559,7 @@ export function normalizePostDetail(raw: unknown): HubPostDetail | null {
     notify_subscribers: bool(raw.notify_subscribers, true),
     credits: decodeCreditsInfo(raw),
     ...(str(raw.tier_required_id) ? { tier_required_id: str(raw.tier_required_id) } : {}),
+    ...(row.action ? { action: row.action } : {}),
   };
 }
 
@@ -598,6 +606,8 @@ export interface HubPostPatch {
   release_year?: number | null;
   /** ≤ 100 runes; null (or "") clears. */
   production_house?: string | null;
+  /** The Action button (contract 23 Oct 2026): {label, url} adds or changes it, null removes it, omitted = unchanged. */
+  action?: ActionWrite | null;
 }
 
 /** The PATCH body: only the keys present (undefined dropped; "" kept — it clears). */

@@ -4,6 +4,7 @@ import { fetchCreatorCollections, type Collection } from "../library/libraryApi"
 import { channelAvatarUrl, channelBannerUrl, getVideoPost, hydrateRows, type ChannelInfo } from "../data/posttubeApi";
 import { mediaServeUrl, type HydratedPostRow } from "../model";
 import type { PostTubeVideo } from "../types";
+import { decodeAction, type PostAction } from "@/features/action-button/model";
 
 /*
   The channel page's one adapter: every request the page makes and every
@@ -55,6 +56,8 @@ export interface ChannelWire {
   playlist_count?: number | null;
   is_subscribed?: boolean | null;
   notify_on?: string | null;
+  /** The profile Action button (contract 23 Oct 2026), the posts' read shape. */
+  action?: unknown;
 }
 
 /** A by-author row: the hydrated post plus the two fields the Live tab reads. */
@@ -103,6 +106,8 @@ export interface ChannelView {
   notifyOn: "all" | "none" | null;
   /** True when the page is drawn from a user id that has no channel row. */
   thin?: boolean;
+  /** The channel's Action button, beside Subscribe; absent = none. */
+  action?: PostAction;
 }
 
 /** A long video or a short, with the fields the tabs read beyond the tile. */
@@ -183,7 +188,9 @@ export function normalizeChannel(raw: unknown): ChannelView | null {
   const contactEmail = text(w.contact_email);
   // The URL helpers take the older ChannelInfo; the fields they read are the same names.
   const info = w as unknown as ChannelInfo;
+  const action = decodeAction(w.action);
   return {
+    ...(action ? { action } : {}),
     userId,
     name: text(w.name) || (handle ? `@${handle}` : "Channel"),
     handle,
@@ -316,7 +323,7 @@ export async function fetchFeaturedVideo(postId: string): Promise<PostTubeVideo 
   return getVideoPost(postId);
 }
 
-export type ChannelReportReason = "spam" | "harassment" | "hate_speech" | "violence" | "nudity" | "misinformation" | "other";
+export type ChannelReportReason = "spam" | "harassment" | "hate_speech" | "violence" | "nudity" | "misinformation" | "scam_link" | "other";
 
 /**
  * `POST /v1/reports` against the channel's owner. The shared useSubmitReport

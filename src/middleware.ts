@@ -94,6 +94,10 @@ const PUBLIC_PREFIXES = [
     "/channel/",
     // Content permalinks people paste into other apps.
     "/post/",
+    // An Action button's redirect (/l/<id>, the "You're leaving VChat"
+    // page): a public post's button must open for a visitor with no
+    // session. GET /v1/links/:id is a public route.
+    "/l/",
     "/posttube/watch",
     // A public channel and its RSS feed
     // (/posttube/channel/<handle>/feed.xml): podcast apps and feed readers

@@ -6,7 +6,7 @@ import { IdentitySection, NameAvailabilityNote, nameFieldError } from "./Identit
 import { LinksSection } from "./LinksSection";
 import { FeaturedSection } from "./FeaturedSection";
 import { FeedSection } from "./FeedSection";
-import { Field, inputClass, inputErrorClass, primaryButtonClass } from "./ui";
+import { Card, Field, inputClass, inputErrorClass, primaryButtonClass } from "./ui";
 import { SECTIONS, type BrandingScreenProps, type HandleAvailability, type NoChannelProps, type SaveBarProps, type SectionId } from "./view";
 
 /*
@@ -216,6 +216,11 @@ export function BrandingScreen(props: BrandingScreenProps) {
           <div className="space-y-4">
             <IdentitySection {...props.identity} />
             <LinksSection {...props.links} />
+            {props.actionButton ? (
+              <Card id="action" title="Action button" hint="A button beside Follow and Message on your profile and channel. It opens a website through VChat's leaving page. Saved on its own.">
+                {props.actionButton}
+              </Card>
+            ) : null}
             <FeaturedSection {...props.featured} />
             <FeedSection {...props.feed} />
             <MonetizationCard />
