@@ -52,6 +52,7 @@ describe("notification preferences (T-06)", () => {
             "community_posts",
             "community_mentions",
             "event_reminders",
+            "credits",
             "system",
         ])
     })

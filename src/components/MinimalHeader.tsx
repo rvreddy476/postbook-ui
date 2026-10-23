@@ -22,6 +22,7 @@ import { useAcceptFriendRequest, useRejectFriendRequest } from '@/hooks/useConne
 import NotificationPostPopup from '@/components/NotificationPostPopup';
 import { useGlobalToast } from '@/contexts/ToastContext';
 import { bellRow, notificationActorId } from '@/lib/notificationPresentation';
+import { creditNotificationHref } from '@/lib/notificationInbox';
 import { NotificationGlyph } from '@/components/notifications/NotificationGlyph';
 
 /** This header's own sentence beside the actor's name; null lets the server's title speak. */
@@ -33,6 +34,8 @@ function describeNotification(type: string): string | null {
         case 'reaction': return 'reacted to your post';
         case 'comment_reaction': return 'liked your comment';
         case 'comment': return 'commented on your post';
+        case 'credit_request': return 'credited you in a video';
+        case 'credit_accepted': return 'accepted your credit';
         default: return null;
     }
 }
@@ -182,6 +185,13 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
             }
         }
         if (notif.type === 'friend_request') {
+            setIsNotifOpen(false);
+            return;
+        }
+        // Credit notifications: the requests page, or the accepted video on /posttube.
+        const creditHref = creditNotificationHref(notif.type, notif.deep_link);
+        if (creditHref) {
+            router.push(creditHref);
             setIsNotifOpen(false);
             return;
         }

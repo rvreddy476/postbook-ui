@@ -9,6 +9,7 @@ import type {
 import type { MediaSubtitleTrack } from "@/features/posttube/types";
 import type { ChapterDraft } from "@/features/posttube/hub/chaptersModel";
 import type { SeriesChoice } from "./studioApi";
+import { EMPTY_CREDITS_FORM, type CreditsForm } from "@/features/posttube/credits/creditsModel";
 
 export type { ContentType, StepId, ChapterDraft, SeriesChoice };
 
@@ -97,6 +98,9 @@ export interface StudioFormState {
   seriesEpisodeNum: number | null;
   chapterRows: ChapterDraft[];
 
+  /* ── Credits (long videos in a credits topic; sent with create / draft) ── */
+  credits: CreditsForm;
+
   /* ── Processing ─────────────────── */
   processingReady: boolean;
   processingStatus: "idle" | "processing" | "ready" | "failed";
@@ -167,6 +171,7 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   seriesChoice: { kind: "none" },
   seriesEpisodeNum: null,
   chapterRows: [],
+  credits: EMPTY_CREDITS_FORM,
   processingReady: false,
   processingStatus: "idle",
   processingError: null,

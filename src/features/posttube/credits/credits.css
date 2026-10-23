@@ -1,0 +1,89 @@
+/*
+  Video credits: the shared editor (upload studio + Hub edit sheet), the
+  watch page's Credits block and the Credit requests list. Theme tokens
+  only (src/ui/theme.css); sizes from the type scale.
+*/
+
+/* ── Editor ─────────────────────────────────────────────── */
+.credits-editor { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.credits-editor__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.credits-editor__head > span { margin: 0; }
+.credits-editor__count { margin-left: 6px; font-size: var(--type-2xs); font-weight: 500; color: rgb(var(--text-muted)); }
+.credits-editor__list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.credits-editor__genres { margin: 0; padding: 0; border: 0; min-width: 0; }
+.credits-editor__genres > legend { padding: 0; }
+.credits-editor__facts { display: grid; grid-template-columns: minmax(0, 140px) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 480px) { .credits-editor__facts { grid-template-columns: minmax(0, 1fr); } }
+
+.credits-row { display: flex; align-items: flex-start; gap: 8px; padding: 8px; border: 1px solid var(--brand-divider); border-radius: 10px; background: rgb(var(--brand-card)); min-width: 0; }
+.credits-row[data-dragging] { opacity: .5; }
+.credits-row__handle { display: grid; place-items: center; width: 20px; min-height: 32px; color: rgb(var(--text-muted)); cursor: grab; flex-shrink: 0; touch-action: none; }
+.credits-row__handle svg { width: 16px; height: 16px; }
+.credits-row__fields { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.credits-row__inputs { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 6px; }
+@media (max-width: 480px) { .credits-row__inputs { grid-template-columns: minmax(0, 1fr); } }
+.credits-row__actions { display: flex; gap: 4px; flex-shrink: 0; }
+.credits-row__actions button { width: 32px; height: 32px; }
+.credits-row__actions button:disabled { opacity: .4; cursor: default; }
+.credits-row__actions svg { width: 14px; height: 14px; }
+@media (max-width: 480px) { .credits-row__actions { flex-direction: column; } }
+
+.credits-link-btn { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; padding: 2px 0; border: 0; background: transparent; color: rgb(var(--text-muted)); font-size: var(--type-xs); font-weight: 600; cursor: pointer; }
+.credits-link-btn:hover { color: rgb(var(--brand-text)); }
+.credits-link-btn svg { width: 13px; height: 13px; }
+
+.credits-linked { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 4px 6px; border-radius: 8px; background: rgb(var(--brand-secondary) / .6); }
+.credits-linked__text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.credits-linked__name { font-size: var(--type-xs); font-weight: 600; color: rgb(var(--brand-text)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.credits-linked__note { font-size: var(--type-2xs); color: rgb(var(--text-muted)); }
+.credits-linked[data-status="accepted"] .credits-linked__note { color: rgb(var(--success)); }
+.credits-linked[data-status="declined"] .credits-linked__note { color: rgb(var(--danger)); }
+.credits-linked[data-status="pending"] .credits-linked__note { color: rgb(var(--warning)); }
+.credits-linked__unlink { display: grid; place-items: center; width: 24px; height: 24px; border: 0; border-radius: 50%; background: transparent; color: rgb(var(--text-muted)); cursor: pointer; flex-shrink: 0; }
+.credits-linked__unlink:hover { color: rgb(var(--danger)); background: rgb(var(--danger) / .08); }
+.credits-linked__unlink svg { width: 12px; height: 12px; }
+
+.credits-search { position: relative; display: flex; flex-direction: column; gap: 4px; }
+.credits-search__box { position: relative; display: flex; align-items: center; gap: 6px; }
+.credits-search__box > svg { position: absolute; left: 9px; width: 14px; height: 14px; color: rgb(var(--text-muted)); pointer-events: none; }
+.credits-search__box > input { padding-left: 28px; flex: 1; min-width: 0; }
+.credits-search__list { position: absolute; z-index: 20; top: 100%; left: 0; right: 0; margin: 4px 0 0; padding: 4px; list-style: none; border: 1px solid var(--brand-divider); border-radius: 10px; background: rgb(var(--brand-card)); box-shadow: 0 8px 24px rgb(var(--brand-text) / .12); max-height: 240px; overflow-y: auto; }
+.credits-search__option { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; cursor: pointer; }
+.credits-search__option[aria-selected="true"] { background: rgb(var(--brand-secondary)); }
+.credits-search__name { display: block; font-size: var(--type-xs); font-weight: 600; color: rgb(var(--brand-text)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.credits-search__handle { display: block; font-size: var(--type-2xs); color: rgb(var(--text-muted)); }
+.credits-search__empty { padding: 6px 8px; font-size: var(--type-xs); color: rgb(var(--text-muted)); }
+
+.credits-genres { display: flex; flex-wrap: wrap; gap: 6px; }
+.credits-genre { min-height: 30px; padding: 4px 12px; border: 1px solid var(--brand-divider); border-radius: 999px; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); font-size: var(--type-xs); font-weight: 500; cursor: pointer; }
+.credits-genre:hover:not(:disabled) { background: rgb(var(--brand-secondary)); }
+.credits-genre[aria-pressed="true"] { background: rgb(var(--brand-text)); border-color: transparent; color: rgb(var(--brand-card)); }
+.credits-genre:disabled { opacity: .45; cursor: default; }
+
+/* ── Watch page block ───────────────────────────────────── */
+.tube-credits { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; font-size: var(--type-sm); line-height: var(--type-sm-lh); color: rgb(var(--brand-text)); }
+.tube-credits__meta { margin: 0; font-size: var(--type-xs); color: rgb(var(--text-muted)); }
+.tube-credits__groups { margin: 0; }
+.tube-credits__group { display: inline; }
+.tube-credits__group + .tube-credits__group::before { content: " · "; color: rgb(var(--text-muted)); }
+.tube-credits__role { font-weight: 600; }
+.tube-credits a { color: rgb(var(--brand-text)); text-decoration: none; }
+.tube-credits a:hover { text-decoration: underline; text-underline-offset: 2px; }
+.tube-credits__person { display: inline-flex; align-items: center; gap: 4px; vertical-align: middle; }
+.tube-credits__avatar { display: inline-flex; }
+.tube-credits__avatar > * { width: 18px !important; height: 18px !important; font-size: var(--type-2xs); }
+.tube-credits__status { margin-left: 4px; font-size: var(--type-2xs); color: rgb(var(--text-muted)); }
+.tube-credits__remove { margin-left: 6px; padding: 0; border: 0; background: transparent; color: rgb(var(--text-muted)); font-size: var(--type-2xs); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.tube-credits__remove:hover { color: rgb(var(--danger)); }
+
+/* ── Credit requests page ───────────────────────────────── */
+.credit-requests { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.credit-request { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--brand-divider); border-radius: 12px; background: rgb(var(--brand-card)); min-width: 0; }
+.credit-request__cover { width: 96px; aspect-ratio: 16 / 9; flex-shrink: 0; border-radius: 8px; overflow: hidden; background: rgb(var(--brand-secondary)); }
+.credit-request__cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.credit-request__body { flex: 1; min-width: 0; }
+.credit-request__actions { display: flex; gap: 6px; flex-shrink: 0; }
+@media (max-width: 560px) {
+  .credit-request { flex-wrap: wrap; }
+  .credit-request__actions { width: 100%; justify-content: flex-end; }
+}

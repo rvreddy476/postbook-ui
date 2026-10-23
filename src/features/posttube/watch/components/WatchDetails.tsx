@@ -55,6 +55,8 @@ export interface WatchDetailsProps {
   revealAbout?: number;
   /** Creator disclosures (AI-generated, paid promotion, altered content), labels under the title. */
   disclosures?: Disclosures | null;
+  /** The Credits block (cast & crew, genres, year), drawn under the description. */
+  credits?: ReactNode;
 }
 
 export function WatchDetails({
@@ -79,6 +81,7 @@ export function WatchDetails({
   related = null,
   revealAbout = 0,
   disclosures = null,
+  credits = null,
 }: WatchDetailsProps) {
   // A description that only repeats the title is not drawn twice (founder, 2026-10-19).
   const description = rawDescription.trim().toLowerCase() === title.trim().toLowerCase() ? "" : rawDescription;
@@ -188,6 +191,7 @@ export function WatchDetails({
             ) : null}
           </p>
         ) : null}
+        {credits}
         {related ? <RelatedCard related={related} /> : null}
         {/* Only when there is something more to show (2026-10-19). */}
         {description || tags.length > 0 || topic ? (

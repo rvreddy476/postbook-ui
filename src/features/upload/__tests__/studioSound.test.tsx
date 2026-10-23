@@ -103,7 +103,7 @@ describe("the requests carry them", () => {
     const hook = readFileSync(resolve(import.meta.dir, "../useUploadStudio.ts"), "utf8").split("\r\n").join("\n");
     const save = hook.slice(hook.indexOf("await updateDraft(draftId, {"), hook.indexOf("} catch { /* silently continue */ }"));
     expect(save).toContain("overlay_audio_volume: form.overlayAudioVolume,\n        ...studioDraftSoundFields(form),");
-    expect(hook).toContain("fields: studioCreateFields(form),");
+    expect(hook).toContain("fields: studioCreateFields(form, { longVideo: classified === \"long_video\" }),");
     const api = readFileSync(resolve(import.meta.dir, "../studioApi.ts"), "utf8").split("\r\n").join("\n");
     expect(api).toContain("overlay_audio_volume: form.overlayAudioVolume,\n    ...studioSoundFields(form),");
   });

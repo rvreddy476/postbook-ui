@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronDown, ChevronUp, ListVideo, Loader2 } from "lucide-react";
@@ -51,7 +51,12 @@ import {
 import { ambientAllowed } from "../watch/ambient";
 import { chapterIndexAt } from "../watch/chapters";
 import { collectionNeighbours, collectionWatchHref } from "../watch/collectionNav";
-import { useCollectionPlayback, useCreatorSupport, useReducedMotion, useStoryboard, useUpNext, useVideoElements, useWatchDetail, useWatchPrefs } from "../watch/hooks/useWatch";
+import { useCollectionPlayback, useCreatorSupport, useReducedMotion, useStoryboard, useUpNext, useVideoElements, useWatchDetail, useWatchPrefs, WATCH_KEYS } from "../watch/hooks/useWatch";
+import { CreditsBlock } from "../credits/components/CreditsBlock";
+import { removeMyCredit } from "../credits/creditsApi";
+import type { VideoCredit } from "../credits/creditsModel";
+import { useGenres } from "../credits/useCredits";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { endBoxesAtEnd } from "../watch/endScreenView";
 import { TubeStage } from "../watch/miniPlayer";
 import { RAIL_IDLE, railReducer } from "../watch/railState";
@@ -207,6 +212,18 @@ function WatchPageContent({ videoId, listId = null, startSeconds = null }: Watch
   const activeAudioTrack = pickAudioTrack(audioTracks, watchPrefs.audioLanguage);
 
   const isOwner = !!user && !!video && user.id === video.author_id;
+
+  /* Credits: genre labels only when the video has genres; "Remove me" for the viewer's own accepted credit. */
+  const genresQuery = useGenres(!!detail && detail.credits.genres.length > 0);
+  const [removeCredit, setRemoveCredit] = useState<VideoCredit | null>(null);
+  const queryClient = useQueryClient();
+  const removeMe = useMutation({
+    mutationFn: (creditId: string) => removeMyCredit(creditId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: WATCH_KEYS.detail(videoId) });
+      if (user?.id) void queryClient.invalidateQueries({ queryKey: ["posttube", "credits", "appearances", user.id] });
+    },
+  });
   /* The offline copy (features/offline): the More row's state, and the stored copy the player prefers. Never a file download. */
   const notifyOffline = useCallback((notice: OfflineNotice) => void toast(notice), [toast]);
   const offlineRow = useOfflineRow({ postId: videoId, surface: "video", hasMedia: !!mediaAssetId, signedIn: !!user, notify: notifyOffline });
@@ -901,6 +918,35 @@ function WatchPageContent({ videoId, listId = null, startSeconds = null }: Watch
             related={detail.relatedPost}
             disclosures={detail.disclosures}
             revealAbout={revealAbout}
+            credits={
+              <CreditsBlock
+                info={detail.credits}
+                genres={genresQuery.data}
+                viewerId={user?.id ?? null}
+                isOwner={isOwner}
+                onRemoveMe={(credit) => setRemoveCredit(credit)}
+                removingId={removeMe.isPending ? (removeMe.variables ?? null) : null}
+              />
+            }
+          />
+          <ConfirmDialog
+            open={!!removeCredit}
+            title="Remove yourself from this video?"
+            body="Your name stays in the credits as plain text, without a link to you, and the video leaves your profile."
+            confirmLabel="Remove me"
+            danger
+            pending={removeMe.isPending}
+            onClose={() => setRemoveCredit(null)}
+            onConfirm={() => {
+              if (!removeCredit) return;
+              removeMe.mutate(removeCredit.id, {
+                onSuccess: () => {
+                  setRemoveCredit(null);
+                  toast({ type: "success", title: "Removed", description: "You are no longer linked to this video." });
+                },
+                onError: () => toast({ type: "error", title: "Could not remove you", description: "Try again in a moment." }),
+              });
+            }}
           />
 
           {series && series.episodes.length > 0 ? <SeriesPanel series={series} currentId={video.id} /> : null}

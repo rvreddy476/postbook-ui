@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { MessageSquare } from 'lucide-react'
+import { Clapperboard, MessageSquare } from 'lucide-react'
 import Avatar from '@/components/ui/Avatar'
 import { useAcceptFriendRequest, usePendingFriendRequests, useRejectFriendRequest, type FriendRequestEntry } from '@/hooks/useConnections'
 
@@ -26,6 +26,13 @@ export function RequestsList({ items, busy, onAccept, onDecline }: RequestsListP
       >
         <MessageSquare className="h-5 w-5 text-primary" aria-hidden />
         <span className="flex-1">Message requests</span>
+      </Link>
+      <Link
+        href="/credits/requests"
+        className="flex items-center gap-3 rounded-xl border border-border bg-brand-card p-4 text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <Clapperboard className="h-5 w-5 text-primary" aria-hidden />
+        <span className="flex-1">Credit requests</span>
       </Link>
       {items.length === 0 ? (
         <p className="py-12 text-center text-sm text-muted-foreground">No pending friend requests.</p>

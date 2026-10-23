@@ -179,6 +179,13 @@ describe("tab rules", () => {
     expect(visibleTabs({ videos: 0, shorts: 0, live: 0, collections: 0 }, false)).toEqual(["posts"]);
     expect(visibleTabs({}, false)).toEqual(["videos", "shorts", "live", "collections", "posts"]);
   });
+  test("Appears in is last, for everyone, and only when the person has accepted credits", () => {
+    expect(visibleTabs({}, true, false, true)).toEqual(["videos", "shorts", "live", "collections", "posts", "appears"]);
+    expect(visibleTabs({ videos: 0, shorts: 0, live: 0, collections: 0 }, false, false, true)).toEqual(["posts", "appears"]);
+    expect(visibleTabs({}, true, false, false)).not.toContain("appears");
+    expect(resolveTab("appears", visibleTabs({}, false, false, true))).toBe("appears");
+    expect(resolveTab("appears", visibleTabs({}, false))).toBe("videos");
+  });
   test("?tab= lands on a visible tab, else the first", () => {
     const tabs = visibleTabs({ videos: 4, shorts: 0, live: 0, collections: 2 }, false);
     expect(resolveTab("collections", tabs)).toBe("collections");

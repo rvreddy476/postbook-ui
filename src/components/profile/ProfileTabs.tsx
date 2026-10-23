@@ -15,6 +15,7 @@ import {
     ShoppingBag,
     CalendarCheck,
     Heart,
+    Clapperboard,
 } from "lucide-react"
 
 interface ProfileTabsProps {
@@ -26,6 +27,8 @@ interface ProfileTabsProps {
     /** @deprecated Videos and Reels tabs always show; kept for callers. */
     hasFlicks?: boolean
     hasMedia: boolean
+    /** Videos that credit this person (accepted); the "Appears in" tab shows only then. */
+    hasAppearances?: boolean
     isSticky?: boolean
 }
 
@@ -87,6 +90,15 @@ const tabDefinitions: TabDef[] = [
         requiresContent: true,
     },
     {
+        // Others' long videos that credit this person, once accepted (video credits).
+        key: "appears",
+        label: "Appears in",
+        icon: Clapperboard,
+        activeColor: "bg-primary-tint text-primary-ink",
+        inactiveColor: "text-muted-foreground",
+        requiresContent: true,
+    },
+    {
         key: "orders",
         label: "Orders",
         icon: ShoppingBag,
@@ -138,11 +150,12 @@ const QA_TAB_ENABLED = false
  * only when the content count is non-zero; Saved and Liked, like Orders and
  * Bookings, belong to the owner only.
  */
-export function visibleProfileTabKeys({ isOwn, hasMedia = false }: { isOwn: boolean; hasMedia?: boolean }): ProfileTab[] {
+export function visibleProfileTabKeys({ isOwn, hasMedia = false, hasAppearances = false }: { isOwn: boolean; hasMedia?: boolean; hasAppearances?: boolean }): ProfileTab[] {
     return tabDefinitions
         .filter((tab) => {
             if (tab.selfOnly && !isOwn) return false
             if (tab.key === "media" && !hasMedia) return false
+            if (tab.key === "appears" && !hasAppearances) return false
             if (tab.key === "qa" && !QA_TAB_ENABLED) return false
             return true
         })
@@ -154,13 +167,14 @@ export function ProfileTabs({
     onTabChange,
     isOwn,
     hasMedia,
+    hasAppearances = false,
     isSticky = false,
 }: ProfileTabsProps) {
     const scrollRef = useRef<HTMLDivElement>(null)
     const [canScrollLeft, setCanScrollLeft] = useState(false)
     const [canScrollRight, setCanScrollRight] = useState(false)
 
-    const visibleKeys = new Set(visibleProfileTabKeys({ isOwn, hasMedia }))
+    const visibleKeys = new Set(visibleProfileTabKeys({ isOwn, hasMedia, hasAppearances }))
     const visibleTabs = tabDefinitions.filter((tab) => visibleKeys.has(tab.key))
 
     useEffect(() => {

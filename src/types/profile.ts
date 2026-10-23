@@ -155,6 +155,7 @@ export type ProfileTab =
     | "connections"
     | "videos"
     | "flicks"
+    | "appears"
     | "stashed"
     | "liked"
     | "portfolio"

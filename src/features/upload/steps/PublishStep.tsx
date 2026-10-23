@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Calendar, Clock, Eye, Film } from "lucide-react";
+import { AlertCircle, Calendar, Clapperboard, Clock, Eye, Film } from "lucide-react";
 
 import { SeriesPicker } from "../components/SeriesPicker";
 import {
@@ -26,6 +26,8 @@ interface PublishStepProps {
   onReplaceVideo?: () => void;
   /** Which studio this is: decides the settings shown and which taxonomy kinds the topic select offers. */
   contentType?: ContentType;
+  /** Present when the chosen topic takes credits: the Credits step is offered, and this opens it. */
+  onOpenCredits?: () => void;
 }
 
 function clock(totalSec: number): string {
@@ -71,7 +73,7 @@ function PublishSummary({ form, short, publishError }: { form: StudioFormState; 
   );
 }
 
-export function PublishStep({ form, patch, showErrors, publishError, contentType = "long" }: PublishStepProps) {
+export function PublishStep({ form, patch, showErrors, publishError, contentType = "long", onOpenCredits }: PublishStepProps) {
   const short = isShortStudio(contentType);
   const scheduleError = !!showErrors && getStepErrors("publish", form).some((error) => error.field === "scheduleAt");
   const takesSeries = !short && (form.finalVideoCategory ?? "long_video") === "long_video";
@@ -92,6 +94,20 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
       ) : (
         <>
           <TopicSetting form={form} patch={patch} contentType={contentType} showErrors={showErrors} />
+          {/* A film-like topic adds the Credits step before this one. */}
+          {onOpenCredits ? (
+            <p className="upload-banner" data-credits-offer role="status">
+              <Clapperboard aria-hidden="true" />
+              <span>
+                {form.credits.credits.length > 0
+                  ? `${form.credits.credits.length === 1 ? "1 credit" : `${form.credits.credits.length} credits`} added. `
+                  : "This topic can carry credits: the cast and crew, genres and release year. "}
+                <button type="button" className="upload-link-button" onClick={onOpenCredits}>
+                  {form.credits.credits.length > 0 ? "Edit credits" : "Add credits"}
+                </button>
+              </span>
+            </p>
+          ) : null}
           {/* Series (long videos; added after publish). */}
           {takesSeries ? <SeriesPicker form={form} patch={patch} showErrors={showErrors} /> : null}
           <ScheduleSetting form={form} patch={patch} invalid={scheduleError} />

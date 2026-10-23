@@ -18,6 +18,8 @@ import { CreationsTab } from "./tabs/CreationsTab"
 import { AboutTab } from "./tabs/AboutTab"
 import { ConnectionsTab } from "./tabs/ConnectionsTab"
 import { VideosTab } from "./tabs/VideosTab"
+import { AppearsInTab } from "./tabs/AppearsInTab"
+import { useAppearanceRows } from "@/features/posttube/credits/useCredits"
 import { FlicksTab } from "./tabs/FlicksTab"
 import { StashedTab } from "./tabs/StashedTab"
 import MutualFriendsCard from "./sidebar/MutualFriendsCard"
@@ -477,6 +479,9 @@ export function ProfilePage({ username }: ProfilePageProps) {
     const hasVideos = contentCounts.video > 0
     const hasFlicks = contentCounts.reel > 0
     const hasCreatorContent = hasVideos || hasFlicks
+    // "Appears in": others' videos that credit this person and that they accepted; hidden when there are none.
+    const appearances = useAppearanceRows(profile?.id)
+    const hasAppearances = (appearances.data?.pages[0]?.items.length ?? 0) > 0
 
     // Mutations
     const followMutation = useFollowUser()
@@ -725,6 +730,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
                         hasVideos={hasVideos}
                         hasFlicks={hasFlicks}
                         hasMedia={false}
+                        hasAppearances={hasAppearances}
                         isSticky={isTabsSticky}
                     />
                 </div>
@@ -770,6 +776,9 @@ export function ProfilePage({ username }: ProfilePageProps) {
                                 )}
                                 {activeTab === "flicks" && (
                                     <FlicksTab userId={profile.id} isOwn={isOwn} />
+                                )}
+                                {activeTab === "appears" && hasAppearances && (
+                                    <AppearsInTab userId={profile.id} />
                                 )}
                                 {activeTab === "orders" && (
                                     <ComingSoonTab

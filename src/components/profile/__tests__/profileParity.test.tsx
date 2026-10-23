@@ -217,6 +217,13 @@ describe("sort control, tabs, counts, share", () => {
     expect(owner).toContain("liked");
   });
 
+  test("Appears in (accepted video credits) shows after Reels only when there are some", () => {
+    expect(visibleProfileTabKeys({ isOwn: false })).not.toContain("appears");
+    expect(visibleProfileTabKeys({ isOwn: true })).not.toContain("appears");
+    const keys = visibleProfileTabKeys({ isOwn: false, hasAppearances: true });
+    expect(keys.indexOf("appears")).toBe(keys.indexOf("flicks") + 1);
+  });
+
   test("Q&A is parked until after launch: hidden for visitors and the owner", () => {
     expect(visibleProfileTabKeys({ isOwn: false })).not.toContain("qa");
     expect(visibleProfileTabKeys({ isOwn: true })).not.toContain("qa");

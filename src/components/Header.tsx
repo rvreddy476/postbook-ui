@@ -30,6 +30,7 @@ import { resolveAppBrand } from '@/lib/appBrand';
 import { RoleMenuLink } from '@/components/auth/RoleMenuLink';
 import { useFeedSearchAlignment } from './feed/useFeedSearchAlignment';
 import { bellRow, notificationActorId } from '@/lib/notificationPresentation';
+import { creditNotificationHref } from '@/lib/notificationInbox';
 import { NotificationGlyph } from '@/components/notifications/NotificationGlyph';
 
 /**
@@ -71,6 +72,10 @@ function describeNotification(type: string): string | null {
       return 'uploaded a new flick'
     case 'creator_went_live':
       return 'is live now'
+    case 'credit_request':
+      return 'credited you in a video'
+    case 'credit_accepted':
+      return 'accepted your credit'
     case 'incoming_call':
       return 'called you'
     case 'incoming_video_call':
@@ -358,7 +363,9 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
       }
     } else {
       // Navigate for user-related notifications (follow, friend_request, dm…)
-      router.push(notificationHref(notif.deep_link, notif.actor_user_id, actorUsername));
+      // A credit request is answered on its own page, whatever link the row
+      // carries; an accepted credit's /tube/watch link lands on /posttube.
+      router.push(notificationHref(creditNotificationHref(notif.type, notif.deep_link) ?? notif.deep_link, notif.actor_user_id, actorUsername));
       setIsNotifOpen(false);
     }
   };

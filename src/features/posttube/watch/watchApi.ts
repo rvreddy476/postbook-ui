@@ -12,6 +12,7 @@ import { normalizeChapters, type Chapter } from "./chapters";
 import { parseStoryboardVtt, type StoryboardCue } from "./storyboard";
 import { normalizeSupport, type CreatorSupport } from "./thanks";
 import { upNextChipQuery, type UpNextChip } from "./upNext";
+import { decodeCreditsInfo, type VideoCreditsInfo } from "../credits/creditsModel";
 
 /*
   The watch page's adapter: every request the page makes that is not
@@ -91,6 +92,11 @@ export interface WatchPostRow extends HydratedPostRow {
     duration_seconds?: number | null;
     channel_name?: string | null;
   } | null;
+  /* Video credits (contract 23 Oct 2026); read by decodeCreditsInfo. `status` only for the owner. */
+  credits?: unknown;
+  genres?: unknown;
+  release_year?: unknown;
+  production_house?: unknown;
 }
 
 /** The creator's pick shown in the about card; only present when the viewer may see it. */
@@ -143,6 +149,8 @@ export interface WatchDetail {
   madeForKids: boolean;
   /** AI-generated / paid promotion / altered content, labels under the title. */
   disclosures: Disclosures;
+  /** Cast & crew, genres, year, production house; empty when the video has none. */
+  credits: VideoCreditsInfo;
 }
 
 /** A row + its card model → what the page reads. Missing keys fall back to what the card already knew. */
@@ -170,6 +178,7 @@ export function normalizeWatchDetail(row: WatchPostRow, video: PostTubeVideo): W
     ageRestricted: row.age_restricted === true,
     madeForKids: row.made_for_kids === true || row.is_made_for_kids === true,
     disclosures: disclosuresFromWire(row),
+    credits: decodeCreditsInfo(row),
   };
 }
 

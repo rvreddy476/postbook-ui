@@ -280,6 +280,11 @@ export async function updateDraft(
     recording_location: string;
     schedule_at: string;
     content_type: string;
+    /* Video credits (long videos; the lists replace what the draft holds, [] clears; null clears the year and house). */
+    credits: { name: string; role: string; user_id?: string }[];
+    genres: string[];
+    release_year: number | null;
+    production_house: string | null;
   }>
 ): Promise<ReelDraft> {
   const res = await api.patch<ApiResponse<ReelDraft>>(`/v1/reels/drafts/${draftId}`, params);

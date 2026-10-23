@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -22,7 +22,7 @@ import {
   updateVideoTrim,
 } from "@/features/posttube/data/posttubeApi";
 
-import { STEP_SCHEMAS, FLICK_MAX_DURATION_SECONDS, type ContentType, type StepId } from "./tokens";
+import { FLICK_MAX_DURATION_SECONDS, studioSteps, type ContentType, type StepId } from "./tokens";
 import { getPublishDefaults } from "@/features/posttube/hub";
 import { updatePost } from "@/features/posttube/hub/hubApi";
 import { chapterRowsToWire } from "@/features/posttube/hub/chaptersModel";
@@ -30,7 +30,7 @@ import { chapterRowsToWire } from "@/features/posttube/hub/chaptersModel";
 import { type FollowUpFailure, type StudioFormState, INITIAL_FORM_STATE } from "./types";
 import { validateSelectedFile, validateMediaDuration } from "./fileRules";
 import { freshStudioForm, mergePublishDefaults, takesPublishDefaults } from "./studioDefaults";
-import { applySeriesChoice, postPublishPatch, saveUploadChapters, scheduleIso, studioCreateFields } from "./studioApi";
+import { applySeriesChoice, postPublishPatch, saveUploadChapters, scheduleIso, studioCreateFields, studioDraftCreditFields, studioTakesCredits } from "./studioApi";
 import { cachedCover, keepPublishAttempt, newPublishAttempt, type PublishAttempt } from "./publishAttempt";
 import { chosenSoundPatch, soundToAudioTrack, studioDraftSoundFields, studioSoundNotice, studioSoundStatus } from "./studioSound";
 import { useSoundInfo } from "@/features/reels/hooks/useSounds";
@@ -129,8 +129,11 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
   // Made on the first Publish press, reused by a retry, cleared on success,
   // on a definite refusal and whenever the file changes (publishAttempt.ts).
   const publishAttemptRef = useRef<PublishAttempt | null>(null);
-  const steps = STEP_SCHEMAS[contentType];
   const isLongStudio = contentType === "long" || contentType === "podcast";
+  // Credits (cast & crew) only for a long video whose topic takes them; the step sits before Publish.
+  const longUpload = classifyVideo(form.videoDurationSec, form.videoWidth, form.videoHeight) === "long_video";
+  const takesCredits = studioTakesCredits(form, longUpload);
+  const steps = useMemo(() => studioSteps(contentType, takesCredits), [contentType, takesCredits]);
 
   const patch = useCallback(
     (updates: Partial<StudioFormState>) => setForm((prev) => ({ ...prev, ...updates })),
@@ -509,6 +512,8 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         location_place_id: form.locationName.trim() ? form.locationPlaceId ?? "" : "",
         // The picker's local wall clock, as RFC3339 (the same conversion as the create route's publish_at).
         schedule_at: scheduleIso(form.scheduleAt),
+        // Credits replace what the draft holds; a topic that takes none clears them.
+        ...studioDraftCreditFields(form, classified === "long_video"),
       });
   }, [form, patch]);
 
@@ -604,7 +609,7 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         content_type: classified,
         publish_to_feed: form.publishToFeed,
         idempotencyKey: attempt.key,
-        fields: studioCreateFields(form),
+        fields: studioCreateFields(form, { longVideo: classified === "long_video" }),
       });
       return { reel, coverMediaId };
     },
@@ -703,6 +708,11 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
   /* ── Step navigation ─────────────────────────────── */
 
   const currentStepIndex = steps.indexOf(form.currentStep);
+
+  // A step that went away under the creator (the topic no longer takes credits): land on Publish.
+  useEffect(() => {
+    if (!steps.includes(form.currentStep)) patch({ currentStep: steps.includes("publish") ? "publish" : steps[steps.length - 1] });
+  }, [steps, form.currentStep, patch]);
 
   const goToStep = useCallback(
     (step: StepId) => {

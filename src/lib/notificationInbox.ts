@@ -1,4 +1,5 @@
 import { notificationActor, notificationActorId, notificationIcon, notificationTitle, type NotificationIcon } from '@/lib/notificationPresentation'
+import { tubePathnameToPosttube } from '@/features/posttube/tubeRedirect'
 
 export interface InboxNotification {
   id: string
@@ -77,6 +78,43 @@ const copy: Record<string, [string, string]> = {
   'user.friend_accepted': ['Friend request accepted', 'Your friend request was accepted.'],
 }
 
+/** Where a credit request is answered (app/credits/requests). */
+export const CREDIT_REQUESTS_PATH = '/credits/requests'
+
+/**
+ * The two video-credit notifications (contract 23 Oct 2026). The inbox row
+ * carries no body (the "{role} · {title}" line rides on the push only), so
+ * the row is drawn from its title and type: the server's sentence names
+ * the uploader and wins when sent, otherwise the actor's name fills the
+ * contract's copy, and the second line is the web's own. A credit request
+ * always opens the requests page, whatever link the row carries; an
+ * accepted credit opens the video, the row's `/tube/watch/{id}` landed
+ * straight on `/posttube/watch/{id}` (the /tube alias would redirect it
+ * anyway). null for every other type.
+ */
+export function creditNotificationCopy(
+  type: string,
+  actorName: string | undefined,
+  serverTitle: string | undefined,
+  rowLink?: string,
+): { title: string; body: string; link: string | undefined } | null {
+  const who = actorName?.trim() || 'Someone'
+  if (type === 'credit_request') {
+    return { title: serverTitle ?? `${who} credited you in a video`, body: 'Accept to show the video on your profile, or decline.', link: CREDIT_REQUESTS_PATH }
+  }
+  if (type === 'credit_accepted') {
+    return { title: serverTitle ?? `${who} accepted your credit`, body: 'The video now shows on their profile.', link: creditNotificationHref(type, rowLink) }
+  }
+  return null
+}
+
+/** Where a credit notification opens (the bell menus use it too); undefined for other types or no link. */
+export function creditNotificationHref(type: string, rowLink: string | undefined): string | undefined {
+  if (type === 'credit_request') return CREDIT_REQUESTS_PATH
+  if (type === 'credit_accepted' && rowLink) return tubePathnameToPosttube(rowLink) ?? rowLink
+  return undefined
+}
+
 /** Stored mobile links must never launch an arbitrary scheme or external URL. */
 export function notificationWebLink(value: unknown): string | undefined {
   if (typeof value !== 'string' || /[\\\x00-\x20]/.test(value)) return undefined
@@ -100,18 +138,21 @@ export function decodeNotificationPage(value: unknown): { notifications: InboxNo
     const fallback = n.type.startsWith('doorstep.pro.') ? ['Partner update', 'Open your workspace for details.'] : n.type.startsWith('doorstep.') ? ['Service booking update', 'Open your booking for details.'] : ['New notification', 'Open this update for details.']
     const serverTitle = notificationTitle(n.title)
     const actor = notificationActor(n.actor)
+    const actorName = actor?.display_name ?? actor?.username
+    const link = notificationWebLink(n.deep_link)
+    const credit = creditNotificationCopy(n.type, actorName, serverTitle, link)
     // The web's own wording wins for the types it knows; the server's
     // sentence only replaces the generic fallback line.
     return {
       id: n.notification_id,
       type: n.type,
-      title: known ? known[0] : serverTitle ?? fallback[0],
-      body: known ? known[1] : fallback[1],
+      title: credit ? credit.title : known ? known[0] : serverTitle ?? fallback[0],
+      body: credit ? credit.body : known ? known[1] : fallback[1],
       server_title: serverTitle,
       icon: notificationIcon(n.icon),
       actor_id: notificationActorId(n.actor_user_id),
-      actor_name: actor?.display_name ?? actor?.username,
-      deep_link: notificationWebLink(n.deep_link),
+      actor_name: actorName,
+      deep_link: credit?.link ?? link,
       is_read: n.is_read,
       created_at: n.created_at,
       bucket: n.bucket as number,

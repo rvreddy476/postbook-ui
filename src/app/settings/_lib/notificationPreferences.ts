@@ -42,6 +42,8 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     { key: "community_posts", label: "Community posts", primary: false },
     { key: "community_mentions", label: "Community mentions", primary: false },
     { key: "event_reminders", label: "Event reminders", primary: false },
+    // Video credits (2026-10-23): credit requests and accepted credits; on by default.
+    { key: "credits", label: "Credits", primary: false },
     { key: "system", label: "Security and system", primary: false },
 ]
 

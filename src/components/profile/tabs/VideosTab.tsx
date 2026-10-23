@@ -48,7 +48,8 @@ function getVideoThumbnail(post: PostDetail): string {
     return ""
 }
 
-function VideoCard({ post, index }: { post: PostDetail; index: number }) {
+/** One video in the profile grid (Videos, and Appears in). */
+export function VideoCard({ post, index }: { post: PostDetail; index: number }) {
     const router = useRouter()
     const thumbnail = getVideoThumbnail(post)
     const title = post.title || (post.text ? post.text.slice(0, 80) : "Untitled video")
@@ -113,7 +114,7 @@ function VideoCard({ post, index }: { post: PostDetail; index: number }) {
     )
 }
 
-function VideosSkeleton() {
+export function VideosSkeleton() {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (

@@ -18,6 +18,8 @@ import { DetailsStep } from "./steps/DetailsStep";
 import { AudienceStep } from "./steps/AudienceStep";
 import { EngageStep } from "./steps/EngageStep";
 import { EnrichStep } from "./steps/EnrichStep";
+import { CreditsStep } from "./steps/CreditsStep";
+import { creditsErrorProblem } from "@/features/posttube/credits/creditsModel";
 import { PublishStep } from "./steps/PublishStep";
 import { getStepErrors, canPublish, getAllErrors } from "./validation";
 
@@ -162,6 +164,8 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
         return <EngageStep {...props} />;
       case "enrich":
         return <EnrichStep {...props} />;
+      case "credits":
+        return <CreditsStep {...props} serverProblem={creditsErrorProblem(failure?.code)} />;
       case "publish":
         return (
           <PublishStep
@@ -170,6 +174,7 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
             retryProcessingCheck={studio.retryProcessingCheck}
             onReplaceVideo={studio.clearFile}
             contentType={contentType}
+            onOpenCredits={steps.includes("credits") && !navigationLocked ? () => { setAttemptedNext(false); setShowValidationErrors(false); goToStep("credits"); } : undefined}
           />
         );
       default:

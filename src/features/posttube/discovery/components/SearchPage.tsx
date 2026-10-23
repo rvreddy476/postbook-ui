@@ -10,6 +10,7 @@ import {
   SEARCH_SORTS,
   SEARCH_TABS,
   SEARCH_WHENS,
+  SEARCH_YEAR_MIN,
   parseSearchFilters,
   searchHref,
   type ChannelResult,
@@ -18,6 +19,8 @@ import {
   type VideoResult,
 } from "../discoveryApi";
 import { useTubeSearch } from "../hooks/useDiscovery";
+import type { Genre } from "../../credits/creditsModel";
+import { useGenres } from "../../credits/useCredits";
 import { EmptyState, ErrorState, RowSkeleton } from "./DiscoveryState";
 import { PageHead } from "./PageHead";
 import { PillRow } from "./Pills";
@@ -96,6 +99,67 @@ export interface SearchViewProps {
   channels: ChannelResult[];
   collections: CollectionResult[];
   onRetry?: () => void;
+  /** The genre list for the Genre filter (GET /v1/posts/genres); empty hides it. */
+  genres?: readonly Genre[];
+}
+
+/** Release years for the Year filter, newest first: next year down to 1900. */
+export function searchYearOptions(now = new Date()): string[] {
+  const out: string[] = [];
+  for (let y = now.getFullYear() + 1; y >= SEARCH_YEAR_MIN; y--) out.push(String(y));
+  return out;
+}
+
+/** Genre and Year (video credits): optional, passed through to the search request. */
+function CreditFilters({ filters, genres, onChange }: { filters: SearchFilters; genres: readonly Genre[]; onChange: (next: SearchFilters) => void }) {
+  const genreKnown = !filters.genre || genres.some((g) => g.slug === filters.genre);
+  return (
+    <div className="disco-filterbar__selects">
+      {genres.length > 0 || filters.genre ? (
+        <label className="disco-select">
+          <span className="disco-pills__label">Genre</span>
+          <select
+            value={filters.genre ?? ""}
+            aria-label="Genre"
+            onChange={(e) => {
+              const next = { ...filters };
+              if (e.target.value) next.genre = e.target.value;
+              else delete next.genre;
+              onChange(next);
+            }}
+          >
+            <option value="">Any genre</option>
+            {genres.map((g) => (
+              <option key={g.slug} value={g.slug}>
+                {g.label}
+              </option>
+            ))}
+            {!genreKnown && filters.genre ? <option value={filters.genre}>{filters.genre}</option> : null}
+          </select>
+        </label>
+      ) : null}
+      <label className="disco-select">
+        <span className="disco-pills__label">Year</span>
+        <select
+          value={filters.year ?? ""}
+          aria-label="Release year"
+          onChange={(e) => {
+            const next = { ...filters };
+            if (e.target.value) next.year = e.target.value;
+            else delete next.year;
+            onChange(next);
+          }}
+        >
+          <option value="">Any year</option>
+          {searchYearOptions().map((y) => (
+            <option key={y} value={y}>
+              {y}
+            </option>
+          ))}
+        </select>
+      </label>
+    </div>
+  );
 }
 
 function SearchBox({ initial, onSubmit }: { initial: string; onSubmit: (q: string) => void }) {
@@ -117,7 +181,7 @@ function SearchBox({ initial, onSubmit }: { initial: string; onSubmit: (q: strin
 }
 
 /** The pure screen: the query and every filter live in the URL; the page reads them and hands them here. */
-export function SearchView({ filters, onFiltersChange, onSubmitQuery, status, videos, channels, collections, onRetry }: SearchViewProps) {
+export function SearchView({ filters, onFiltersChange, onSubmitQuery, status, videos, channels, collections, onRetry, genres = [] }: SearchViewProps) {
   const q = filters.q;
   const set = <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => onFiltersChange({ ...filters, [key]: value });
   const list = filters.tab === "videos" ? videos : filters.tab === "channels" ? channels : collections;
@@ -142,6 +206,9 @@ export function SearchView({ filters, onFiltersChange, onSubmitQuery, status, vi
             <div className="disco-filterbar__row">
               <PillRow name="Sort" label="Sort" options={SEARCH_SORTS} value={filters.sort} onChange={(v) => set("sort", v)} />
             </div>
+            <div className="disco-filterbar__row">
+              <CreditFilters filters={filters} genres={genres} onChange={onFiltersChange} />
+            </div>
           </>
         ) : null}
       </div>
@@ -155,7 +222,15 @@ export function SearchView({ filters, onFiltersChange, onSubmitQuery, status, vi
       ) : list.length === 0 ? (
         <EmptyState
           title={`No ${filters.tab} for “${q}”`}
-          body={filters.tab === "videos" && (filters.length !== "any" || filters.when !== "any") ? "Try clearing the length or date filter." : "Check the spelling or try another word."}
+          body={
+            filters.tab !== "videos"
+              ? "Check the spelling or try another word."
+              : filters.length !== "any" || filters.when !== "any"
+                ? "Try clearing the length or date filter."
+                : filters.genre || filters.year
+                  ? "Try clearing the genre or year filter."
+                  : "Check the spelling or try another word."
+          }
         />
       ) : (
         <div className="disco-rows" aria-live="polite">
@@ -176,6 +251,7 @@ export function SearchPage() {
   const params = useSearchParams();
   const filters = parseSearchFilters((k) => params.get(k));
   const { videos, channels, collections } = useTubeSearch(filters);
+  const genres = useGenres(filters.tab === "videos");
 
   const navigate = useCallback((next: SearchFilters) => router.replace(searchHref(next)), [router]);
   const onSubmitQuery = useCallback((q: string) => router.push(searchHref({ ...filters, q })), [router, filters]);
@@ -193,6 +269,7 @@ export function SearchPage() {
       channels={channels.data ?? []}
       collections={collections.data ?? []}
       onRetry={() => void active.refetch()}
+      genres={genres.data ?? []}
     />
   );
 }

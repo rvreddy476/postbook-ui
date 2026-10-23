@@ -5,7 +5,7 @@ import { SHORTS_MAX_DURATION_LABEL, SHORTS_MAX_DURATION_SECONDS } from "@/lib/vi
 /** Content type identifiers. "short" and "reel" are the same vertical studio. */
 export type ContentType = "reel" | "short" | "long" | "podcast";
 
-export type StepId = "video" | "details" | "audience" | "engage" | "enrich" | "publish";
+export type StepId = "video" | "details" | "audience" | "engage" | "enrich" | "credits" | "publish";
 
 /** True for the vertical shorts studio (Reels); false for long video and podcasts (PostTube). */
 export function isShortStudio(contentType: ContentType): boolean {
@@ -24,12 +24,26 @@ export const STEP_SCHEMAS: Record<ContentType, readonly StepId[]> = {
   podcast: ["video", "details", "audience", "engage", "enrich", "publish"],
 } as const;
 
+/**
+ * The steps this upload shows: the studio's schema, plus Credits (cast &
+ * crew, genres, year, production) just before Publish when the video is
+ * long and its topic is one that takes credits (posttube/credits). The
+ * topic is picked on Publish, so the step appears once one is chosen.
+ */
+export function studioSteps(contentType: ContentType, takesCredits: boolean): readonly StepId[] {
+  const base = STEP_SCHEMAS[contentType];
+  if (!takesCredits || isShortStudio(contentType)) return base;
+  const at = base.indexOf("publish");
+  return [...base.slice(0, at), "credits", ...base.slice(at)];
+}
+
 export const STEP_META: Record<StepId, { label: string; description: string }> = {
   video:    { label: "Video",    description: "Choose your file" },
   details:  { label: "Details",  description: "Title, description and cover" },
   audience: { label: "Audience", description: "Who it is for and disclosures" },
   engage:   { label: "Comments", description: "Comments, likes and remixing" },
   enrich:   { label: "Extras",   description: "Language, subtitles and chapters" },
+  credits:  { label: "Credits",  description: "Cast, crew, genres and year" },
   publish:  { label: "Publish",  description: "Visibility, topic and schedule" },
 };
 
@@ -49,6 +63,8 @@ export function stepIntro(step: StepId, contentType: ContentType): { title: stri
       return { title: "Comments and likes", body: "Choose how viewers can respond to your video." };
     case "enrich":
       return { title: "Extras", body: "Optional: language, subtitles and chapters help viewers find their way." };
+    case "credits":
+      return { title: "Credits", body: "Optional: the cast and crew, genres, release year and production house. Viewers can search by them." };
     case "publish":
       return short
         ? { title: "Ready to post", body: "Check who can watch, then publish now or schedule it." }

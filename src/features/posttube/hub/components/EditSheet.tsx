@@ -60,6 +60,9 @@ import { ChaptersEditor } from "./ChaptersEditor";
 import { CardsEditor, EndScreenEditor } from "./EndScreenEditor";
 import { cardsBlocked, durationMsOf, endScreenBlock, validateCards, validateEndScreens } from "../endScreenEditor";
 import { SeriesSection } from "./SeriesSection";
+import { CreditsEditor } from "../../credits/components/CreditsEditor";
+import { categoryTakesCredits, creditsEditPatch, creditsErrorProblem, creditsFormFrom, creditsProblems, hasCreditsInfo, type CreditsForm, type CreditsProblem } from "../../credits/creditsModel";
+import { useGenres } from "../../credits/useCredits";
 import { HubError, HubSkeleton } from "./HubEmpty";
 import { SwitchRow, Toggle, VisibilityIcon } from "./Pills";
 
@@ -157,6 +160,10 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
     return scheduleFirst ? { ...f, visibility: "scheduled" } : f;
   });
   const [form, setForm] = useState<DetailsForm>(base);
+  const [creditsBase, setCreditsBase] = useState<CreditsForm>(() => creditsFormFrom(post.credits));
+  const [creditsForm, setCreditsForm] = useState<CreditsForm>(creditsBase);
+  const genres = useGenres();
+  const me = useAuthUser();
   const [frameClock, setFrameClock] = useState("0:05");
   const scheduleRef = useRef<HTMLDivElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -166,6 +173,9 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
     const next = scheduleFirst ? { ...f, visibility: "scheduled" as const } : f;
     setBase(next);
     setForm(next);
+    const credits = creditsFormFrom(post.credits);
+    setCreditsBase(credits);
+    setCreditsForm(credits);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [post.id]);
 
@@ -181,10 +191,18 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
   const scheduleIso = form.visibility === "scheduled" ? fromLocalInput(form.scheduled_local) : null;
   const scheduleChanged = form.visibility === "scheduled" ? scheduleIso !== null && (base.visibility !== "scheduled" || toLocalInput(post.scheduled_at) !== form.scheduled_local) : base.visibility === "scheduled";
   const scheduleInvalid = form.visibility === "scheduled" && (!scheduleIso || Date.parse(scheduleIso) <= Date.now());
+  // Credits: long videos whose topic takes them, or that already carry some (a changed topic never hides saved credits).
+  const showCredits = !short && (categoryTakesCredits(form.category) || hasCreditsInfo(post.credits));
+  const creditsPatch = useMemo(() => (showCredits ? creditsEditPatch(creditsBase, creditsForm) : {}), [showCredits, creditsBase, creditsForm]);
+  const creditIssues = showCredits ? creditsProblems(creditsForm) : [];
+  // Credit issues are shown on their rows; they block Save like the others.
   const problems = detailsProblems(form, post.id);
-  const dirty = Object.keys(patch).length > 0 || scheduleChanged;
+  const blocked = problems.length > 0 || creditIssues.length > 0;
+  const dirty = Object.keys(patch).length > 0 || Object.keys(creditsPatch).length > 0 || scheduleChanged;
   const busy = update.isPending || reschedule.isPending;
   const [saveError, setSaveError] = useState<string | null>(null);
+  /** The server's last credits refusal (TOO_MANY_CREDITS, INVALID_GENRE, …), until the credits change. */
+  const [creditServerProblem, setCreditServerProblem] = useState<CreditsProblem | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
 
   const set = <K extends keyof DetailsForm>(k: K, v: DetailsForm[K]) => {
@@ -195,23 +213,32 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
   const relatedOptions = useMemo(() => candidates.filter((c) => c.id !== post.id && !isShortType(c.content_type)), [candidates, post.id]);
 
   const save = async () => {
-    if (!dirty || busy || scheduleInvalid || problems.length > 0) return;
+    if (!dirty || busy || scheduleInvalid || blocked) return;
     setSaveError(null);
     try {
-      const body: HubPostPatch = { ...patch };
+      // Credits ride in the same PATCH; `credits` replaces the whole list.
+      const body: HubPostPatch = { ...patch, ...creditsPatch };
       if (base.visibility === "scheduled" && form.visibility !== "scheduled") {
         // Leaving "scheduled": publish now, then apply the chosen state.
         await reschedule.mutateAsync({ postId: post.id });
         body.visibility = form.visibility;
       }
-      if (Object.keys(body).length > 0) await update.mutateAsync({ postId: post.id, patch: body });
+      const saved = Object.keys(body).length > 0 ? await update.mutateAsync({ postId: post.id, patch: body }) : null;
       if (form.visibility === "scheduled" && scheduleIso && scheduleChanged) {
         await reschedule.mutateAsync({ postId: post.id, publishAt: scheduleIso });
       }
       setBase(form);
+      // The saved list comes back with each tag's status (a new link reads Pending).
+      const credits = saved && body.credits !== undefined ? creditsFormFrom(saved.credits) : creditsForm;
+      setCreditsBase(credits);
+      setCreditsForm(credits);
       toast({ type: "success", title: "Saved" });
     } catch (err) {
-      const message = readableHubError(hubErrorCode(err), "Check the fields and try again.");
+      const code = hubErrorCode(err);
+      // A credits refusal is said under its field in the Credits editor too.
+      const creditProblem = creditsErrorProblem(code);
+      setCreditServerProblem(creditProblem);
+      const message = creditProblem?.message ?? readableHubError(code, "Check the fields and try again.");
       setSaveError(message);
       toast({ type: "error", title: "Could not save", description: message });
     }
@@ -329,6 +356,33 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
           </div>
         </div>
 
+        {showCredits ? (
+          <section className="hub-field" aria-labelledby="hub-credits-title" data-section="credits">
+            <span className="hub-label" id="hub-credits-title">
+              Credits
+            </span>
+            <span className="hub-hint">The cast and crew, genres, release year and production house. A linked account is asked to accept.</span>
+            <div className="hub-card hub-card-pad">
+              <CreditsEditor
+                value={creditsForm}
+                onChange={(next) => {
+                  setSaveError(null);
+                  setCreditServerProblem(null);
+                  setCreditsForm(next);
+                }}
+                genres={genres.data ?? []}
+                genresLoading={genres.isPending}
+                variant="hub"
+                showStatus
+                selfId={me?.id ?? null}
+                problems={creditServerProblem ? [...creditIssues, creditServerProblem] : creditIssues}
+                showErrors
+                idPrefix="hub-credits"
+              />
+            </div>
+          </section>
+        ) : null}
+
         <div className="hub-card hub-card-pad" style={{ paddingTop: 2, paddingBottom: 2 }}>
           <SwitchRow label="Conversations" hint="Viewers can comment." checked={!form.no_comments} onChange={(v) => set("no_comments", !v)} />
           <SwitchRow label="Save offline" hint="Viewers can save this video to watch offline inside the app. They never get a file." checked={form.allow_download} onChange={(v) => set("allow_download", v)} />
@@ -367,7 +421,7 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
         <button type="button" className="hub-btn" onClick={onClose}>
           Close
         </button>
-        <button type="button" className="hub-btn hub-btn-primary" onClick={save} disabled={!dirty || busy || scheduleInvalid || problems.length > 0}>
+        <button type="button" className="hub-btn hub-btn-primary" onClick={save} disabled={!dirty || busy || scheduleInvalid || blocked}>
           {busy ? "Saving…" : "Save"}
         </button>
       </div>

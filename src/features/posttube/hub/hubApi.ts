@@ -3,6 +3,7 @@ import { mediaHref } from "@/features/reels/model";
 import { uploadMedia } from "@/lib/mediaUpload";
 import { addPlaylistItem, createSubtitleTrack, getPlaylistItems, getSubtitleTracks, updateSchedule } from "@/features/posttube/data/posttubeApi";
 import { captureCoverFrame } from "./coverFrame";
+import { decodeCreditsInfo, type CreditWire, type VideoCreditsInfo } from "@/features/posttube/credits/creditsModel";
 import type { MediaSubtitleTrack } from "@/features/posttube/types";
 import { fetchCreatorCollections } from "@/features/posttube/library/libraryApi";
 import { readEndScreenPosition } from "@/features/posttube/watch/watchApi";
@@ -468,6 +469,8 @@ export interface HubPostDetail {
   comment_moderation: HubCommentModeration;
   comment_access: HubCommentAccess;
   notify_subscribers: boolean;
+  /** Cast & crew, genres, year, production house (long videos; the owner shape carries each credit's status). */
+  credits: VideoCreditsInfo;
 }
 
 /** `related_post` on the detail: `{id, title, thumbnail_url, duration_seconds, channel_name}` or null. */
@@ -545,6 +548,7 @@ export function normalizePostDetail(raw: unknown): HubPostDetail | null {
     comment_moderation: pick(raw.comment_moderation, HUB_COMMENT_MODERATIONS, "none"),
     comment_access: pick(raw.comment_access, HUB_COMMENT_ACCESSES, "everyone"),
     notify_subscribers: bool(raw.notify_subscribers, true),
+    credits: decodeCreditsInfo(raw),
   };
 }
 
@@ -584,6 +588,13 @@ export interface HubPostPatch {
   default_comment_sort?: HubCommentSort;
   /** A uuid of the caller's own post, or "" to clear. */
   related_post_id?: string;
+  /* Video credits (contract 23 Oct 2026): `credits` and `genres` REPLACE their lists, [] clears; omitted = unchanged. */
+  credits?: CreditWire[];
+  genres?: string[];
+  /** null clears. */
+  release_year?: number | null;
+  /** ≤ 100 runes; null (or "") clears. */
+  production_house?: string | null;
 }
 
 /** The PATCH body: only the keys present (undefined dropped; "" kept — it clears). */

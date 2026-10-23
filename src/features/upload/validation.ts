@@ -1,4 +1,5 @@
 import { validateChapterRows } from "@/features/posttube/hub/chaptersModel";
+import { creditsProblems } from "@/features/posttube/credits/creditsModel";
 
 import type { StudioFormState } from "./types";
 import { isShortStudio, type StepId } from "./tokens";
@@ -26,6 +27,8 @@ export function getStepErrors(step: StepId, form: StudioFormState): FieldError[]
       return [];
     case "enrich":
       return getEnrichErrors(form);
+    case "credits":
+      return getCreditsErrors(form);
     case "publish":
       return getPublishErrors(form);
     default:
@@ -37,6 +40,11 @@ export function getStepErrors(step: StepId, form: StudioFormState): FieldError[]
 export function getEnrichErrors(form: StudioFormState): FieldError[] {
   const durationMs = form.videoDurationSec ? form.videoDurationSec * 1000 : null;
   return validateChapterRows(form.chapterRows, durationMs).map((issue, i) => ({ field: `chapters-${i}`, message: issue.message }));
+}
+
+/** Credits: the contract's limits (30 credits, names and roles, 3 genres, year, production house). Field ids are `upload-<field>`. */
+export function getCreditsErrors(form: StudioFormState): FieldError[] {
+  return creditsProblems(form.credits).map((p) => ({ field: p.field, message: p.message }));
 }
 
 /** A series picked as "New series" needs a name; an episode number, when typed, is a whole number ≥ 1. */
@@ -122,6 +130,7 @@ export function isStepComplete(
     case "audience":
     case "engage":
     case "enrich":
+    case "credits":
       // Only mark complete if the user has moved past this step
       if (stepIndex != null && currentStepIndex != null) {
         return currentStepIndex > stepIndex;

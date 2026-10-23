@@ -36,6 +36,11 @@
 .disco-filterbar { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 14px; background: rgb(var(--brand-card)); }
 .disco-filterbar__row { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .disco-filterbar__divider { height: 1px; background: rgb(var(--brand-text) / .08); }
+/* Genre and Year (video credits): two compact selects in the pill style. */
+.disco-filterbar__selects { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.disco-select { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.disco-select select { height: 30px; max-width: 180px; padding: 0 10px; border: 0; border-radius: 999px; background: rgb(var(--brand-text) / .07); color: rgb(var(--brand-text)); font: inherit; font-size: var(--type-xs); font-weight: 600; cursor: pointer; }
+.disco-select select:focus-visible { outline: 2px solid rgb(var(--brand-ink)); outline-offset: 2px; }
 
 /* ---- the home strip's extras (the band and pills are tube.css's tube-strip__*) --- */
 .disco-strip__sep { flex: 0 0 1px; width: 1px; height: 18px; margin: 0 4px; background: rgb(var(--brand-text) / .14); }

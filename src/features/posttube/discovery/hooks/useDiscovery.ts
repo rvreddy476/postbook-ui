@@ -81,7 +81,7 @@ export function useStripFeed(value: string, limit = 20, enabled = true) {
 export function useTubeSearch(filters: SearchFilters) {
   const q = filters.q.trim();
   const videos = useQuery({
-    queryKey: [...KEY, "search", "videos", q, filters.sort, filters.length, filters.when],
+    queryKey: [...KEY, "search", "videos", q, filters.sort, filters.length, filters.when, filters.genre ?? "", filters.year ?? ""],
     queryFn: () => searchVideos({ ...filters, q }),
     enabled: !!q && filters.tab === "videos",
     staleTime: 60 * 1000,

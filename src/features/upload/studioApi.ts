@@ -2,6 +2,8 @@ import api from "@/lib/api";
 
 import { saveChapters, type HubPostPatch } from "@/features/posttube/hub/hubApi";
 
+import { creditsApply, creditsCreateFields, creditsDraftFields, creditsErrorProblem, type CreditsContext, type CreditsFields } from "@/features/posttube/credits/creditsModel";
+
 import { studioSoundFields } from "./studioSound";
 import { isShortStudio } from "./tokens";
 import type { StudioFormState } from "./types";
@@ -27,8 +29,10 @@ export function scheduleIso(local: string | null | undefined): string | undefine
  * share_to_postbook is always sent: the server reads an explicit false as
  * "keep this out of the home Feed", and an omitted one as true.
  */
-export function studioCreateFields(form: StudioFormState): Record<string, unknown> {
+export function studioCreateFields(form: StudioFormState, opts: { longVideo?: boolean } = {}): Record<string, unknown> {
   const out: Record<string, unknown> = {
+    // Credits, genres, year and production house: long videos in a credits topic only.
+    ...creditsCreateFields(form.credits, studioCreditsContext(form, opts.longVideo ?? false)),
     title: form.title.trim(),
     no_comments: !form.commentsEnabled,
     no_likes: !form.likesEnabled,
@@ -57,6 +61,25 @@ export function studioCreateFields(form: StudioFormState): Record<string, unknow
 }
 
 /**
+ * The credits context of an upload: its topic, and whether it will be a
+ * long video. `longVideo` is the caller's classification (the file's
+ * duration and shape); the shorts studio never takes credits.
+ */
+export function studioCreditsContext(form: Pick<StudioFormState, "contentType" | "category">, longVideo: boolean): CreditsContext {
+  return { category: form.category, longVideo: longVideo && !isShortStudio(form.contentType) };
+}
+
+/** Whether the studio offers the Credits step (and sends credits) for this upload. */
+export function studioTakesCredits(form: Pick<StudioFormState, "contentType" | "category">, longVideo: boolean): boolean {
+  return creditsApply(studioCreditsContext(form, longVideo));
+}
+
+/** The draft save's credit keys (replace semantics; see creditsDraftFields). */
+export function studioDraftCreditFields(form: StudioFormState, longVideo: boolean): CreditsFields {
+  return creditsDraftFields(form.credits, studioCreditsContext(form, longVideo));
+}
+
+/**
  * Settings the create route does not take, sent as one owner PATCH
  * (/v1/posts/:id) once the post exists — scheduled posts too, since the row
  * is written at create. Today that is only age_restricted, and only from
@@ -72,12 +95,16 @@ export function postPublishPatch(form: Pick<StudioFormState, "contentType" | "ag
  * Why a publish failed, in words a person can act on. Every service answers
  * `{ error: { code, message } }`; axios's own message ("Request failed with
  * status code 403") says nothing, so it is the last resort. `code` lets the
- * studio react to CHANNEL_REQUIRED by showing the channel form.
+ * studio react to CHANNEL_REQUIRED by showing the channel form. A credits
+ * refusal (TOO_MANY_CREDITS, INVALID_GENRE, …) carries a developer's
+ * message, so it gets the Credits step's own sentence instead.
  */
 export function publishFailure(err: unknown): { code: string | null; message: string } | null {
   if (!err) return null;
   const body = (err as { response?: { data?: { error?: { code?: unknown; message?: unknown } } } }).response?.data?.error;
   const code = typeof body?.code === "string" && body.code ? body.code : null;
+  const creditProblem = creditsErrorProblem(code);
+  if (creditProblem) return { code, message: creditProblem.message };
   const message = typeof body?.message === "string" && body.message.trim() ? body.message.trim() : null;
   if (message) return { code, message: /[.!?]$/.test(message) ? message : `${message}.` };
   return { code, message: err instanceof Error && err.message ? err.message : "Something went wrong." };
