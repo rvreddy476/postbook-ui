@@ -6,6 +6,9 @@ import { Tv, UserX } from "lucide-react";
 
 import { useAuthUser } from "@/store/auth";
 import { ShareSheet } from "@/features/reels/components/ShareSheet";
+import { MembersTab } from "@/features/memberships/components/MembersTab";
+import { useCreatorLevels } from "@/features/memberships/hooks";
+import { activeLevels } from "@/features/memberships/model";
 import { VideoCard } from "../../components/VideoCard";
 import { EmptyState, ErrorState, LoadingState } from "../../discovery/components/DiscoveryState";
 import { channelFeedPath, channelPath } from "../../feed/feedUrl";
@@ -120,7 +123,10 @@ function ChannelBody({ channel, isOwner, signedIn }: { channel: ChannelView; isO
   // "Appears in": videos that credit this person and that they accepted; the tab shows only when there are some.
   const appearances = useAppearances(channel.userId);
   const appearsIn = (appearances.data?.pages[0]?.items.length ?? 0) > 0;
-  const tabs = useMemo(() => visibleTabs(channel.counts, isOwner, !!liveNow, appearsIn), [channel.counts, isOwner, liveNow, appearsIn]);
+  // "Members": the creator offers at least one membership level (public route; empty while memberships are off).
+  const levels = useCreatorLevels(channel.thin ? undefined : channel.userId);
+  const members = activeLevels(levels.data ?? []).length > 0;
+  const tabs = useMemo(() => visibleTabs(channel.counts, isOwner, !!liveNow, appearsIn, members), [channel.counts, isOwner, liveNow, appearsIn, members]);
   const active = resolveTab(params?.get("tab"), tabs);
 
   // Follow / unfollow moves the count locally; a fresh count from the server replaces the local step.
@@ -166,7 +172,7 @@ function ChannelBody({ channel, isOwner, signedIn }: { channel: ChannelView; isO
       {active ? (
         <>
           <ChannelTabs pathname={pathname} tabs={tabs} active={active} counts={channel.counts} query={query} onQuery={setQuery} />
-          <TabPanel tab={active} ownerId={channel.userId} isOwner={isOwner} query={query} sort={sort} onSort={setSort} />
+          <TabPanel tab={active} ownerId={channel.userId} ownerName={channel.name} isOwner={isOwner} query={query} sort={sort} onSort={setSort} />
         </>
       ) : (
         <EmptyState icon={<Tv size={20} strokeWidth={1.75} />} title="Nothing here yet" body="This channel has not posted anything public." />
@@ -192,6 +198,7 @@ export function FeaturedVideo({ video }: { video: PostTubeVideo }) {
 interface TabPanelProps {
   tab: ChannelTab;
   ownerId: string;
+  ownerName?: string;
   isOwner: boolean;
   query: string;
   sort: VideoSort;
@@ -209,6 +216,8 @@ function TabPanel(props: TabPanelProps) {
       return <CollectionsTab {...props} />;
     case "appears":
       return <AppearsInTab {...props} />;
+    case "members":
+      return <MembersTab authorId={props.ownerId} authorName={props.ownerName} isOwner={props.isOwner} />;
     default:
       return <PostsTab {...props} />;
   }

@@ -16,6 +16,7 @@ import {
     CalendarCheck,
     Heart,
     Clapperboard,
+    Lock,
 } from "lucide-react"
 
 interface ProfileTabsProps {
@@ -29,6 +30,8 @@ interface ProfileTabsProps {
     hasMedia: boolean
     /** Videos that credit this person (accepted); the "Appears in" tab shows only then. */
     hasAppearances?: boolean
+    /** The person offers a membership level; the "Members" tab shows only then. */
+    hasMembers?: boolean
     isSticky?: boolean
 }
 
@@ -87,6 +90,15 @@ const tabDefinitions: TabDef[] = [
         icon: Film,
         activeColor: "bg-orange-100 text-orange-600",
         inactiveColor: "text-orange-400",
+        requiresContent: true,
+    },
+    {
+        // Members-only posts, shorts and videos (paid memberships); locked for non-members.
+        key: "members",
+        label: "Members",
+        icon: Lock,
+        activeColor: "bg-primary-tint text-primary-ink",
+        inactiveColor: "text-muted-foreground",
         requiresContent: true,
     },
     {
@@ -150,12 +162,13 @@ const QA_TAB_ENABLED = false
  * only when the content count is non-zero; Saved and Liked, like Orders and
  * Bookings, belong to the owner only.
  */
-export function visibleProfileTabKeys({ isOwn, hasMedia = false, hasAppearances = false }: { isOwn: boolean; hasMedia?: boolean; hasAppearances?: boolean }): ProfileTab[] {
+export function visibleProfileTabKeys({ isOwn, hasMedia = false, hasAppearances = false, hasMembers = false }: { isOwn: boolean; hasMedia?: boolean; hasAppearances?: boolean; hasMembers?: boolean }): ProfileTab[] {
     return tabDefinitions
         .filter((tab) => {
             if (tab.selfOnly && !isOwn) return false
             if (tab.key === "media" && !hasMedia) return false
             if (tab.key === "appears" && !hasAppearances) return false
+            if (tab.key === "members" && !hasMembers) return false
             if (tab.key === "qa" && !QA_TAB_ENABLED) return false
             return true
         })
@@ -168,13 +181,14 @@ export function ProfileTabs({
     isOwn,
     hasMedia,
     hasAppearances = false,
+    hasMembers = false,
     isSticky = false,
 }: ProfileTabsProps) {
     const scrollRef = useRef<HTMLDivElement>(null)
     const [canScrollLeft, setCanScrollLeft] = useState(false)
     const [canScrollRight, setCanScrollRight] = useState(false)
 
-    const visibleKeys = new Set(visibleProfileTabKeys({ isOwn, hasMedia, hasAppearances }))
+    const visibleKeys = new Set(visibleProfileTabKeys({ isOwn, hasMedia, hasAppearances, hasMembers }))
     const visibleTabs = tabDefinitions.filter((tab) => visibleKeys.has(tab.key))
 
     useEffect(() => {

@@ -331,6 +331,13 @@ export interface PostDetailsForm {
   extraHashtags: string[]
   /** Names a draft carried that its caption does not. */
   extraMentions: string[]
+  /**
+   * Members only: the lowest membership level that sees the post; absent or
+   * null for everyone. Never sent with the create or the draft (neither
+   * takes it): useComposeSubmit applies it with PUT /v1/posts/:id/membership
+   * once the post exists.
+   */
+  tierRequiredId?: string | null
 }
 
 export function emptyDetails(language: string = defaultLanguage()): PostDetailsForm {

@@ -1,0 +1,14 @@
+{
+  "data": {
+    "eligible": false,
+    "missing": [
+      "age",
+      "pan",
+      "followers",
+      "strikes"
+    ]
+  },
+  "meta": {
+    "request_id": "req-4"
+  }
+}

@@ -20,6 +20,9 @@ import { ConnectionsTab } from "./tabs/ConnectionsTab"
 import { VideosTab } from "./tabs/VideosTab"
 import { AppearsInTab } from "./tabs/AppearsInTab"
 import { useAppearanceRows } from "@/features/posttube/credits/useCredits"
+import { MembersTab } from "@/features/memberships/components/MembersTab"
+import { useCreatorLevels } from "@/features/memberships/hooks"
+import { activeLevels } from "@/features/memberships/model"
 import { FlicksTab } from "./tabs/FlicksTab"
 import { StashedTab } from "./tabs/StashedTab"
 import MutualFriendsCard from "./sidebar/MutualFriendsCard"
@@ -482,6 +485,9 @@ export function ProfilePage({ username }: ProfilePageProps) {
     // "Appears in": others' videos that credit this person and that they accepted; hidden when there are none.
     const appearances = useAppearanceRows(profile?.id)
     const hasAppearances = (appearances.data?.pages[0]?.items.length ?? 0) > 0
+    // "Members": members-only posts, when the person offers a membership level.
+    const memberLevels = useCreatorLevels(profile?.id)
+    const hasMembers = activeLevels(memberLevels.data ?? []).length > 0
 
     // Mutations
     const followMutation = useFollowUser()
@@ -731,6 +737,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
                         hasFlicks={hasFlicks}
                         hasMedia={false}
                         hasAppearances={hasAppearances}
+                        hasMembers={hasMembers}
                         isSticky={isTabsSticky}
                     />
                 </div>
@@ -776,6 +783,9 @@ export function ProfilePage({ username }: ProfilePageProps) {
                                 )}
                                 {activeTab === "flicks" && (
                                     <FlicksTab userId={profile.id} isOwn={isOwn} />
+                                )}
+                                {activeTab === "members" && hasMembers && (
+                                    <MembersTab authorId={profile.id} authorName={profile.display_name || profile.username} isOwner={isOwn} />
                                 )}
                                 {activeTab === "appears" && hasAppearances && (
                                     <AppearsInTab userId={profile.id} />

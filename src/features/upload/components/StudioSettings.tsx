@@ -2,6 +2,8 @@
 
 import { AlertCircle, Calendar, Eye, EyeOff, Globe, Link2, Loader2, Lock, MessageSquare, Newspaper, Repeat2, ShieldAlert, Tag, UserCheck, Users } from "lucide-react";
 
+import { MembersOnlyChoices } from "@/features/memberships/components/MembersOnlyChoices";
+import type { Tier } from "@/features/memberships/model";
 import { useVideoCategories } from "@/features/posttube/hooks/usePosttubeHome";
 
 import { categoryOptions } from "../categories";
@@ -44,6 +46,22 @@ export function VisibilitySetting({ form, patch }: SettingProps) {
           <ChoiceCard key={o.value} name="visibility" label={o.label} description={o.description} icon={o.icon} checked={form.visibility === o.value} onChange={() => patch({ visibility: o.value })} />
         ))}
       </div>
+    </Section>
+  );
+}
+
+/* ── Members only ───────────────────────────────────────── */
+
+/**
+  Everyone, or a membership level (and every dearer one). Drawn only when
+  the creator has an active level; applied after the create (PUT
+  /v1/posts/:id/membership), the studio says so if it did not stick.
+*/
+export function MembersOnlySetting({ form, patch, levels }: SettingProps & { levels: readonly Tier[] }) {
+  if (levels.length === 0) return null;
+  return (
+    <Section title="Members only" subtitle="Who can watch it in full" icon={Lock}>
+      <MembersOnlyChoices levels={levels} value={form.tierRequiredId} onChange={(tierRequiredId) => patch({ tierRequiredId })} />
     </Section>
   );
 }

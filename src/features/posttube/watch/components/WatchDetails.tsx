@@ -6,6 +6,7 @@ import { HandHeart, Lock, Radio, ShieldAlert } from "lucide-react";
 
 import { Avatar } from "@/components/LetterAvatar";
 import { DisclosureBadges } from "@/components/DisclosureBadges";
+import { JoinButton } from "@/features/memberships/components/JoinButton";
 import type { Disclosures } from "@/lib/disclosures";
 
 import { formatCount, formatDuration, subscribersLabel, timeAgo, viewsLabel } from "../../model";
@@ -254,18 +255,20 @@ export function AgeGateCard({ gate, videoId }: { gate: AgeGate; videoId: string 
   );
 }
 
-/** The join card on a membership-gated video: where the player would be. */
-export function MembershipCard({ channelName, poster }: { channelName: string; poster?: string }) {
+/**
+  The join card on a membership-gated video, where the player would be. Join
+  opens the Join sheet (features/memberships); once the payment lands the
+  entitlement is read again and the player takes this card's place.
+*/
+export function MembershipCard({ channelName, poster, creatorId, tierRequiredId }: { channelName: string; poster?: string; creatorId: string; tierRequiredId?: string | null }) {
   return (
-    <div className="tube-gate" style={poster ? { backgroundImage: `linear-gradient(rgb(var(--reel-stage) / .8), rgb(var(--reel-stage) / .9)), url("${poster}")`, backgroundSize: "cover" } : undefined}>
+    <div data-membership="video-lock" className="tube-gate" style={poster ? { backgroundImage: `linear-gradient(rgb(var(--reel-stage) / .8), rgb(var(--reel-stage) / .9)), url("${poster}")`, backgroundSize: "cover" } : undefined}>
       <span className="tube-gate__icon">
         <Lock size={20} />
       </span>
       <p className="tube-gate__title">Members only</p>
       <p className="tube-gate__hint">{channelName} shares this video with members. Join to watch it.</p>
-      <Link href="/monetization" className="tube-gate__cta">
-        Join
-      </Link>
+      <JoinButton creatorId={creatorId} creatorName={channelName} requiredTierId={tierRequiredId} className="tube-gate__cta" />
     </div>
   );
 }

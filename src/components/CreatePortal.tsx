@@ -81,6 +81,7 @@ import MoodActivityPicker from '@/components/studio/MoodActivityPicker';
 import { useRouter } from 'next/navigation';
 import { serverCode, serverMessage } from '@/features/post-compose/api';
 import { useComposeSubmit } from '@/features/post-compose/hooks';
+import { useGateLevels } from '@/features/memberships/hooks';
 import { useComposeMedia } from '@/features/post-compose/useComposeMedia';
 import {
   coverAfterRemove,
@@ -181,6 +182,8 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
   const [details, setDetails] = useState<PostDetailsForm>(() => emptyDetails());
   const patchDetails = useCallback((patch: DetailsPatch) => setDetails((d) => ({ ...d, ...patch })), []);
   const compose = useComposeSubmit(feedMedia.markUploaded);
+  // Members only: offered when the author has an active membership level.
+  const { levels: memberLevels } = useGateLevels();
 
   const [isDark, setIsDark] = useState(false);
   useEffect(() => {
@@ -1251,6 +1254,7 @@ const CreatePortal: React.FC<CreatePortalProps> = ({ onClose, groupId }) => {
                 media={feedMedia.media}
                 onAltText={feedMedia.setAltText}
                 disabled={isSubmitting || compose.savingDraft}
+                memberLevels={memberLevels}
               />
             </div>
           )}

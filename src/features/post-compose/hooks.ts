@@ -3,6 +3,8 @@
 import { useCallback, useRef, useState } from "react"
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query"
 
+import { useGlobalToast } from "@/contexts/ToastContext"
+import { setPostMembersOnly } from "@/features/memberships/api"
 import { feedPostFromCreate } from "@/hooks/feedPostFromCreate"
 import type { PostDetail } from "@/types/profile"
 
@@ -123,10 +125,36 @@ export interface ComposeSubmission {
  */
 export function useComposeSubmit(onUploaded?: (key: string, mediaId: string) => void) {
   const qc = useQueryClient()
+  const toast = useGlobalToast()
   const create = useCreatePostMutation()
   const keysRef = useRef(createAttemptKeys())
   const [posting, setPosting] = useState(false)
   const [savingDraft, setSavingDraft] = useState(false)
+
+  /*
+    Members only: neither the create nor the draft publish takes the level,
+    so it goes on with PUT /v1/posts/:id/membership the moment the post
+    exists. A failure never fails the post (it is up); it is said plainly,
+    because the post is then open to everyone who can see it.
+  */
+  const applyMembersOnly = useCallback(
+    async (created: PostDetail, tierId: string | null | undefined): Promise<PostDetail> => {
+      if (!tierId || !created.id) return created
+      try {
+        await setPostMembersOnly(created.id, tierId)
+        const gated = { ...created, tier_required_id: tierId }
+        qc.setQueryData(["post-detail", created.id], (old: PostDetail | undefined) => (old ? { ...old, tier_required_id: tierId } : old))
+        qc.invalidateQueries({ queryKey: ["home-feed"] })
+        qc.invalidateQueries({ queryKey: ["profile-posts"] })
+        qc.invalidateQueries({ queryKey: ["memberships", "members-tab"] })
+        return gated
+      } catch {
+        toast({ type: "warning", title: "Posted for everyone", description: "Members only could not be set, so everyone who can see your posts can see this one. Delete it if it should stay members-only." })
+        return created
+      }
+    },
+    [qc, toast],
+  )
 
   const publish = useCallback(
     async ({ text, details, media, extras, draftId }: ComposeSubmission): Promise<PostDetail> => {
@@ -140,19 +168,19 @@ export function useComposeSubmit(onUploaded?: (key: string, mediaId: string) => 
           showCreatedPost(qc, created, kinds)
           qc.removeQueries({ queryKey: [...POST_DRAFTS_KEY, draftId] })
           qc.invalidateQueries({ queryKey: POST_DRAFTS_KEY })
-          return created
+          return applyMembersOnly(created, details.tierRequiredId)
         }
         await applyAltTexts(uploaded)
         const body = buildCreateRequest({ text, details, media: uploaded, extras })
         const idempotencyKey = keysRef.current.keyFor(JSON.stringify(body))
         const created = await create.mutateAsync({ body, idempotencyKey, media: kinds })
         keysRef.current.reset()
-        return created
+        return applyMembersOnly(created, details.tierRequiredId)
       } finally {
         setPosting(false)
       }
     },
-    [create, onUploaded, qc],
+    [applyMembersOnly, create, onUploaded, qc],
   )
 
   const saveDraft = useCallback(

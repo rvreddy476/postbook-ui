@@ -8,6 +8,7 @@ import { useGlobalToast } from "@/contexts/ToastContext";
 import { AppShell } from "@/features/reels/components/AppShell";
 import { ChannelCreatePrompt, studioNeedsChannel } from "@/features/posttube/channelGate/ChannelGate";
 import { useMyChannel } from "@/hooks/useChannels";
+import { useGateLevels } from "@/features/memberships/hooks";
 import { followUpNotice, hubEditHref, publishFailure } from "./studioApi";
 import { CONTENT_TYPE_META, STEP_META, isShortStudio, stepIntro, type ContentType } from "./tokens";
 import { useUploadStudio, classifyVideo } from "./useUploadStudio";
@@ -42,6 +43,8 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
   const publishError = failure?.message ?? null;
   const toast = useGlobalToast();
   const short = isShortStudio(contentType);
+  // Members only: offered when the creator has an active membership level.
+  const { levels: memberLevels } = useGateLevels();
 
   // A reel or short over the shorts cap publishes as a long video, which
   // needs a channel; the page's own gate only covered long uploads.
@@ -174,6 +177,7 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
             retryProcessingCheck={studio.retryProcessingCheck}
             onReplaceVideo={studio.clearFile}
             contentType={contentType}
+            memberLevels={memberLevels}
             onOpenCredits={steps.includes("credits") && !navigationLocked ? () => { setAttemptedNext(false); setShowValidationErrors(false); goToStep("credits"); } : undefined}
           />
         );

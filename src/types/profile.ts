@@ -155,6 +155,7 @@ export type ProfileTab =
     | "connections"
     | "videos"
     | "flicks"
+    | "members"
     | "appears"
     | "stashed"
     | "liked"
@@ -265,13 +266,15 @@ export interface PostDetail {
     is_repost?: boolean
     reposted_by?: string
     feed_content_type?: string
-    // Tier 3c — Membership gating. tier_required_id != null means
-    // this post is members-only at that tier (or higher). When
-    // body_redacted is true, the heavy fields (text, rich_text,
-    // media, poll) are blanked by the backend; render a paywall
-    // preview instead.
+    // Members only (post-service members_read.go). tier_required_id != null
+    // means members of that level (or a dearer one) see it; it is on every
+    // gated row, members' too. body_redacted is true when this viewer is not
+    // one: text, rich_text, media, poll, tags and location are cleared and
+    // the card draws the lock (features/memberships). duration_ms is the
+    // longest video's length, kept on a redacted row.
     tier_required_id?: string | null
     body_redacted?: boolean
+    duration_ms?: number
     /** Age-restricted (post-service age_gate.go): never embeddable. */
     age_restricted?: boolean
     /*

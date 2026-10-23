@@ -91,6 +91,12 @@ export interface StudioFormState {
    */
   crossPostPostbook: boolean;
   publishToFeed: boolean;
+  /**
+   * Members only: the lowest membership level that sees it, or null for
+   * everyone. The create route does not take it; it is applied with PUT
+   * /v1/posts/:id/membership right after the create (features/memberships).
+   */
+  tierRequiredId: string | null;
 
   /* ── Series + chapters (long videos; applied after publish) ── */
   seriesChoice: SeriesChoice;
@@ -168,6 +174,7 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   category: "",
   crossPostPostbook: true,
   publishToFeed: true,
+  tierRequiredId: null,
   seriesChoice: { kind: "none" },
   seriesEpisodeNum: null,
   chapterRows: [],

@@ -471,6 +471,8 @@ export interface HubPostDetail {
   notify_subscribers: boolean;
   /** Cast & crew, genres, year, production house (long videos; the owner shape carries each credit's status). */
   credits: VideoCreditsInfo;
+  /** Members only: the lowest membership level that sees it; absent when it is for everyone. */
+  tier_required_id?: string;
 }
 
 /** `related_post` on the detail: `{id, title, thumbnail_url, duration_seconds, channel_name}` or null. */
@@ -549,6 +551,7 @@ export function normalizePostDetail(raw: unknown): HubPostDetail | null {
     comment_access: pick(raw.comment_access, HUB_COMMENT_ACCESSES, "everyone"),
     notify_subscribers: bool(raw.notify_subscribers, true),
     credits: decodeCreditsInfo(raw),
+    ...(str(raw.tier_required_id) ? { tier_required_id: str(raw.tier_required_id) } : {}),
   };
 }
 

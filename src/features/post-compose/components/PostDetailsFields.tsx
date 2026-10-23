@@ -5,6 +5,8 @@ import { AtSign, Check, Globe, Hash, Link as LinkIcon, Loader2, Lock, MapPin, Sl
 import type { LucideIcon } from "lucide-react"
 
 import { useMentionSearch } from "@/components/comments/useMentionSearch"
+import { MembersOnlyChoices, membersOnlySummary } from "@/features/memberships/components/MembersOnlyChoices"
+import type { Tier } from "@/features/memberships/model"
 
 import {
   AUDIENCE_OPTIONS,
@@ -182,7 +184,7 @@ function MentionPicker({ onPick, onClose }: { onPick: (username: string) => void
 
 /* ─── The rows and their sheets ────────────────────────────────────── */
 
-type Sheet = "location" | "link" | "audience" | "more" | "disclosure" | "alt" | "language"
+type Sheet = "location" | "link" | "audience" | "members" | "more" | "disclosure" | "alt" | "language"
 
 const AUDIENCE_ICON: Record<PostAudience, LucideIcon> = {
   public: Globe,
@@ -199,6 +201,8 @@ export interface DetailRowsProps {
   disabled?: boolean
   /** Open on a sheet (tests render a sheet without clicking). */
   initialSheet?: Sheet | null
+  /** The author's active membership levels, cheapest first; the Members only row shows only when there is one. */
+  memberLevels?: readonly Tier[]
 }
 
 function DetailRow({
@@ -258,7 +262,7 @@ function rememberPlace(name: string) {
   }
 }
 
-export function DetailRows({ details, onDetails, media, onAltText, disabled, initialSheet = null }: DetailRowsProps) {
+export function DetailRows({ details, onDetails, media, onAltText, disabled, initialSheet = null, memberLevels = [] }: DetailRowsProps) {
   const [sheet, setSheet] = useState<Sheet | null>(initialSheet)
   const close = () => setSheet(null)
   const backToMore = () => setSheet("more")
@@ -284,7 +288,21 @@ export function DetailRows({ details, onDetails, media, onAltText, disabled, ini
         name="audience"
         disabled={disabled}
       />
+      {memberLevels.length > 0 ? (
+        <DetailRow
+          icon={Lock}
+          title="Members only"
+          value={membersOnlySummary(memberLevels, details.tierRequiredId ?? null)}
+          onClick={() => setSheet("members")}
+          name="members-only"
+          disabled={disabled}
+        />
+      ) : null}
       <DetailRow icon={SlidersHorizontal} title="More options" onClick={() => setSheet("more")} name="more" disabled={disabled} />
+
+      <ComposeSheet open={sheet === "members"} title="Members only" onClose={close} footer={<SheetDone onClick={close} />}>
+        <MembersOnlyChoices levels={memberLevels} value={details.tierRequiredId ?? null} onChange={(tierRequiredId) => onDetails({ tierRequiredId })} />
+      </ComposeSheet>
 
       <LocationSheet
         open={sheet === "location"}

@@ -39,6 +39,7 @@ import { ComposeActions } from "@/features/post-compose/components/ComposeAction
 import { MediaStrip } from "@/features/post-compose/components/MediaStrip";
 import { CaptionHelpers, DetailRows, TitleField, type DetailsPatch } from "@/features/post-compose/components/PostDetailsFields";
 import { usePostDraft, usePostDrafts, useComposeSubmit } from "@/features/post-compose/hooks";
+import { useGateLevels } from "@/features/memberships/hooks";
 import {
   AUDIENCE_OPTIONS,
   captionTags,
@@ -143,6 +144,8 @@ function CreatePostScreen() {
   // modal composer, other card styling): kept as it was and sent back.
   const [carried, setCarried] = useState<Pick<ComposeExtras, "feeling" | "activity" | "activityDetail" | "richText">>({});
   const compose = useComposeSubmit(photos.markUploaded);
+  // Members only: offered when the author has an active membership level.
+  const { levels: memberLevels } = useGateLevels();
 
   // Tab state for style customizers
   const [styleTab, setStyleTab] = useState<"solids" | "gradients" | "custom">("solids");
@@ -763,7 +766,7 @@ function CreatePostScreen() {
 
               {/* The details rows */}
               <div className="px-6 pt-4" data-compose="details">
-                <DetailRows details={details} onDetails={patchDetails} media={photos.media} onAltText={photos.setAltText} disabled={busy} />
+                <DetailRows details={details} onDetails={patchDetails} media={photos.media} onAltText={photos.setAltText} disabled={busy} memberLevels={memberLevels} />
               </div>
 
               {error ? (

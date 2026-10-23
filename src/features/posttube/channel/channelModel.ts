@@ -7,8 +7,12 @@ import type { ChannelCounts, ChannelLinkView } from "./channelApi";
   requests; the tests pin them.
 */
 
-export type ChannelTab = "videos" | "shorts" | "live" | "collections" | "posts" | "appears";
-/** The channel's own tabs. "Appears in" (videos that credit this person) is added only when it has rows. */
+export type ChannelTab = "videos" | "shorts" | "live" | "collections" | "posts" | "members" | "appears";
+/**
+ * The channel's own tabs. "Members" (members-only posts) is added only when
+ * the creator offers a membership level; "Appears in" (videos that credit
+ * this person) only when it has rows.
+ */
 export const CHANNEL_TABS: readonly ChannelTab[] = ["videos", "shorts", "live", "collections", "posts"];
 
 export const TAB_LABELS: Record<ChannelTab, string> = {
@@ -17,6 +21,7 @@ export const TAB_LABELS: Record<ChannelTab, string> = {
   live: "Live",
   collections: "Collections",
   posts: "Posts",
+  members: "Members",
   appears: "Appears in",
 };
 
@@ -44,10 +49,13 @@ export function tabCount(tab: ChannelTab, counts: ChannelCounts): number | undef
  * has no recordings yet: the count only knows recordings. `appearsIn`
  * (the person has accepted credits on others' videos) adds "Appears in"
  * last, for everyone; with none it is hidden, the owner included.
+ * `members` (the creator offers at least one membership level) adds
+ * "Members" after Posts, for everyone.
  */
-export function visibleTabs(counts: ChannelCounts, isOwner: boolean, liveNow = false, appearsIn = false): ChannelTab[] {
+export function visibleTabs(counts: ChannelCounts, isOwner: boolean, liveNow = false, appearsIn = false, members = false): ChannelTab[] {
   const own = isOwner ? [...CHANNEL_TABS] : CHANNEL_TABS.filter((t) => (t === "live" && liveNow) || tabCount(t, counts) !== 0);
-  return appearsIn ? [...own, "appears"] : own;
+  const withMembers: ChannelTab[] = members ? [...own, "members"] : own;
+  return appearsIn ? [...withMembers, "appears"] : withMembers;
 }
 
 /** `?tab=` when it names a visible tab, else the first visible one. */

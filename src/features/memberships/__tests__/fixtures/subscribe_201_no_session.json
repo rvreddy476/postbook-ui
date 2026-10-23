@@ -1,0 +1,11 @@
+{
+  "data": {
+    "subscription_id": "5ab0c0de-0000-4000-8000-000000000010",
+    "payment_id": "9a7e0000-0000-4000-8000-000000000020",
+    "kind": "join",
+    "status": "pending_payment",
+    "amount_paise": 4900,
+    "currency": "INR",
+    "client_session": null
+  }
+}

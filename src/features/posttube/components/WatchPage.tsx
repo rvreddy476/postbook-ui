@@ -13,7 +13,8 @@ import { useToggleLike } from "@/hooks/usePostReaction";
 import { useSubmitReport, REPORT_REASONS } from "@/hooks/useReport";
 import { useChannelByRef } from "@/hooks/useChannels";
 import { useDataSaver } from "@/hooks/useDataSaver";
-import { useEntitlement } from "@/hooks/useMonetization";
+import { useMembershipAccess } from "@/features/memberships/hooks";
+import { membersLocked } from "@/features/memberships/model";
 import { useVideoTracker } from "@/hooks/useVideoTracker";
 import { useSeries, useWatchProgress } from "@/hooks/usePosttubeExtras";
 import { useAuthUser } from "@/store/auth";
@@ -229,8 +230,9 @@ function WatchPageContent({ videoId, listId = null, startSeconds = null }: Watch
   const offlineRow = useOfflineRow({ postId: videoId, surface: "video", hasMedia: !!mediaAssetId, signedIn: !!user, notify: notifyOffline });
   const offlineSource = useOfflineSource(videoId);
   const gateCreator = detail?.tierRequiredId && !isOwner ? video?.author_id : null;
-  const entitlement = useEntitlement(gateCreator, detail?.tierRequiredId ?? null);
-  const gated = !!gateCreator && (!user || (entitlement.data ? !entitlement.data.allowed : false));
+  const access = useMembershipAccess(gateCreator, detail?.tierRequiredId ?? null, !!user);
+  // Members only, fail closed: the lock stays until the entitlement says yes (it used to open while the check loaded).
+  const gated = !!detail && membersLocked({ tierRequiredId: detail.tierRequiredId, bodyRedacted: detail.bodyRedacted, isOwner, access, trustServedBody: false });
 
   /* End screen + cards: once per video; none for made-for-kids or a gated video. */
   const videoElements = useVideoElements(videoId, !!detail && !detail.madeForKids && !gated);
@@ -807,7 +809,7 @@ function WatchPageContent({ videoId, listId = null, startSeconds = null }: Watch
         <div className="tube-watch__player">
           {playingOffline ? <OfflineBadge /> : null}
           {gated ? (
-            <MembershipCard channelName={channelName} poster={video.thumbnail_url || undefined} />
+            <MembershipCard channelName={channelName} poster={video.thumbnail_url || undefined} creatorId={video.author_id} tierRequiredId={detail?.tierRequiredId ?? null} />
           ) : (
             <TubeStage
               miniplayerOn={miniOn}

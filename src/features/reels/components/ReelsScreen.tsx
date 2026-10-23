@@ -14,6 +14,7 @@ import "./reels-screen.css";
 
 import { ShareSheet } from "@/features/reels/components/ShareSheet";
 import { ReelVideo, type ReelVideoHandle } from "@/features/reels/components/ReelVideo";
+import { StageLock } from "@/features/memberships/components/LockCards";
 import { ReelRail } from "@/features/reels/components/ReelRail";
 import { ReelOverlay } from "@/features/reels/components/ReelOverlay";
 import { ReelMoreMenu, reelChannelName } from "@/features/reels/components/ReelMoreMenu";
@@ -802,6 +803,17 @@ export function ReelsScreen() {
                         transition={{ duration: 0.22, ease: "easeOut" }}
                         className="reel-portrait-content"
                       >
+                        {active.locked ? (
+                          /* Members only, not a member: the blurred cover, a lock and Join; no player, no caption. */
+                          <StageLock
+                            creatorId={active.authorId}
+                            creatorName={active.authorName}
+                            tierRequiredId={active.locked.tierRequiredId}
+                            coverUrl={active.media.posterUrl}
+                            title={active.title}
+                            durationMs={active.media.durationMs}
+                          />
+                        ) : (
                         <ReelVideo
                           ref={playerRef}
                           reel={active}
@@ -825,8 +837,9 @@ export function ReelsScreen() {
                           chromeless={theater}
                           sourceOverride={activeAudioTrack?.playback_url ?? offlineSource?.videoUrl ?? null}
                         />
-                        {offlineSource && !activeAudioTrack?.playback_url ? <OfflineBadge /> : null}
-                        {theater ? null : (
+                        )}
+                        {offlineSource && !activeAudioTrack?.playback_url && !active.locked ? <OfflineBadge /> : null}
+                        {theater || active.locked ? null : (
                           <ReelOverlay
                             reel={active}
                             sound={prefs.sound && !forcedMuted}

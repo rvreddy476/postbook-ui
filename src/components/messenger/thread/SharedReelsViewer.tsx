@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type JSX, type Touch
 import Link from 'next/link'
 import { ChevronDown, ChevronUp, ExternalLink, Loader2, Volume2, VolumeX, X } from 'lucide-react'
 
+import { StageLock } from '@/features/memberships/components/LockCards'
 import { ReelVideo, type ReelVideoHandle } from '@/features/reels/components/ReelVideo'
 import { fetchPostsBatch } from '@/features/reels/data/reelFeedApi'
 import { usePlayerPrefs } from '@/features/reels/hooks/usePlayerPrefs'
@@ -205,6 +206,13 @@ export default function SharedReelsViewer({ conversationId, startPostId, postIds
     )
   } else if (entry.kind === 'unavailable') {
     body = <p className="px-6 text-center text-[13px] opacity-80">{POST_UNAVAILABLE_TEXT}</p>
+  } else if (reel?.locked) {
+    // Members only and the viewer is not one: the lock card, never a player.
+    body = (
+      <div className="relative h-full w-full">
+        <StageLock creatorId={reel.authorId} creatorName={reel.authorName} tierRequiredId={reel.locked.tierRequiredId} coverUrl={reel.media.posterUrl} title={reel.title} durationMs={reel.media.durationMs} />
+      </div>
+    )
   } else if (reel) {
     body = (
       <div className="relative h-full w-full">

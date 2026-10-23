@@ -27,7 +27,7 @@ import {
 import { motion } from "framer-motion"
 import api from "@/lib/api"
 import { uploadMedia } from "@/lib/mediaUpload"
-import TierPicker from "@/components/monetization/TierPicker"
+import { ProfileJoinButton } from "@/features/memberships/components/JoinButton"
 import { FriendRequestButton } from "@/components/connections/FriendRequestButton"
 import MessageButton from "@/components/connections/MessageButton"
 import { ImageAdjustEditor } from "@/components/media/ImageAdjustEditor"
@@ -169,8 +169,6 @@ export function ProfileHeader({
     const followsYou = relationship?.followed_by ?? false
     const followState = followButtonState(profile, relationship)
     const isCreatorOrBusiness = !!(profile.badge_flags & (BADGE_CREATOR | BADGE_BUSINESS))
-    // Tier 3 monetization modals
-    const [showTierPicker, setShowTierPicker] = useState(false)
 
     const uploadMutation = useMutation({
         mutationFn: async ({ file, field }: { file: File; field: ProfileImageField }) => {
@@ -483,6 +481,14 @@ export function ProfileHeader({
                                         />
                                     }
                                 />
+                                {/* Join: only a creator with an active membership level, never your own page. */}
+                                {!isOwn && (
+                                    <ProfileJoinButton
+                                        creatorId={profile.id}
+                                        creatorName={profile.display_name || profile.username}
+                                        className="flex h-10 items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 text-xs font-bold tracking-wider text-brand-bg shadow-xs transition-all hover:opacity-90"
+                                    />
+                                )}
                                 {isOwn && (
                                     <button
                                         onClick={toggleTheme}
@@ -594,14 +600,6 @@ export function ProfileHeader({
                     </div>
                 )}
             </div>
-
-            {/* Tier 3c — Member tier picker modal */}
-            <TierPicker
-                creatorId={profile.id}
-                creatorName={profile.display_name || profile.username}
-                open={showTierPicker}
-                onClose={() => setShowTierPicker(false)}
-            />
         </div>
     )
 }

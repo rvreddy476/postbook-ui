@@ -69,6 +69,8 @@ export interface WatchPostRow extends HydratedPostRow {
   source?: string | null;
   like_count?: number | null;
   tier_required_id?: string | null;
+  /** Members only, this viewer is not a member: the body, media, chapters and credits were cleared (post-service members_read.go). */
+  body_redacted?: boolean | null;
   no_comments?: boolean | null;
   hide_share?: boolean | null;
   /** The topic slug (posts.category after the migration; free text before it). */
@@ -135,6 +137,8 @@ export interface WatchDetail {
   likeCount: number;
   /** The membership tier the post is gated behind; null = open. */
   tierRequiredId: string | null;
+  /** The server redacted the row for this viewer (not a member): locked whatever else says. */
+  bodyRedacted: boolean;
   commentsOff: boolean;
   shareHidden: boolean;
   topicSlug: string | null;
@@ -168,6 +172,7 @@ export function normalizeWatchDetail(row: WatchPostRow, video: PostTubeVideo): W
     source: row.source === "live" ? "live" : "upload",
     likeCount,
     tierRequiredId: typeof row.tier_required_id === "string" && row.tier_required_id ? row.tier_required_id : null,
+    bodyRedacted: row.body_redacted === true,
     commentsOff: row.no_comments === true,
     shareHidden: row.hide_share === true,
     topicSlug: slug && /^[a-z0-9-]{2,40}$/.test(slug) ? slug : null,

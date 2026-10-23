@@ -26,7 +26,8 @@ import { useDataSaver } from '@/hooks/useDataSaver';
 import { ReelReportDialog } from '@/features/reels/components/ReelReportDialog';
 import { embedCode, isEmbeddablePost } from '@/lib/postEmbed';
 import { onImageError, resolveImageUrl } from '@/lib/imageUrl';
-import PaywallPreview from '@/components/monetization/PaywallPreview';
+import { MembersBadge, PostLock } from '@/features/memberships/components/LockCards';
+import { membersLocked } from '@/features/memberships/model';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { postTimeLabel, postTimeTitle } from '@/lib/postTime';
 import { isDoubleTap, mediaFrameRatio, type Tap } from '@/components/feed/mediaFrame';
@@ -85,6 +86,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const pollData = livePoll ?? post.poll;
 
   const isOwnPost = profile?.id === post.author_id;
+  // Members only: post-service redacts the row for a non-member (fail closed), so a body it sends is its yes.
+  const locked = membersLocked({ tierRequiredId: post.tier_required_id, bodyRedacted: post.body_redacted, isOwner: isOwnPost, access: 'unknown', trustServedBody: true });
+  const membersOnly = !!post.tier_required_id && !locked;
 
   /*
     Double-tap a photo to like it. It only ever likes — a second double tap
@@ -339,6 +343,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   {postTimeLabel(post.created_at)}
                 </time>
               </Link>
+              {membersOnly && <MembersBadge />}
               {post.location && (
                 <>
                   <span className="text-brand-text/30">·</span>
@@ -395,12 +400,19 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </div>
       </div>
 
-      {/* Tier 3c — Paywall preview if backend redacted the body. */}
-      {post.body_redacted && (
+      {/* Members only, for a non-member: the title (kept on the redacted row), a lock and Join. */}
+      {locked && post.title?.trim() && (
+        <h3 className="post-card-title px-3 sm:px-4 pb-1.5 text-lg font-bold leading-snug text-brand-text break-words">
+          {post.title.trim()}
+        </h3>
+      )}
+      {locked && (
         <div className="px-3 sm:px-4">
-          <PaywallPreview
+          <PostLock
             creatorId={post.author_id}
+            creatorName={authorProfile?.display_name || authorProfile?.username}
             tierRequiredId={post.tier_required_id ?? null}
+            durationMs={post.duration_ms ?? 0}
           />
         </div>
       )}
@@ -408,14 +420,14 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       {/* The post's title, typed in its own field in the composer. It was
           stored and sent but never drawn. A Journal entry draws its own
           heading inside JournalBody, so it is left out here. */}
-      {!post.body_redacted && post.title?.trim() && post.rich_text?.format !== 'tiptap' && (
+      {!locked && post.title?.trim() && post.rich_text?.format !== 'tiptap' && (
         <h3 className="post-card-title px-3 sm:px-4 pb-1.5 text-[17px] font-bold leading-snug text-brand-text break-words">
           {post.title.trim()}
         </h3>
       )}
 
       {/* Post Text with clickable hashtags and @mentions */}
-      {!post.body_redacted && post.text && (() => {
+      {!locked && post.text && (() => {
         /*
           A styled post renders exactly as its author composed it.
 
@@ -581,7 +593,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       {/* Content & Actions Layout */}
       <div className="post-card-content-actions relative">
         {/* Media Display */}
-        {hasMedia && (
+        {hasMedia && !locked && (
           // The home feed sizes this stage inside the reference-size card.
           // Other post surfaces retain their existing media layout.
           // Photos fill the card's width at their own shape (see mediaFrame);
@@ -832,7 +844,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
       {/* A comment under the post, so the feed shows people talking. Only
           when there ARE comments and the full section is closed. */}
-      {!isReel && !post.no_comments && !showComments && commentsCount > 0 && (
+      {!isReel && !locked && !post.no_comments && !showComments && commentsCount > 0 && (
         <CommentPreview postId={post.id} count={commentsCount} onOpen={() => setShowComments(true)} />
       )}
 

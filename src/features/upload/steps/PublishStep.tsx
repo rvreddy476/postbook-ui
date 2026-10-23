@@ -1,18 +1,21 @@
 "use client";
 
-import { AlertCircle, Calendar, Clapperboard, Clock, Eye, Film } from "lucide-react";
+import { AlertCircle, Calendar, Clapperboard, Clock, Eye, Film, Lock } from "lucide-react";
 
 import { SeriesPicker } from "../components/SeriesPicker";
 import {
   CommentSettings,
   DisclosureSettings,
   FeedSetting,
+  MembersOnlySetting,
   RemixSetting,
   ScheduleSetting,
   TopicSetting,
   VisibilitySetting,
   visibilityLabel,
 } from "../components/StudioSettings";
+import type { Tier } from "@/features/memberships/model";
+
 import { isShortStudio, type ContentType } from "../tokens";
 import type { StudioFormState } from "../types";
 import { getStepErrors } from "../validation";
@@ -28,6 +31,8 @@ interface PublishStepProps {
   contentType?: ContentType;
   /** Present when the chosen topic takes credits: the Credits step is offered, and this opens it. */
   onOpenCredits?: () => void;
+  /** The creator's active membership levels; the Members only choice shows only when there is one. */
+  memberLevels?: readonly Tier[];
 }
 
 function clock(totalSec: number): string {
@@ -57,6 +62,7 @@ function PublishSummary({ form, short, publishError }: { form: StudioFormState; 
         <ul className="upload-summary-meta">
           {form.videoDurationSec != null ? <li><Clock aria-hidden="true" />{clock(form.videoDurationSec)}</li> : null}
           <li><Eye aria-hidden="true" />{visibilityLabel(form.visibility)}</li>
+          {form.tierRequiredId ? <li data-members-only><Lock aria-hidden="true" />Members only</li> : null}
           <li><Calendar aria-hidden="true" />{scheduleText(form.scheduleAt)}</li>
         </ul>
         <p className="upload-summary-note">
@@ -73,7 +79,7 @@ function PublishSummary({ form, short, publishError }: { form: StudioFormState; 
   );
 }
 
-export function PublishStep({ form, patch, showErrors, publishError, contentType = "long", onOpenCredits }: PublishStepProps) {
+export function PublishStep({ form, patch, showErrors, publishError, contentType = "long", onOpenCredits, memberLevels = [] }: PublishStepProps) {
   const short = isShortStudio(contentType);
   const scheduleError = !!showErrors && getStepErrors("publish", form).some((error) => error.field === "scheduleAt");
   const takesSeries = !short && (form.finalVideoCategory ?? "long_video") === "long_video";
@@ -82,6 +88,7 @@ export function PublishStep({ form, patch, showErrors, publishError, contentType
     <div className="upload-stack">
       <PublishSummary form={form} short={short} publishError={publishError} />
       <VisibilitySetting form={form} patch={patch} />
+      <MembersOnlySetting form={form} patch={patch} levels={memberLevels} />
       {short ? (
         <>
           {/* Reels ask everything on this one page (founder, 2026-10-21). */}

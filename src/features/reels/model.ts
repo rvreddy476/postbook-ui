@@ -94,6 +94,12 @@ export interface FeedReelPost {
   ai_generated?: boolean;
   paid_promotion?: boolean;
   altered_content?: boolean;
+  /** Members only (post-service members_read.go): the level, on every gated row. */
+  tier_required_id?: string | null;
+  /** This viewer is not a member: caption, media, tags were cleared; the cover and title stay. */
+  body_redacted?: boolean;
+  /** The video's length, kept on a redacted row (its media is not). */
+  duration_ms?: number | null;
 }
 
 /** The added sound a reel plays, normalised. */
@@ -148,6 +154,12 @@ export interface ReelItem {
   soundReuseAllowed: boolean;
   /** AI-generated / paid promotion / altered content, shown as labels on the reel. */
   disclosures?: Disclosures;
+  /**
+   * Members only and this viewer is not a member (the row came redacted):
+   * the stage draws the lock card, never a player or the caption. Absent on
+   * every other reel.
+   */
+  locked?: { tierRequiredId: string };
   media: {
     mediaId: string;
     width: number;
@@ -239,7 +251,66 @@ export function wireVolume(raw: unknown): number {
 
 const RUNG = /^(\d{3,4})p$/;
 
+/**
+  A members-only short this viewer may not watch. The redacted row has no
+  media (post-service members_read.go), so isShortForm would drop it; it is
+  kept as a locked item instead — the cover, the title, the author and the
+  counts, and nothing to play: the stage draws the lock card.
+*/
+export function toLockedReelItem(post: FeedReelPost): ReelItem | null {
+  const tier = typeof post.tier_required_id === "string" ? post.tier_required_id.trim() : "";
+  if (post.body_redacted !== true || !tier) return null;
+  const type = (post.content_type || post.feed_content_type || "").toLowerCase();
+  if (!SHORT_FORM_TYPES.has(type)) return null;
+  const durationMs = wholeMs(post.duration_ms);
+  if (durationMs > REEL_MAX_DURATION_MS) return null;
+  const author = post.author ?? null;
+  return {
+    id: post.id,
+    authorId: author?.id || post.author_id,
+    authorName: author?.display_name || author?.username || "Someone",
+    authorUsername: author?.username || "",
+    authorAvatarUrl: author?.avatar_url ? mediaHref(author.avatar_url)
+      : author?.avatar_media_id ? mediaHref(`/v1/media/${author.avatar_media_id}/serve`) : null,
+    channelHandle: post.channel?.handle || null,
+    caption: "",
+    title: post.title?.trim() || "",
+    hashtags: [],
+    createdAt: post.created_at || "",
+    likeCount: post.counts?.likes ?? 0,
+    commentCount: post.counts?.comments ?? 0,
+    shareCount: post.counts?.shares ?? 0,
+    saveCount: post.counts?.saves ?? post.counts?.bookmarks,
+    viewCount: post.view_count ?? 0,
+    viewerLiked: post.has_reacted === true || !!post.viewer_reaction,
+    viewerSaved: post.is_bookmarked === true,
+    commentsDisabled: post.no_comments === true,
+    shareHidden: post.hide_share === true,
+    downloadAllowed: false,
+    isProcessing: false,
+    reasonText: post.reason_text || null,
+    sound: null,
+    originalVolume: 1,
+    overlayVolume: 1,
+    soundReuseAllowed: false,
+    locked: { tierRequiredId: tier },
+    media: {
+      mediaId: "",
+      width: 1080,
+      height: 1920,
+      durationMs,
+      hlsUrl: null,
+      fileUrl: "",
+      downloadUrl: "",
+      posterUrl: post.cover_media_id ? mediaHref(`/v1/media/${post.cover_media_id}/serve`) : null,
+      qualities: [],
+    },
+  };
+}
+
 export function toReelItem(post: FeedReelPost): ReelItem | null {
+  const locked = toLockedReelItem(post);
+  if (locked) return locked;
   if (!isShortForm(post)) return null;
   const video = primaryVideo(post)!;
   const author = post.author ?? null;

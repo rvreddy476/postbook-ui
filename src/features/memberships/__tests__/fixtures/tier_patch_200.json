@@ -1,0 +1,21 @@
+{
+  "data": {
+    "status": "updated",
+    "tier": {
+      "id": "6f1c2a10-1111-4a3b-9c00-000000000001",
+      "creator_id": "c0ffee00-0000-4000-8000-000000000001",
+      "name": "Supporter",
+      "price_paise": 5900,
+      "currency": "INR",
+      "perks": [
+        "Members-only videos",
+        "Early access"
+      ],
+      "subscriber_count": 12,
+      "is_active": true,
+      "billing_period": "monthly",
+      "created_at": "2026-10-23T09:00:00Z",
+      "updated_at": "2026-10-23T10:00:00Z"
+    }
+  }
+}

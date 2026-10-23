@@ -6,6 +6,8 @@ import { createPortal } from "react-dom";
 
 import { useGlobalToast } from "@/contexts/ToastContext";
 import { useAuthUser } from "@/store/auth";
+import { MembersOnlyChoices } from "@/features/memberships/components/MembersOnlyChoices";
+import { useGateLevels, useSetPostMembersOnly } from "@/features/memberships/hooks";
 import {
   HUB_COMMENT_ACCESSES,
   HUB_COMMENT_MODERATIONS,
@@ -162,6 +164,11 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
   const [form, setForm] = useState<DetailsForm>(base);
   const [creditsBase, setCreditsBase] = useState<CreditsForm>(() => creditsFormFrom(post.credits));
   const [creditsForm, setCreditsForm] = useState<CreditsForm>(creditsBase);
+  // Members only: its own route (PUT /v1/posts/:id/membership), saved with the rest.
+  const { levels: gateLevels } = useGateLevels();
+  const setMembersOnly = useSetPostMembersOnly();
+  const [gateBase, setGateBase] = useState<string | null>(post.tier_required_id ?? null);
+  const [gate, setGate] = useState<string | null>(gateBase);
   const genres = useGenres();
   const me = useAuthUser();
   const [frameClock, setFrameClock] = useState("0:05");
@@ -176,6 +183,8 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
     const credits = creditsFormFrom(post.credits);
     setCreditsBase(credits);
     setCreditsForm(credits);
+    setGateBase(post.tier_required_id ?? null);
+    setGate(post.tier_required_id ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [post.id]);
 
@@ -198,8 +207,9 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
   // Credit issues are shown on their rows; they block Save like the others.
   const problems = detailsProblems(form, post.id);
   const blocked = problems.length > 0 || creditIssues.length > 0;
-  const dirty = Object.keys(patch).length > 0 || Object.keys(creditsPatch).length > 0 || scheduleChanged;
-  const busy = update.isPending || reschedule.isPending;
+  const gateChanged = gate !== gateBase;
+  const dirty = Object.keys(patch).length > 0 || Object.keys(creditsPatch).length > 0 || scheduleChanged || gateChanged;
+  const busy = update.isPending || reschedule.isPending || setMembersOnly.isPending;
   const [saveError, setSaveError] = useState<string | null>(null);
   /** The server's last credits refusal (TOO_MANY_CREDITS, INVALID_GENRE, …), until the credits change. */
   const [creditServerProblem, setCreditServerProblem] = useState<CreditsProblem | null>(null);
@@ -226,6 +236,10 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
       const saved = Object.keys(body).length > 0 ? await update.mutateAsync({ postId: post.id, patch: body }) : null;
       if (form.visibility === "scheduled" && scheduleIso && scheduleChanged) {
         await reschedule.mutateAsync({ postId: post.id, publishAt: scheduleIso });
+      }
+      if (gateChanged) {
+        await setMembersOnly.mutateAsync({ postId: post.id, tierId: gate });
+        setGateBase(gate);
       }
       setBase(form);
       // The saved list comes back with each tag's status (a new link reads Pending).
@@ -405,6 +419,13 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
             </div>
           ) : null}
         </div>
+
+        {gateLevels.length > 0 || gateBase ? (
+          <div className="hub-field" data-hub-members-only>
+            <span className="hub-label">Members only</span>
+            <MembersOnlyChoices levels={gateLevels} value={gate} onChange={(v) => { setSaveError(null); setGate(v); }} disabled={busy} />
+          </div>
+        ) : null}
 
         <MoreSettings form={form} set={set} open={moreOpen} onToggle={() => setMoreOpen((o) => !o)} notifyEditable={notifyEditable} relatedOptions={relatedOptions} related={post.related_post} />
 

@@ -20,6 +20,8 @@ import EmojiPickerPopover from '@/components/comments/EmojiPickerPopover';
 import CommentMenu, { commentMenuItems, type CommentMenuAction } from '@/components/comments/CommentMenu';
 import { applyPin, pinnedFirst, type CommentCreatorTools } from '@/components/comments/creatorTools';
 import { findReplyPages, focusTarget, isMissingComment, type ReplyPage } from '@/components/comments/focusComment';
+import { CommentsLock } from '@/features/memberships/components/LockCards';
+import { isMembersOnlyError } from '@/features/memberships/model';
 
 export type { CommentCreatorTools } from '@/components/comments/creatorTools';
 
@@ -450,6 +452,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
   const comments = source.data ? pinnedFirst(source.data as CommentItem[]) : undefined;
   const isLoading = source.isLoading;
   const loadError = source.isError;
+  // A members-only post's thread, for a non-member: 403 MEMBERS_ONLY (post-service post_edit.go).
+  const membersOnly = loadError && isMembersOnlyError(source.error);
 
   const addComment = useAddComment();
 
@@ -555,6 +559,14 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
             View all {commentsCount} comments
           </button>
         )}
+      </div>
+    );
+  }
+
+  if (membersOnly) {
+    return (
+      <div className="flex flex-col h-full bg-brand-card">
+        <CommentsLock creatorId={postAuthorId} />
       </div>
     );
   }

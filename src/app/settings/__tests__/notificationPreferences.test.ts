@@ -53,6 +53,8 @@ describe("notification preferences (T-06)", () => {
             "community_mentions",
             "event_reminders",
             "credits",
+            // Paid memberships (23 Oct 2026); Android's enum does not have it yet.
+            "memberships",
             "system",
         ])
     })

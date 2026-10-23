@@ -36,6 +36,7 @@ describe("settings hub: groups and rows", () => {
             ["Verification", "/settings/verification"],
             ["Addresses", "/settings/addresses"],
             ["Tax profile", "/settings/tax-profile"],
+            ["Memberships", "/memberships"],
         ])
         expect(rows.privacy).toEqual([
             ["Privacy", "/settings/privacy"],

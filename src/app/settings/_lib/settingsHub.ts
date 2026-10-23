@@ -2,6 +2,7 @@ import {
   ArrowDownToLine,
   BadgeCheck,
   Bell,
+  Crown,
   Database,
   EyeOff,
   FileText,
@@ -67,6 +68,8 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
       { key: "verification", label: "Verification", icon: BadgeCheck, href: "/settings/verification" },
       { key: "addresses", label: "Addresses", icon: MapPin, href: "/settings/addresses" },
       { key: "tax-profile", label: "Tax profile", icon: Receipt, href: "/settings/tax-profile" },
+      // Paid memberships: the creators I'm a member of (renew, change level, cancel).
+      { key: "memberships", label: "Memberships", icon: Crown, href: "/memberships" },
     ],
   },
   {

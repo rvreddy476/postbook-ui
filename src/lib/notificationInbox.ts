@@ -1,5 +1,6 @@
 import { notificationActor, notificationActorId, notificationIcon, notificationTitle, type NotificationIcon } from '@/lib/notificationPresentation'
 import { tubePathnameToPosttube } from '@/features/posttube/tubeRedirect'
+import { membershipNotificationCopy } from '@/features/memberships/model'
 
 export interface InboxNotification {
   id: string
@@ -108,10 +109,17 @@ export function creditNotificationCopy(
   return null
 }
 
-/** Where a credit notification opens (the bell menus use it too); undefined for other types or no link. */
+/**
+ * Where a credit or membership notification opens (the bell menus use it
+ * too); undefined for other types, or a credit with no link. A membership
+ * notice always has a destination: the creator's levels page, the one
+ * membership, or the list.
+ */
 export function creditNotificationHref(type: string, rowLink: string | undefined): string | undefined {
   if (type === 'credit_request') return CREDIT_REQUESTS_PATH
   if (type === 'credit_accepted' && rowLink) return tubePathnameToPosttube(rowLink) ?? rowLink
+  const membership = membershipNotificationCopy(type, undefined, undefined, rowLink ? notificationWebLink(rowLink) : undefined)
+  if (membership) return membership.link
   return undefined
 }
 
@@ -140,7 +148,8 @@ export function decodeNotificationPage(value: unknown): { notifications: InboxNo
     const actor = notificationActor(n.actor)
     const actorName = actor?.display_name ?? actor?.username
     const link = notificationWebLink(n.deep_link)
-    const credit = creditNotificationCopy(n.type, actorName, serverTitle, link)
+    // Credits and paid memberships: the server's sentence (it names the other party) and our second line.
+    const credit = creditNotificationCopy(n.type, actorName, serverTitle, link) ?? membershipNotificationCopy(n.type, actorName, serverTitle, link)
     // The web's own wording wins for the types it knows; the server's
     // sentence only replaces the generic fallback line.
     return {

@@ -1,0 +1,78 @@
+/* Paid memberships: the lock cards drawn on a dark stage (reels, the watch
+   player's slot). Colours are the reel stage tokens (src/ui/theme.css); sizes
+   are the type scale. */
+
+.mship-stage-lock {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  overflow: hidden;
+  text-align: center;
+  background: rgb(var(--reel-stage));
+  color: rgb(var(--reel-on-stage));
+}
+
+.mship-stage-lock--inline {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+}
+
+.mship-stage-lock__cover {
+  position: absolute;
+  inset: -32px;
+  background-size: cover;
+  background-position: center;
+  filter: blur(28px) brightness(0.55);
+  transform: scale(1.08);
+}
+
+.mship-stage-lock > :not(.mship-stage-lock__cover) {
+  position: relative;
+}
+
+.mship-stage-lock__icon {
+  display: flex;
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgb(var(--reel-on-stage) / 0.14);
+}
+
+.mship-stage-lock__title {
+  margin: 0;
+  font-size: var(--type-lg);
+  line-height: var(--type-lg-lh);
+  font-weight: 700;
+}
+
+.mship-stage-lock__hint {
+  margin: 0;
+  max-width: 320px;
+  font-size: var(--type-sm);
+  line-height: var(--type-sm-lh);
+  color: rgb(var(--reel-on-stage) / 0.78);
+}
+
+.mship-stage-lock__meta {
+  margin: 0;
+  font-size: var(--type-xs);
+  line-height: var(--type-xs-lh);
+  color: rgb(var(--reel-on-stage) / 0.7);
+}
+
+@media (max-width: 480px) {
+  .mship-stage-lock--inline {
+    aspect-ratio: auto;
+    min-height: 240px;
+  }
+}

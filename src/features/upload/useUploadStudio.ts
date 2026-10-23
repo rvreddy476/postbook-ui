@@ -35,6 +35,7 @@ import { cachedCover, keepPublishAttempt, newPublishAttempt, type PublishAttempt
 import { chosenSoundPatch, soundToAudioTrack, studioDraftSoundFields, studioSoundNotice, studioSoundStatus } from "./studioSound";
 import { useSoundInfo } from "@/features/reels/hooks/useSounds";
 import type { SoundInfo } from "@/features/reels/sounds";
+import { setPostMembersOnly } from "@/features/memberships/api";
 
 /* ── Constants ─────────────────────────────────────────── */
 
@@ -617,6 +618,16 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
       publishAttemptRef.current = null;
       const postId = reel.reel_id;
       const warnings: string[] = [];
+
+      // Members only first: the create route does not take the level, so the
+      // gate goes on before anything else runs after it.
+      if (postId && form.tierRequiredId) {
+        try {
+          await setPostMembersOnly(postId, form.tierRequiredId);
+        } catch {
+          warnings.push("Members only could not be set, so this video is open to everyone who can see it. Set it in Creator Hub, or delete the video.");
+        }
+      }
 
       // The post row exists at create, scheduled or not, so the follow-ups
       // run for scheduled videos too (they were skipped before).
