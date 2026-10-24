@@ -13,6 +13,7 @@ import {
 import { useFollowUser, useUnfollowUser } from '@/hooks/useEditProfile';
 import { followLabel, type FollowState } from '@/features/reels/explore/SuggestedCreators';
 import { useSentRequests } from '@/hooks/useSentRequests';
+import { suggestionMetaLine } from '@/lib/suggestionReason';
 
 interface PeopleYouMayKnowStripProps {
   /** Which slice of the suggestion list this strip instance shows —
@@ -149,10 +150,8 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
               {/* Name + mutuals + CTA */}
               <div className="p-2.5">
                 <p className="truncate text-[13px] font-bold text-brand-text">{name}</p>
-                <p className="h-4 truncate text-[11px] text-brand-text/45">
-                  {user.mutual_friend_count
-                    ? `${user.mutual_friend_count} mutual friend${user.mutual_friend_count === 1 ? '' : 's'}`
-                    : `@${user.username ?? ''}`}
+                <p className="h-4 truncate text-xs text-brand-text/45">
+                  {suggestionMetaLine(user, `@${user.username ?? ''}`)}
                 </p>
                 <SuggestionFollowButton userId={user.user_id} name={name} following={!!relMap?.get(user.user_id)?.following} />
               </div>

@@ -1,10 +1,12 @@
 import type { Candidate, AddPeopleResult } from '@/components/messenger/groupComposition'
+import { FOLLOWS_YOU_LABEL, REASON_FOLLOWS_YOU } from '@/lib/suggestionReason'
 
 export type GroupPerson = Candidate & { reason_codes?: string[] }
 export const relatedReasons: Record<string, string> = {
   SAME_CITY: 'Same town or city', SAME_SCHOOL: 'School in common',
   SAME_COMPANY: 'Workplace in common', SAME_PROFESSION: 'Similar work',
   MUTUAL_FRIENDS: 'Mutual connections', COMMON_GROUPS: 'Groups in common',
+  [REASON_FOLLOWS_YOU]: FOLLOWS_YOU_LABEL,
 }
 
 // Labels come only from server-provided reason codes, never profile scraping

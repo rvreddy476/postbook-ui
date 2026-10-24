@@ -25,6 +25,7 @@ describe('group people wire boundaries', () => {
   test('only server reason codes become labels, not inferred private facts', () => {
     expect(personReason({ ...person('u'), reason_codes: ['SAME_CITY', 'SAME_SCHOOL'] })).toBe('Same town or city · School in common')
     expect(personReason({ ...person('u'), reason_codes: ['SAME_COMPANY'] })).toBe('Workplace in common')
+    expect(personReason({ ...person('u'), reason_codes: ['FOLLOWS_YOU', 'MUTUAL_FRIENDS'] })).toBe('Follows you · Mutual connections')
     expect(personReason({ ...person('u'), reason_codes: ['private value'] })).toBe('Suggested for you')
     expect(personReason({ ...person('u'), reason_codes: ['POPULAR'] })).toBe('Suggested for you')
     const noCode = { ...person('u'), explain_text: 'Studied at Private School' }

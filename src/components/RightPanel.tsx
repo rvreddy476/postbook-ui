@@ -12,6 +12,7 @@ import { useSentRequests } from '@/hooks/useSentRequests';
 import { getCategoryFeed } from '@/features/posttube/data/posttubeApi';
 import { useAuthUser } from '@/store/auth';
 import { useFriendSuggestions, useBatchRelationships } from '@/hooks/useConnections';
+import { suggestionMetaLine } from '@/lib/suggestionReason';
 import { useLiveStreams } from '@/hooks/useLiveV2';
 import { currentViewerCount, viewerCountLabel } from '@/features/live/status';
 import Avatar from '@/components/ui/Avatar';
@@ -147,9 +148,7 @@ const RightPanel: React.FC<RightPanelProps> = () => {
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-medium text-brand-text">{name}</span>
                         <span className="block truncate text-xs text-muted-foreground">
-                          {p.mutual_friend_count
-                            ? `${p.mutual_friend_count} mutual friend${p.mutual_friend_count === 1 ? '' : 's'}`
-                            : p.username ? `@${p.username}` : 'Suggested for you'}
+                          {suggestionMetaLine(p, p.username ? `@${p.username}` : 'Suggested for you')}
                         </span>
                       </span>
                     </button>
