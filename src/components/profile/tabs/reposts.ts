@@ -3,7 +3,7 @@
  *
  * post-service (internal/http/handler.go ListUserReposts, service/post.go):
  *
- *   GET /v1/users/:userId/reposts?limit=&cursor=
+ *   GET /v1/creators/:creatorId/reposts?limit=&cursor=
  *     → { data: { items: UserRepostItem[], next_cursor? } }
  *     UserRepostItem = { repost_id, type: "plain" | "quote", quote_text?,
  *                        original_post_id, created_at }
@@ -14,14 +14,21 @@
  * visibility there, and an original it does not return (deleted, private,
  * blocked) is left out of the tab.
  *
- * NOTE: the gateway does not reach this route yet (see REPOSTS_TAB_ENABLED
- * in ProfileTabs.tsx).
+ * The route: post-service registers GET /v1/users/:userId/reposts, but
+ * the gateway sends every /v1/users/* path to user-service, so it never
+ * arrives. The server is adding the same handler at
+ * /v1/creators/:creatorId/reposts (the gateway proxies /v1/creators to
+ * post-service). REPOSTS_PATH is the one place the web names it; the tab
+ * stays off (REPOSTS_TAB_ENABLED in ProfileTabs.tsx) until that route ships.
  */
 
 export const REPOSTS_PAGE_SIZE = 20
 
+/** post-service's profile reposts list, `:creatorId` being the profile's user id. */
+export const REPOSTS_PATH = "/v1/creators/:creatorId/reposts"
+
 export function repostsPath(userId: string): string {
-    return `/v1/users/${encodeURIComponent(userId)}/reposts`
+    return REPOSTS_PATH.replace(":creatorId", encodeURIComponent(userId))
 }
 
 export interface UserRepost {

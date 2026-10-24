@@ -16,6 +16,7 @@ import {
   Bell, BookOpen, Flame, Bike, UtensilsCrossed,
   type LucideIcon,
 } from "lucide-react";
+import { PARKED_NAV_IDS, parkedAppKeys } from "@/lib/parkedProducts";
 
 /*
   One product, many apps. The header names the app the viewer is inside —
@@ -98,10 +99,20 @@ export function resolveAppBrand(pathname: string | null | undefined): AppBrand {
 }
 
 export interface AppNavigationItem { label: string; href: string; icon: LucideIcon }
-/** Only routes implemented by the web app. Messenger is available in every app. */
-export function resolveAppNavigation(pathname: string | null | undefined): AppNavigationItem[] | null {
+/**
+ * Only routes implemented by the web app. Messenger is available in every app.
+ *
+ * A parked product (lib/parkedProducts.ts) has no rail of its own: its pages
+ * are still served, but the viewer gets the ordinary rail there, so nothing
+ * names it or offers "Create group" / "Ask a question" until it launches.
+ */
+export function resolveAppNavigation(
+  pathname: string | null | undefined,
+  parked: ReadonlySet<string> = PARKED_NAV_IDS,
+): AppNavigationItem[] | null {
   const brand = resolveAppBrand(pathname);
   if (brand.key === 'home') return null;
+  if (parkedAppKeys(parked).has(brand.key)) return null;
   const items: AppNavigationItem[] = [{ label: brand.name, href: brand.href, icon: brand.icon }];
   if (brand.key === 'reels') items.push(
     { label: 'Explore', href: '/search', icon: Compass },
@@ -133,6 +144,10 @@ export function resolveAppNavigation(pathname: string | null | undefined): AppNa
   A `soon` tile has no page behind it. The launcher renders it disabled with
   a chip rather than linking to a 404, and the test guards that every LIVE
   tile does link somewhere.
+
+  ALL_APP_LAUNCHER is the whole registry; APP_LAUNCHER is what the launcher
+  offers: every tile whose product is not parked (lib/parkedProducts.ts).
+  Unparking a product brings its tile back in its old place.
 */
 export interface AppLauncherTile {
   /** Stable key; unique across the registry. */
@@ -146,7 +161,7 @@ export interface AppLauncherTile {
   badge?: "new";
 }
 
-export const APP_LAUNCHER: readonly AppLauncherTile[] = [
+export const ALL_APP_LAUNCHER: readonly AppLauncherTile[] = [
   { key: "home", name: "Home feed", description: "Posts from people and pages you follow", href: "/", icon: Home },
   { key: "reels", name: "Reels", description: "Short vertical video", href: "/reels", icon: Clapperboard },
   { key: "tube", name: "PostTube", description: "Long video, channels and playlists", href: "/posttube", icon: Tv },
@@ -166,6 +181,17 @@ export const APP_LAUNCHER: readonly AppLauncherTile[] = [
   { key: "feast", name: "Feast", description: "Food delivery", href: "/feast", icon: UtensilsCrossed },
   { key: "ride", name: "Ride", description: "Mopedu: rides across town", href: "/ride", icon: Bike, soon: true },
 ];
+
+/** The tiles offered now: every tile whose product is not parked. */
+export function launchedTiles(
+  tiles: readonly AppLauncherTile[],
+  parked: ReadonlySet<string> = PARKED_NAV_IDS,
+): AppLauncherTile[] {
+  const keys = parkedAppKeys(parked);
+  return tiles.filter((tile) => !keys.has(tile.key));
+}
+
+export const APP_LAUNCHER: readonly AppLauncherTile[] = launchedTiles(ALL_APP_LAUNCHER);
 
 /**
  * Tiles whose name or description contains the query, case-insensitively.

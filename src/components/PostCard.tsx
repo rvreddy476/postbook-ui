@@ -34,6 +34,7 @@ import { ActionPill } from '@/features/action-button/components/ActionPill';
 import { decodeAction, visibleAction } from '@/features/action-button/model';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { postTimeLabel, postTimeTitle } from '@/lib/postTime';
+import { pinErrorCopy } from '@/components/profile/pinned';
 import { isDoubleTap, mediaFrameRatio, type Tap } from '@/components/feed/mediaFrame';
 import { compactCount, countWord } from '@/components/feed/cardSummary';
 import {
@@ -147,7 +148,12 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   };
 
   const handlePin = () => {
-    togglePinMutation.mutate({ postId: post.id, pinned: !post.is_pinned });
+    const pinning = !post.is_pinned;
+    togglePinMutation.mutate(
+      { postId: post.id, pinned: pinning },
+      // A 4th pin is refused (409 PIN_LIMIT): say so instead of failing silently.
+      { onError: (err) => toast({ type: 'error', title: pinErrorCopy(err, pinning) }) },
+    );
     closeMenu();
   };
 

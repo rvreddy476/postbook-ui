@@ -53,6 +53,11 @@ export function isInboxTab(value: unknown): value is InboxTab {
   return typeof value === 'string' && INBOX_TABS.some((t) => t.key === value)
 }
 
+/** The tab an address names (`/notifications?tab=requests`); All for none or an unknown one. */
+export function inboxTabFromParam(value: string | null | undefined): InboxTab {
+  return isInboxTab(value) ? value : 'all'
+}
+
 /** The GET path for one window of a category ('' = everything). */
 export function inboxListPath(category: string, cursor: string | null, limit = INBOX_PAGE_SIZE): string {
   const params = new URLSearchParams()

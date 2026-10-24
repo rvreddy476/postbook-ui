@@ -280,7 +280,8 @@ describe('rendering', () => {
     expect(html).toContain('aria-label="Decline follow request from Ada"')
     // No button inside an anchor.
     expect(html).not.toMatch(/<a [^>]*>(?:(?!<\/a>)[\s\S])*<button/)
-    expect(html).toContain('href="/u/ada"')
+    // A follow request opens the Requests tab, whatever link the row carries.
+    expect(html).toContain('href="/notifications?tab=requests"')
     expect(html).toContain('href="/post/p1"')
   })
 

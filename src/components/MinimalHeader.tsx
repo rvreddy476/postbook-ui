@@ -170,7 +170,16 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
         if (!notif.is_read && notif.bucket != null && notif.ts != null) {
             markRead.mutate({ bucket: notif.bucket, ts: notif.ts });
         }
-        if (notif.type === 'follow' || notif.type === 'friend_accepted') {
+        if (notif.type === 'follow_request_accepted' && notif.deep_link) {
+            // Their profile, by the row's own link (creditNotificationHref keeps it in-app).
+            const href = creditNotificationHref(notif.type, notif.deep_link);
+            if (href) {
+                router.push(href);
+                setIsNotifOpen(false);
+                return;
+            }
+        }
+        if (notif.type === 'follow' || notif.type === 'friend_accepted' || notif.type === 'follow_request_accepted') {
             router.push(`/u/${actorUsername || notif.actor_user_id}`);
             setIsNotifOpen(false);
             return;

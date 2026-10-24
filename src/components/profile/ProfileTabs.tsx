@@ -22,7 +22,7 @@ import {
  * The tabs a profile can show. Orders and Bookings are gone (they were
  * "Coming soon" placeholders; orders live in the shop); Reposts is new.
  */
-export type ProfileTabKey = Exclude<ProfileTab, "orders" | "bookings"> | "reposts"
+export type ProfileTabKey = ProfileTab | "reposts"
 
 interface ProfileTabsProps {
     activeTab: ProfileTabKey
@@ -59,7 +59,7 @@ const tabDefinitions: TabDef[] = [
     { key: "members", label: "Members", icon: Lock, requiresContent: true },
     // Others' long videos that credit this person, once accepted (video credits).
     { key: "appears", label: "Appears in", icon: Clapperboard, requiresContent: true },
-    // Posts this person reposted (post-service GET /v1/users/:id/reposts).
+    // Posts this person reposted (post-service GET /v1/creators/:id/reposts).
     { key: "reposts", label: "Reposts", icon: Repeat2 },
     { key: "stashed", label: "Saved", icon: Bookmark, selfOnly: true },
     // The viewer's liked reels; post-service serves likes to their owner only.
@@ -76,9 +76,9 @@ const QA_TAB_ENABLED = false
   GET /v1/users/:userId/reposts, but the gateway sends every /v1/users/*
   path to user-service (api-gateway routeDefinitions), which has no such
   route: on dev it answers an empty 200, which would read as "no reposts"
-  for everyone. The tab and its reader (tabs/RepostsTab.tsx) are built;
-  flip this once the route is reachable (e.g. moved under /v1/posts or
-  /v1/creators, then update REPOSTS_PATH in tabs/reposts.ts).
+  for everyone. The server is adding the same handler at
+  GET /v1/creators/:creatorId/reposts, and the reader already asks there
+  (REPOSTS_PATH in tabs/reposts.ts). Flip this once that route has shipped.
 */
 export const REPOSTS_TAB_ENABLED = false
 

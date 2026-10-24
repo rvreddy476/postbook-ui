@@ -165,9 +165,10 @@ export function removeFollowRequest(pages: readonly FollowRequestLoad[], request
 }
 
 /**
- * The notification types that are a follow request. None is emitted yet
- * (notification-service does not consume graph.follow_requested); the row
- * gets Accept / Decline as soon as one is.
+ * The notification types that are a follow request, and so get Accept /
+ * Decline in place. notification-service emits `follow_request`; the
+ * event names are kept in case a row arrives under one. Exact matches only:
+ * `follow_request_accepted` is the answer coming back, not a request.
  */
 export const FOLLOW_REQUEST_NOTIFICATION_TYPES: readonly string[] = [
   'follow_request',

@@ -167,8 +167,6 @@ export type ProfileTab =
     | "liked"
     | "portfolio"
     | "qa"
-    | "orders"
-    | "bookings"
 
 export interface PollOption {
     id: string
@@ -740,15 +738,6 @@ export function getBadges(flags: number): string[] {
     if (flags & BADGE_CREATOR) badges.push("creator")
     if (flags & BADGE_BUSINESS) badges.push("business")
     return badges
-}
-
-export interface ProfilePin {
-    id: string
-    user_id: string
-    content_type: string
-    content_id: string
-    display_order: number
-    created_at: string
 }
 
 export interface PortfolioItem {

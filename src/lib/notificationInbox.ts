@@ -83,6 +83,51 @@ const copy: Record<string, [string, string]> = {
 /** Where a credit request is answered (app/credits/requests). */
 export const CREDIT_REQUESTS_PATH = '/credits/requests'
 
+/** Where a follow request is answered: the Activity page's Requests tab. */
+export const FOLLOW_REQUESTS_PATH = '/notifications?tab=requests'
+
+/** A profile page for an actor: by handle, else by id (/u/[username] takes either). */
+function actorProfilePath(actorUsername: string | undefined, actorId: string | undefined): string | undefined {
+  const who = actorUsername?.trim() || actorId?.trim()
+  return who ? `/u/${encodeURIComponent(who)}` : undefined
+}
+
+/**
+ * The two follow-request notifications a private account's requests raise
+ * (notification-service):
+ *
+ *   follow_request           "{requester} requested to follow you"
+ *                            always opens the Requests tab, whatever link the
+ *                            row carries; the inbox row answers it in place
+ *                            (FollowRequestActions, matched by type).
+ *   follow_request_accepted  "{name} accepted your follow request"
+ *                            opens their profile: the row's link, else the
+ *                            actor's own page.
+ *
+ * As with credits, the server's sentence wins when sent; otherwise the
+ * actor's name fills the copy. null for every other type.
+ */
+export function followRequestNotificationCopy(
+  type: string,
+  actorName: string | undefined,
+  serverTitle: string | undefined,
+  rowLink?: string,
+  actor?: { id?: string; username?: string },
+): { title: string; body: string; link: string | undefined } | null {
+  const who = actorName?.trim() || 'Someone'
+  if (type === 'follow_request') {
+    return { title: serverTitle ?? `${who} requested to follow you`, body: 'Accept or decline their request.', link: FOLLOW_REQUESTS_PATH }
+  }
+  if (type === 'follow_request_accepted') {
+    return {
+      title: serverTitle ?? `${who} accepted your follow request`,
+      body: 'You can now see their posts.',
+      link: rowLink ?? actorProfilePath(actor?.username, actor?.id),
+    }
+  }
+  return null
+}
+
 /**
  * The two video-credit notifications (contract 23 Oct 2026). The inbox row
  * carries no body (the "{role} · {title}" line rides on the push only), so
@@ -111,8 +156,11 @@ export function creditNotificationCopy(
 }
 
 /**
- * Where a credit or membership notification opens (the bell menus use it
- * too); undefined for other types, or a credit with no link. A membership
+ * Where a credit, follow-request or membership notification opens (the bell
+ * menus use it too); undefined for other types, or a credit with no link.
+ * A follow request always opens the Requests tab; an accepted one opens the
+ * row's profile link (undefined without one, so the menu falls back to the
+ * actor's profile). A membership
  * notice always has a destination: the creator's levels page, the one
  * membership, or the list. So does a copyright review notice: Creator Hub
  * for a hold or a block, the video for a clear.
@@ -120,6 +168,8 @@ export function creditNotificationCopy(
 export function creditNotificationHref(type: string, rowLink: string | undefined): string | undefined {
   if (type === 'credit_request') return CREDIT_REQUESTS_PATH
   if (type === 'credit_accepted' && rowLink) return tubePathnameToPosttube(rowLink) ?? rowLink
+  if (type === 'follow_request') return FOLLOW_REQUESTS_PATH
+  if (type === 'follow_request_accepted') return rowLink ? notificationWebLink(rowLink) : undefined
   const membership = membershipNotificationCopy(type, undefined, undefined, rowLink ? notificationWebLink(rowLink) : undefined)
   if (membership) return membership.link
   // Copyright title review: a hold or a block opens Creator Hub, a clear opens the video on /posttube.
@@ -153,9 +203,10 @@ export function decodeNotificationPage(value: unknown): { notifications: InboxNo
     const actor = notificationActor(n.actor)
     const actorName = actor?.display_name ?? actor?.username
     const link = notificationWebLink(n.deep_link)
-    // Credits, paid memberships and copyright reviews: the server's sentence and our second line.
+    // Credits, follow requests, paid memberships and copyright reviews: the server's sentence and our second line.
     const credit =
       creditNotificationCopy(n.type, actorName, serverTitle, link) ??
+      followRequestNotificationCopy(n.type, actorName, serverTitle, link, actor) ??
       membershipNotificationCopy(n.type, actorName, serverTitle, link) ??
       copyrightNotificationCopy(n.type, serverTitle, link)
     // The web's own wording wins for the types it knows; the server's

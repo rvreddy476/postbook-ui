@@ -1,53 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
-import type { ProfilePin, PortfolioItem, ProfileQRCode } from "@/types/profile"
+import type { PortfolioItem, ProfileQRCode } from "@/types/profile"
 
-export function useMyPins() {
-    return useQuery({
-        queryKey: ["pins", "me"],
-        queryFn: async () => {
-            const res = await api.get<{ data: { items: ProfilePin[] } }>("/v1/users/me/pins")
-            return res.data?.data ?? res.data
-        },
-    })
-}
-
-export function useUserPins(userId: string) {
-    return useQuery({
-        queryKey: ["pins", userId],
-        queryFn: async () => {
-            const res = await api.get<{ data: { items: ProfilePin[] } }>(`/v1/users/${userId}/pins`)
-            return res.data?.data ?? res.data
-        },
-        enabled: !!userId,
-    })
-}
-
-export function usePinContent() {
-    const qc = useQueryClient()
-    return useMutation({
-        mutationFn: async (body: { content_type: string; content_id: string }) => {
-            const res = await api.post<{ data: ProfilePin }>("/v1/users/me/pins", body)
-            return res.data?.data ?? res.data
-        },
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ["pins"] })
-        },
-    })
-}
-
-export function useUnpinContent(pinId: string) {
-    const qc = useQueryClient()
-    return useMutation({
-        mutationFn: async () => {
-            const res = await api.delete<{ data: unknown }>(`/v1/users/me/pins/${pinId}`)
-            return res.data?.data ?? res.data
-        },
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ["pins"] })
-        },
-    })
-}
+// Pinned posts are not here: they are posts.is_pinned, read from by-author's
+// leading rows and set with PUT /v1/posts/:id/pin (components/profile/pinned.ts).
+// The old /v1/users/:id/pins hooks read a user-service table nothing writes.
 
 export function useMyPortfolio() {
     return useQuery({

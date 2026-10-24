@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server"
 
 import { ProfileTabs, REPOSTS_TAB_ENABLED, visibleProfileTabKeys } from "../ProfileTabs"
 import { MAX_PINNED_POSTS, pinnedHref, pinnedLabel, pinnedPosts, pinnedPostsRequest, unpinRequest } from "../pinned"
-import { parseRepostsPage, repostOriginalIds, repostRows, repostsParams, repostsPath } from "../tabs/reposts"
+import { REPOSTS_PATH, parseRepostsPage, repostOriginalIds, repostRows, repostsParams, repostsPath } from "../tabs/reposts"
 
 const profileDir = resolve(import.meta.dir, "..")
 const noop = () => undefined
@@ -140,7 +140,10 @@ describe("reposts: the decoder", () => {
     })
 
     test("the request", () => {
-        expect(repostsPath("u1")).toBe("/v1/users/u1/reposts")
+        // /v1/users/* goes to user-service at the gateway; /v1/creators reaches post-service.
+        expect(REPOSTS_PATH).toBe("/v1/creators/:creatorId/reposts")
+        expect(repostsPath("u1")).toBe("/v1/creators/u1/reposts")
+        expect(repostsPath("a/b c")).toBe("/v1/creators/a%2Fb%20c/reposts")
         expect(repostsParams()).toEqual({ limit: "20" })
         expect(repostsParams("c")).toEqual({ limit: "20", cursor: "c" })
     })

@@ -18,15 +18,17 @@ import {
   UtensilsCrossed,
   Video,
 } from 'lucide-react';
+import { PARKED_NAV_IDS } from '@/lib/parkedProducts';
 
 /*
   The web rail and its More menu (components/Sidebar.tsx).
 
   Launch is four products: Social, Shorts (Reels), Long video (PostTube)
   and Commerce (MStore). Everything else is PARKED: built, its pages still
-  served, but not offered in navigation until it launches. PARKED_NAV_IDS is
-  the one list — take an id out of it and the entry comes back exactly where
-  it was. Messenger stays: chat is part of Social.
+  served, but not offered in navigation until it launches. PARKED_NAV_IDS
+  (lib/parkedProducts.ts) is the one list — take an id out of it and the
+  entry comes back exactly where it was, here and in the launcher. Messenger
+  stays: chat is part of Social.
 
   Communities was already consolidated into Groups and Channels are a mobile
   product; neither has an entry here.
@@ -46,16 +48,9 @@ export type SidebarItem = {
   newTab?: boolean;
 };
 
-/** Entries hidden until their product launches. Pages stay; only the ways in go. */
-export const PARKED_NAV_IDS: ReadonlySet<string> = new Set([
-  'Groups', // Groups (and Communities inside it)
-  'Ask', // Q&A
-  'Pages', // business pages
-  'Feast', // food delivery
-  'Doorstep', // home services
-  'PostMatch', // Pulse (dating)
-  'Memories',
-]);
+// The parked list lives in lib/parkedProducts.ts, so the launcher and the
+// per-app rail (lib/appBrand.ts) read the same one.
+export { PARKED_NAV_IDS };
 
 // Primary rail — always visible. Sized so the rail never scrolls.
 export const ALL_PRIMARY_ITEMS: readonly SidebarItem[] = [

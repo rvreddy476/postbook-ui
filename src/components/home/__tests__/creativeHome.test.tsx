@@ -46,9 +46,12 @@ describe('launch Home is a service destination, not another feed', () => {
     for (const path of paths) {
       expect(existsSync(join(process.cwd(), 'src/app', path, 'page.tsx'))).toBe(true);
     }
-    for (const path of ['/feed', '/messenger', '/groups', '/reels', '/posttube', '/saved', '/posttube/history']) {
+    for (const path of ['/feed', '/messenger', '/reels', '/posttube', '/saved', '/posttube/history']) {
       expect(paths).toContain(path);
     }
+    // Groups is parked (lib/parkedProducts.ts): no way in from Home.
+    expect(paths).not.toContain('/groups');
+    expect(markup).toContain('home-social home-destination home-destination--wide');
     expect(paths.filter(path => path === '/feed')).toHaveLength(1);
   });
   test('renders without providers, account data, posts or media downloads', () => {

@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import AppShell from '@/components/AppShell'
 import { useActivityInbox, useMarkAllRead, useMarkNotificationRead } from '@/hooks/useNotificationInbox'
-import { flattenInboxLoads, isInboxTab, shouldAutoLoadMore, type InboxTab } from '@/lib/activityInbox'
+import { flattenInboxLoads, inboxTabFromParam, shouldAutoLoadMore, type InboxTab } from '@/lib/activityInbox'
 import { ActivityTabs, ACTIVITY_PANEL_ID, activityTabId } from './ActivityTabs'
 import { ActivityList, EMPTY_COPY } from './ActivityList'
 import { RequestsPanel, useRequestsBadge } from './RequestsPanel'
@@ -20,15 +21,22 @@ import { isFollowRequestNotification } from '@/lib/followRequests'
   is asked, so a quiet tab never loops.
 */
 
-function readTabFromAddress(): InboxTab {
-  if (typeof window === 'undefined') return 'all'
-  const tab = new URLSearchParams(window.location.search).get('tab')
-  return isInboxTab(tab) ? tab : 'all'
+/*
+  The address names the tab (?tab=requests is where a follow-request
+  notification opens). It is followed on every change, not only on the
+  first render: a row or the bell can link to /notifications?tab=requests
+  while this page is already open, and Next keeps the page mounted. Its own
+  Suspense boundary, so useSearchParams does not opt the page out of
+  prerendering.
+*/
+function TabFromAddress({ onTab }: { onTab: (tab: InboxTab) => void }) {
+  const tab = useSearchParams().get('tab')
+  useEffect(() => onTab(inboxTabFromParam(tab)), [tab, onTab])
+  return null
 }
 
 export default function NotificationsInboxPage() {
   const [tab, setTab] = useState<InboxTab>('all')
-  useEffect(() => setTab(readTabFromAddress()), [])
 
   const selectTab = (next: InboxTab) => {
     setTab(next)
@@ -70,6 +78,9 @@ export default function NotificationsInboxPage() {
 
   return (
     <AppShell>
+      <Suspense fallback={null}>
+        <TabFromAddress onTab={setTab} />
+      </Suspense>
       <div className="mx-auto max-w-3xl p-4">
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-2xl font-semibold text-foreground">Activity</h1>

@@ -38,6 +38,26 @@ export function pinnedPosts<P extends { id: string; is_pinned?: boolean | null }
     return out
 }
 
+/** What the author is told when post-service refuses a 4th pin (409 PIN_LIMIT). */
+export const PIN_LIMIT_MESSAGE = `You can pin up to ${MAX_PINNED_POSTS} posts. Unpin one first.`
+
+/**
+ * A sentence for a refused PUT /v1/posts/:id/pin. post-service answers
+ * 409 { error: { code: "PIN_LIMIT" } } when the author already has
+ * MAX_PINNED_POSTS pinned; anything else is a plain failure.
+ */
+export function pinErrorCopy(err: unknown, pinning: boolean): string {
+    const response =
+        err && typeof err === "object" && "response" in err
+            ? (err as { response?: { status?: number; data?: { error?: { code?: unknown } } } }).response
+            : undefined
+    if (pinning && response?.status === 409 && response.data?.error?.code === "PIN_LIMIT") return PIN_LIMIT_MESSAGE
+    if (err && typeof err === "object" && "isAxiosError" in err && !response) {
+        return "You seem to be offline. Check your connection and try again."
+    }
+    return pinning ? "That post couldn’t be pinned. Please try again." : "That post couldn’t be unpinned. Please try again."
+}
+
 export function unpinRequest(postId: string): { method: "put"; url: string; body: { pinned: false } } {
     return { method: "put", url: `/v1/posts/${encodeURIComponent(postId)}/pin`, body: { pinned: false } }
 }
