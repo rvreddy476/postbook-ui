@@ -2,6 +2,14 @@ import { afterEach, describe, expect, spyOn, test } from "bun:test"
 
 const { default: api } = await import("@/lib/api")
 const {
+  APPEAL_DEFAULT_NOTE,
+  APPEAL_SENT_COPY,
+  APPEAL_UPHELD_COPY,
+  APPEAL_USED_COPY,
+  ASK_FOR_REVIEW_LABEL,
+  appealNoteProblem,
+  appealRequestBody,
+  reviewFormNoteProblem,
   CLEARED_COPY,
   COPYRIGHT_REPORT_REASONS,
   COPYRIGHT_REVIEW_CREATE_COPY,
@@ -62,6 +70,8 @@ describe("decodeCopyrightReview", () => {
       createdAt: "2026-10-24T05:00:00Z",
       decidedAt: null,
       reviewRequestedAt: null,
+      appealedAt: null,
+      canAppeal: false,
     })
   })
 
@@ -90,6 +100,8 @@ describe("decodeCopyrightReview", () => {
       createdAt: null,
       decidedAt: null,
       reviewRequestedAt: null,
+      appealedAt: null,
+      canAppeal: false,
     })
   })
 
@@ -107,9 +119,9 @@ describe("decodeCopyrightReview", () => {
   })
 
   test("held means pending or blocked", () => {
-    expect(isCopyrightHeld({ state: "pending", matchedTitle: "", createdAt: null, decidedAt: null, reviewRequestedAt: null })).toBe(true)
-    expect(isCopyrightHeld({ state: "blocked", matchedTitle: "", createdAt: null, decidedAt: null, reviewRequestedAt: null })).toBe(true)
-    expect(isCopyrightHeld({ state: "cleared", matchedTitle: "", createdAt: null, decidedAt: null, reviewRequestedAt: null })).toBe(false)
+    expect(isCopyrightHeld({ state: "pending", matchedTitle: "", createdAt: null, decidedAt: null, reviewRequestedAt: null, appealedAt: null, canAppeal: false })).toBe(true)
+    expect(isCopyrightHeld({ state: "blocked", matchedTitle: "", createdAt: null, decidedAt: null, reviewRequestedAt: null, appealedAt: null, canAppeal: false })).toBe(true)
+    expect(isCopyrightHeld({ state: "cleared", matchedTitle: "", createdAt: null, decidedAt: null, reviewRequestedAt: null, appealedAt: null, canAppeal: false })).toBe(false)
     expect(isCopyrightHeld(null)).toBe(false)
     expect(isCopyrightHeld(undefined)).toBe(false)
   })
@@ -125,6 +137,7 @@ describe("copyrightReviewCopy (the contract's words)", () => {
       message: "In copyright review — this video is hidden until our team checks it. It matched “Sholay”.",
       requested: null,
       canRequest: true,
+      canAppeal: false,
     })
   })
 
@@ -142,6 +155,7 @@ describe("copyrightReviewCopy (the contract's words)", () => {
       message: "Cleared — your video is live",
       requested: null,
       canRequest: false,
+      canAppeal: false,
     })
     expect(CLEARED_COPY).toBe("Cleared — your video is live")
   })
@@ -153,6 +167,7 @@ describe("copyrightReviewCopy (the contract's words)", () => {
       message: "Blocked for copyright — it matched “Sholay”. This isn't a strike, but repeated blocks pause long-video uploads.",
       requested: null,
       canRequest: false,
+      canAppeal: false,
     })
   })
 
@@ -218,6 +233,79 @@ describe("Request review", () => {
     expect(reviewRequestIsStale(httpError(404, "review_request_404"))).toBe(true)
     expect(reviewRequestIsStale(httpError(503, "review_request_503"))).toBe(false)
     expect(reviewRequestIsStale(NETWORK_ERROR)).toBe(false)
+  })
+})
+
+describe("Ask for a review (the block's one appeal, commit cb571fa20)", () => {
+  const blocked = () => decodeCopyrightReview((fixture("post_detail_owner_blocked_can_appeal") as Envelope).data.copyright_review)!
+
+  test("a blocked review with its appeal unused offers Ask for a review", () => {
+    const review = blocked()
+    expect(review).toMatchObject({ state: "blocked", canAppeal: true, appealedAt: null, decidedAt: "2026-10-25T09:00:00Z" })
+    const copy = copyrightReviewCopy(review)
+    expect(copy).toMatchObject({ tone: "danger", canAppeal: true, canRequest: false, requested: null })
+    expect(ASK_FOR_REVIEW_LABEL).toBe("Ask for a review")
+  })
+
+  test("can_appeal counts only on a block, only when true, and never once an appeal is on record", () => {
+    const base = { matched_title: "Sholay", created_at: "2026-10-24T05:00:00Z", can_appeal: true }
+    expect(decodeCopyrightReview({ ...base, state: "pending" })?.canAppeal).toBe(false)
+    expect(decodeCopyrightReview({ ...base, state: "cleared" })?.canAppeal).toBe(false)
+    expect(decodeCopyrightReview({ ...base, state: "blocked", can_appeal: "true" })?.canAppeal).toBe(false)
+    expect(decodeCopyrightReview({ ...base, state: "blocked", can_appeal: false })?.canAppeal).toBe(false)
+    expect(decodeCopyrightReview({ ...base, state: "blocked", appealed_at: "2026-10-26T04:00:00Z" })?.canAppeal).toBe(false)
+    expect(decodeCopyrightReview({ ...base, state: "blocked", appealed_at: "0001-01-01T00:00:00Z" })).toMatchObject({ canAppeal: true, appealedAt: null })
+    expect(copyrightReviewCopy(decodeCopyrightReview({ ...base, state: "pending" })!).canAppeal).toBe(false)
+  })
+
+  test("the appeal answered with the block kept: no second offer, and it says so", () => {
+    const review = decodeCopyrightReview({ state: "blocked", matched_title: "Sholay", appealed_at: "2026-10-26T04:00:00Z", can_appeal: false })!
+    expect(copyrightReviewCopy(review)).toMatchObject({ canAppeal: false, canRequest: false, requested: APPEAL_UPHELD_COPY })
+  })
+
+  test("an appeal back with a reviewer reads Review requested, dated by the appeal", () => {
+    const review = decodeCopyrightReview((fixture("review_appeal_200") as Envelope).data)!
+    expect(review).toMatchObject({ state: "pending", appealedAt: "2026-10-26T04:00:00Z", canAppeal: false })
+    const copy = copyrightReviewCopy(review)
+    expect(copy.requested).toBe("Review requested 26 Oct 2026")
+    expect(copy.canRequest).toBe(false)
+    expect(copy.canAppeal).toBe(false)
+    // appealed_at alone (no review_requested_at) still counts as asked
+    const only = copyrightReviewCopy(decodeCopyrightReview({ state: "pending", appealed_at: "2026-10-26T04:00:00Z" })!)
+    expect(only).toMatchObject({ requested: "Review requested 26 Oct 2026", canRequest: false })
+  })
+
+  test("the note is optional; an empty one sends the default note the server requires", () => {
+    expect(appealNoteProblem("")).toBeNull()
+    expect(appealNoteProblem("   ")).toBeNull()
+    expect(appealNoteProblem("I have a licence")).toBeNull()
+    expect(appealNoteProblem("a".repeat(1001))).toBe("Keep it to 1,000 characters (1,001 now).")
+    expect(appealRequestBody("  I have a licence ")).toEqual({ note: "I have a licence" })
+    expect(appealRequestBody(" \n ")).toEqual({ note: APPEAL_DEFAULT_NOTE })
+    expect(Array.from(APPEAL_DEFAULT_NOTE).length).toBeLessThanOrEqual(1000)
+    expect(reviewNoteProblem(APPEAL_DEFAULT_NOTE)).toBeNull()
+    // the form: optional for an appeal, required for a request
+    expect(reviewFormNoteProblem("", true)).toBeNull()
+    expect(reviewFormNoteProblem("", false)).toBe("Tell us why you have the rights to use it.")
+    expect(reviewFormNoteProblem("a".repeat(1001), true)).not.toBeNull()
+  })
+
+  test("requestCopyrightReview with appeal posts the same route; no note → the default note", async () => {
+    const post = spyOn(api, "post").mockResolvedValue({ data: fixture("review_appeal_200") } as never)
+    spies.push(post)
+    const review = await requestCopyrightReview(POST, "  ", true)
+    expect(post).toHaveBeenCalledWith(`/v1/posts/${POST}/copyright-review/request`, { note: APPEAL_DEFAULT_NOTE })
+    expect(review).toMatchObject({ state: "pending", appealedAt: "2026-10-26T04:00:00Z" })
+    await requestCopyrightReview(POST, " mine ", true)
+    expect(post).toHaveBeenLastCalledWith(`/v1/posts/${POST}/copyright-review/request`, { note: "mine" })
+  })
+
+  test("409 APPEAL_ALREADY_USED: the founder's sentence, and the cached review refetches", () => {
+    const used = httpError(409, "review_request_409_appeal_used")
+    expect(reviewRequestErrorMessage(used)).toBe("You have already asked for a review of this block.")
+    expect(APPEAL_USED_COPY).toBe("You have already asked for a review of this block.")
+    expect(reviewRequestIsStale(used)).toBe(true)
+    expect(APPEAL_SENT_COPY).toBe("A reviewer will look at it. The video stays hidden until then.")
   })
 })
 

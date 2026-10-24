@@ -70,6 +70,35 @@ describe("CopyrightReviewNotice", () => {
     expect(blocked).not.toContain("data-request-review")
   })
 
+  test("blocked with the appeal unused: Ask for a review, not Request review", () => {
+    const html = render(<CopyrightReviewNotice postId={POST} review={review({ state: "blocked", can_appeal: true })} />)
+    expect(html).toContain('data-copyright-review="blocked"')
+    expect(html).toContain("data-ask-for-review")
+    expect(html).not.toContain("data-request-review")
+    expect(text(html)).toContain("Ask for a review")
+  })
+
+  test("the appeal answered or under way: no Ask for a review", () => {
+    const answered = render(<CopyrightReviewNotice postId={POST} review={review({ state: "blocked", appealed_at: "2026-10-26T04:00:00Z" })} />)
+    expect(answered).not.toContain("data-ask-for-review")
+    expect(text(answered)).toContain("You asked for a review and the block stayed.")
+    const waiting = render(<CopyrightReviewNotice postId={POST} review={review({ appealed_at: "2026-10-26T04:00:00Z" })} />)
+    expect(waiting).not.toContain("data-ask-for-review")
+    expect(waiting).not.toContain("data-request-review")
+    expect(text(waiting)).toContain("Review requested 26 Oct 2026")
+  })
+
+  test("the appeal form: an optional note, the one-ask hint, Send enabled with no note", () => {
+    const html = render(<CopyrightReviewNotice postId={POST} review={review({ state: "blocked", can_appeal: true })} defaultOpen />)
+    expect(html).toContain("data-appeal")
+    const t = text(html)
+    expect(t).toContain("Ask for a review")
+    expect(t).toContain("Add a note (optional)")
+    expect(t).toContain("A reviewer looks at the block again. You can ask once.")
+    expect(t).toContain("0 / 1,000")
+    expect(html).not.toMatch(/<button[^>]*disabled[^>]*>Send/)
+  })
+
   test("the request form: the note's placeholder, its 1,000 cap, Send", () => {
     const html = render(<CopyrightReviewNotice postId={POST} review={review()} defaultOpen />)
     expect(html).toContain("data-request-review-dialog")

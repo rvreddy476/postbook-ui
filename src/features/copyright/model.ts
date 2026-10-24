@@ -18,7 +18,14 @@ import { tubePathnameToPosttube } from "@/features/posttube/tubeRedirect"
     POST /v1/posts/:postId/copyright-review/request {"note"} (1-1000 chars)
       → 200 the same view; 400 INVALID_REQUEST, 404 REVIEW_NOT_FOUND,
         409 REVIEW_ALREADY_DECIDED, 503 COPYRIGHT_REVIEW_UNAVAILABLE
-      (http/copyright_review.go:304 RequestCopyrightReview)
+      (http/copyright_review.go:398 RequestCopyrightReview)
+    On a BLOCKED review with can_appeal the same call is the block's ONE
+    appeal (server commit cb571fa20, migration 076): the review goes back
+    to pending with appealed_at set and the video stays hidden until a
+    reviewer clears it; a second try is 409 APPEAL_ALREADY_USED. The view
+    then carries appealed_at (omitempty) and can_appeal (always sent).
+    The server still requires a 1-1000 character note, so an appeal sent
+    without one carries APPEAL_DEFAULT_NOTE.
 
   Refusals on the publication routes (http/standing_errors.go:31):
     403 UPLOADS_PAUSED   error.details.until (RFC3339) — long videos only
@@ -57,6 +64,10 @@ export interface CopyrightReview {
   decidedAt: string | null
   /** When the author sent "I own the rights"; null until then. */
   reviewRequestedAt: string | null
+  /** When the author asked for a review of the block (the one appeal); null until then. */
+  appealedAt: string | null
+  /** Blocked, and its one appeal is unused: "Ask for a review" is offered. */
+  canAppeal: boolean
 }
 
 /** `copyright_review` off a post detail or an uploads row; null when absent or not a state we know. */
@@ -65,12 +76,17 @@ export function decodeCopyrightReview(raw: unknown): CopyrightReview | null {
   const r = raw as Record<string, unknown>
   const state = str(r.state).toLowerCase()
   if (!(COPYRIGHT_REVIEW_STATES as readonly string[]).includes(state)) return null
+  const appealedAt = instant(r.appealed_at)
   return {
     state: state as CopyrightReviewState,
     matchedTitle: str(r.matched_title).trim(),
     createdAt: instant(r.created_at),
     decidedAt: instant(r.decided_at),
     reviewRequestedAt: instant(r.review_requested_at),
+    appealedAt,
+    // Only a block can be appealed, and only once: the server's flag, never
+    // trusted on another state or once an appeal is on record.
+    canAppeal: state === "blocked" && r.can_appeal === true && !appealedAt,
   }
 }
 
@@ -101,9 +117,19 @@ export interface CopyrightReviewCopy {
   requested: string | null
   /** Whether "Request review" is offered: pending and not yet asked. */
   canRequest: boolean
+  /** Whether "Ask for a review" (the block's one appeal) is offered. */
+  canAppeal: boolean
 }
 
 export const REQUEST_REVIEW_LABEL = "Request review"
+export const ASK_FOR_REVIEW_LABEL = "Ask for a review"
+export const REVIEW_REQUESTED_LABEL = "Review requested"
+/** After the appeal is sent. */
+export const APPEAL_SENT_COPY = "A reviewer will look at it. The video stays hidden until then."
+/** 409 APPEAL_ALREADY_USED. */
+export const APPEAL_USED_COPY = "You have already asked for a review of this block."
+/** A reviewer answered the appeal and kept the block. */
+export const APPEAL_UPHELD_COPY = "You asked for a review and the block stayed."
 export const REVIEW_NOTE_PLACEHOLDER = "I own the rights / I have a licence"
 export const CLEARED_COPY = "Cleared — your video is live"
 
@@ -112,24 +138,28 @@ const matched = (title: string) => (title ? ` It matched “${title}”.` : "")
 export function copyrightReviewCopy(review: CopyrightReview): CopyrightReviewCopy {
   switch (review.state) {
     case "pending": {
-      const requestedOn = review.reviewRequestedAt ? formatCopyrightDate(review.reviewRequestedAt) : ""
+      // An appealed block back with a reviewer is "Review requested" too,
+      // dated by the appeal.
+      const asked = review.appealedAt ?? review.reviewRequestedAt
       return {
         tone: "warning",
         label: "In copyright review",
         message: `In copyright review — this video is hidden until our team checks it.${matched(review.matchedTitle)}`,
-        requested: review.reviewRequestedAt ? `Review requested ${requestedOn}`.trim() : null,
-        canRequest: !review.reviewRequestedAt,
+        requested: asked ? `${REVIEW_REQUESTED_LABEL} ${formatCopyrightDate(asked)}`.trim() : null,
+        canRequest: !asked,
+        canAppeal: false,
       }
     }
     case "cleared":
-      return { tone: "success", label: "Copyright cleared", message: CLEARED_COPY, requested: null, canRequest: false }
+      return { tone: "success", label: "Copyright cleared", message: CLEARED_COPY, requested: null, canRequest: false, canAppeal: false }
     case "blocked":
       return {
         tone: "danger",
         label: "Blocked for copyright",
         message: `Blocked for copyright${review.matchedTitle ? ` — it matched “${review.matchedTitle}”` : ""}. This isn't a strike, but repeated blocks pause long-video uploads.`,
-        requested: null,
+        requested: review.appealedAt ? APPEAL_UPHELD_COPY : null,
         canRequest: false,
+        canAppeal: review.canAppeal,
       }
   }
 }
@@ -158,6 +188,31 @@ export function reviewRequestBody(note: string): { note: string } {
 
 export function reviewRequestPath(postId: string): string {
   return `/v1/posts/${encodeURIComponent(postId)}/copyright-review/request`
+}
+
+/* ── "Ask for a review" (the block's one appeal) ────────────────── */
+
+/**
+  What an appeal sent without a note says. The note is optional for the
+  author, but the server still requires 1-1000 characters (service
+  RequestCopyrightReview), so the reviewer reads this instead.
+*/
+export const APPEAL_DEFAULT_NOTE = "The creator asked for a review of this block without adding a note."
+
+/** Why the optional appeal note can't be sent; null when it can (empty included). */
+export function appealNoteProblem(note: string): string | null {
+  return reviewNoteLength(note) === 0 ? null : reviewNoteProblem(note)
+}
+
+/** The request form's check: an appeal's note is optional, a request's is required. */
+export function reviewFormNoteProblem(note: string, appeal: boolean): string | null {
+  return appeal ? appealNoteProblem(note) : reviewNoteProblem(note)
+}
+
+/** The appeal's body: the trimmed note, or APPEAL_DEFAULT_NOTE when there is none. */
+export function appealRequestBody(note: string): { note: string } {
+  const trimmed = note.trim()
+  return { note: trimmed || APPEAL_DEFAULT_NOTE }
 }
 
 /* ── refusals ───────────────────────────────────────────────────── */
@@ -227,6 +282,7 @@ const REQUEST_ERROR_COPY: Record<string, string> = {
   INVALID_REQUEST: "Write a note of 1 to 1,000 characters.",
   REVIEW_NOT_FOUND: "This video has no copyright review to answer any more.",
   REVIEW_ALREADY_DECIDED: "This review has already been decided. Refresh to see the result.",
+  APPEAL_ALREADY_USED: APPEAL_USED_COPY,
   COPYRIGHT_REVIEW_UNAVAILABLE: "Copyright review is unavailable right now. Try again in a few minutes.",
 }
 
@@ -239,10 +295,10 @@ export function reviewRequestErrorMessage(err: unknown): string {
   return "Your request couldn't be sent. Try again."
 }
 
-/** A decided review (409) or a gone one (404): the cached state is stale, so refetch it. */
+/** A decided review (409), a used appeal (409) or a gone one (404): the cached state is stale, so refetch it. */
 export function reviewRequestIsStale(err: unknown): boolean {
   const e = wireError(err)
-  return e.code === "REVIEW_ALREADY_DECIDED" || e.code === "REVIEW_NOT_FOUND"
+  return e.code === "REVIEW_ALREADY_DECIDED" || e.code === "APPEAL_ALREADY_USED" || e.code === "REVIEW_NOT_FOUND"
 }
 
 /* ── report reasons (trust-safety migration 018) ────────────────── */

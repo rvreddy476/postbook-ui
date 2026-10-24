@@ -8,12 +8,15 @@ import { useGlobalToast } from "@/contexts/ToastContext"
 
 import { useRequestCopyrightReview } from "../api"
 import {
+  APPEAL_SENT_COPY,
+  ASK_FOR_REVIEW_LABEL,
   REQUEST_REVIEW_LABEL,
   REVIEW_NOTE_MAX,
   REVIEW_NOTE_PLACEHOLDER,
+  REVIEW_REQUESTED_LABEL,
   copyrightReviewCopy,
+  reviewFormNoteProblem,
   reviewNoteLength,
-  reviewNoteProblem,
   reviewRequestErrorMessage,
   type CopyrightReview,
 } from "../model"
@@ -22,9 +25,11 @@ import "../copyright.css"
 
 /*
   The author's copyright title review on one video: the state's sentence,
-  "Review requested <date>" once asked, and "Request review" while it is
-  pending and not yet asked. Rendered on Creator Hub library rows
-  (variant "row"), the edit sheet and the video's insights page.
+  "Review requested <date>" once asked, "Request review" while it is
+  pending and not yet asked, and "Ask for a review" (the block's one
+  appeal, optional note) while it is blocked and the appeal is unused.
+  Rendered on Creator Hub library rows (variant "row"), the edit sheet and
+  the video's insights page.
 */
 
 export interface CopyrightReviewNoticeProps {
@@ -38,7 +43,11 @@ export interface CopyrightReviewNoticeProps {
 export function CopyrightReviewNotice({ postId, review, variant = "panel", defaultOpen = false }: CopyrightReviewNoticeProps) {
   const copy = copyrightReviewCopy(review)
   const [open, setOpen] = useState(defaultOpen)
+  // A sent appeal reads "A reviewer will look at it…" until the refetch lands.
+  const [appealSent, setAppealSent] = useState(false)
   const Icon = copy.tone === "success" ? CheckCircle2 : copy.tone === "danger" ? ShieldAlert : AlertTriangle
+  const appeal = copy.canAppeal && !appealSent
+  const offered = copy.canRequest || appeal
   return (
     <div
       className={`cr-notice${variant === "row" ? " cr-notice--row" : ""}`}
@@ -49,22 +58,31 @@ export function CopyrightReviewNotice({ postId, review, variant = "panel", defau
       <Icon className="cr-notice__icon" aria-hidden="true" />
       <div className="cr-notice__text">
         <p>{copy.message}</p>
-        {copy.requested ? (
+        {appealSent && copy.canAppeal ? (
+          <p className="cr-notice__sub" data-review-requested>
+            {REVIEW_REQUESTED_LABEL}. {APPEAL_SENT_COPY}
+          </p>
+        ) : copy.requested ? (
           <p className="cr-notice__sub" data-review-requested>
             {copy.requested}
           </p>
         ) : null}
       </div>
-      {copy.canRequest ? (
-        <button type="button" className="hub-btn hub-btn-sm cr-notice__action" onClick={() => setOpen(true)} data-request-review>
-          {REQUEST_REVIEW_LABEL}
+      {offered ? (
+        <button
+          type="button"
+          className="hub-btn hub-btn-sm cr-notice__action"
+          onClick={() => setOpen(true)}
+          {...(appeal ? { "data-ask-for-review": true } : { "data-request-review": true })}
+        >
+          {appeal ? ASK_FOR_REVIEW_LABEL : REQUEST_REVIEW_LABEL}
         </button>
       ) : null}
-      {open && copy.canRequest ? (
+      {open && offered ? (
         defaultOpen ? (
-          <RequestReviewForm postId={postId} matchedTitle={review.matchedTitle} onClose={() => setOpen(false)} />
+          <RequestReviewForm postId={postId} matchedTitle={review.matchedTitle} appeal={appeal} onClose={() => setOpen(false)} onAppealSent={() => setAppealSent(true)} />
         ) : (
-          <RequestReviewDialog postId={postId} matchedTitle={review.matchedTitle} onClose={() => setOpen(false)} />
+          <RequestReviewDialog postId={postId} matchedTitle={review.matchedTitle} appeal={appeal} onClose={() => setOpen(false)} onAppealSent={() => setAppealSent(true)} />
         )
       ) : null}
     </div>
@@ -74,7 +92,10 @@ export function CopyrightReviewNotice({ postId, review, variant = "panel", defau
 interface RequestReviewProps {
   postId: string
   matchedTitle: string
+  /** The block's one appeal: "Ask for a review", the note optional. */
+  appeal?: boolean
   onClose: () => void
+  onAppealSent?: () => void
 }
 
 /** The dialog: the form in a portal over a backdrop. */
@@ -89,8 +110,11 @@ export function RequestReviewDialog(props: RequestReviewProps) {
   )
 }
 
-/** The note (1–1,000 characters) and Send; POST /v1/posts/:id/copyright-review/request. */
-export function RequestReviewForm({ postId, matchedTitle, onClose }: RequestReviewProps) {
+/**
+  The note and Send; POST /v1/posts/:id/copyright-review/request.
+  A request needs 1–1,000 characters; an appeal's note is optional (up to 1,000).
+*/
+export function RequestReviewForm({ postId, matchedTitle, appeal = false, onClose, onAppealSent }: RequestReviewProps) {
   const toast = useGlobalToast()
   const titleId = useId()
   const noteId = useId()
@@ -98,18 +122,27 @@ export function RequestReviewForm({ postId, matchedTitle, onClose }: RequestRevi
   const [touched, setTouched] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const request = useRequestCopyrightReview()
-  const problem = reviewNoteProblem(note)
+  const problem = reviewFormNoteProblem(note, appeal)
   const length = reviewNoteLength(note)
+  const title = appeal ? ASK_FOR_REVIEW_LABEL : REQUEST_REVIEW_LABEL
+  const hint = appeal
+    ? "A reviewer looks at the block again. You can ask once."
+    : "Say how you have the rights: you made it, or you have a licence."
 
   const send = () => {
     setTouched(true)
     if (problem || request.isPending) return
     setError(null)
     request.mutate(
-      { postId, note },
+      { postId, note, appeal },
       {
         onSuccess: () => {
-          toast({ type: "success", title: "Review requested", description: "Our team will read your note when they check the video." })
+          if (appeal) {
+            toast({ type: "success", title: REVIEW_REQUESTED_LABEL, description: APPEAL_SENT_COPY })
+            onAppealSent?.()
+          } else {
+            toast({ type: "success", title: REVIEW_REQUESTED_LABEL, description: "Our team will read your note when they check the video." })
+          }
           onClose()
         },
         onError: (err) => setError(reviewRequestErrorMessage(err)),
@@ -118,11 +151,18 @@ export function RequestReviewForm({ postId, matchedTitle, onClose }: RequestRevi
   }
 
   return (
-    <div className="hub hub-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId} data-request-review-dialog>
+    <div
+      className="hub hub-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      data-request-review-dialog
+      {...(appeal ? { "data-appeal": true } : {})}
+    >
       <div className="hub-sheet-head">
         <div>
           <div className="hub-sheet-title" id={titleId}>
-            {REQUEST_REVIEW_LABEL}
+            {title}
           </div>
           {matchedTitle ? <div className="hub-hint">It matched “{matchedTitle}”.</div> : null}
         </div>
@@ -132,7 +172,7 @@ export function RequestReviewForm({ postId, matchedTitle, onClose }: RequestRevi
       </div>
       <div className="hub-dialog-body">
         <label className="hub-label" htmlFor={noteId}>
-          Why can you use it?
+          {appeal ? "Add a note (optional)" : "Why can you use it?"}
         </label>
         <textarea
           id={noteId}
@@ -148,7 +188,7 @@ export function RequestReviewForm({ postId, matchedTitle, onClose }: RequestRevi
           }}
         />
         <div className="hub-row" style={{ justifyContent: "space-between" }}>
-          <span className={`hub-hint${touched && problem ? " is-error" : ""}`}>{touched && problem ? problem : "Say how you have the rights: you made it, or you have a licence."}</span>
+          <span className={`hub-hint${touched && problem ? " is-error" : ""}`}>{touched && problem ? problem : hint}</span>
           <span id={`${noteId}-count`} className="hub-hint cr-count" data-over={length > REVIEW_NOTE_MAX || undefined}>
             {length.toLocaleString("en-IN")} / {REVIEW_NOTE_MAX.toLocaleString("en-IN")}
           </span>
