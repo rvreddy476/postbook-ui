@@ -85,7 +85,7 @@ export default function EditPostSheet({ post, saving, error, onSave, onClose }: 
               value={form.text}
               rows={5}
               onChange={(event) => setForm((f) => ({ ...f, text: event.target.value }))}
-              className="w-full resize-y rounded-xl border border-brand-divider bg-brand-bg px-3 py-2 text-[15px] leading-relaxed text-brand-text focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="w-full resize-y rounded-xl border border-brand-divider bg-brand-bg px-3 py-2 text-base leading-relaxed text-brand-text focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
             <p className={`mt-1 text-right text-xs tabular-nums ${length > MAX_POST_TEXT ? 'text-danger' : 'text-brand-text/55'}`}>
               {length.toLocaleString('en-US')} / {MAX_POST_TEXT.toLocaleString('en-US')}
@@ -106,8 +106,8 @@ export default function EditPostSheet({ post, saving, error, onSave, onClose }: 
                     className="h-4 w-4 accent-primary"
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[14px] font-medium text-brand-text">{option.label}</span>
-                    <span className="block text-[12px] text-brand-text/60">{option.detail}</span>
+                    <span className="block text-sm font-medium text-brand-text">{option.label}</span>
+                    <span className="block text-xs text-brand-text/60">{option.detail}</span>
                   </span>
                 </label>
               ))}

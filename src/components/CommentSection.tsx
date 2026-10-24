@@ -127,10 +127,10 @@ function ReportDialog({
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
             <Check className="h-6 w-6 text-success" />
           </div>
-          <h3 className="text-[15px] font-bold text-brand-text">Report Submitted</h3>
-          <p className="mt-1 text-[13px] text-brand-highlight">Thanks for helping keep our community safe. Our team will review this shortly.</p>
+          <h3 className="text-base font-bold text-brand-text">Report Submitted</h3>
+          <p className="mt-1 text-sm text-brand-highlight">Thanks for helping keep our community safe. Our team will review this shortly.</p>
           <button onClick={onClose}
-            className="mt-4 w-full rounded-full bg-primary-ink py-2.5 text-[13px] font-semibold text-white transition hover:bg-primary-ink/90">
+            className="mt-4 w-full rounded-full bg-primary-ink py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary-ink/90">
             Done
           </button>
         </div>
@@ -142,19 +142,19 @@ function ReportDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-xs">
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Report" className="w-[min(380px,calc(100vw-2rem))] rounded-2xl bg-brand-card shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between border-b border-brand-divider px-5 py-3.5">
-          <h3 className="text-[14px] font-bold text-brand-text">Report</h3>
+          <h3 className="text-sm font-bold text-brand-text">Report</h3>
           <button onClick={onClose} aria-label="Close" className="flex h-11 w-11 -mr-2 items-center justify-center rounded-full text-brand-text/60 transition hover:bg-brand-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <X className="h-4 w-4" />
           </button>
         </div>
         <div className="px-5 py-4">
-          <p className="text-[12px] text-brand-highlight mb-3">Why are you reporting this {targetType}?</p>
+          <p className="text-xs text-brand-highlight mb-3">Why are you reporting this {targetType}?</p>
           <div className="space-y-1.5">
             {COMMENT_REPORT_REASONS.map((r) => (
               <button key={r.value} onClick={() => setSelectedReason(r.value)}
-                className={`w-full rounded-xl px-3.5 py-2.5 text-left text-[13px] transition ${
+                className={`w-full rounded-xl px-3.5 py-2.5 text-left text-sm transition ${
                   selectedReason === r.value
-                    ? 'bg-brand-text text-white font-medium'
+                    ? 'bg-brand-text text-brand-bg font-medium'
                     : 'bg-brand-secondary text-brand-text hover:bg-brand-secondary'
                 }`}>
                 {r.label}
@@ -167,14 +167,14 @@ function ReportDialog({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Tell us more..."
               rows={2}
-              className="mt-3 w-full rounded-xl bg-brand-secondary px-3.5 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-hidden ring-1 ring-brand-secondary focus:ring-brand-text/40 transition resize-none"
+              className="mt-3 w-full rounded-xl bg-brand-secondary px-3.5 py-2.5 text-sm text-brand-text placeholder:text-brand-text/60 outline-hidden ring-1 ring-brand-secondary focus:ring-brand-text/40 transition resize-none"
             />
           )}
         </div>
         <div className="border-t border-brand-divider px-5 py-3">
           <button onClick={handleSubmit}
             disabled={!selectedReason || reportMutation.isPending}
-            className="w-full rounded-full bg-red-600 py-2.5 text-[13px] font-semibold text-white transition hover:bg-red-700 disabled:opacity-40">
+            className="w-full rounded-full bg-destructive py-2.5 text-sm font-semibold text-destructive-foreground transition hover:bg-destructive/90 disabled:opacity-40">
             {reportMutation.isPending ? 'Submitting...' : 'Submit Report'}
           </button>
         </div>
@@ -325,7 +325,7 @@ export const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, postA
       {/* Header row: small avatar + name + time */}
       <div className="flex items-center gap-2">
         <img src={author.avatar} alt="" className={`${isReply ? 'w-7 h-7' : 'w-8 h-8'} rounded-full object-cover shrink-0 bg-brand-secondary`} />
-        <span className="text-[12px] font-semibold text-brand-text">{author.username ? `@${author.username}` : author.name}</span>
+        <span className="text-xs font-semibold text-brand-text">{author.username ? `@${author.username}` : author.name}</span>
         <time dateTime={comment.created_at} title={postTimeTitle(comment.created_at)} className="text-xs text-muted-foreground">{postTimeLabel(comment.created_at)}</time>
         {comment.pinned && !isReply ? (
           <span data-comment-pinned className="inline-flex items-center gap-1 rounded-full bg-brand-secondary px-1.5 py-0.5 text-xs font-semibold text-muted-foreground"><Pin className="h-3 w-3" aria-hidden="true" /> Pinned</span>
@@ -340,15 +340,15 @@ export const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, postA
         {editing ? (
           <form onSubmit={handleEdit} className="space-y-2">
             <input type="text" value={editText} onChange={(e) => setEditText(e.target.value)} aria-label="Edit comment"
-              className="w-full rounded-xl bg-brand-secondary px-3 py-2 text-[13px] text-brand-text outline-hidden ring-1 ring-brand-secondary focus:ring-brand-text/40 transition" autoFocus />
+              className="w-full rounded-xl bg-brand-secondary px-3 py-2 text-sm text-brand-text outline-hidden ring-1 ring-brand-secondary focus:ring-brand-text/40 transition" autoFocus />
             <div className="flex justify-end gap-1.5">
-              <button type="button" onClick={() => setEditing(false)} className="text-[12px] text-brand-highlight font-medium px-3 py-1 rounded-full hover:bg-brand-secondary transition">Cancel</button>
+              <button type="button" onClick={() => setEditing(false)} className="text-xs text-brand-highlight font-medium px-3 py-1 rounded-full hover:bg-brand-secondary transition">Cancel</button>
               <button type="submit" disabled={editMutation.isPending || !editText.trim()}
-                className="text-[12px] font-semibold px-3 py-1 bg-primary-ink text-white rounded-full disabled:opacity-40 transition hover:bg-primary-ink/90">Save</button>
+                className="text-xs font-semibold px-3 py-1 bg-primary-ink text-primary-foreground rounded-full disabled:opacity-40 transition hover:bg-primary-ink/90">Save</button>
             </div>
           </form>
         ) : (
-          <p className="text-[13px] text-brand-text leading-relaxed break-words"><MentionText body={body} /></p>
+          <p className="text-sm text-brand-text leading-relaxed break-words"><MentionText body={body} /></p>
         )}
 
         {/* Action bar: Reactions  Reply. Pin, Love, Edit, Delete and Report live in the ⋮ menu. */}
@@ -357,7 +357,7 @@ export const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, postA
             <CommentReactions item={comment} onChange={react} disabled={setReaction.isPending} />
 
             <button type="button" onClick={() => setShowReplyInput(open => !open)} aria-expanded={showReplyInput}
-              className="text-[12px] font-semibold text-brand-highlight hover:text-brand-text transition">
+              className="text-xs font-semibold text-brand-highlight hover:text-brand-text transition">
               Reply
             </button>
           </div>
@@ -381,19 +381,19 @@ export const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, postA
 
       {canToggle && (
         <button type="button" onClick={() => setRepliesOpen(open => !open)} aria-expanded={repliesOpen}
-          className="ml-10 mt-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-brand-highlight hover:text-brand-text transition">
+          className="ml-10 mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-brand-highlight hover:text-brand-text transition">
           <CornerDownRight className="w-3.5 h-3.5" />
           {repliesOpen ? 'Hide replies' : repliesLabel(replyCount)}
         </button>
       )}
 
       {!isReply && repliesOpen && replies.isLoading && (
-        <div className="ml-10 mt-2 flex items-center gap-2 text-[12px] text-brand-text/60">
+        <div className="ml-10 mt-2 flex items-center gap-2 text-xs text-brand-text/60">
           <span className="comment-spinner" aria-hidden="true" /> Loading replies…
         </div>
       )}
       {!isReply && repliesOpen && replies.isError && (
-        <div role="alert" className="ml-10 mt-2 text-[12px] text-brand-text/60">
+        <div role="alert" className="ml-10 mt-2 text-xs text-brand-text/60">
           Replies could not load. <button type="button" className="underline" onClick={() => void replies.refetch()}>Try again</button>
         </div>
       )}
@@ -406,7 +406,7 @@ export const CommentNode: React.FC<CommentNodeProps> = ({ comment, postId, postA
           ))}
           {replies.hasNextPage && (
             <button type="button" disabled={replies.isFetchingNextPage} onClick={() => void replies.fetchNextPage()}
-              className="mt-1.5 text-[12px] font-semibold text-brand-highlight hover:text-brand-text transition disabled:opacity-40">
+              className="mt-1.5 text-xs font-semibold text-brand-highlight hover:text-brand-text transition disabled:opacity-40">
               {replies.isFetchingNextPage ? 'Loading…' : 'Load more replies'}
             </button>
           )}
@@ -556,7 +556,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
       <div className="px-5 pb-4">
         {commentsCount > 0 && (
           <button onClick={() => setIsExpanded(true)}
-            className="flex items-center gap-1.5 text-[13px] font-semibold text-brand-text/60 hover:text-brand-text transition">
+            className="flex items-center gap-1.5 text-sm font-semibold text-brand-text/60 hover:text-brand-text transition">
             <MessageCircle className="w-3.5 h-3.5" />
             View all {commentsCount} comments
           </button>
@@ -578,7 +578,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
       {/* Comments list — scrollable */}
       <div data-comments-list className="flex-1 min-h-0 overflow-y-auto divide-y divide-brand-secondary">
         {(focusMissing || focusLost) && (
-          <p role="status" data-comment-focus-lost className="px-4 py-2.5 text-[12px] text-brand-text/60">That comment is no longer available.</p>
+          <p role="status" data-comment-focus-lost className="px-4 py-2.5 text-xs text-brand-text/60">That comment is no longer available.</p>
         )}
         {loadError && <div role="alert" className="p-4 text-sm">Comments could not refresh. <button type="button" className="underline" onClick={() => { void source.refetch(); }}>Try again</button></div>}
         {isLoading && (
@@ -592,8 +592,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
             <div className="w-12 h-12 rounded-full bg-brand-secondary flex items-center justify-center mb-3">
               <MessageCircle className="w-5 h-5 text-brand-text/30" />
             </div>
-            <p className="text-[13px] font-medium text-brand-text/60">No comments yet</p>
-            <p className="text-[12px] text-brand-text/30 mt-0.5">Be the first to share your thoughts</p>
+            <p className="text-sm font-medium text-brand-text/60">No comments yet</p>
+            <p className="text-xs text-brand-text/30 mt-0.5">Be the first to share your thoughts</p>
           </div>
         )}
 
@@ -639,7 +639,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId = 
               value={commentText}
               onValueChange={setCommentText}
               placeholder="Add a comment..."
-              className="w-full min-w-0 rounded-full bg-brand-secondary px-4 py-2.5 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-hidden ring-1 ring-transparent focus:ring-brand-divider focus:bg-brand-card transition"
+              className="w-full min-w-0 rounded-full bg-brand-secondary px-4 py-2.5 text-sm text-brand-text placeholder:text-brand-text/60 outline-hidden ring-1 ring-transparent focus:ring-brand-divider focus:bg-brand-card transition"
             />
             <button
               type="submit"

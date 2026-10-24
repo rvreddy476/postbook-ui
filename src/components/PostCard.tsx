@@ -308,7 +308,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const showLikeTotal = !post.no_likes && likesCount > 0;
   const showCommentTotal = !post.no_comments && commentsCount > 0;
   const hasSummary = showLikeTotal || showCommentTotal || sharesCount > 0;
-  const actionButton = 'flex flex-1 min-w-0 min-h-10 items-center justify-center gap-1.5 rounded-lg px-2 text-[13px] font-semibold transition-colors duration-200 hover:bg-brand-secondary active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+  const actionButton = 'flex flex-1 min-w-0 min-h-10 items-center justify-center gap-1.5 rounded-lg px-2 text-sm font-semibold transition-colors duration-200 hover:bg-brand-secondary active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
   const hasVoted = pollData?.viewer_votes && pollData.viewer_votes.length > 0;
   const pollEnded = pollData?.has_ended;
   const showResults = hasVoted || pollEnded;
@@ -366,7 +366,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-x-2">
-              <h4 className="truncate text-[14px] font-bold text-brand-text hover:text-primary-ink cursor-pointer transition-colors">{name}</h4>
+              <h4 className="truncate text-sm font-bold text-brand-text hover:text-primary-ink cursor-pointer transition-colors">{name}</h4>
               {post.feeling && (
                 <span className="text-xs text-muted-foreground">
                   — feeling {post.feeling} <Smile className="w-3 h-3 inline text-warning" />
@@ -459,7 +459,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           stored and sent but never drawn. A Journal entry draws its own
           heading inside JournalBody, so it is left out here. */}
       {!locked && post.title?.trim() && post.rich_text?.format !== 'tiptap' && (
-        <h3 className="post-card-title px-3 sm:px-4 pb-1.5 text-[17px] font-bold leading-snug text-brand-text break-words">
+        <h3 className="post-card-title px-3 sm:px-4 pb-1.5 text-lg font-bold leading-snug text-brand-text break-words">
           {post.title.trim()}
         </h3>
       )}
@@ -527,7 +527,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
         const textContent = (
           <p
-            className={`leading-relaxed whitespace-pre-wrap ${hasStyledBg ? `font-semibold ${align === 'center' ? 'text-center' : 'text-left'}` : 'text-[15px] text-brand-text'}`}
+            className={`leading-relaxed whitespace-pre-wrap ${hasStyledBg ? `font-semibold ${align === 'center' ? 'text-center' : 'text-left'}` : 'text-base text-brand-text'}`}
             style={hasStyledBg ? { color: textColor || 'rgb(var(--theme-on-bubble))', fontSize: `${scale * 1.25}rem` } : undefined}
           >
             {post.text.split(/(#[\p{L}\p{M}\p{N}_]+|@\w+)/gu).map((part, i) => {
@@ -611,7 +611,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                       )}
                       {isVoted && (
                         <div className="w-5 h-5 rounded-full bg-primary-ink flex items-center justify-center">
-                          <Check className="w-3 h-3 text-white" />
+                          <Check className="w-3 h-3 text-primary-foreground" />
                         </div>
                       )}
                     </div>
@@ -674,7 +674,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                           </div>
                           <div className="text-white">
                             <p className="text-sm font-semibold">{name} · Reel</p>
-                            <p className="text-[11px] text-white/60 flex items-center gap-1">
+                            <p className="text-xs text-white/60 flex items-center gap-1">
                               <Music className="w-3 h-3" /> Original Audio
                             </p>
                           </div>
@@ -834,7 +834,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             {/* The counts, on their own line: likes on the left, comments
                 and shares on the right. Nothing when there is nothing. */}
             {hasSummary && (
-              <div className="post-card-summary px-3 sm:px-4 pt-2.5 pb-2 flex items-center justify-between gap-3 text-[13px] text-muted-foreground">
+              <div className="post-card-summary px-3 sm:px-4 pt-2.5 pb-2 flex items-center justify-between gap-3 text-sm text-muted-foreground">
                 {showLikeTotal ? (
                   <span className="flex min-w-0 items-center gap-1.5">
                     <span aria-hidden="true" className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-primary-ink text-primary-foreground">
@@ -858,7 +858,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             {/* Four equal buttons that say what they do. */}
             <div className={`post-card-actions mx-2 sm:mx-3 py-1 flex items-stretch gap-1 ${hasSummary || !hasMedia ? 'border-t border-brand-divider' : ''}`}>
               {!post.no_likes && (
-                <div className="post-card-action flex flex-1 min-w-0 [&_.reaction-control]:w-full [&_.reaction-trigger]:w-full [&_.reaction-trigger>button:first-child]:flex-1 [&_.reaction-trigger>button:first-child]:text-[13px] [&_.reaction-trigger>button:first-child]:font-semibold">
+                <div className="post-card-action flex flex-1 min-w-0 [&_.reaction-control]:w-full [&_.reaction-trigger]:w-full [&_.reaction-trigger>button:first-child]:flex-1 [&_.reaction-trigger>button:first-child]:text-sm [&_.reaction-trigger>button:first-child]:font-semibold">
                   <FeedReactionControl post={post} showLabel />
                 </div>
               )}

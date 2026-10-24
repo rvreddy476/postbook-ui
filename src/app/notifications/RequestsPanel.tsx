@@ -57,7 +57,7 @@ function SectionHeading({ id, title, count }: { id: string; title: string; count
     <h2 id={id} className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
       {title}
       {count ? (
-        <span data-request-count className="rounded-full bg-primary px-1.5 text-[11px] font-semibold normal-case tracking-normal tabular-nums text-primary-foreground">
+        <span data-request-count className="rounded-full bg-primary px-1.5 text-xs font-semibold normal-case tracking-normal tabular-nums text-primary-foreground">
           {count}<span className="sr-only"> pending</span>
         </span>
       ) : null}

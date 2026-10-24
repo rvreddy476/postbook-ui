@@ -44,7 +44,7 @@ export function ActivityTabs({ active, onSelect, badges }: { active: InboxTab; o
           >
             {t.label}
             {badge ? (
-              <span data-tab-badge className="ml-1.5 rounded-full bg-primary px-1.5 text-[11px] font-semibold tabular-nums text-primary-foreground">
+              <span data-tab-badge className="ml-1.5 rounded-full bg-primary px-1.5 text-xs font-semibold tabular-nums text-primary-foreground">
                 {badge}<span className="sr-only"> pending</span>
               </span>
             ) : null}

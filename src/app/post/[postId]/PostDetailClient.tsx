@@ -35,7 +35,7 @@ function PostDetailContent() {
         <p className="text-lg font-black text-brand-text/30 tracking-widest italic">Post not found</p>
         <button
           onClick={() => router.back()}
-          className="px-6 py-3 bg-brand-card rounded-2xl font-black text-[10px] tracking-widest text-brand-highlight hover:text-brand-accent hover:shadow-lg transition-all border border-brand-divider"
+          className="px-6 py-3 bg-brand-card rounded-2xl font-black text-xs tracking-widest text-brand-highlight hover:text-brand-accent hover:shadow-lg transition-all border border-brand-divider"
         >
           Go Back
         </button>

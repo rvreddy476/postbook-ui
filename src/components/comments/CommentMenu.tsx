@@ -142,7 +142,7 @@ export default function CommentMenu({ items, onSelect, disabled, noun = 'comment
             return (
               <button key={item.action} type="button" role="menuitem" tabIndex={-1} data-comment-menu-item={item.action}
                 onClick={() => { close(true); onSelect(item.action) }}
-                className={`flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-[13px] transition hover:bg-brand-secondary focus:bg-brand-secondary focus:outline-hidden ${item.danger ? 'text-danger' : 'text-brand-text'}`}>
+                className={`flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm transition hover:bg-brand-secondary focus:bg-brand-secondary focus:outline-hidden ${item.danger ? 'text-danger' : 'text-brand-text'}`}>
                 <Icon className={`h-3.5 w-3.5 ${item.action === 'unheart' ? 'fill-current' : ''}`} aria-hidden="true" />
                 <span>{item.label}</span>
               </button>

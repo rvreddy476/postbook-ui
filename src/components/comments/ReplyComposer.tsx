@@ -62,14 +62,14 @@ export default function ReplyComposer({ postId, parentId, prefill = '', myId, on
           <Smile className="w-4 h-4 text-brand-text/60" />
         </button>
         <MentionInput inputRef={inputRef} value={text} onValueChange={setText} placeholder="Reply..." aria-label="Write a reply" type="text"
-          className="w-full rounded-full bg-brand-secondary px-4 py-2 text-[13px] text-brand-text placeholder:text-brand-text/60 outline-hidden ring-1 ring-brand-secondary focus:ring-brand-text/40 transition"
+          className="w-full rounded-full bg-brand-secondary px-4 py-2 text-sm text-brand-text placeholder:text-brand-text/60 outline-hidden ring-1 ring-brand-secondary focus:ring-brand-text/40 transition"
           onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); onCancel() } }} />
         <button type="submit" disabled={!text.trim() || reply.isPending} aria-label="Send reply"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-ink text-white disabled:opacity-40 transition hover:bg-primary-ink/90">
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-ink text-primary-foreground disabled:opacity-40 transition hover:bg-primary-ink/90">
           <Send className="w-3.5 h-3.5" />
         </button>
       </form>
-      <button type="button" onClick={onCancel} className="mt-1.5 ml-10 text-[11px] text-brand-text/60 hover:text-brand-highlight transition">Cancel</button>
+      <button type="button" onClick={onCancel} className="mt-1.5 ml-10 text-xs text-brand-text/60 hover:text-brand-highlight transition">Cancel</button>
       {pickerOpen && <EmojiPickerPopover anchorRef={emojiButton} onSelect={insertEmoji} onClose={() => setPickerOpen(false)} />}
     </div>
   )
