@@ -32,6 +32,24 @@ type RouteParams = { params: Promise<{ path?: string[] }> };
 
 const BEARER_PATTERN = /^Bearer\s+\S+$/;
 
+/*
+  Hidden chats (contract 24 Oct 2026): the reveal and open tokens ride in
+  these two headers and must reach chat-message-service. They are opaque,
+  short-lived and bound to the user server-side; anything that is not one
+  plain token is dropped rather than forwarded. Never logged.
+*/
+const HIDDEN_CHAT_HEADERS = ['X-Chat-Reveal', 'X-Chat-Open'] as const;
+const HIDDEN_TOKEN_PATTERN = /^[A-Za-z0-9._~+/=-]{1,512}$/;
+
+function hiddenChatHeaders(req: Request): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const name of HIDDEN_CHAT_HEADERS) {
+        const value = req.headers.get(name)?.trim() ?? '';
+        if (value && HIDDEN_TOKEN_PATTERN.test(value)) out[name] = value;
+    }
+    return out;
+}
+
 export async function GET(req: Request, { params }: RouteParams) {
     return handleRequest(req, await params);
 }
@@ -92,6 +110,7 @@ async function handleRequest(req: Request, params: { path?: string[] }) {
                 'Authorization': authHeader,
                 'Content-Type': 'application/json',
                 'Idempotency-Key': idempotencyKey,
+                ...hiddenChatHeaders(req),
             },
             body
         });

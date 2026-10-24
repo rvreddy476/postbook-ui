@@ -32,6 +32,14 @@ import { InboxAvatar } from './inbox/InboxAvatar'
 import { NotesRow } from './inbox/NotesRow'
 import { ActivityStatusButton } from './inbox/ActivityStatus'
 import { InboxSearch } from './inbox/InboxSearch'
+import { useHiddenChats } from './hidden/useHiddenChats'
+import { HiddenChatsList, HiddenChatBanner } from './hidden/HiddenChatsList'
+import { ChatPasswordPrompt, HiddenChatsSetupSheet, SecretKeyPrompt } from './hidden/HiddenChatsSheets'
+import { matchesShortcut } from '@/lib/chat/hiddenChats/shortcut'
+import { hiddenErrorOf, settingsErrorMessage } from '@/lib/chat/hiddenChats/requests'
+import { subscribeHiddenConversation, unsubscribeHiddenConversation } from '@/services/hiddenChatsApi'
+import { subscribeToHubConnected } from '@/services/messageService'
+import { useNotifications } from '@/contexts/NotificationContext'
 import {
   Users, MessageCircle, Plus, Hash, Search, Bell, UserPlus,
   Lock, Shield, ChevronRight, Send, MailQuestion, Check, Loader2,
@@ -135,6 +143,16 @@ export default function PostbookMessenger() {
   const [confirmDelete, setConfirmDelete] = useState<InboxRow | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [showArchived, setShowArchived] = useState(false)
+  /*
+    Hidden chats (contract 24 Oct 2026). hiddenOpenId: the open chat is a
+    hidden one (a banner offers Unhide). passwordFor: a hidden row waiting
+    for the chat password. setupFor: Hide chat before any secrets exist.
+  */
+  const [hiddenOpenId, setHiddenOpenId] = useState<string | null>(null)
+  const [passwordFor, setPasswordFor] = useState<InboxRow | null>(null)
+  const [setupFor, setSetupFor] = useState<InboxRow | null>(null)
+  const [showKeyPrompt, setShowKeyPrompt] = useState(false)
+  const [unhiding, setUnhiding] = useState(false)
 
   const currentUser = getSession()
   const myId = currentUser?.id ?? ''
@@ -143,6 +161,8 @@ export default function PostbookMessenger() {
 
   const openConversationId = activeGroupChat?.conversationId ?? activeConversationId
   const inbox = useInbox(myId, openConversationId)
+  const hidden = useHiddenChats(myId)
+  const { forgetConversations } = useNotifications()
   const { rows, requests, filteredRequests, requestCount, hiddenRequestCount, requestCountText, hiddenRequestCountText, loading: isLoading } = inbox.state
 
   const showToast = useCallback((msg: string) => {
@@ -163,6 +183,7 @@ export default function PostbookMessenger() {
   }
 
   const clearOpen = () => {
+    setHiddenOpenId(null)
     setActiveDm(null)
     setActiveGroupChat(null)
     setActiveGroupId(null)
@@ -202,7 +223,29 @@ export default function PostbookMessenger() {
     openPerson({ id: p.userId, name: p.displayName, avatar: p.avatarUrl ?? '', isOnline: p.isOnline === true, lastActiveAt: p.lastActiveAt })
   }, [rows, openRow, openPerson])
 
+  /** Hide a chat: it leaves every normal list, badge and stored unread count at once. */
+  const doHide = useCallback(async (row: InboxRow) => {
+    try {
+      await hidden.hide(row)
+      inbox.dropRow(row.id)
+      forgetConversations([row.id])
+      if (openConversationId === row.id || (row.peer && activeDm?.id === row.peer.userId)) clearOpen()
+      showToast('Chat hidden. Enter your secret key in search to find it.')
+    } catch (err) {
+      showToast(settingsErrorMessage(hiddenErrorOf(err)))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hidden.hide, inbox.dropRow, forgetConversations, openConversationId, activeDm, showToast])
+
   const onRowAction = useCallback(async (row: InboxRow, action: RowAction) => {
+    if (action === 'hide') {
+      // First time: set up the secrets, then hide.
+      if (hidden.settings?.configured) void doHide(row)
+      else if (hidden.settings === null) showToast("Hidden chats aren't available yet")
+      else if (hidden.settings === undefined) { void hidden.reloadSettings(); showToast("One moment, then try again") }
+      else setSetupFor(row)
+      return
+    }
     try {
       if (action === 'pin') { await inbox.pin(row); showToast(row.isPinned ? 'Unpinned' : 'Pinned to top') }
       else if (action === 'mute') { await inbox.mute(row); showToast(row.isMuted ? 'Unmuted' : 'Muted') }
@@ -218,7 +261,83 @@ export default function PostbookMessenger() {
       showToast(serverMessage(err, "Couldn't update that chat"))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inbox, showToast, showArchived])
+  }, [inbox, showToast, showArchived, hidden.settings, doHide])
+
+  /* ---- Hidden chats ------------------------------------------------- */
+
+  /** A hidden row: the chat password first (once per unlock), then the chat. */
+  const openHiddenRow = useCallback((row: InboxRow) => {
+    if (!hidden.opened) {
+      setPasswordFor(row)
+      return
+    }
+    openRow(row)
+    setHiddenOpenId(row.id)
+    forgetConversations([row.id])
+  }, [hidden.opened, openRow, forgetConversations])
+
+  // Re-locked (idle, tab hidden, sign-out, Lock, or the server said no): a hidden chat closes.
+  useEffect(() => {
+    if (hiddenOpenId && !hidden.opened) {
+      clearOpen()
+      setPasswordFor(null)
+    }
+    if (!hidden.revealed) setPasswordFor(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hidden.opened, hidden.revealed, hiddenOpenId])
+
+  // The hidden list's ids never stay in the stored unread state.
+  useEffect(() => {
+    if (hidden.rows && hidden.rows.length > 0) forgetConversations(hidden.rows.map((r) => r.id))
+  }, [hidden.rows, forgetConversations])
+
+  // Live messages of the open hidden chat: subscribe with the open token, again after a reconnect.
+  useEffect(() => {
+    if (!hiddenOpenId || !hidden.opened) return
+    subscribeHiddenConversation(hiddenOpenId)
+    const off = subscribeToHubConnected(() => { subscribeHiddenConversation(hiddenOpenId) })
+    return () => {
+      off()
+      unsubscribeHiddenConversation(hiddenOpenId)
+    }
+  }, [hiddenOpenId, hidden.opened])
+
+  // The shortcut (default Ctrl+Shift+H) opens the secret-key prompt.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!matchesShortcut(e, hidden.shortcut)) return
+      e.preventDefault()
+      setShowKeyPrompt(true)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [hidden.shortcut])
+
+  /** Search submitted: a key that opens nothing leaves the search exactly as it is. */
+  const onSearchSubmit = useCallback(async () => {
+    const text = search
+    if (await hidden.trySearchKey(text)) {
+      setSearch('')
+      setContactTab('friends')
+      setShowArchived(false)
+      setUnreadOnly(false)
+    }
+  }, [search, hidden.trySearchKey])
+
+  const doUnhide = async () => {
+    if (!hiddenOpenId || unhiding) return
+    setUnhiding(true)
+    try {
+      await hidden.unhide(hiddenOpenId)
+      setHiddenOpenId(null)
+      showToast('Chat is back in your chats')
+      void inbox.reload()
+    } catch (err) {
+      showToast(settingsErrorMessage(hiddenErrorOf(err)))
+    } finally {
+      setUnhiding(false)
+    }
+  }
 
   const doDelete = async () => {
     if (!confirmDelete) return
@@ -556,6 +675,9 @@ export default function PostbookMessenger() {
               placeholder="Search people, chats and messages"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.nativeEvent.isComposing) void onSearchSubmit()
+              }}
               className="w-full rounded-xl border border-transparent bg-brand-secondary py-2.5 pl-9 pr-4 text-[13px] text-brand-text outline-hidden transition-colors placeholder:text-brand-text/40 focus:border-primary-outline focus:bg-brand-bg"
             />
           </div>
@@ -651,6 +773,8 @@ export default function PostbookMessenger() {
           ) : contactTab === 'friends' ? (
             searching ? (
               <InboxSearch query={search} rows={rows} myId={myId} onOpenPerson={openPeer} onOpenRow={openRow} />
+            ) : hidden.viewOpen ? (
+              <HiddenChatsList rows={hidden.rows} myId={myId} activeId={hiddenOpenId} onOpen={openHiddenRow} onLock={hidden.lock} />
             ) : isLoading ? (
               <SidebarSkeleton />
             ) : showArchived ? (
@@ -924,6 +1048,9 @@ export default function PostbookMessenger() {
       {/*  MAIN CONTENT                                                  */}
       {/* ============================================================ */}
       <div className={`flex-1 flex flex-col min-w-0 bg-brand-secondary ${!anyOpen ? 'hidden md:flex' : 'flex'}`}>
+        {hiddenOpenId && (activeDm || activeGroupChat) && (
+          <HiddenChatBanner busy={unhiding} onUnhide={() => void doUnhide()} onLock={hidden.lock} />
+        )}
         {activeDm ? (
           <DmChat
             key={`dm-${activeDm.id}-${urlConversation?.conversationId ?? ''}`}
@@ -932,7 +1059,7 @@ export default function PostbookMessenger() {
             userAvatar={activeDm.avatar}
             userOnline={activeDm.isOnline ?? false}
             userLastActiveAt={activeDm.lastActiveAt ?? null}
-            onBack={() => setActiveDm(null)}
+            onBack={() => { setActiveDm(null); setHiddenOpenId(null) }}
             onConversationReady={setActiveConversationId}
             conversationId={urlConversation?.peerId === activeDm.id ? urlConversation.conversationId : undefined}
             focusMessageId={focusMessageId}
@@ -946,7 +1073,7 @@ export default function PostbookMessenger() {
             userName={activeGroupChat.title}
             userAvatar={activeGroupChat.avatarUrl ?? ''}
             userOnline={false}
-            onBack={() => setActiveGroupChat(null)}
+            onBack={() => { setActiveGroupChat(null); setHiddenOpenId(null) }}
             onConversationReady={setActiveConversationId}
             conversationId={activeGroupChat.conversationId}
             group={{ title: activeGroupChat.title, avatarUrl: activeGroupChat.avatarUrl, members: activeGroupChat.members }}
@@ -1035,6 +1162,52 @@ export default function PostbookMessenger() {
           busy={pendingRequestId === confirmRequest.row.id}
           onCancel={() => setConfirmRequest(null)}
           onConfirm={() => void doRequestAction()}
+        />
+      )}
+
+      {setupFor && (
+        <HiddenChatsSetupSheet
+          onClose={() => setSetupFor(null)}
+          onSaved={(saved) => {
+            const row = setupFor
+            setSetupFor(null)
+            hidden.setSettings(saved)
+            void doHide(row)
+          }}
+        />
+      )}
+
+      {showKeyPrompt && (
+        <SecretKeyPrompt
+          onClose={() => setShowKeyPrompt(false)}
+          onSubmit={async (key) => {
+            const out = await hidden.tryKey(key)
+            if (out.ok) {
+              setSearch('')
+              setContactTab('friends')
+              setShowArchived(false)
+              setUnreadOnly(false)
+            }
+            return out
+          }}
+        />
+      )}
+
+      {passwordFor && hidden.revealed && (
+        <ChatPasswordPrompt
+          chatName={rowName(passwordFor, myId)}
+          onClose={() => setPasswordFor(null)}
+          onForgot={() => { window.location.assign('/settings/hidden-chats#forgot') }}
+          onSubmit={async (password) => {
+            const row = passwordFor
+            const out = await hidden.openWithPassword(password)
+            if (out.ok) {
+              openRow(row)
+              setHiddenOpenId(row.id)
+              forgetConversations([row.id])
+            }
+            return out
+          }}
         />
       )}
 

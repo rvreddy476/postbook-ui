@@ -20,6 +20,8 @@ import {
 import { playChatAlert } from "@/hooks/useChatAlertTone"
 import { alertPrefsCache, alertSoundFor, primeAlertPrefs } from "@/lib/chat/alertTone"
 import { getConversationPrefs } from "@/services/chatParityApi"
+import { hiddenChatTokens } from "@/lib/chat/hiddenChats/tokenStore"
+import { withoutConversations } from "@/lib/chat/hiddenChats/unreadState"
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -42,6 +44,8 @@ interface NotificationContextValue {
     getUnreadCountForUser: (userId: string) => number
     clearAllUnread: () => void
     toggleSound: (enabled: boolean) => void
+    /** A hidden chat: every count, time and mapping of it leaves the state (and localStorage). */
+    forgetConversations: (convIds: readonly string[]) => void
 }
 
 const NotificationContext = createContext<NotificationContextValue | null>(null)
@@ -198,6 +202,9 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
 
             const convId = msg.conversation_id
 
+            // A hidden chat never counts, rings or is remembered here.
+            if (hiddenChatTokens.isLocked(convId)) return
+
             // A dating chat is not Messages: it never counts or maps here.
             if (datingIdsRef.current.has(convId)) return
             classifyConversation(convId)
@@ -323,6 +330,7 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
     }, [])
 
     const markConversationRead = useCallback((convId: string, lastMsgTs?: string) => {
+        if (hiddenChatTokens.isLocked(convId)) return
         setState((prev) => {
             const next = {
                 ...prev,
@@ -340,6 +348,7 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
         // A dating chat opened through the messenger must not become the
         // person's Messages thread.
         if (datingIdsRef.current.has(convId)) return
+        if (hiddenChatTokens.isLocked(convId)) return
         setState((prev) => {
             if (prev.userConvMap[userId] === convId) return prev
             const next = {
@@ -371,6 +380,14 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
         setSoundEnabled(enabled)
     }, [])
 
+    const forgetConversations = useCallback((convIds: readonly string[]) => {
+        setState((prev) => {
+            const next = withoutConversations(prev, convIds)
+            if (next !== prev) saveState(next)
+            return next
+        })
+    }, [])
+
     const value = useMemo<NotificationContextValue>(
         () => ({
             unreadCounts: state.counts,
@@ -383,6 +400,7 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
             getUnreadCountForUser,
             clearAllUnread,
             toggleSound,
+            forgetConversations,
         }),
         [
             state.counts,
@@ -395,6 +413,7 @@ export function NotificationProvider({ currentUserId, children }: ProviderProps)
             getUnreadCountForUser,
             clearAllUnread,
             toggleSound,
+            forgetConversations,
         ]
     )
 
@@ -416,6 +435,7 @@ const NOOP_VALUE: NotificationContextValue = {
     getUnreadCountForUser: () => 0,
     clearAllUnread: () => {},
     toggleSound: () => {},
+    forgetConversations: () => {},
 }
 
 export function useNotifications() {

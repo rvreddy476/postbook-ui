@@ -23,6 +23,7 @@ import {
   type PrefsPatch,
 } from '@/services/chatParityApi'
 import type { InboxRow } from '@/lib/chat/contract'
+import { hiddenChatTokens } from '@/lib/chat/hiddenChats/tokenStore'
 import { alertPrefsCache, asAlertTone } from '@/lib/chat/alertTone'
 import {
   applyLiveMessage,
@@ -236,6 +237,8 @@ export function useInbox(myId: string, openConversationId: string | null) {
   useEffect(() => {
     return subscribeToMessages((m: Message) => {
       if (!m?.conversation_id) return
+      // A hidden chat never moves, counts or refetches the normal list.
+      if (hiddenChatTokens.isLocked(m.conversation_id)) return
       setRows((prev) => {
         const next = applyLiveMessage(
           prev,
@@ -320,6 +323,12 @@ export function useInbox(myId: string, openConversationId: string | null) {
     }
   }
 
+  /** A chat that just became hidden leaves every normal list at once. */
+  const dropRow = useCallback((conversationId: string) => {
+    setRows((prev) => prev.filter((r) => r.id !== conversationId))
+    setArchived((prev) => (prev ? prev.filter((r) => r.id !== conversationId) : prev))
+  }, [])
+
   /** Delete chat = hide for me + clear my history. false when the route is not there yet. */
   const removeForMe = async (row: InboxRow): Promise<boolean> => {
     const res = await deleteChatForMe(row.id)
@@ -373,7 +382,8 @@ export function useInbox(myId: string, openConversationId: string | null) {
 
   return {
     state: {
-      rows: primaryRows(rows, myId),
+      // A chat known to be hidden never shows here, even if a page still lists it.
+      rows: primaryRows(rows, myId).filter((r) => !hiddenChatTokens.isLocked(r.id)),
       requests,
       filteredRequests,
       requestCount: shownRequestCount,
@@ -400,6 +410,7 @@ export function useInbox(myId: string, openConversationId: string | null) {
     pin,
     mute,
     archive,
+    dropRow,
     removeForMe,
     markRead,
     markUnread,

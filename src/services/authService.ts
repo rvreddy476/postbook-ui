@@ -5,6 +5,7 @@ import { ApiGender } from '@/services/auth/types';
 import { createAuthStrategy } from '@/services/auth/strategyFactory';
 import { noteOfflineSignOut } from '@/features/offline/signOut';
 import { noteWebPushSignOut } from '@/features/webPush/signOut';
+import { forgetHiddenChats } from '@/lib/chat/hiddenChats/tokenStore';
 import { HttpClientError } from '@/services/core/httpClient';
 import { TERMS_VERSION } from '@/lib/legal';
 
@@ -285,6 +286,8 @@ export const logoutUser = () => {
   noteOfflineSignOut(authRepository.getSessionUser()?.id);
   // Also before it goes: removing the push device needs the in-memory access token.
   noteWebPushSignOut(authRepository.getSessionUser()?.id);
+  // Hidden chats lock: reveal/open tokens and the hidden ids leave memory.
+  forgetHiddenChats();
   authRepository.logout();
 };
 
@@ -292,6 +295,7 @@ export const logoutUser = () => {
 export const prepareLogoutNavigation = () => {
   noteOfflineSignOut(authRepository.getSessionUser()?.id);
   noteWebPushSignOut(authRepository.getSessionUser()?.id);
+  forgetHiddenChats();
   authRepository.prepareLogoutNavigation();
 };
 

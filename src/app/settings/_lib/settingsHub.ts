@@ -81,6 +81,7 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
       { key: "friend-requests", label: "Friend requests", icon: UserCheck, href: "/settings/friend-requests" },
       { key: "blocked", label: "Blocked accounts", icon: UserX, href: "/settings/blocked" },
       { key: "hidden-channels", label: "Hidden channels", icon: EyeOff, href: "/settings/hidden-channels" },
+      { key: "hidden-chats", label: "Hidden chats", icon: Lock, href: "/settings/hidden-chats" },
     ],
   },
   {

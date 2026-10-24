@@ -13,6 +13,8 @@ import {
 import { decodeRequestRemovedFrame } from '@/lib/chat/requestsLane';
 import { decodeDeliveryReceiptFrame, decodeReadReceiptFrame, parseTickStatus, type TickStatus } from '@/lib/chat/tickState';
 import { createDeliveredAckBatcher } from '@/lib/chat/deliveredAck';
+import { hiddenChatTokens } from '@/lib/chat/hiddenChats/tokenStore';
+import { conversationIdOfPath, openHeaderFor, OPEN_HEADER } from '@/lib/chat/hiddenChats/requests';
 
 export interface Message {
   id: string;
@@ -447,22 +449,38 @@ const chatClient = {
     // The access token is the whole identity: the proxy forwards it to
     // chat-message-service, which verifies it itself. No X-User-Id — the
     // proxy would not forward one, and nothing here should name a user.
-    if (accessToken) {
+    // A caller's own bearer wins: the hidden-chats reset presents the
+    // step-up token for that one call (services/hiddenChatsApi.ts).
+    if (accessToken && !headers.has('Authorization')) {
       headers.set('Authorization', `Bearer ${accessToken}`);
     }
     if (options.body !== undefined && !headers.has('Content-Type')) {
       headers.set('Content-Type', 'application/json');
     }
+    // A hidden chat's calls carry the open token (memory only), and no other call does.
+    const openHeader = headers.has(OPEN_HEADER)
+      ? null
+      : openHeaderFor(path, hiddenChatTokens.isLocked, hiddenChatTokens.open());
+    if (openHeader) headers.set(OPEN_HEADER, openHeader[OPEN_HEADER]);
 
     const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
     const payload = await parseResponsePayload(res);
     if (!res.ok) {
       const message = getErrorMessage(payload, `Chat API request failed (${res.status})`);
-      if (!background && (res.status === 401 || /invalid token/i.test(message))) {
+      const code = getErrorCode(payload);
+      // 401 WRONG_PASSWORD is about a hidden-chats secret, not the session.
+      if (!background && code !== 'WRONG_PASSWORD' && (res.status === 401 || /invalid token/i.test(message))) {
         closeChatSocket(message);
       }
-      throw new ChatApiError(message, res.status, getErrorCode(payload), payload);
+      if (code === 'CHAT_LOCKED') {
+        // The conversation is hidden and its open token is missing or spent.
+        const lockedId = conversationIdOfPath(path);
+        if (lockedId) hiddenChatTokens.markLocked([lockedId]);
+        hiddenChatTokens.drop('server', 'open');
+      }
+      throw new ChatApiError(message, res.status, code, payload);
     }
+    if (openHeader) hiddenChatTokens.slide('open');
     return payload as TResponse;
   }
 };
@@ -533,7 +551,9 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
         };
         onMsg(msg);
         localListeners.forEach(cb => cb(msg));
-        getChannel()?.postMessage(msg);
+        // A hidden chat's message stays in this tab: other tabs would count
+        // it in their badge and persist its id in their unread state.
+        if (!hiddenChatTokens.isLocked(msg.conversation_id)) getChannel()?.postMessage(msg);
         // Message ticks: this device has it — tell the sender (any chat, open or not).
         if (msg.id && msg.conversation_id && msg.sender_id && msg.sender_id !== getSessionUser()?.id) {
           ackDelivered(msg.conversation_id, msg.id, msg.ts);

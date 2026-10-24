@@ -1,19 +1,21 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Archive, ArchiveRestore, BellOff, CheckCheck, MailOpen, MoreHorizontal, Pin, PinOff, Bell, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, BellOff, CheckCheck, EyeOff, MailOpen, MoreHorizontal, Pin, PinOff, Bell, Trash2 } from 'lucide-react'
 
 import type { InboxRow } from '@/lib/chat/contract'
 import { readToggleAction, rowName, rowPreview, shortAgo, showOnlineDot, streakBadge, unreadIndicator } from '@/lib/chat/inbox'
 import { InboxAvatar } from './InboxAvatar'
 
-export type RowAction = 'pin' | 'mute' | 'archive' | 'delete' | 'read' | 'unread'
+export type RowAction = 'pin' | 'mute' | 'archive' | 'delete' | 'read' | 'unread' | 'hide'
 
 /*
   One conversation in Messages: photo avatar with an online dot, name,
   preview (with "Seen" on my own last message), time, unread pill, mute and
   pin glyphs, streak. Hover shows a ⋯ button; right-click opens the same menu:
-  Pin, Mute, Mark as read / Mark as unread, Archive, Delete chat.
+  Pin, Mute, Mark as read / Mark as unread, Archive, Hide chat, Delete chat.
+  A row in the hidden list (`hidden`) has no menu: its actions are inside
+  the opened chat, behind the chat password.
 */
 export function InboxRowItem({
   row,
@@ -21,6 +23,7 @@ export function InboxRowItem({
   active,
   sentRequestWaiting,
   archived,
+  hidden,
   onOpen,
   onAction,
 }: {
@@ -30,6 +33,8 @@ export function InboxRowItem({
   sentRequestWaiting?: boolean
   /** Shown in the Archived list: the menu offers Unarchive. */
   archived?: boolean
+  /** Shown in the hidden list: no menu, and no right-click menu. */
+  hidden?: boolean
   onOpen: (row: InboxRow) => void
   onAction: (row: InboxRow, action: RowAction) => void
 }) {
@@ -59,7 +64,7 @@ export function InboxRowItem({
 
   const openMenuAt = (x: number, y: number) => {
     const w = 200
-    const h = 232
+    const h = 272
     setMenu({ x: Math.min(x, window.innerWidth - w - 8), y: Math.min(y, window.innerHeight - h - 8) })
   }
 
@@ -70,6 +75,7 @@ export function InboxRowItem({
       ? { action: 'read', label: 'Mark as read', icon: CheckCheck }
       : { action: 'unread', label: 'Mark as unread', icon: MailOpen },
     { action: 'archive', label: archived ? 'Unarchive' : 'Archive', icon: archived ? ArchiveRestore : Archive },
+    { action: 'hide', label: 'Hide chat', icon: EyeOff, hidden: row.isRequest },
     { action: 'delete', label: 'Delete chat', icon: Trash2, danger: true },
   ]
 
@@ -79,6 +85,7 @@ export function InboxRowItem({
         type="button"
         onClick={() => onOpen(row)}
         onContextMenu={(e) => {
+          if (hidden) return
           e.preventDefault()
           openMenuAt(e.clientX, e.clientY)
         }}
@@ -125,7 +132,7 @@ export function InboxRowItem({
           />
         )}
       </button>
-      <button
+      {!hidden && <button
         type="button"
         aria-label={`More for ${name}`}
         onClick={(e) => {
@@ -135,7 +142,7 @@ export function InboxRowItem({
         className="absolute right-2 top-1/2 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-brand-card text-brand-text/60 shadow-xs hover:text-brand-text group-hover/row:flex focus-visible:flex"
       >
         <MoreHorizontal className="h-4 w-4" />
-      </button>
+      </button>}
 
       {menu && (
         <div

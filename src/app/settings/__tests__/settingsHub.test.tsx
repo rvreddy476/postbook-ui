@@ -44,6 +44,7 @@ describe("settings hub: groups and rows", () => {
             ["Friend requests", "/settings/friend-requests"],
             ["Blocked accounts", "/settings/blocked"],
             ["Hidden channels", "/settings/hidden-channels"],
+            ["Hidden chats", "/settings/hidden-chats"],
         ])
         expect(rows.messaging).toEqual([["Inbox & messaging", "/settings/messaging"]])
         expect(rows.notifications).toEqual([["Notifications", "/settings/notifications"]])

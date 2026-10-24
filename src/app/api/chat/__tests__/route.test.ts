@@ -112,4 +112,30 @@ describe("/api/chat proxy", () => {
     const res = await POST(req, params("conversations"));
     expect(res.status).toBe(502);
   });
+
+
+  test("forwards the hidden-chats reveal and open tokens (contract 24 Oct 2026)", async () => {
+    const req = new Request("http://localhost/api/chat/hidden/conversations", {
+      headers: { authorization: "Bearer caller.access.token", "x-chat-reveal": "rv.Token-1_~", "x-chat-open": "op/Token+2=" },
+    });
+    await GET(req, params("hidden", "conversations"));
+    const sent = headersOf(calls[0].init);
+    expect(sent.get("x-chat-reveal")).toBe("rv.Token-1_~");
+    expect(sent.get("x-chat-open")).toBe("op/Token+2=");
+  });
+
+  test("drops a hidden-chat header that is not one plain token, and sends none when absent", async () => {
+    const bad = new Request("http://localhost/api/chat/hidden/open", {
+      method: "POST",
+      headers: { authorization: "Bearer caller.access.token", "x-chat-reveal": "a b", "x-chat-open": "x".repeat(513) },
+      body: "{}",
+    });
+    await POST(bad, params("hidden", "open"));
+    await GET(new Request("http://localhost/api/chat/conversations", { headers: { authorization: "Bearer caller.access.token" } }), params("conversations"));
+    for (const c of calls) {
+      const sent = headersOf(c.init);
+      expect(sent.get("x-chat-reveal")).toBeNull();
+      expect(sent.get("x-chat-open")).toBeNull();
+    }
+  });
 });
