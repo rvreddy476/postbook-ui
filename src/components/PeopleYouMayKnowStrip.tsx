@@ -25,7 +25,18 @@ interface PeopleYouMayKnowStripProps {
  * 2026): a suggestion offers Follow, the graph-service follow; a private
  * account turns it into a request.
  */
-export function SuggestionFollowButton({ userId, name, following }: { userId: string; name: string; following: boolean }) {
+export function SuggestionFollowButton({
+  userId,
+  name,
+  following,
+  variant = 'card',
+}: {
+  userId: string
+  name: string
+  following: boolean
+  /** `card` fills a suggestion card; `row` sits at the end of a list row. */
+  variant?: 'card' | 'row'
+}) {
   const follow = useFollowUser();
   const unfollow = useUnfollowUser();
   const [local, setLocal] = useState<FollowState | null>(null);
@@ -54,7 +65,7 @@ export function SuggestionFollowButton({ userId, name, following }: { userId: st
       disabled={busy}
       aria-pressed={state !== 'none'}
       aria-label={`${followLabel(state)} ${name}`}
-      className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-bold transition-all disabled:opacity-60 ${state === 'none' ? 'bg-primary-ink text-white hover:bg-primary-hover' : 'bg-brand-text/8 text-brand-text/70 hover:bg-brand-text/12'}`}
+      className={`${variant === 'card' ? 'mt-2 w-full px-2' : 'shrink-0 px-3'} flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-bold transition-all disabled:opacity-60 ${state === 'none' ? 'bg-primary-ink text-white hover:bg-primary-hover' : 'bg-brand-text/8 text-brand-text/70 hover:bg-brand-text/12'}`}
     >
       {state === 'following' ? <Check className="h-3.5 w-3.5" aria-hidden /> : state === 'requested' ? <Clock className="h-3.5 w-3.5" aria-hidden /> : <UserPlus className="h-3.5 w-3.5" aria-hidden />}
       {followLabel(state)}

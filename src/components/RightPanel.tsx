@@ -7,7 +7,7 @@ import { MessageCircle, Play, TrendingUp, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 import { useTrending } from '@/hooks/useSearch';
-import MessageButton from '@/components/connections/MessageButton';
+import { SuggestionFollowButton } from '@/components/PeopleYouMayKnowStrip';
 import { useSentRequests } from '@/hooks/useSentRequests';
 import { getCategoryFeed } from '@/features/posttube/data/posttubeApi';
 import { useAuthUser } from '@/store/auth';
@@ -41,7 +41,7 @@ function formatViews(n: number): string {
  *   ("will show up here", "on its way"). With Trending also empty on a quiet
  *   network, a third of the screen said the app had nothing in it. Those two
  *   are gone, and every remaining card renders only when it has content.
- * - People suggestions lead, with faces and a message action, because
+ * - People suggestions lead, with faces and a Follow button, because
  *   people are what make a social feed feel inhabited. The same suggestions
  *   also appear inline in the feed, but only below this breakpoint, so no one
  *   sees the same faces twice.
@@ -86,7 +86,8 @@ const RightPanel: React.FC<RightPanelProps> = () => {
       if (hasSent(p.user_id)) return false;
       const rel = relMap?.get(p.user_id);
       if (!rel) return true;
-      return rel.connection_status !== 'pending_sent' && !rel.is_connection;
+      // Someone already followed is not a suggestion either.
+      return !rel.following && rel.connection_status !== 'pending_sent' && !rel.is_connection;
     })
     .slice(0, 5);
 
@@ -153,10 +154,16 @@ const RightPanel: React.FC<RightPanelProps> = () => {
                       </span>
                     </button>
                     {/*
-                      Message only. Connect is gone from the product; the
-                      server decides between a chat and a request.
+                      Follow only (founder, 24 Oct 2026): a suggestion is
+                      for following someone's content. Message and Connect
+                      are not offered here; the profile still has Message.
                     */}
-                    <MessageButton targetUserId={p.user_id} targetUsername={p.username} targetName={p.display_name} />
+                    <SuggestionFollowButton
+                      userId={p.user_id}
+                      name={name}
+                      following={!!relMap?.get(p.user_id)?.following}
+                      variant="row"
+                    />
                   </li>
                 );
               })}

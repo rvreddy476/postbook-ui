@@ -100,6 +100,24 @@ describe('suggestions offer Follow instead of Connect', () => {
     expect(strip).toContain('<SuggestionFollowButton')
   })
 
+  test('every suggestion surface offers only Follow (no Message, Connect or Add friend)', () => {
+    for (const file of ['src/components/PeopleYouMayKnowStrip.tsx', 'src/components/RightPanel.tsx']) {
+      const src = read(file)
+      expect(src).toContain('<SuggestionFollowButton')
+      expect(src).not.toMatch(/MessageButton|FriendRequestButton|Add friend|>\s*Connect\s*</)
+    }
+    const creators = read('src/features/reels/explore/SuggestedCreators.tsx')
+    expect(creators).not.toMatch(/MessageButton|FriendRequestButton|Add friend/)
+  })
+
+  test('the row variant does not stretch across the rail', async () => {
+    const { SuggestionFollowButton } = await import('@/components/PeopleYouMayKnowStrip')
+    const qc = new QueryClient()
+    const html = (variant: 'card' | 'row') => renderToStaticMarkup(<QueryClientProvider client={qc}><SuggestionFollowButton userId="u1" name="Ada" following={false} variant={variant} /></QueryClientProvider>)
+    expect(html('row')).not.toContain('w-full')
+    expect(html('card')).toContain('w-full')
+  })
+
   test('a group member who is not a connection gets Follow, not "Add friend"', () => {
     const src = read('src/components/groups/tabs/GroupMembersTab.tsx')
     expect(src).not.toContain('FriendRequestButton')
