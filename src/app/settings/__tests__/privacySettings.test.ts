@@ -28,6 +28,10 @@ const privateAccount = {
         who_can_see_last_seen: "connections_only",
         who_can_see_profile_photo: "everyone",
         auto_filter_abusive_content: true,
+        // Mentions and tags (2026-10-24): user-service store/users.go:50-51
+        // (json who_can_mention / who_can_tag), vocabulary service/user.go:73-75.
+        who_can_mention: "following",
+        who_can_tag: "no_one",
         strict_privacy_mode: false,
         under_18_mode: false,
         privacy_version: 4,
@@ -51,6 +55,8 @@ describe("parsePrivacySettings", () => {
             who_can_see_last_seen: "connections_only",
             who_can_see_profile_photo: "everyone",
             auto_filter_abusive_content: true,
+            who_can_mention: "following",
+            who_can_tag: "no_one",
             strict_privacy_mode: false,
             under_18_mode: false,
         })
@@ -140,6 +146,8 @@ describe("privacy page (T-08)", () => {
             lastSeen: "connections_only",
             profilePhoto: "everyone",
             filterAbusiveContent: true,
+            mentions: "following",
+            tags: "no_one",
         })
         expect(privacyPatch(s, form)).toEqual({})
     })
@@ -173,6 +181,8 @@ describe("privacy page (T-08)", () => {
             lastSeen: "everyone",
             profilePhoto: "no_one",
             filterAbusiveContent: false,
+            mentions: "no_one",
+            tags: "everyone",
         })
         expect(patch).toEqual({
             account_visibility: "public",
@@ -181,6 +191,8 @@ describe("privacy page (T-08)", () => {
             who_can_see_last_seen: "everyone",
             who_can_see_profile_photo: "no_one",
             auto_filter_abusive_content: false,
+            who_can_mention: "no_one",
+            who_can_tag: "everyone",
         })
     })
 

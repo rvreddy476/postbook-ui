@@ -158,6 +158,29 @@ export function useToggleBookmark() {
     })
 }
 
+/**
+ * useSetBookmark – save (POST) or unsave (DELETE) by the state the viewer
+ * wants. useToggleBookmark always POSTs, which since the route became an
+ * idempotent set (post-service handler.go: "PUT-like semantics on POST")
+ * never unsaves. Saved items and collections refresh too.
+ */
+export function useSetBookmark() {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: async ({ postId, saved }: { postId: string; saved: boolean }) => {
+            if (saved) await api.post(`/v1/posts/${postId}/bookmark`)
+            else await api.delete(`/v1/posts/${postId}/bookmark`)
+            return { postId, saved }
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ["home-feed"] })
+            qc.invalidateQueries({ queryKey: ["profile-posts"] })
+            qc.invalidateQueries({ queryKey: ["saved-items"] })
+            qc.invalidateQueries({ queryKey: ["saved-collections"] })
+        },
+    })
+}
+
 export function useToggleTune() {
     const qc = useQueryClient()
     return useMutation({

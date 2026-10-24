@@ -9,6 +9,7 @@ import {
   Flag,
   Gauge,
   Globe,
+  Hash,
   Hourglass,
   LayoutGrid,
   ListFilter,
@@ -110,6 +111,8 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
       { key: "wellbeing", label: "Time & wellbeing", icon: Hourglass, href: "/settings/wellbeing" },
       // Feed filter words (trust-safety); the DM word filter is on Inbox & messaging.
       { key: "keyword-filters", label: "Filter keywords", icon: ListFilter, href: "/settings/keyword-filters" },
+      // The tags you follow; their posts are the home feed's Hashtags tab.
+      { key: "followed-hashtags", label: "Followed hashtags", icon: Hash, href: "/settings/followed-hashtags" },
       { key: "modules", label: "Module profiles", icon: Globe, href: "/settings/modules" },
       { key: "channel", label: "Channel settings", icon: Tv, href: "/settings/channel" },
       { key: "mini-apps", label: "Mini apps", icon: LayoutGrid, href: "/apps" },

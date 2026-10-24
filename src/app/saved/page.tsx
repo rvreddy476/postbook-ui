@@ -1,16 +1,46 @@
 "use client"
 
-import React, { useState, useCallback } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
+import { Bookmark, ChevronRight, FolderInput, FolderPlus, Loader2, Pencil, Trash2, X } from "lucide-react"
 import AppShell from "@/components/AppShell"
-import { useSavedItems, useCollections, useUnsaveItem } from "@/hooks/useSavedItems"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { useGlobalToast } from "@/contexts/ToastContext"
+import {
+    SAVED_COLLECTIONS_KEY,
+    useCollections,
+    useCreateCollection,
+    useDeleteCollection,
+    useMoveSavedItem,
+    useRenameCollection,
+    useSavedItems,
+    useUnsaveItem,
+} from "@/hooks/useSavedItems"
 import { usePostDetail } from "@/hooks/useFeedPosts"
 import { useUserProfile } from "@/hooks/useEditProfile"
-import type { SavedItem, SavedCollection } from "@/types/profile"
+import SaveToCollectionSheet from "@/features/saved/SaveToCollectionSheet"
+import CollectionNameDialog from "@/features/saved/CollectionNameDialog"
+import {
+    COLLECTION_NAME_PROBLEM_TEXT,
+    DEFAULT_COLLECTION_NAME,
+    canCreateCollection,
+    errorCode,
+    resolveTab,
+    savedErrorText,
+    tabOf,
+    type SavedCollectionView,
+    type SavedItemView,
+    type SavedTab,
+} from "@/features/saved/savedCollections"
 
-// ---------------------------------------------------------------------------
-// Routing + label helpers
-// ---------------------------------------------------------------------------
+/*
+  /saved: the viewer's saved posts, one tab per collection (post-service
+  saved collections, 546eec063). All Saved is the default collection — the
+  posts in no named collection — so a post moved to "Recipes" is listed
+  under Recipes only (an item is in exactly one collection). Deleting a
+  collection moves its posts back to All Saved; nothing is unsaved.
+*/
 
 const REEL_TYPES = new Set(["reel", "short", "flick"])
 
@@ -18,96 +48,37 @@ function contentRoute(post: { id: string; content_type?: string } | undefined, f
     if (!post) return `/post/${fallbackId}`
     const t = post.content_type
     if (t && REEL_TYPES.has(t)) return `/reels?postId=${post.id}`
-    if (t === "video") return `/posttube/watch?v=${post.id}`
+    if (t === "video" || t === "long_video") return `/posttube/watch?v=${post.id}`
     return `/post/${post.id}`
 }
 
 function contentLabel(post: { content_type?: string } | undefined): string {
     const t = post?.content_type
     if (!t) return "Post"
-    if (REEL_TYPES.has(t)) return "Reels"
-    if (t === "video") return "Video"
+    if (REEL_TYPES.has(t)) return "Reel"
+    if (t === "video" || t === "long_video") return "Video"
     if (t === "article") return "Article"
     if (t === "poll") return "Poll"
     return "Post"
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function formatTimeAgo(dateStr: string): string {
-    const diff = Date.now() - new Date(dateStr).getTime()
-    const mins = Math.floor(diff / 60_000)
-    if (mins < 1) return "Just now"
-    if (mins < 60) return `${mins}m ago`
-    const hrs = Math.floor(mins / 60)
-    if (hrs < 24) return `${hrs}h ago`
-    const days = Math.floor(hrs / 24)
-    if (days < 7) return `${days}d ago`
-    return `${Math.floor(days / 7)}w ago`
-}
-
-function targetTypeIcon(type: string): React.ReactNode {
-    switch (type.toLowerCase()) {
-        case "post":
-            return (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-            )
-        case "video":
-            return (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
-                </svg>
-            )
-        case "short":
-            return (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                </svg>
-            )
-        case "photo":
-            return (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-            )
-        default:
-            return (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-            )
-    }
-}
-
-function targetTypeBadgeColor(type: string): string {
-    switch (type.toLowerCase()) {
-        case "post":    return "bg-brand-text/5 text-brand-text border-brand-text/10"
-        case "video":   return "bg-indigo-50 text-indigo-600 border-indigo-100"
-        case "short":   return "bg-fuchsia-50 text-fuchsia-600 border-fuchsia-100"
-        case "photo":   return "bg-rose-50 text-rose-600 border-rose-100"
-        default:        return "bg-brand-secondary text-brand-highlight border-brand-divider"
-    }
+function itemCount(n: number): string {
+    return n === 1 ? "1 item" : `${n.toLocaleString("en-US")} items`
 }
 
 // ---------------------------------------------------------------------------
-// Skeleton loader
+// Skeleton
 // ---------------------------------------------------------------------------
 
 function SavedItemSkeleton() {
     return (
-        <div className="bg-brand-card rounded-2xl border border-brand-divider p-5 shadow-xs animate-pulse">
+        <div className="rounded-2xl border border-brand-divider bg-brand-card p-4 shadow-xs motion-safe:animate-pulse" aria-hidden="true">
             <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-brand-secondary shrink-0" />
-                <div className="flex-1 space-y-2.5 min-w-0">
-                    <div className="h-3 bg-brand-secondary rounded-full w-1/3" />
-                    <div className="h-3 bg-brand-secondary rounded-full w-1/2" />
-                    <div className="h-2.5 bg-brand-secondary rounded-full w-1/4" />
+                <div className="h-24 w-24 shrink-0 rounded-xl bg-brand-secondary" />
+                <div className="min-w-0 flex-1 space-y-2.5">
+                    <div className="h-3 w-1/2 rounded-full bg-brand-secondary" />
+                    <div className="h-3 w-1/3 rounded-full bg-brand-secondary" />
                 </div>
-                <div className="w-16 h-8 bg-brand-secondary rounded-xl shrink-0" />
             </div>
         </div>
     )
@@ -118,356 +89,463 @@ function SavedItemSkeleton() {
 // ---------------------------------------------------------------------------
 
 interface SavedItemCardProps {
-    item: SavedItem
+    item: SavedItemView
+    collectionName: string
+    onMove: (item: SavedItemView) => void
     onUnsave: (id: string) => void
-    isPending: boolean
+    removing: boolean
 }
 
-function SavedItemCard({ item, onUnsave, isPending }: SavedItemCardProps) {
+function SavedItemCard({ item, collectionName, onMove, onUnsave, removing }: SavedItemCardProps) {
     const router = useRouter()
-    const { data: post } = usePostDetail(item.target_id)
+    const { data: post } = usePostDetail(item.targetId)
     const { data: author } = useUserProfile(post?.author_id)
 
-    const route = contentRoute(post as { id: string; content_type?: string } | undefined, item.target_id)
+    const route = contentRoute(post as { id: string; content_type?: string } | undefined, item.targetId)
     const label = contentLabel(post)
-    const authorName = author?.display_name || "Unknown"
-    const authorAvatar = author?.avatar_media_id ? `/v1/media/${author.avatar_media_id}/serve` : null
+    const authorName = author?.display_name || "Someone"
     const firstMedia = post?.media?.[0]
     const thumbnailUrl = firstMedia ? `/v1/media/${firstMedia.media_id}/serve` : null
     const isVideoMedia = firstMedia?.kind === "video"
     const title = post?.title || post?.text || "Untitled"
-
-    const handleNavigate = useCallback(() => {
-        router.push(route)
-    }, [router, route])
-
-    const stop = (e: React.MouseEvent) => e.stopPropagation()
+    const open = useCallback(() => router.push(route), [router, route])
 
     return (
-        <div
-            onClick={handleNavigate}
-            className="group bg-brand-card rounded-2xl border border-brand-divider overflow-hidden shadow-xs hover:shadow-md hover:border-brand-text/10 transition-all duration-300 cursor-pointer"
-        >
+        <article className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs transition-shadow hover:shadow-md">
             <div className="flex items-stretch gap-4 p-4">
-                {/* Thumbnail */}
-                <div className="relative shrink-0 w-32 h-32 rounded-xl overflow-hidden bg-brand-secondary">
+                <button
+                    type="button"
+                    onClick={open}
+                    className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-brand-secondary sm:h-28 sm:w-28"
+                    aria-label={`Open ${label.toLowerCase()}: ${title}`}
+                >
                     {thumbnailUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                        <img src={thumbnailUrl} alt="" className="h-full w-full object-cover" />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center text-brand-text/30">
-                            {targetTypeIcon(item.target_type)}
-                        </div>
+                        <span className="flex h-full w-full items-center justify-center text-brand-text/30">
+                            <Bookmark className="h-6 w-6" aria-hidden="true" />
+                        </span>
                     )}
                     {isVideoMedia && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                            <div className="w-10 h-10 rounded-full bg-black/60 flex items-center justify-center">
-                                <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/20" aria-hidden="true">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black/60">
+                                <svg className="ml-0.5 h-4 w-4 text-white" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M8 5v14l11-7L8 5z" />
                                 </svg>
-                            </div>
-                        </div>
+                            </span>
+                        </span>
                     )}
-                </div>
+                </button>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0 flex flex-col gap-2">
-                    <h3 className="text-base font-semibold text-brand-text line-clamp-2">{title}</h3>
-                    <p className="text-xs text-brand-text/60">
+                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                    <button type="button" onClick={open} className="text-left">
+                        <h3 className="line-clamp-2 text-base font-semibold text-brand-text">{title}</h3>
+                    </button>
+                    <p className="text-xs text-muted-foreground">
                         {label} · {authorName}
                     </p>
+                    <p className="text-xs text-muted-foreground">
+                        In <span className="font-semibold text-brand-text">{collectionName}</span>
+                    </p>
 
-                    <div className="flex items-center gap-2 mt-auto">
-                        {authorAvatar ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={authorAvatar} alt="" className="w-5 h-5 rounded-full object-cover ring-2 ring-blue-500/40" />
-                        ) : (
-                            <div className="w-5 h-5 rounded-full bg-brand-secondary ring-2 ring-blue-500/40" />
-                        )}
-                        <span className="text-xs text-brand-text/60">
-                            Saved from <span className="font-semibold text-brand-text">{authorName}&apos;s {label.toLowerCase()}</span>
-                        </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 pt-2" onClick={stop}>
+                    <div className="mt-auto flex items-center gap-2 pt-2">
                         <button
                             type="button"
-                            onClick={() => onUnsave(item.id)}
-                            disabled={isPending}
-                            className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold bg-brand-secondary text-brand-text hover:bg-brand-text/10 active:scale-95 transition-all disabled:opacity-50"
-                            title="Remove from Saved"
+                            onClick={() => onMove(item)}
+                            disabled={removing}
+                            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand-secondary px-3 py-2 text-sm font-semibold text-brand-text transition-colors hover:bg-brand-text/10 disabled:opacity-50"
                         >
-                            {isPending ? "Removing..." : "Add to Collection"}
+                            <FolderInput className="h-4 w-4" aria-hidden="true" />
+                            Move to collection
                         </button>
                         <button
                             type="button"
-                            onClick={handleNavigate}
-                            className="w-10 h-10 rounded-xl bg-brand-secondary text-brand-text hover:bg-brand-text/10 active:scale-95 transition-all flex items-center justify-center"
-                            title="Open"
+                            onClick={open}
+                            aria-label="Open"
+                            className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-secondary text-brand-text transition-colors hover:bg-brand-text/10"
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                            </svg>
+                            <ChevronRight className="h-4 w-4" aria-hidden="true" />
                         </button>
                         <button
                             type="button"
                             onClick={() => onUnsave(item.id)}
-                            disabled={isPending}
-                            className="w-10 h-10 rounded-xl bg-brand-secondary text-brand-text hover:bg-rose-500/20 hover:text-rose-400 active:scale-95 transition-all flex items-center justify-center"
-                            title="Unsave"
+                            disabled={removing}
+                            aria-label="Remove from Saved"
+                            className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-secondary text-brand-text transition-colors hover:bg-destructive/10 hover:text-danger disabled:opacity-50"
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            {removing ? <Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" /> : <X className="h-4 w-4" aria-hidden="true" />}
                         </button>
                     </div>
                 </div>
             </div>
-        </div>
+        </article>
     )
 }
 
 // ---------------------------------------------------------------------------
-// Collection tab bar
+// Collection tabs
 // ---------------------------------------------------------------------------
 
-interface CollectionTabBarProps {
-    collections: SavedCollection[]
-    activeCollection: string | undefined
-    onSelect: (name: string | undefined) => void
+interface CollectionTabsProps {
+    collections: SavedCollectionView[]
+    active: SavedTab
+    onSelect: (tab: SavedTab) => void
+    onCreate: () => void
     isLoading: boolean
 }
 
-function CollectionTabBar({ collections, activeCollection, onSelect, isLoading }: CollectionTabBarProps) {
-    const allCount = collections.reduce((sum, c) => sum + c.count, 0)
-
+function CollectionTabs({ collections, active, onSelect, onCreate, isLoading }: CollectionTabsProps) {
     if (isLoading) {
         return (
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
-                {[80, 100, 90, 110].map((w, i) => (
-                    <div key={i} className={`h-9 rounded-xl bg-brand-secondary animate-pulse shrink-0`} style={{ width: w }} />
+            <div className="flex items-center gap-2 overflow-x-auto pb-1" aria-hidden="true">
+                {[96, 110, 90].map((w, i) => (
+                    <div key={i} className="h-10 shrink-0 rounded-xl bg-brand-secondary motion-safe:animate-pulse" style={{ width: w }} />
                 ))}
             </div>
         )
     }
 
     return (
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
-            {/* All tab */}
-            <button
-                onClick={() => onSelect(undefined)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-widest shrink-0 transition-all duration-200 border ${
-                    activeCollection === undefined
-                        ? "bg-brand-card text-brand-text border-brand-text/20 shadow-xs shadow-brand-text/10"
-                        : "bg-brand-secondary text-brand-highlight border-transparent hover:bg-brand-card hover:text-brand-text hover:border-brand-divider"
-                }`}
-            >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-                All
-                {allCount > 0 && (
-                    <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[8px] font-black ${
-                        activeCollection === undefined ? "bg-brand-text/10 text-brand-text" : "bg-brand-secondary text-brand-highlight"
-                    }`}>
-                        {allCount}
-                    </span>
-                )}
-            </button>
-
-            {/* Per-collection tabs */}
-            {collections.map((col) => (
-                <button
-                    key={col.name}
-                    onClick={() => onSelect(col.name)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-widest shrink-0 transition-all duration-200 border ${
-                        activeCollection === col.name
-                            ? "bg-brand-card text-brand-text border-brand-text/20 shadow-xs shadow-brand-text/10"
-                            : "bg-brand-secondary text-brand-highlight border-transparent hover:bg-brand-card hover:text-brand-text hover:border-brand-divider"
-                    }`}
-                >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                    </svg>
-                    {col.name}
-                    {col.count > 0 && (
-                        <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[8px] font-black ${
-                            activeCollection === col.name ? "bg-brand-text/10 text-brand-text" : "bg-brand-secondary text-brand-highlight"
-                        }`}>
-                            {col.count}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Collections">
+            {collections.map((c) => {
+                const tab = tabOf(c.id)
+                const selected = active === tab
+                return (
+                    <button
+                        key={tab}
+                        type="button"
+                        role="tab"
+                        aria-selected={selected}
+                        onClick={() => onSelect(tab)}
+                        className={`flex shrink-0 items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-colors ${
+                            selected
+                                ? "border-primary-outline bg-primary-tint text-primary-ink"
+                                : "border-transparent bg-brand-secondary text-brand-text hover:border-brand-divider hover:bg-brand-card"
+                        }`}
+                    >
+                        <span className="max-w-[12rem] truncate">{c.name}</span>
+                        <span className={`rounded-full px-1.5 text-xs tabular-nums ${selected ? "bg-primary-ink/10" : "bg-brand-text/5 text-muted-foreground"}`}>
+                            {c.count.toLocaleString("en-US")}
                         </span>
-                    )}
-                </button>
-            ))}
+                    </button>
+                )
+            })}
+            <button
+                type="button"
+                onClick={onCreate}
+                className="flex shrink-0 items-center gap-1.5 rounded-xl border border-dashed border-brand-divider px-4 py-2 text-sm font-semibold text-primary-ink transition-colors hover:bg-primary-tint"
+            >
+                <FolderPlus className="h-4 w-4" aria-hidden="true" />
+                New collection
+            </button>
         </div>
     )
 }
 
 // ---------------------------------------------------------------------------
-// Main page
+// Page
 // ---------------------------------------------------------------------------
 
+type Dialog =
+    | { kind: "create" }
+    | { kind: "rename"; collection: SavedCollectionView }
+    | { kind: "delete"; collection: SavedCollectionView }
+    | null
+
 export default function SavedPage() {
-    const [activeCollection, setActiveCollection] = useState<string | undefined>(undefined)
+    const qc = useQueryClient()
+    const toast = useGlobalToast()
+    const [chosenTab, setChosenTab] = useState<SavedTab>("default")
     const [pendingUnsaveId, setPendingUnsaveId] = useState<string | null>(null)
+    const [moving, setMoving] = useState<SavedItemView | null>(null)
+    const [moveError, setMoveError] = useState<string | null>(null)
+    const [dialog, setDialog] = useState<Dialog>(null)
+    const [dialogError, setDialogError] = useState<string | null>(null)
 
-    const {
-        data: collectionsData,
-        isLoading: collectionsLoading,
-    } = useCollections()
-    const collections: SavedCollection[] = collectionsData ?? []
+    const collectionsQuery = useCollections()
+    const collections = collectionsQuery.data ?? []
+    // A collection deleted elsewhere drops the view back to All Saved.
+    const tab = resolveTab(chosenTab, collectionsQuery.data)
+    const activeCollection = collections.find((c) => tabOf(c.id) === tab)
+    const activeName = activeCollection?.name ?? DEFAULT_COLLECTION_NAME
 
-    const {
-        data,
-        isLoading,
-        isFetchingNextPage,
-        hasNextPage,
-        fetchNextPage,
-        isError,
-    } = useSavedItems(activeCollection)
+    const items = useSavedItems(tab, !collectionsQuery.isLoading)
+    const allItems: SavedItemView[] = items.data?.pages.flatMap((page) => page.items) ?? []
 
-    const unsaveItem = useUnsaveItem()
+    const unsave = useUnsaveItem()
+    const move = useMoveSavedItem()
+    const create = useCreateCollection()
+    const rename = useRenameCollection()
+    const remove = useDeleteCollection()
 
-    const allItems: SavedItem[] = data?.pages.flatMap((page) => page.data) ?? []
+    // The listed collection vanished between the tabs and the list: re-read the tabs.
+    const itemsMissing = items.isError && errorCode(items.error) === "COLLECTION_NOT_FOUND"
+    useEffect(() => {
+        if (itemsMissing) {
+            void qc.invalidateQueries({ queryKey: SAVED_COLLECTIONS_KEY })
+            setChosenTab("default")
+        }
+    }, [itemsMissing, qc])
 
-    const handleUnsave = useCallback((id: string) => {
+    const nameOf = (collectionId: string | null) =>
+        collections.find((c) => c.id === collectionId)?.name ?? DEFAULT_COLLECTION_NAME
+
+    const handleUnsave = (id: string) => {
         setPendingUnsaveId(id)
-        unsaveItem.mutate(id, {
+        unsave.mutate(id, {
+            onError: (err) => toast({ type: "error", title: savedErrorText(err, "unsave") }),
             onSettled: () => setPendingUnsaveId(null),
         })
-    }, [unsaveItem])
+    }
+
+    const handleMove = (to: { id: string | null; name: string }) => {
+        if (!moving) return
+        setMoveError(null)
+        move.mutate(
+            { item: moving, toCollectionId: to.id, tab },
+            {
+                onSuccess: () => {
+                    setMoving(null)
+                    toast({ type: "success", title: `Moved to ${to.name}` })
+                },
+                onError: (err) => setMoveError(savedErrorText(err, "move")),
+            },
+        )
+    }
+
+    const openDialog = (next: Dialog) => {
+        setDialogError(null)
+        setDialog(next)
+    }
+
+    const handleCreate = (name: string) => {
+        create.mutate(name, {
+            onSuccess: (created) => {
+                setDialog(null)
+                setChosenTab(tabOf(created.id))
+            },
+            onError: (err) => setDialogError(savedErrorText(err, "create")),
+        })
+    }
+
+    const handleRename = (collection: SavedCollectionView, name: string) => {
+        rename.mutate(
+            { id: collection.id!, name },
+            {
+                onSuccess: () => setDialog(null),
+                onError: (err) => setDialogError(savedErrorText(err, "rename")),
+            },
+        )
+    }
+
+    const handleDelete = (collection: SavedCollectionView) => {
+        remove.mutate(collection.id!, {
+            onSuccess: ({ movedToDefault }) => {
+                setDialog(null)
+                setChosenTab("default")
+                toast({
+                    type: "success",
+                    title: `Deleted ${collection.name}`,
+                    description: movedToDefault > 0 ? `${itemCount(movedToDefault)} moved to ${DEFAULT_COLLECTION_NAME}.` : undefined,
+                })
+            },
+            onError: (err) => {
+                setDialog(null)
+                toast({ type: "error", title: savedErrorText(err, "delete") })
+            },
+        })
+    }
+
+    const createAllowed = canCreateCollection(collections)
 
     return (
         <AppShell>
-        <div className="min-h-screen bg-brand-bg">
-            <div className="max-w-3xl mx-auto px-4 pt-10 pb-16">
-
-                {/* Page heading */}
-                <div className="mb-8">
-                    <div className="flex items-center gap-3 mb-1">
-                        <div className="w-10 h-10 orchid-gradient rounded-[0.8rem] flex items-center justify-center shadow-lg shadow-brand-text/20">
-                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                            </svg>
+            <div className="min-h-screen bg-brand-bg">
+                <div className="mx-auto max-w-3xl px-4 pb-16 pt-10">
+                    <div className="mb-8 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-tint text-primary-ink" aria-hidden="true">
+                            <Bookmark className="h-5 w-5" />
                         </div>
-                        <h1 className="text-2xl font-black tracking-tight text-brand-text">Saved</h1>
-                    </div>
-                    <p className="text-[11px] font-bold text-brand-text/60 tracking-widest ml-[52px]">
-                        Your bookmarked content, organised by collection
-                    </p>
-                </div>
-
-                {/* Collection tab bar */}
-                <div className="mb-6">
-                    <CollectionTabBar
-                        collections={collections}
-                        activeCollection={activeCollection}
-                        onSelect={setActiveCollection}
-                        isLoading={collectionsLoading}
-                    />
-                </div>
-
-                {/* Divider */}
-                <div className="h-px bg-brand-secondary mb-6" />
-
-                {/* Content area */}
-                {isLoading ? (
-                    <div className="space-y-3">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                            <SavedItemSkeleton key={i} />
-                        ))}
-                    </div>
-                ) : isError ? (
-                    <div className="flex flex-col items-center justify-center py-20 gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center">
-                            <svg className="w-6 h-6 text-rose-400" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-[11px] font-black tracking-widest text-brand-text">Something went wrong</p>
-                            <p className="text-[10px] font-bold text-brand-text/60 mt-0.5">Failed to load your saved items.</p>
+                        <div>
+                            <h1 className="text-2xl font-bold tracking-tight text-brand-text">Saved</h1>
+                            <p className="text-sm text-muted-foreground">Only you can see what you save.</p>
                         </div>
                     </div>
-                ) : allItems.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 gap-4">
-                        <div className="w-16 h-16 rounded-2xl orchid-gradient flex items-center justify-center shadow-lg shadow-brand-text/20 opacity-30">
-                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                            </svg>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-[11px] font-black tracking-widest text-brand-text">
-                                {activeCollection ? `No items in "${activeCollection}"` : "Nothing saved yet"}
-                            </p>
-                            <p className="text-[10px] font-bold text-brand-text/60 mt-0.5">
-                                {activeCollection
-                                    ? "Try another collection or save something new."
-                                    : "Bookmark posts, videos, and more to find them here."}
+
+                    <div className="mb-4">
+                        {collectionsQuery.isError ? (
+                            <div role="alert" className="rounded-2xl border border-brand-divider bg-brand-card px-4 py-3 text-sm text-brand-text">
+                                {savedErrorText(collectionsQuery.error, "load")}{" "}
+                                <button type="button" onClick={() => void collectionsQuery.refetch()} className="font-semibold text-primary-ink hover:underline">
+                                    Try again
+                                </button>
+                            </div>
+                        ) : (
+                            <CollectionTabs
+                                collections={collections}
+                                active={tab}
+                                onSelect={setChosenTab}
+                                onCreate={() =>
+                                    createAllowed
+                                        ? openDialog({ kind: "create" })
+                                        : toast({ type: "warning", title: COLLECTION_NAME_PROBLEM_TEXT.limit })
+                                }
+                                isLoading={collectionsQuery.isLoading}
+                            />
+                        )}
+                    </div>
+
+                    {/* The open collection: its name, count, and Rename / Delete for a named one. */}
+                    <div className="mb-6 flex flex-wrap items-center gap-3 border-b border-brand-divider pb-4">
+                        <div className="min-w-0 flex-1">
+                            <h2 className="truncate text-lg font-semibold text-brand-text">{activeName}</h2>
+                            <p className="text-xs text-muted-foreground">
+                                {activeCollection ? itemCount(activeCollection.count) : ""}
+                                {tab === "default" ? " not in a collection" : ""}
                             </p>
                         </div>
-                    </div>
-                ) : (
-                    <>
-                        {/* Item count header */}
-                        <div className="flex items-center justify-between mb-4">
-                            <p className="text-[9px] font-black tracking-widest text-brand-text/60">
-                                {allItems.length} item{allItems.length !== 1 ? "s" : ""}
-                                {activeCollection ? ` in "${activeCollection}"` : " total"}
-                            </p>
-                        </div>
-
-                        {/* Saved item list */}
-                        <div className="space-y-3">
-                            {allItems.map((item) => (
-                                <SavedItemCard
-                                    key={item.id}
-                                    item={item}
-                                    onUnsave={handleUnsave}
-                                    isPending={pendingUnsaveId === item.id}
-                                />
-                            ))}
-                        </div>
-
-                        {/* Load more */}
-                        {hasNextPage && (
-                            <div className="mt-8 flex justify-center">
+                        {activeCollection && !activeCollection.isDefault && (
+                            <div className="flex items-center gap-2">
                                 <button
-                                    onClick={() => fetchNextPage()}
-                                    disabled={isFetchingNextPage}
-                                    className="flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black tracking-widest bg-brand-card border border-brand-divider text-brand-highlight hover:border-brand-text/20 hover:text-brand-text hover:bg-brand-text/5 active:scale-95 transition-all duration-200 shadow-xs disabled:opacity-60 disabled:cursor-not-allowed"
+                                    type="button"
+                                    onClick={() => openDialog({ kind: "rename", collection: activeCollection })}
+                                    className="inline-flex items-center gap-1.5 rounded-xl border border-brand-divider px-3 py-2 text-sm font-semibold text-brand-text hover:bg-brand-secondary"
                                 >
-                                    {isFetchingNextPage ? (
-                                        <>
-                                            <div className="w-3.5 h-3.5 border-2 border-brand-text/30 border-t-transparent rounded-full animate-spin" />
-                                            Loading...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                            Load more
-                                        </>
-                                    )}
+                                    <Pencil className="h-4 w-4" aria-hidden="true" />
+                                    Rename
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => openDialog({ kind: "delete", collection: activeCollection })}
+                                    className="inline-flex items-center gap-1.5 rounded-xl border border-brand-divider px-3 py-2 text-sm font-semibold text-danger hover:bg-destructive/10"
+                                >
+                                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                                    Delete
                                 </button>
                             </div>
                         )}
+                    </div>
 
-                        {/* End of list indicator */}
-                        {!hasNextPage && allItems.length > 0 && (
-                            <div className="mt-10 flex items-center gap-3">
-                                <div className="flex-1 h-px bg-brand-secondary" />
-                                <p className="text-[8px] font-black tracking-widest text-brand-text/30 shrink-0">
-                                    End of saved items
-                                </p>
-                                <div className="flex-1 h-px bg-brand-secondary" />
+                    {collectionsQuery.isLoading || items.isLoading ? (
+                        <div className="space-y-3" role="status" aria-label="Loading saved items">
+                            {Array.from({ length: 4 }).map((_, i) => (
+                                <SavedItemSkeleton key={i} />
+                            ))}
+                        </div>
+                    ) : items.isError && !itemsMissing ? (
+                        <div role="alert" className="flex flex-col items-center gap-3 py-16 text-center">
+                            <p className="text-sm font-semibold text-brand-text">{savedErrorText(items.error, "load")}</p>
+                            <button
+                                type="button"
+                                onClick={() => void items.refetch()}
+                                className="rounded-xl border border-brand-divider px-4 py-2 text-sm font-semibold text-brand-text hover:bg-brand-secondary"
+                            >
+                                Try again
+                            </button>
+                        </div>
+                    ) : allItems.length === 0 ? (
+                        <div className="flex flex-col items-center gap-3 py-16 text-center">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-tint text-primary-ink" aria-hidden="true">
+                                <Bookmark className="h-7 w-7" />
                             </div>
-                        )}
-                    </>
-                )}
+                            <p className="text-base font-semibold text-brand-text">
+                                {tab === "default" ? "Nothing here yet" : `Nothing in ${activeName} yet`}
+                            </p>
+                            <p className="max-w-sm text-sm text-muted-foreground">
+                                {tab === "default"
+                                    ? "Tap Save on a post to keep it here. Posts you move to a collection are listed under that collection."
+                                    : "Use Move to collection on a saved post, or Save to collection when you save one."}
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="space-y-3">
+                                {allItems.map((item) => (
+                                    <SavedItemCard
+                                        key={item.id}
+                                        item={item}
+                                        collectionName={nameOf(item.collectionId)}
+                                        onMove={(it) => {
+                                            setMoveError(null)
+                                            setMoving(it)
+                                        }}
+                                        onUnsave={handleUnsave}
+                                        removing={pendingUnsaveId === item.id}
+                                    />
+                                ))}
+                            </div>
+
+                            {items.hasNextPage ? (
+                                <div className="mt-8 flex justify-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => void items.fetchNextPage()}
+                                        disabled={items.isFetchingNextPage}
+                                        className="inline-flex items-center gap-2 rounded-xl border border-brand-divider bg-brand-card px-5 py-2.5 text-sm font-semibold text-brand-text hover:bg-brand-secondary disabled:opacity-60"
+                                    >
+                                        {items.isFetchingNextPage && <Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />}
+                                        {items.isFetchingNextPage ? "Loading…" : "Load more"}
+                                    </button>
+                                </div>
+                            ) : (
+                                <p className="mt-10 text-center text-xs text-muted-foreground">That’s everything in {activeName}.</p>
+                            )}
+                        </>
+                    )}
+                </div>
             </div>
-        </div>
+
+            {moving && (
+                <SaveToCollectionSheet
+                    title="Move to collection"
+                    currentCollectionId={moving.collectionId}
+                    busy={move.isPending}
+                    error={moveError}
+                    onPick={handleMove}
+                    onClose={() => { if (!move.isPending) setMoving(null) }}
+                />
+            )}
+
+            {dialog?.kind === "create" && (
+                <CollectionNameDialog
+                    mode="create"
+                    collections={collections}
+                    busy={create.isPending}
+                    error={dialogError}
+                    onSubmit={handleCreate}
+                    onClose={() => { if (!create.isPending) setDialog(null) }}
+                />
+            )}
+
+            {dialog?.kind === "rename" && (
+                <CollectionNameDialog
+                    mode="rename"
+                    collection={dialog.collection}
+                    collections={collections}
+                    busy={rename.isPending}
+                    error={dialogError}
+                    onSubmit={(name) => handleRename(dialog.collection, name)}
+                    onClose={() => { if (!rename.isPending) setDialog(null) }}
+                />
+            )}
+
+            <ConfirmDialog
+                open={dialog?.kind === "delete"}
+                onClose={() => { if (!remove.isPending) setDialog(null) }}
+                onConfirm={() => { if (dialog?.kind === "delete") handleDelete(dialog.collection) }}
+                title={dialog?.kind === "delete" ? `Delete ${dialog.collection.name}?` : "Delete collection?"}
+                description={
+                    dialog?.kind === "delete"
+                        ? dialog.collection.count > 0
+                            ? `The ${itemCount(dialog.collection.count)} in it move to ${DEFAULT_COLLECTION_NAME}. Nothing is unsaved.`
+                            : "It is empty. Nothing is unsaved."
+                        : ""
+                }
+                confirmLabel="Delete collection"
+                destructive
+                loading={remove.isPending}
+            />
         </AppShell>
     )
 }

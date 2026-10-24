@@ -20,7 +20,7 @@ export function HashtagGrid({ tiles }: { tiles: HashtagTile[] }) {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={tile.posterUrl} alt="" loading="lazy" decoding="async" />
             ) : (
-              <span className="absolute inset-0 flex items-center p-3 text-[13px] font-semibold leading-snug" aria-hidden>
+              <span className="absolute inset-0 flex items-center p-3 text-sm font-semibold leading-snug" aria-hidden>
                 <span className="line-clamp-6">{tile.text || "Post"}</span>
               </span>
             )}

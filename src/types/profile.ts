@@ -376,6 +376,9 @@ export interface ReactionToggleResult {
 }
 
 // --- Saved Items ---
+// The wire shapes (post-service store/postgres/saved.go:17-27,
+// service/saved_collections.go:82-90). The app reads them through the
+// decoders in features/saved/savedCollections.ts.
 
 export interface SavedItem {
     id: string
@@ -383,12 +386,19 @@ export interface SavedItem {
     target_type: string
     target_id: string
     collection_name: string
+    /** null = the default collection, All Saved. */
+    collection_id: string | null
     created_at: string
 }
 
 export interface SavedCollection {
+    /** null = the default collection, All Saved. */
+    id: string | null
     name: string
     count: number
+    is_default: boolean
+    created_at?: string
+    updated_at?: string
 }
 
 // --- About ---

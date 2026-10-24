@@ -8,7 +8,11 @@ import { useFeedReaction } from '@/hooks/useFeedReaction';
 import { normalizeReaction } from '@/lib/reactions';
 import FeedReactionControl from '@/components/reactions/FeedReactionControl';
 import Link from 'next/link';
-import { useToggleBookmark, useTogglePin, useHidePost, useDeletePost, useEditPost } from '@/hooks/usePostActions';
+import { useSetBookmark, useTogglePin, useHidePost, useDeletePost, useEditPost } from '@/hooks/usePostActions';
+import { useSavePostToCollection } from '@/hooks/useSavedItems';
+import SaveToCollectionSheet from '@/features/saved/SaveToCollectionSheet';
+import { savedErrorText } from '@/features/saved/savedCollections';
+import SavedPostToast from '@/components/feed/SavedPostToast';
 import EditPostSheet from '@/components/feed/EditPostSheet';
 import { postEditErrorCopy, type PostEditBody } from '@/components/feed/postEdit';
 import { useGlobalToast } from '@/contexts/ToastContext';
@@ -76,7 +80,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   const { data: profile } = useMyProfile();
   const likeMutation = useFeedReaction(post.id);
-  const bookmarkMutation = useToggleBookmark();
+  const bookmarkMutation = useSetBookmark();
+  const saveToCollection = useSavePostToCollection();
+  const [collectionSheetOpen, setCollectionSheetOpen] = useState(false);
+  const [collectionError, setCollectionError] = useState<string | null>(null);
   const togglePinMutation = useTogglePin();
   const muteMutation = useMuteUser();
   const blockMutation = useBlockUser();
@@ -138,13 +145,43 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     : loadedRatio ?? 1;
 
 
+  // Save lands in All Saved and the toast offers a collection; tapping
+  // Saved unsaves (DELETE — the POST is an idempotent set).
+  const openCollectionSheet = () => {
+    setCollectionError(null);
+    setCollectionSheetOpen(true);
+  };
+
   const handleBookmark = () => {
     const wasBookmarked = bookmarked;
     setBookmarked(!wasBookmarked);
-    bookmarkMutation.mutate(post.id, {
-      onError: () => setBookmarked(wasBookmarked),
+    bookmarkMutation.mutate({ postId: post.id, saved: !wasBookmarked }, {
+      onSuccess: () => {
+        if (!wasBookmarked) {
+          toast({ type: 'info', title: 'Saved', customContent: <SavedPostToast onChoose={openCollectionSheet} /> });
+        }
+      },
+      onError: (err) => {
+        setBookmarked(wasBookmarked);
+        toast({ type: 'error', title: savedErrorText(err, wasBookmarked ? 'unsave' : 'save') });
+      },
     });
     closeMenu();
+  };
+
+  const handlePickCollection = (collection: { id: string | null; name: string }) => {
+    setCollectionError(null);
+    saveToCollection.mutate(
+      { postId: post.id, toCollectionId: collection.id, alreadySaved: bookmarked },
+      {
+        onSuccess: () => {
+          setBookmarked(true);
+          setCollectionSheetOpen(false);
+          toast({ type: 'success', title: `Saved to ${collection.name}` });
+        },
+        onError: (err) => setCollectionError(savedErrorText(err, 'save')),
+      },
+    );
   };
 
   const handlePin = () => {
@@ -910,6 +947,16 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         targetType={isReel ? 'reel' : post.content_type === 'long_video' ? 'video' : 'post'}
         onClose={() => setShowReportDialog(false)}
       />
+
+      {collectionSheetOpen && (
+        <SaveToCollectionSheet
+          title="Save to collection"
+          busy={saveToCollection.isPending}
+          error={collectionError}
+          onPick={handlePickCollection}
+          onClose={() => { if (!saveToCollection.isPending) setCollectionSheetOpen(false); }}
+        />
+      )}
 
       {/* Edit a published post: text, audience, comments, like count */}
       {showEditSheet && isOwnPost && (

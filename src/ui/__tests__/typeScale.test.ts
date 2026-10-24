@@ -35,6 +35,12 @@ const SOCIAL_DIRS = [
   "src/app/notifications",
   "src/app/post",
   "src/app/feed",
+  // Saved collections and followed hashtags (24 Oct 2026, server 546eec063).
+  "src/app/saved",
+  "src/features/saved",
+  "src/app/hashtag",
+  "src/features/hashtag",
+  "src/app/settings/followed-hashtags",
 ];
 const SOCIAL_FILES = "src/components/{PostCard,CommentSection,CommentPreview,Feed*}.tsx";
 

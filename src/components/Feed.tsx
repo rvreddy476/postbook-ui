@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Check,
   Compass,
+  Hash,
   Loader2,
   WifiOff,
   X,
@@ -21,6 +22,7 @@ import { useReducedMotion } from "framer-motion";
 import PostCard from "./PostCard";
 import PeopleYouMayKnowStrip from "./PeopleYouMayKnowStrip";
 import { homeFeedKey, useHomeFeed, type HomeFeedOptions } from "@/hooks/useFeedPosts";
+import { FOLLOWED_HASHTAG_POSTS_KEY, useFollowedHashtagPosts } from "@/hooks/useHashtagFollow";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import { subscribeToPostUpdates } from "@/services/messageService";
 import { useFeedDelta } from "@/hooks/useFeedDelta";
@@ -64,11 +66,14 @@ function FeedSkeleton() {
   );
 }
 
-type FeedTab = "for-you" | "following";
+type FeedTab = "for-you" | "following" | "hashtags";
 
 const FEED_TABS: { key: FeedTab; label: string }[] = [
   { key: "for-you", label: "For You" },
   { key: "following", label: "Following" },
+  // Posts carrying a hashtag the viewer follows (post-service
+  // GET /v1/hashtags/followed/posts, 546eec063; not part of feed-service's timeline).
+  { key: "hashtags", label: "Hashtags" },
 ];
 
 export default function Feed({
@@ -99,13 +104,19 @@ export default function Feed({
   };
   const forYou = useHomeFeed("ranked", forYouOptions);
   const following = useHomeFeed("chronological", followingOptions);
-  const feed = tab === "following" ? following : forYou;
-  const activeKey =
-    tab === "following" ? homeFeedKey("chronological", followingOptions) : homeFeedKey("ranked", forYouOptions);
+  const hashtags = useFollowedHashtagPosts(tab === "hashtags");
+  const feed = tab === "hashtags" ? hashtags : tab === "following" ? following : forYou;
+  const activeKey: readonly unknown[] =
+    tab === "hashtags"
+      ? FOLLOWED_HASHTAG_POSTS_KEY
+      : tab === "following"
+        ? homeFeedKey("chronological", followingOptions)
+        : homeFeedKey("ranked", forYouOptions);
   const posts = uniqueFeedPosts(feed.data?.pages);
+  // The delta endpoint counts feed-service timelines; the Hashtags tab has none.
   const { newCount, setAnchor, consumeNew } = useFeedDelta({
     feedType: tab === "following" ? "following" : "home",
-    enabled: posts.length > 0,
+    enabled: posts.length > 0 && tab !== "hashtags",
   });
 
   useEffect(
@@ -285,7 +296,29 @@ export default function Feed({
                 </button>
               </div>
             )}
-            {!feed.isError && posts.length === 0 && (
+            {!feed.isError && posts.length === 0 && tab === "hashtags" && (
+              <div className="home-feed-state">
+                <div className="home-feed-state-icon">
+                  <Hash size={28} aria-hidden="true" />
+                </div>
+                <h2>
+                  No posts from your hashtags yet
+                </h2>
+                <p>
+                  Follow a hashtag from its page, and its newest public posts show here.
+                </p>
+                <div className="flex flex-wrap justify-center gap-3">
+                  <Link href="/settings/followed-hashtags" className="home-feed-action">
+                    Followed hashtags
+                    <ArrowRight size={16} aria-hidden="true" />
+                  </Link>
+                  <Link href="/trending" className="home-feed-action home-feed-secondary">
+                    Trending hashtags
+                  </Link>
+                </div>
+              </div>
+            )}
+            {!feed.isError && posts.length === 0 && tab !== "hashtags" && (
               <div className="home-feed-state">
                 <div className="home-feed-state-icon">
                   <Compass size={28} aria-hidden="true" />

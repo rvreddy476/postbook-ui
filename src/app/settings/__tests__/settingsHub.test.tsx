@@ -53,6 +53,7 @@ describe("settings hub: groups and rows", () => {
             ["Appearance", "theme"],
             ["Time & wellbeing", "/settings/wellbeing"],
             ["Filter keywords", "/settings/keyword-filters"],
+            ["Followed hashtags", "/settings/followed-hashtags"],
             ["Module profiles", "/settings/modules"],
             ["Channel settings", "/settings/channel"],
             ["Mini apps", "/apps"],

@@ -6,6 +6,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import {
     ArrowLeft,
+    AtSign,
     Eye,
     Shield,
     Tag,
@@ -18,13 +19,16 @@ import {
     ACCOUNT_VISIBILITY_OPTIONS,
     COMMENT_AUDIENCE_OPTIONS,
     LAST_SEEN_OPTIONS,
+    MENTION_TAG_OPTIONS,
     PROFILE_PHOTO_OPTIONS,
     READ_RECEIPT_OPTIONS,
     isEmptyPatch,
+    mentionTagNarrowedText,
     privacyFormFromSettings,
     privacyPatch,
     type AccountVisibility,
     type CommentAudience,
+    type MentionTagAudience,
     type PrivacyForm,
     type VisibilityAudience,
 } from "../_lib/privacySettings"
@@ -124,6 +128,8 @@ function SectionCard({
  *   Read receipts              who_can_see_read_receipts   everyone | connections_only | no_one
  *   Last seen                  who_can_see_last_seen       everyone | connections_only | no_one
  *   Abusive content filter     auto_filter_abusive_content boolean
+ *   Who can mention me         who_can_mention             everyone | following | no_one
+ *   Who can tag me             who_can_tag                 everyone | following | no_one
  *
  * Feed filter words are their own page (/settings/keyword-filters, a
  * trust-safety list, not a field of this document).
@@ -133,14 +139,17 @@ function SectionCard({
  *
  * Removed, because no field exists for them in updateSettingsRequest and the
  * page used to report "Saved!" for values it never sent: who can see my
- * posts, appear in search results, appear in suggestions, allow tagging, and
- * the "Only me" profile option (a profile is public or private).
+ * posts, appear in search results, appear in suggestions, and the "Only me"
+ * profile option (a profile is public or private). Tagging came back as a
+ * real field, who_can_tag (user-service, 24 Oct 2026).
  */
 export default function PrivacyPage() {
     const settingsQuery = useMySettings()
     const update = useUpdateMySettings()
     const { showResult, Toast } = useSaveToast()
     const [form, setForm] = useState<PrivacyForm | null>(null)
+    // Set when the server stored a narrower mention / tag value than was sent.
+    const [narrowed, setNarrowed] = useState<string | null>(null)
 
     useEffect(() => {
         if (settingsQuery.data && !form) setForm(privacyFormFromSettings(settingsQuery.data))
@@ -156,15 +165,20 @@ export default function PrivacyPage() {
         if (!dirty) return
         try {
             const stored = await update.mutateAsync(patch)
+            // The stored values, not the form: a minor or a strict-mode account
+            // has Everyone narrowed to People you follow (applyStrictMode).
             setForm(privacyFormFromSettings(stored))
+            setNarrowed(mentionTagNarrowedText(patch, stored))
             showResult({ ok: true, data: stored })
         } catch (err) {
             showResult(failedSave(err))
         }
     }
 
-    const set = <K extends keyof PrivacyForm>(key: K, value: PrivacyForm[K]) =>
+    const set = <K extends keyof PrivacyForm>(key: K, value: PrivacyForm[K]) => {
+        setNarrowed(null)
         setForm((f) => (f ? { ...f, [key]: value } : f))
+    }
 
     const selectClasses =
         "w-full max-w-xs rounded-xl border border-brand-divider bg-brand-secondary px-3 py-2 text-sm font-medium text-brand-text focus:border-brand-text/50 focus:bg-brand-card focus:outline-hidden focus:ring-2 focus:ring-brand-text/20"
@@ -272,6 +286,60 @@ export default function PrivacyPage() {
                                 ))}
                             </select>
                         </div>
+                    </SectionCard>
+
+                    {/* Section 1d — Mentions and tags (user-service who_can_mention /
+                        who_can_tag). A disallowed @mention or tag is dropped from
+                        the post silently, so nobody learns the setting. */}
+                    <SectionCard
+                        icon={<AtSign className="h-6 w-6 text-brand-text/50" />}
+                        title="Mentions and tags"
+                        description="Choose who can @mention you and tag you in posts."
+                        delay={0.08}
+                    >
+                        <div className="space-y-1.5">
+                            <label htmlFor="who-can-mention" className="block text-xs font-semibold text-brand-highlight">
+                                Who can mention me
+                            </label>
+                            <select
+                                id="who-can-mention"
+                                value={form.mentions}
+                                onChange={(e) => set("mentions", e.target.value as MentionTagAudience)}
+                                className={selectClasses}
+                            >
+                                {MENTION_TAG_OPTIONS.map((o) => (
+                                    <option key={o.value} value={o.value}>{o.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="mt-5 space-y-1.5">
+                            <label htmlFor="who-can-tag" className="block text-xs font-semibold text-brand-highlight">
+                                Who can tag me
+                            </label>
+                            <select
+                                id="who-can-tag"
+                                value={form.tags}
+                                onChange={(e) => set("tags", e.target.value as MentionTagAudience)}
+                                className={selectClasses}
+                            >
+                                {MENTION_TAG_OPTIONS.map((o) => (
+                                    <option key={o.value} value={o.value}>{o.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <p className="pt-3 text-xs text-brand-highlight">
+                            People you follow means the accounts you follow, not your followers. Anyone else&apos;s @mention or tag is left off the post, and they aren&apos;t told why.
+                        </p>
+                        {enforced && (
+                            <p className="pt-2 text-xs text-brand-highlight">
+                                Your account has strict privacy protections, so Everyone is saved as People you follow.
+                            </p>
+                        )}
+                        {narrowed && (
+                            <p role="status" className="pt-2 text-xs font-semibold text-brand-text">
+                                {narrowed}
+                            </p>
+                        )}
                     </SectionCard>
 
                     {/* Section 1c — Messaging.

@@ -19,6 +19,7 @@ import {
     type HashtagTab,
 } from '@/features/hashtag/hashtagPage'
 import { ShareIcon } from "@/components/icons/ShareIcon";
+import { FollowHashtagButton } from '@/features/hashtag/FollowHashtagButton'
 import '@/features/reels/components/reels-screen.css'
 
 type SortMode = 'recent' | 'top'
@@ -65,6 +66,10 @@ function useHashtagPosts(tag: string, sort: SortMode, contentTypes: string[]) {
   /hashtag/<tag> (audit T-34): the tag's title, its count (the server's
   total when it sends one, else what is loaded), Share, and the posts as a
   poster grid — the same tiles as the sound and liked-reels pages.
+
+  Follow / Following (post-service hashtag_follows_handler.go, 546eec063):
+  a followed tag's posts show in the home feed's Hashtags tab. A visitor
+  gets a sign-in link in its place.
 
   Not here yet, on purpose:
   - Report: trust-safety does not accept entity_type "hashtag" yet
@@ -150,6 +155,7 @@ export function HashtagScreen() {
                                     </p>
                                 )}
                             </div>
+                            {tag && <FollowHashtagButton tag={tag} />}
                             <button
                                 type="button"
                                 onClick={() => setShareOpen(true)}

@@ -34,6 +34,14 @@ export type MessageAudience =
     | "friends_of_friends_requests"
     | "everyone_message_requests"
 export type VisibilityAudience = "everyone" | "connections_only" | "no_one"
+/**
+ * Who may @mention or tag this account (user-service service/user.go:70-75,
+ * the "mention_tag" vocabulary). "following" is the accounts THIS user
+ * follows, not their followers (graph-service resolves it as "target
+ * follows actor"). A disallowed mention or tag is silently dropped from the
+ * post, never an error (store/users.go:29-35).
+ */
+export type MentionTagAudience = "everyone" | "following" | "no_one"
 
 /** The subset of the settings document the web settings pages read and write. */
 export interface PrivacySettings {
@@ -47,6 +55,10 @@ export interface PrivacySettings {
     /** Enforced by profile-service photo access (via graph-service view_profile); signed-out viewers see it only for everyone. */
     who_can_see_profile_photo: VisibilityAudience
     auto_filter_abusive_content: boolean
+    /** Who can @mention me in a caption or comment. */
+    who_can_mention: MentionTagAudience
+    /** Who can tag me on a post (tagged_user_ids). */
+    who_can_tag: MentionTagAudience
     strict_privacy_mode?: boolean
     under_18_mode?: boolean
 }
@@ -62,6 +74,8 @@ export type PrivacyPatch = Partial<
         | "who_can_see_last_seen"
         | "who_can_see_profile_photo"
         | "auto_filter_abusive_content"
+        | "who_can_mention"
+        | "who_can_tag"
     >
 >
 
@@ -74,6 +88,8 @@ const WRITABLE_KEYS = [
     "who_can_see_last_seen",
     "who_can_see_profile_photo",
     "auto_filter_abusive_content",
+    "who_can_mention",
+    "who_can_tag",
 ] as const satisfies readonly (keyof PrivacyPatch)[]
 
 export interface Option<V extends string> {
@@ -94,6 +110,13 @@ export const COMMENT_AUDIENCE_OPTIONS: Option<CommentAudience>[] = [
 export const READ_RECEIPT_OPTIONS: Option<VisibilityAudience>[] = [
     { value: "everyone", label: "Everyone" },
     { value: "connections_only", label: "Connections only" },
+    { value: "no_one", label: "No one" },
+]
+
+/** Mentions and tags share one set; "following" is spelled out because it is the people YOU follow. */
+export const MENTION_TAG_OPTIONS: Option<MentionTagAudience>[] = [
+    { value: "everyone", label: "Everyone" },
+    { value: "following", label: "People you follow" },
     { value: "no_one", label: "No one" },
 ]
 
@@ -126,6 +149,7 @@ const CONNECTION_REQUEST_AUDIENCE = new Set<string>([
     "everyone",
 ])
 const VISIBILITY_AUDIENCE = new Set<string>(["everyone", "connections_only", "no_one"])
+const MENTION_TAG_AUDIENCE = new Set<string>(["everyone", "following", "no_one"])
 
 function pick<V extends string>(allowed: Set<string>, value: unknown, fallback: V): V {
     return typeof value === "string" && allowed.has(value) ? (value as V) : fallback
@@ -159,6 +183,9 @@ export function parsePrivacySettings(body: unknown): PrivacySettings | null {
         who_can_see_last_seen: pick(VISIBILITY_AUDIENCE, s.who_can_see_last_seen, "connections_only"),
         who_can_see_profile_photo: pick(VISIBILITY_AUDIENCE, s.who_can_see_profile_photo, "everyone"),
         auto_filter_abusive_content: s.auto_filter_abusive_content === true,
+        // Column default everyone (store/users.go:29-35).
+        who_can_mention: pick(MENTION_TAG_AUDIENCE, s.who_can_mention, "everyone"),
+        who_can_tag: pick(MENTION_TAG_AUDIENCE, s.who_can_tag, "everyone"),
         strict_privacy_mode: s.strict_privacy_mode === true,
         under_18_mode: s.under_18_mode === true,
     }
@@ -234,6 +261,8 @@ export interface PrivacyForm {
     lastSeen: VisibilityAudience
     profilePhoto: VisibilityAudience
     filterAbusiveContent: boolean
+    mentions: MentionTagAudience
+    tags: MentionTagAudience
 }
 
 export function privacyFormFromSettings(s: PrivacySettings): PrivacyForm {
@@ -244,6 +273,8 @@ export function privacyFormFromSettings(s: PrivacySettings): PrivacyForm {
         lastSeen: s.who_can_see_last_seen,
         profilePhoto: s.who_can_see_profile_photo,
         filterAbusiveContent: s.auto_filter_abusive_content,
+        mentions: s.who_can_mention,
+        tags: s.who_can_tag,
     }
 }
 
@@ -255,5 +286,32 @@ export function privacyPatch(original: PrivacySettings, form: PrivacyForm): Priv
         who_can_see_last_seen: form.lastSeen,
         who_can_see_profile_photo: form.profilePhoto,
         auto_filter_abusive_content: form.filterAbusiveContent,
+        who_can_mention: form.mentions,
+        who_can_tag: form.tags,
     })
+}
+
+/**
+ * The fields the server stored differently from what was sent. A minor or a
+ * Strict Privacy Mode account has "everyone" narrowed to "following" for
+ * mentions and tags (applyStrictMode, service/user.go:245-267); the page
+ * shows the stored value and says why.
+ */
+export function narrowedByServer(sent: PrivacyPatch, stored: PrivacySettings): (keyof PrivacyPatch)[] {
+    return WRITABLE_KEYS.filter((key) => sent[key] !== undefined && sent[key] !== stored[key])
+}
+
+const MENTION_TAG_WORDS: Record<MentionTagAudience, string> = {
+    everyone: "Everyone",
+    following: "People you follow",
+    no_one: "No one",
+}
+
+/** The sentence after a save the server narrowed, or null when it kept what was sent. */
+export function mentionTagNarrowedText(sent: PrivacyPatch, stored: PrivacySettings): string | null {
+    const changed = narrowedByServer(sent, stored).filter((k) => k === "who_can_mention" || k === "who_can_tag")
+    if (changed.length === 0) return null
+    const what = changed.length === 2 ? "mentions and tags are" : changed[0] === "who_can_mention" ? "mentions are" : "tags are"
+    const value = MENTION_TAG_WORDS[stored[changed[0]] as MentionTagAudience]
+    return `Your account has strict privacy protections, so ${what} set to ${value}.`
 }
