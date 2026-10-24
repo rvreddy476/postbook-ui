@@ -1,9 +1,14 @@
 "use client"
 
-// /shop/sell/onboarding: basic → storefront → documents → fulfilment → payout
-// → readiness → Submit. Every step is its own PUT; the readiness step reads
-// GET /onboarding/readiness and the submit maps the server's refusal back
-// onto the steps. Nothing here ever asks for an Aadhaar NUMBER.
+// /shop/sell/onboarding: what you sell → basic → storefront → documents →
+// fulfilment → payout → readiness → Submit. Every step is its own PUT; the
+// readiness step reads GET /onboarding/readiness and the submit maps the
+// server's refusal back onto the steps. Nothing here ever asks for an Aadhaar
+// NUMBER.
+//
+// "What you sell" (migration 045): all categories with a GSTIN, or only books
+// with a PAN, the business name and address, and a proof of address in the
+// documents step. The PAN is sent once and only ever shown back masked.
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -14,9 +19,11 @@ import { useGlobalToast } from "@/contexts/ToastContext"
 import { uploadSellerImage } from "../api/sellMedia"
 import {
   useSaveBasic,
+  useSaveBooksScope,
   useSaveDocuments,
   useSaveFulfillmentStep,
   useSavePayout,
+  useSaveSellScope,
   useSaveStorefront,
   useSellerReadiness,
   useSellerStatus,
@@ -31,16 +38,21 @@ import {
   WIZARD_STEPS,
   WIZARD_STEP_LABEL,
   apiMessage,
+  businessAddressPayload,
+  checklistCodes,
   completedSteps,
   documentTypeOptions,
   documentsPayload,
   firstOpenStep,
   fulfillmentPayload,
+  isImageOnly,
+  isTwoSided,
   mapMissing,
   maskAccountNumber,
   missingFromSubmitError,
   payoutPayload,
   pickupAddressPayload,
+  sellerScope,
   sellerStatusBanner,
   stepUnlocked,
   validateDocuments,
@@ -53,9 +65,11 @@ import {
   type SellerWire,
   type WizardStep,
 } from "../model/sell"
+import { panHolderType, sellScopeFieldError, sellScopePayload, validateSellScopeDraft, type SellScope, type SellScopeDraft } from "../model/sellScope"
 import { IMAGE_ACCEPT_ATTR } from "../model/sellListing"
 import { Field, Notice, PageHead, Panel, RowsSkeleton, Select, StepRail, TextField, Textarea } from "../components/sell/primitives"
 import { StatusBanner } from "../components/sell/SellerShell"
+import { SellScopeChoice } from "../components/sell/SellScope"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -78,6 +92,7 @@ export function OnboardingWizardScreen() {
   const banner = sellerStatusBanner(seller)
   const editable = seller.status === "draft" || seller.status === "changes_required"
   const current = step ?? firstOpenStep(done)
+  const scope = sellerScope(seller)
 
   return (
     <div className="shop-sell-wizard">
@@ -94,16 +109,124 @@ export function OnboardingWizardScreen() {
         <div className="shop-sell-wizard__grid">
           <StepRail steps={WIZARD_STEPS} labels={WIZARD_STEP_LABEL} current={current} done={done} unlocked={(s) => stepUnlocked(s, done)} onPick={setStep} />
           <div>
+            {current === "scope" ? <ScopeStep seller={seller} onDone={() => setStep("basic")} /> : null}
             {current === "basic" ? <BasicStep seller={seller} onDone={() => setStep("storefront")} /> : null}
             {current === "storefront" ? <StorefrontStep seller={seller} onDone={() => setStep("documents")} /> : null}
-            {current === "documents" ? <DocumentsStep onDone={() => setStep("fulfillment")} /> : null}
+            {current === "documents" ? <DocumentsStep key={scope} scope={scope} onDone={() => setStep("fulfillment")} /> : null}
             {current === "fulfillment" ? <FulfillmentStep seller={seller} onDone={() => setStep("payout")} /> : null}
             {current === "payout" ? <PayoutStep hasAccount={done.has("payout")} onDone={() => setStep("readiness")} /> : null}
-            {current === "readiness" ? <ReadinessStep onFix={setStep} /> : null}
+            {current === "readiness" ? <ReadinessStep scope={scope} onFix={setStep} /> : null}
           </div>
         </div>
       )}
     </div>
+  )
+}
+
+// ── What you sell ───────────────────────────────────────────────
+
+function ScopeStep({ seller, onDone }: { seller: SellerWire; onDone: () => void }) {
+  const saveAll = useSaveSellScope()
+  const saveBooks = useSaveBooksScope()
+  const [draft, setDraft] = useState<SellScopeDraft>({
+    scope: sellerScope(seller),
+    gstin: seller.gst_number || "",
+    pan: "",
+    businessName: seller.legal_business_name || "",
+  })
+  const [address, setAddress] = useState<PickupAddressDraft>({
+    contact_name: seller.owner_name || seller.legal_business_name || "",
+    phone: seller.phone || "",
+    address_line_1: "",
+    address_line_2: "",
+    city: seller.city || "",
+    state: seller.state || "",
+    postal_code: seller.postal_code || "",
+  })
+  const [attempted, setAttempted] = useState(false)
+  const [serverField, setServerField] = useState<{ field: string; message: string } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const books = draft.scope === "books_only"
+  const errors = validateSellScopeDraft(draft)
+  const addressErrors = books ? validatePickupAddress(address) : {}
+  const holder = books ? panHolderType(draft.pan) : null
+  const pending = saveAll.isPending || saveBooks.isPending
+  const set = (k: keyof SellScopeDraft) => (v: string) => {
+    setServerField(null)
+    setDraft((d) => ({ ...d, [k]: k === "pan" || k === "gstin" ? v.toUpperCase() : v }))
+  }
+  const setAddr = (k: keyof PickupAddressDraft) => (v: string) => setAddress((a) => ({ ...a, [k]: v }))
+  const fieldError = (field: "gstin" | "pan" | "business_name", local: string | undefined) =>
+    serverField?.field === field ? serverField.message : attempted ? (local ?? null) : null
+
+  async function submit() {
+    setAttempted(true)
+    setError(null)
+    setServerField(null)
+    if (Object.keys(errors).length > 0 || Object.keys(addressErrors).length > 0) return
+    try {
+      if (books) await saveBooks.mutateAsync({ scope: sellScopePayload(draft), address: businessAddressPayload(address) })
+      else await saveAll.mutateAsync(sellScopePayload(draft))
+      setDraft((d) => ({ ...d, pan: "" }))
+      onDone()
+    } catch (err) {
+      const refused = sellScopeFieldError(err)
+      if (refused?.field) setServerField(refused)
+      else setError(refused?.message ?? apiMessage(err, "Your choice could not be saved."))
+    }
+  }
+
+  return (
+    <Panel title="What will you sell?" sub="This decides what the application asks for. Books are GST-exempt, so a books-only shop needs a PAN instead of a GSTIN.">
+      <form noValidate className="shop-sell-form" onSubmit={(e) => { e.preventDefault(); void submit() }}>
+        <SellScopeChoice
+          value={draft.scope}
+          onChange={(scope: SellScope) => {
+            setServerField(null)
+            setDraft((d) => ({ ...d, scope }))
+          }}
+        />
+        {!books ? (
+          <>
+            <TextField id="scope-gstin" label="GSTIN" required value={draft.gstin} onChange={set("gstin")} error={fieldError("gstin", errors.gstin)} help="15 characters, as on your GST registration certificate." maxLength={15} autoComplete="off" />
+            <TextField id="scope-name" label="Business name" value={draft.businessName} onChange={set("businessName")} error={fieldError("business_name", errors.businessName)} help="Optional. As registered for GST." maxLength={200} autoComplete="organization" />
+          </>
+        ) : (
+          <>
+            <TextField
+              id="scope-pan"
+              label="PAN"
+              required
+              value={draft.pan}
+              onChange={set("pan")}
+              error={fieldError("pan", errors.pan)}
+              help={seller.pan_masked ? `A PAN ending ${seller.pan_masked.slice(-4)} is on file. Enter it again to save changes.` : "Ten characters, like ABCPE1234F. Stored sealed; only the last four are shown again."}
+              maxLength={10}
+              autoComplete="off"
+            />
+            {holder && !errors.pan ? <p className="shop-sell-pan">PAN holder type: {holder}</p> : null}
+            <TextField id="scope-name" label="Business name" required value={draft.businessName} onChange={set("businessName")} error={fieldError("business_name", errors.businessName)} help="Your name or your business's name, as on the PAN." maxLength={200} autoComplete="organization" />
+            <TextField id="biz-contact" label="Contact name" required value={address.contact_name} onChange={setAddr("contact_name")} error={attempted ? addressErrors.contact_name : null} autoComplete="name" />
+            <TextField id="biz-phone" label="Phone" required type="tel" inputMode="tel" value={address.phone} onChange={setAddr("phone")} error={attempted ? addressErrors.phone : null} autoComplete="tel" />
+            <TextField id="biz-l1" label="Business address" required value={address.address_line_1} onChange={setAddr("address_line_1")} error={attempted ? addressErrors.address_line_1 : null} autoComplete="address-line1" />
+            <TextField id="biz-l2" label="Address line 2" value={address.address_line_2} onChange={setAddr("address_line_2")} autoComplete="address-line2" />
+            <div className="shop-sell-form__row">
+              <TextField id="biz-city" label="City" required value={address.city} onChange={setAddr("city")} error={attempted ? addressErrors.city : null} autoComplete="address-level2" />
+              <TextField id="biz-state" label="State" required value={address.state} onChange={setAddr("state")} error={attempted ? addressErrors.state : null} autoComplete="address-level1" />
+              <TextField id="biz-pin" label="PIN code" required inputMode="numeric" value={address.postal_code} onChange={setAddr("postal_code")} error={attempted ? addressErrors.postal_code : null} autoComplete="postal-code" maxLength={6} />
+            </div>
+            <Notice tone="muted">You will upload one proof of this address in Documents: a voter ID or passport (front and back), or an electricity bill, telephone bill or bank statement.</Notice>
+          </>
+        )}
+        {error ? <Notice tone="danger">{error}</Notice> : null}
+        <div className="shop-sell-actions">
+          <Button type="submit" disabled={pending}>
+            {pending ? "Saving…" : "Save and continue"}
+          </Button>
+        </div>
+      </form>
+    </Panel>
   )
 }
 
@@ -233,14 +356,30 @@ interface DocRow extends DocumentDraft {
   fileName: string
   uploading: boolean
   error: string | null
+  back_media_id: string
+  backFileName: string
+  backUploading: boolean
 }
 
 let docSeq = 0
-const newDoc = (type: DocumentType = "pan_card"): DocRow => ({ key: `d${++docSeq}`, document_type: type, media_id: "", document_number: "", fileName: "", uploading: false, error: null })
+const newDoc = (type: DocumentType = "pan_card"): DocRow => ({
+  key: `d${++docSeq}`,
+  document_type: type,
+  media_id: "",
+  document_number: "",
+  fileName: "",
+  uploading: false,
+  error: null,
+  back_media_id: "",
+  backFileName: "",
+  backUploading: false,
+})
 
-function DocumentsStep({ onDone }: { onDone: () => void }) {
+function DocumentsStep({ scope, onDone }: { scope: "all_categories" | "books_only"; onDone: () => void }) {
   const save = useSaveDocuments()
-  const [rows, setRows] = useState<DocRow[]>([newDoc("pan_card")])
+  const books = scope === "books_only"
+  // A books-only shop starts on its proof of address; everyone else on the PAN card.
+  const [rows, setRows] = useState<DocRow[]>([newDoc(books ? "voter_id" : "pan_card")])
   const [error, setError] = useState<string | null>(null)
   const options = useMemo(() => documentTypeOptions(), [])
   const inputs = useRef<Record<string, HTMLInputElement | null>>({})
@@ -249,23 +388,25 @@ function DocumentsStep({ onDone }: { onDone: () => void }) {
     setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...next } : r)))
   }
 
-  async function pick(key: string, file: File) {
-    patch(key, { uploading: true, fileName: file.name, error: null, media_id: "" })
+  async function pick(key: string, file: File, side: "front" | "back") {
+    if (side === "back") patch(key, { backUploading: true, backFileName: file.name, error: null, back_media_id: "" })
+    else patch(key, { uploading: true, fileName: file.name, error: null, media_id: "" })
     try {
       const mediaId = await uploadSellerImage(file, "kyc")
-      patch(key, { uploading: false, media_id: mediaId })
+      patch(key, side === "back" ? { backUploading: false, back_media_id: mediaId } : { uploading: false, media_id: mediaId })
     } catch (err) {
-      patch(key, { uploading: false, fileName: "", error: err instanceof Error ? err.message : "The upload failed." })
+      const message = err instanceof Error ? err.message : "The upload failed."
+      patch(key, side === "back" ? { backUploading: false, backFileName: "", error: message } : { uploading: false, fileName: "", error: message })
     }
   }
 
   async function submit() {
     setError(null)
-    if (rows.some((r) => r.uploading)) {
+    if (rows.some((r) => r.uploading || r.backUploading)) {
       setError("A document is still uploading.")
       return
     }
-    const problem = validateDocuments(rows)
+    const problem = validateDocuments(rows, scope)
     if (problem) {
       setError(problem)
       return
@@ -279,12 +420,23 @@ function DocumentsStep({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <Panel title="Documents" sub="A person checks these before your shop opens. Upload a clear photo or scan (JPEG, PNG or WebP). At least one document is required.">
+    <Panel
+      title="Documents"
+      sub={
+        books
+          ? "A person checks these before your shop opens. Upload one proof of your business address: a voter ID or passport (front and back), or an electricity bill, telephone bill or bank statement. JPEG, PNG or WebP."
+          : "A person checks these before your shop opens. Upload a clear photo or scan (JPEG, PNG or WebP). At least one document is required."
+      }
+    >
       <div className="shop-sell-form">
         {rows.map((row) => (
           <div key={row.key} className="shop-sell-doc">
             <Field id={`doc-type-${row.key}`} label="Document">
-              <Select id={`doc-type-${row.key}`} value={row.document_type} onChange={(e) => patch(row.key, { document_type: e.target.value as DocumentType, document_number: "" })}>
+              <Select
+                id={`doc-type-${row.key}`}
+                value={row.document_type}
+                onChange={(e) => patch(row.key, { document_type: e.target.value as DocumentType, document_number: "", back_media_id: "", backFileName: "" })}
+              >
                 {options.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
@@ -294,6 +446,8 @@ function DocumentsStep({ onDone }: { onDone: () => void }) {
             </Field>
             {row.document_type === "aadhaar" ? (
               <p className="shop-sell-field__help">Upload the document only. An Aadhaar number is never asked for or stored.</p>
+            ) : isImageOnly(row.document_type) ? (
+              <p className="shop-sell-field__help">Upload the first page only. No account number is asked for or stored.</p>
             ) : row.document_type === "cancelled_cheque" || row.document_type === "other" || row.document_type === "address_proof" ? null : (
               <TextField
                 id={`doc-number-${row.key}`}
@@ -315,13 +469,13 @@ function DocumentsStep({ onDone }: { onDone: () => void }) {
                 id={`doc-file-${row.key}`}
                 onChange={(e) => {
                   const f = e.target.files?.[0]
-                  if (f) void pick(row.key, f)
+                  if (f) void pick(row.key, f, "front")
                   e.target.value = ""
                 }}
               />
               <Button type="button" variant="outline" size="sm" disabled={row.uploading} onClick={() => inputs.current[row.key]?.click()}>
                 <Upload className="h-4 w-4" aria-hidden="true" />
-                {row.media_id ? "Replace file" : row.uploading ? "Uploading…" : "Choose file"}
+                {row.media_id ? (isTwoSided(row.document_type) ? "Replace front" : "Replace file") : row.uploading ? "Uploading…" : isTwoSided(row.document_type) ? "Choose front" : "Choose file"}
               </Button>
               <span className="shop-sell-doc__name">{row.media_id ? `${row.fileName || "Uploaded"} — ready` : row.uploading ? row.fileName : "No file yet"}</span>
               {rows.length > 1 ? (
@@ -330,6 +484,31 @@ function DocumentsStep({ onDone }: { onDone: () => void }) {
                 </button>
               ) : null}
             </div>
+            {isTwoSided(row.document_type) ? (
+              <div className="shop-sell-doc__file">
+                <input
+                  ref={(el) => {
+                    inputs.current[`${row.key}-back`] = el
+                  }}
+                  type="file"
+                  accept={IMAGE_ACCEPT_ATTR}
+                  className="sr-only"
+                  id={`doc-back-${row.key}`}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0]
+                    if (f) void pick(row.key, f, "back")
+                    e.target.value = ""
+                  }}
+                />
+                <Button type="button" variant="outline" size="sm" disabled={row.backUploading} onClick={() => inputs.current[`${row.key}-back`]?.click()}>
+                  <Upload className="h-4 w-4" aria-hidden="true" />
+                  {row.back_media_id ? "Replace back" : row.backUploading ? "Uploading…" : "Choose back"}
+                </Button>
+                <span className="shop-sell-doc__name">
+                  {row.back_media_id ? `${row.backFileName || "Uploaded"} — ready` : row.backUploading ? row.backFileName : "The address is on the back; upload it too."}
+                </span>
+              </div>
+            ) : null}
             {row.error ? <p className="shop-sell-field__error" role="alert">{row.error}</p> : null}
           </div>
         ))}
@@ -489,7 +668,7 @@ function PayoutStep({ hasAccount, onDone }: { hasAccount: boolean; onDone: () =>
 
 // ── Readiness and submit ────────────────────────────────────────
 
-function ReadinessStep({ onFix }: { onFix: (step: WizardStep) => void }) {
+function ReadinessStep({ scope, onFix }: { scope: "all_categories" | "books_only"; onFix: (step: WizardStep) => void }) {
   const router = useRouter()
   const toast = useGlobalToast()
   const readiness = useSellerReadiness(true)
@@ -525,7 +704,8 @@ function ReadinessStep({ onFix }: { onFix: (step: WizardStep) => void }) {
       ) : (
         <div className="shop-sell-form">
           <ul className="shop-sell-checklist">
-            {Object.entries(MISSING_CODES).map(([code, meta]) => {
+            {checklistCodes(scope).map((code) => {
+              const meta = MISSING_CODES[code]
               const gap = missing.find((m) => m.code === code)
               return (
                 <li key={code} className={gap ? "is-missing" : "is-done"}>
@@ -540,6 +720,17 @@ function ReadinessStep({ onFix }: { onFix: (step: WizardStep) => void }) {
                 </li>
               )
             })}
+            {/* Anything the server names that this scope's list does not (an older or newer rule) is still shown. */}
+            {missing
+              .filter((m) => !checklistCodes(scope).includes(m.code))
+              .map((m) => (
+                <li key={m.code} className="is-missing">
+                  <span>{m.label}</span>
+                  <button type="button" className="shop-sell-link" onClick={() => onFix(m.step)}>
+                    Add in {WIZARD_STEP_LABEL[m.step]}
+                  </button>
+                </li>
+              ))}
           </ul>
           {error ? <Notice tone="danger">{error}</Notice> : null}
           <div className="shop-sell-actions">

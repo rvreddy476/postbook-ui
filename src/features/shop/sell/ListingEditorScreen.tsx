@@ -4,6 +4,10 @@
 // listing editor. Category (tree) → details (built-in columns + the
 // category's attribute schema) → price and variants (a single offer, or the
 // variation matrix) → images → review (GET /products/:id/readiness) → Submit.
+//
+// A books-only shop (migration 045) is offered book categories and GST 0%
+// only — the server refuses anything else with 403 SELLER_SCOPE_BOOKS_ONLY —
+// and a "Sell more categories" prompt to add a GSTIN.
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
@@ -12,7 +16,7 @@ import { Button } from "@/components/ui/button"
 import { useGlobalToast } from "@/contexts/ToastContext"
 import { fetchProductVariants, type CategoryNode, type CreateListingBody } from "../api/sell"
 import { parseMinor } from "../money"
-import { useAttributeSchema, useCategoryTree, useProductDetail, useProductReadiness, useSellerStatus, useTaxClasses } from "../hooks/sell"
+import { useAttributeSchema, useCategoryTree, useProductDetail, useProductReadiness, useSellScope, useSellerStatus, useTaxClasses } from "../hooks/sell"
 import {
   emptyValueFor,
   fieldErrorMessage,
@@ -22,7 +26,8 @@ import {
   type AttributeValue,
   type AttributeValueMap,
 } from "../model/attributes"
-import { sellerStatusBanner } from "../model/sell"
+import { sellerScope, sellerStatusBanner } from "../model/sell"
+import { bookOnlyTree, zeroRatedTaxClasses } from "../model/sellScope"
 import {
   EDITOR_STEPS,
   EDITOR_STEP_LABEL,
@@ -62,6 +67,7 @@ import { Field, Notice, PageHead, Panel, RevalidationPanel, RowsSkeleton, Select
 import { NotTradingYet } from "../components/sell/SellerShell"
 import { useListingDraft } from "../components/sell/useListingDraft"
 import { VariationMatrix } from "../components/sell/VariationMatrix"
+import { SellMoreCategories } from "../components/sell/SellScope"
 
 export function ListingEditorScreen({ productId: initialProductId }: { productId: string | null }) {
   const status = useSellerStatus()
@@ -76,15 +82,19 @@ export function ListingEditorScreen({ productId: initialProductId }: { productId
       </div>
     )
   }
-  return <Editor initialProductId={initialProductId} />
+  return <Editor initialProductId={initialProductId} booksOnly={sellerScope(seller) === "books_only"} panMasked={seller.pan_masked} />
 }
 
-function Editor({ initialProductId }: { initialProductId: string | null }) {
+function Editor({ initialProductId, booksOnly, panMasked }: { initialProductId: string | null; booksOnly: boolean; panMasked?: string }) {
   const router = useRouter()
   const toast = useGlobalToast()
   const draft = useListingDraft(initialProductId)
   const tree = useCategoryTree()
   const taxes = useTaxClasses()
+  const scopeView = useSellScope(booksOnly)
+  // A books-only shop picks from book categories and GST 0% only.
+  const roots = useMemo(() => (booksOnly ? bookOnlyTree(tree.data ?? [], scopeView.data?.book_category_ids ?? []) : (tree.data ?? [])), [booksOnly, tree.data, scopeView.data])
+  const taxOptions = useMemo(() => (booksOnly ? zeroRatedTaxClasses(taxes.data ?? []) : (taxes.data ?? [])), [booksOnly, taxes.data])
   const existing = useProductDetail(initialProductId)
 
   const [step, setStep] = useState<EditorStep>(initialProductId ? "details" : "category")
@@ -246,16 +256,17 @@ function Editor({ initialProductId }: { initialProductId: string | null }) {
           <StepRail steps={EDITOR_STEPS} labels={EDITOR_STEP_LABEL} current={step} done={done} unlocked={unlocked} onPick={setStep} />
           <div className="shop-sell-form">
             {step === "category" ? (
+              <>
               <Panel title="Category" sub={initialProductId ? "The category is fixed once a listing exists." : "Choose the most specific category. It decides which questions the listing asks."}>
-                {tree.isPending ? (
+                {tree.isPending || (booksOnly && scopeView.isPending) ? (
                   <RowsSkeleton rows={4} />
-                ) : tree.isError ? (
+                ) : tree.isError || (booksOnly && scopeView.isError) ? (
                   <Notice tone="danger">The categories could not be loaded.</Notice>
                 ) : initialProductId ? (
                   <p>{categoryPath.join(" › ") || "No category"}</p>
                 ) : (
                   <CategoryPicker
-                    roots={tree.data}
+                    roots={roots}
                     value={categoryId}
                     onChange={(node: CategoryNode) => {
                       setCategoryId(node.id)
@@ -263,12 +274,15 @@ function Editor({ initialProductId }: { initialProductId: string | null }) {
                     }}
                   />
                 )}
+                {booksOnly ? <Notice tone="muted">Your shop sells books only, so only book categories are offered. Books are GST-exempt and list on GST 0%.</Notice> : null}
                 <div className="shop-sell-actions">
                   <Button type="button" disabled={!categoryId} onClick={() => setStep("details")}>
                     Continue
                   </Button>
                 </div>
               </Panel>
+              {booksOnly && !initialProductId ? <SellMoreCategories panMasked={panMasked} /> : null}
+              </>
             ) : null}
 
             {step === "details" ? (
@@ -281,7 +295,7 @@ function Editor({ initialProductId }: { initialProductId: string | null }) {
                   <Field id="l-tax" label="GST rate" required error={attempted ? basicsErrors.taxClassId : null} help="Checkout refuses a listing without one.">
                     <Select id="l-tax" value={basics.taxClassId} onChange={(e) => setBasics((b) => ({ ...b, taxClassId: e.target.value }))}>
                       <option value="">{taxes.isPending ? "Loading…" : "Choose…"}</option>
-                      {(taxes.data ?? []).map((t) => (
+                      {taxOptions.map((t) => (
                         <option key={t.id} value={t.id}>
                           {t.name} ({t.rate_percent}%)
                         </option>

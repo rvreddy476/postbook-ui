@@ -37,6 +37,7 @@ import {
   shipRequestBody,
 } from "../model/sell"
 import type { AttributeWireValue, ListingColumns, VariantCreateWire, VariantOptionsWire, VariationAxisWire } from "../model/sellListing"
+import type { SellScopeBody, SellScopeSavedWire, SellScopeViewWire } from "../model/sellScope"
 
 const BASE = "/v1/commerce"
 
@@ -84,6 +85,27 @@ export async function saveSellerAddress(body: SellerAddressBody): Promise<void> 
 
 export async function savePayout(body: PayoutBody): Promise<void> {
   await api.put(`${BASE}/onboarding/step/payout`, body)
+}
+
+/** PUT /onboarding/step/sell-scope: "What will you sell?". 200 with the PAN masked, never in full. */
+export async function saveSellScope(body: SellScopeBody): Promise<SellScopeSavedWire> {
+  return unwrap<SellScopeSavedWire>((await api.put(`${BASE}/onboarding/step/sell-scope`, body)).data)
+}
+
+/** GET /seller/sell-scope: the shop's scope and the category ids a books-only shop may list in. */
+export async function fetchSellScope(): Promise<SellScopeViewWire> {
+  const d = unwrap<Partial<SellScopeViewWire>>((await api.get(`${BASE}/seller/sell-scope`)).data)
+  return {
+    sell_scope: typeof d?.sell_scope === "string" && d.sell_scope ? d.sell_scope : "all_categories",
+    has_gstin: d?.has_gstin === true,
+    book_category_ids: Array.isArray(d?.book_category_ids) ? d.book_category_ids : [],
+    can_upgrade: d?.can_upgrade === true,
+  }
+}
+
+/** POST /seller/sell-scope/upgrade {gstin}: a books-only shop adds a GSTIN and sells in every category. */
+export async function upgradeSellScope(gstin: string): Promise<SellScopeViewWire> {
+  return unwrap<SellScopeViewWire>((await api.post(`${BASE}/seller/sell-scope/upgrade`, { gstin })).data)
 }
 
 export async function fetchReadiness(): Promise<ReadinessWire> {

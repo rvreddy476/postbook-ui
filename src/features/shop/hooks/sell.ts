@@ -12,6 +12,7 @@ export const sellKeys = {
   all: ["shop", "sell"] as const,
   status: ["shop", "sell", "status"] as const,
   readiness: ["shop", "sell", "readiness"] as const,
+  sellScope: ["shop", "sell", "sell-scope"] as const,
   dashboard: ["shop", "sell", "dashboard"] as const,
   actionNeeded: ["shop", "sell", "action-needed"] as const,
   categoryTree: ["shop", "sell", "category-tree"] as const,
@@ -68,6 +69,54 @@ function useInvalidateOnboarding() {
 export function useStartOnboarding() {
   const invalidate = useInvalidateOnboarding()
   return useMutation({ mutationFn: sell.startOnboarding, onSuccess: invalidate })
+}
+
+/** PUT /onboarding/step/sell-scope (the all-categories path: the GSTIN). */
+export function useSaveSellScope() {
+  const invalidate = useInvalidateOnboarding()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: sell.saveSellScope,
+    onSuccess: () => {
+      invalidate()
+      void qc.invalidateQueries({ queryKey: sellKeys.sellScope })
+    },
+  })
+}
+
+/** The books path is one screen and two writes: PUT /onboarding/step/sell-scope, then PUT /seller/address (address_type business). */
+export function useSaveBooksScope() {
+  const invalidate = useInvalidateOnboarding()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (args: { scope: Parameters<typeof sell.saveSellScope>[0]; address: Parameters<typeof sell.saveSellerAddress>[0] }) => {
+      const saved = await sell.saveSellScope(args.scope)
+      await sell.saveSellerAddress(args.address)
+      return saved
+    },
+    onSuccess: () => {
+      invalidate()
+      void qc.invalidateQueries({ queryKey: sellKeys.sellScope })
+    },
+  })
+}
+
+/** GET /seller/sell-scope. */
+export function useSellScope(enabled = true) {
+  return useQuery({ queryKey: sellKeys.sellScope, queryFn: sell.fetchSellScope, enabled, retry: false, staleTime: 60_000 })
+}
+
+/** POST /seller/sell-scope/upgrade. */
+export function useUpgradeSellScope() {
+  const invalidate = useInvalidateOnboarding()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: sell.upgradeSellScope,
+    onSuccess: () => {
+      invalidate()
+      void qc.invalidateQueries({ queryKey: sellKeys.sellScope })
+    },
+  })
 }
 
 export function useSaveBasic() {
