@@ -10,7 +10,7 @@ export const activityTabId = (tab: InboxTab) => `activity-tab-${tab}`
  * The Activity filter tabs: one tab stop, arrow keys / Home / End move and
  * select (WAI-ARIA tabs, automatic activation).
  */
-export function ActivityTabs({ active, onSelect }: { active: InboxTab; onSelect: (tab: InboxTab) => void }) {
+export function ActivityTabs({ active, onSelect, badges }: { active: InboxTab; onSelect: (tab: InboxTab) => void; badges?: Partial<Record<InboxTab, string | null>> }) {
   const refs = useRef<(HTMLButtonElement | null)[]>([])
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -25,6 +25,7 @@ export function ActivityTabs({ active, onSelect }: { active: InboxTab; onSelect:
     <div role="tablist" aria-label="Filter activity" className="mb-5 flex gap-1 overflow-x-auto border-b border-border">
       {INBOX_TABS.map((t, i) => {
         const selected = t.key === active
+        const badge = badges?.[t.key]
         return (
           <button
             key={t.key}
@@ -42,6 +43,11 @@ export function ActivityTabs({ active, onSelect }: { active: InboxTab; onSelect:
             }`}
           >
             {t.label}
+            {badge ? (
+              <span data-tab-badge className="ml-1.5 rounded-full bg-primary px-1.5 text-[11px] font-semibold tabular-nums text-primary-foreground">
+                {badge}<span className="sr-only"> pending</span>
+              </span>
+            ) : null}
           </button>
         )
       })}

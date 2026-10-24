@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type RefObject } from 'react';
-import { CodeXml, EyeOff, Pin, ShieldAlert, SlidersHorizontal, Trash2, UserRoundX, VolumeX, type LucideIcon } from 'lucide-react';
+import { CodeXml, EyeOff, Pencil, Pin, ShieldAlert, SlidersHorizontal, Trash2, UserRoundX, VolumeX, type LucideIcon } from 'lucide-react';
 import './post-controls.css';
 
 export interface PostControlsProps {
@@ -17,6 +17,9 @@ export interface PostControlsProps {
   onReport: () => void;
   onBlock: () => void;
   onPin: () => void;
+  /** Offer "Edit post" on the owner's menu (a feed post, not a repost). */
+  canEdit?: boolean;
+  onEdit?: () => void;
   onDelete: () => void;
   onClose: (restoreFocus?: boolean) => void;
   anchorRef?: RefObject<HTMLDivElement | null>;
@@ -50,8 +53,9 @@ export default function PostControls(props: PostControlsProps) {
   }, [props.anchorRef]);
   const actions: Array<{ label: string; icon: LucideIcon; run: () => void; danger?: boolean; disabled?: boolean }> = props.own
     ? [
-        { label: props.pinned ? 'Unpin update' : 'Pin update', icon: Pin, run: props.onPin },
-        { label: 'Delete update', icon: Trash2, run: props.onDelete, danger: true, disabled: props.deleting },
+        ...(props.canEdit && props.onEdit ? [{ label: 'Edit post', icon: Pencil, run: props.onEdit }] : []),
+        { label: props.pinned ? 'Unpin post' : 'Pin post', icon: Pin, run: props.onPin },
+        { label: 'Delete post', icon: Trash2, run: props.onDelete, danger: true, disabled: props.deleting },
       ]
     : [
         { label: 'Recommend similar', icon: SlidersHorizontal, run: props.onRecommend },
@@ -87,7 +91,7 @@ export default function PostControls(props: PostControlsProps) {
   return (
     <div ref={panel} role="menu" aria-label="Post controls" className="post-controls" style={{ position: 'relative', top: offset }} onKeyDown={navigate}
       onBlur={(event) => { if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget as Node)) props.onClose(); }}>
-      <div className="post-controls-heading" aria-hidden="true">{props.own ? 'Manage update' : 'Post controls'}</div>
+      <div className="post-controls-heading" aria-hidden="true">{props.own ? 'Manage post' : 'Post controls'}</div>
       {actions.map(({ label, icon: Icon, run, danger, disabled }) => (
         <button key={label} type="button" role="menuitem" aria-label={label} tabIndex={-1}
           disabled={disabled} onClick={run} className="post-controls-action" data-danger={danger || undefined}>

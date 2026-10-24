@@ -8,7 +8,9 @@ import { useFeedReaction } from '@/hooks/useFeedReaction';
 import { normalizeReaction } from '@/lib/reactions';
 import FeedReactionControl from '@/components/reactions/FeedReactionControl';
 import Link from 'next/link';
-import { useToggleBookmark, useTogglePin, useHidePost, useDeletePost } from '@/hooks/usePostActions';
+import { useToggleBookmark, useTogglePin, useHidePost, useDeletePost, useEditPost } from '@/hooks/usePostActions';
+import EditPostSheet from '@/components/feed/EditPostSheet';
+import { postEditErrorCopy, type PostEditBody } from '@/components/feed/postEdit';
 import { useGlobalToast } from '@/contexts/ToastContext';
 import HiddenPostToast from '@/components/feed/HiddenPostToast';
 import PostControls from '@/components/feed/PostControls';
@@ -67,6 +69,8 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [bookmarked, setBookmarked] = useState(!!post.is_bookmarked);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
+  const [showEditSheet, setShowEditSheet] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
   const moreMenuRef = useRef<HTMLDivElement>(null);
 
   const { data: profile } = useMyProfile();
@@ -78,6 +82,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const castVoteMutation = useCastVote();
   const hidePost = useHidePost();
   const deleteMutation = useDeletePost();
+  const editMutation = useEditPost();
   const toast = useGlobalToast();
 
   const { data: authorProfile } = useUserProfile(post.author_id);
@@ -227,6 +232,26 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       .writeText(iframe)
       .then(() => toast({ type: 'success', title: 'Embed code copied' }))
       .catch(() => toast({ type: 'error', title: "Couldn't copy the embed code" }));
+  };
+
+  const handleEdit = () => {
+    closeMenu();
+    setEditError(null);
+    setShowEditSheet(true);
+  };
+
+  const handleSaveEdit = (body: PostEditBody) => {
+    setEditError(null);
+    editMutation.mutate(
+      { postId: post.id, body },
+      {
+        onSuccess: () => {
+          setShowEditSheet(false);
+          toast({ type: 'success', title: 'Post updated' });
+        },
+        onError: (err) => setEditError(postEditErrorCopy(err)),
+      },
+    );
   };
 
   const handleDelete = () => {
@@ -395,6 +420,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   onRecommend={handleInterested} onHide={handleNotInterested} onMute={handleMuteAuthor}
                   onEmbed={handleEmbed} onReport={handleReport} onBlock={handleBlockAuthor}
                   onPin={handlePin} onDelete={handleDelete}
+                  canEdit={!post.is_repost} onEdit={handleEdit}
                   onClose={(restoreFocus) => {
                     closeMenu();
                     if (restoreFocus) moreMenuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
@@ -878,6 +904,17 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         targetType={isReel ? 'reel' : post.content_type === 'long_video' ? 'video' : 'post'}
         onClose={() => setShowReportDialog(false)}
       />
+
+      {/* Edit a published post: text, audience, comments, like count */}
+      {showEditSheet && isOwnPost && (
+        <EditPostSheet
+          post={post}
+          saving={editMutation.isPending}
+          error={editError}
+          onSave={handleSaveEdit}
+          onClose={() => { if (!editMutation.isPending) setShowEditSheet(false); }}
+        />
+      )}
     </article>
   );
 };

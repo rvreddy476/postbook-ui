@@ -33,7 +33,7 @@ import type { PostRichText } from "@/components/studio/postStyle";
 import { useGlobalToast } from "@/contexts/ToastContext";
 import { useMyProfile } from "@/hooks/useEditProfile";
 import { formatPostCount, useHashtagSearch } from "@/hooks/useHashtags";
-import api from "@/lib/api";
+import { AISuggestionError, aiErrorCopy, aiHttp, suggestCaptions, suggestHashtags } from "@/hooks/useAI";
 import { serverCode, serverMessage } from "@/features/post-compose/api";
 import { ComposeActions } from "@/features/post-compose/components/ComposeActions";
 import { MediaStrip } from "@/features/post-compose/components/MediaStrip";
@@ -60,6 +60,8 @@ import { useComposeMedia } from "@/features/post-compose/useComposeMedia";
 import { ShareIcon } from "@/components/icons/ShareIcon";
 
 const EmojiPicker = lazy(() => import("@emoji-mart/react"));
+
+const NO_SUGGESTIONS = "No suggestions for this text yet. Try adding a few more words.";
 
 /*
   The full-page post composer (/create/post), and the draft editor
@@ -167,6 +169,9 @@ function CreatePostScreen() {
   const [captionSuggestions, setCaptionSuggestions] = useState<string[]>([]);
   const [hashtagLoading, setHashtagLoading] = useState(false);
   const [hashtagSuggestions, setHashtagSuggestions] = useState<string[]>([]);
+  // What came of the last ask, when it was not a list: a failure, or nothing to suggest.
+  const [captionNote, setCaptionNote] = useState<string | null>(null);
+  const [hashtagNote, setHashtagNote] = useState<string | null>(null);
 
   // Hashtag autocomplete
   const [hashtagQuery, setHashtagQuery] = useState("");
@@ -323,11 +328,13 @@ function CreatePostScreen() {
     if (captionLoading) return;
     setCaptionLoading(true);
     setCaptionSuggestions([]);
+    setCaptionNote(null);
     try {
-      const res = await api.post("/v1/ai/caption-suggestions", { ref_id: "new", ref_type: "post", context_text: content });
-      setCaptionSuggestions(res.data?.data?.captions ?? res.data?.captions ?? []);
-    } catch {
-      setCaptionSuggestions([]);
+      const list = await suggestCaptions(aiHttp, content);
+      setCaptionSuggestions(list);
+      if (list.length === 0) setCaptionNote(NO_SUGGESTIONS);
+    } catch (err) {
+      setCaptionNote(err instanceof AISuggestionError ? err.message : aiErrorCopy(err));
     } finally {
       setCaptionLoading(false);
     }
@@ -337,11 +344,13 @@ function CreatePostScreen() {
     if (hashtagLoading) return;
     setHashtagLoading(true);
     setHashtagSuggestions([]);
+    setHashtagNote(null);
     try {
-      const res = await api.post("/v1/ai/hashtag-suggestions", { ref_id: "new", ref_type: "post", context_text: content });
-      setHashtagSuggestions(res.data?.data?.hashtags ?? res.data?.hashtags ?? []);
-    } catch {
-      setHashtagSuggestions([]);
+      const list = await suggestHashtags(aiHttp, content);
+      setHashtagSuggestions(list);
+      if (list.length === 0) setHashtagNote(NO_SUGGESTIONS);
+    } catch (err) {
+      setHashtagNote(err instanceof AISuggestionError ? err.message : aiErrorCopy(err));
     } finally {
       setHashtagLoading(false);
     }
@@ -897,10 +906,11 @@ function CreatePostScreen() {
                   </div>
                 ) : null}
 
-                <div className="flex items-center justify-between border-t border-brand-divider pt-3 text-xs text-brand-text/60">
-                  <span className="flex items-center gap-1"><Heart className="h-4 w-4" aria-hidden="true" /> 0</span>
-                  <span className="flex items-center gap-1"><MessageSquare className="h-4 w-4" aria-hidden="true" /> 0</span>
-                  <span className="flex items-center gap-1"><ShareIcon className="h-4 w-4" aria-hidden="true" /> 0</span>
+                {/* The card's actions, without numbers: a post nobody has seen has no counts to show. */}
+                <div className="flex items-center justify-between border-t border-brand-divider pt-3 text-xs text-brand-text/60" aria-hidden="true" data-preview-actions>
+                  <span className="flex items-center gap-1"><Heart className="h-4 w-4" /> Like</span>
+                  <span className="flex items-center gap-1"><MessageSquare className="h-4 w-4" /> Comment</span>
+                  <span className="flex items-center gap-1"><ShareIcon className="h-4 w-4" /> Share</span>
                 </div>
               </div>
             </motion.section>
@@ -935,6 +945,13 @@ function CreatePostScreen() {
                   Suggest hashtags
                 </button>
               </div>
+
+              {captionNote || hashtagNote ? (
+                <div className="mb-4 space-y-1" role="status" aria-live="polite">
+                  {captionNote ? <p className="text-xs font-semibold text-brand-text/70">Captions: {captionNote}</p> : null}
+                  {hashtagNote ? <p className="text-xs font-semibold text-brand-text/70">Hashtags: {hashtagNote}</p> : null}
+                </div>
+              ) : null}
 
               {captionSuggestions.length > 0 ? (
                 <div className="mb-4 space-y-2">

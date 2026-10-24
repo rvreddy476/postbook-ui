@@ -21,7 +21,9 @@ import {
 import { decodeNotificationPage, type InboxNotification } from '@/lib/notificationInbox'
 import { ActivityTabs } from '../ActivityTabs'
 import { ActivityList, EMPTY_COPY } from '../ActivityList'
-import { RequestsList } from '../RequestsPanel'
+import { FollowRequestsList, RequestLinks, RequestsList } from '../RequestsPanel'
+import { FollowRequestInlineView } from '../FollowRequestActions'
+import { isFollowRequestNotification } from '@/lib/followRequests'
 
 const row = (id: string, extra: Record<string, unknown> = {}) => ({
   notification_id: id, type: 'post.liked', bucket: 202610, ts: `ts-${id}`, created_at: '2026-10-14T09:00:00Z', is_read: false, deep_link: '/post/p1', ...extra,
@@ -197,15 +199,99 @@ describe('rendering', () => {
     for (const t of INBOX_TABS) if (t.key !== 'requests') expect(EMPTY_COPY[t.key].length).toBeGreaterThan(10)
   })
 
-  test('requests list shows confirm/delete per request and the message-requests way in', () => {
+  test('connection requests are their own labelled section with confirm/delete', () => {
     const html = renderToStaticMarkup(
       <RequestsList items={[{ user_id: 'u1', display_name: 'Ada', username: 'ada', created_at: '2026-10-14T09:00:00Z' }]} busy={false} onAccept={() => undefined} onDecline={() => undefined} />,
     )
-    expect(html).toContain('href="/messenger?lane=requests"')
+    expect(html).toContain('>Connection requests')
+    expect(html).toContain('aria-label="Connection requests"')
     expect(html).toContain('href="/u/ada"')
+    expect(html).toContain('Wants to connect')
     expect(html).toContain('>Confirm</button>')
     expect(html).toContain('>Delete</button>')
-    expect(renderToStaticMarkup(<RequestsList items={[]} busy={false} onAccept={() => undefined} onDecline={() => undefined} />)).toContain('No pending friend requests.')
+    expect(html).toContain('aria-label="Confirm connection request from Ada"')
+    expect(renderToStaticMarkup(<RequestsList items={[]} busy={false} onAccept={() => undefined} onDecline={() => undefined} />)).toContain('No pending connection requests.')
+  })
+
+  test('the message and credit request inboxes stay one tap away', () => {
+    const html = renderToStaticMarkup(<RequestLinks />)
+    expect(html).toContain('href="/messenger?lane=requests"')
+    expect(html).toContain('href="/credits/requests"')
+  })
+
+  const followProps = {
+    pendingId: null, hasMore: false, loadingMore: false, error: null,
+    onAccept: () => undefined, onDecline: () => undefined, onLoadMore: () => undefined,
+  }
+  const ada = { user_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', display_name: 'Ada', username: 'ada', created_at: '2026-10-14T09:00:00Z' }
+  const bo = { user_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', display_name: 'Bo', created_at: '2026-10-14T09:00:00Z' }
+
+  test('follow requests list Accept / Decline per person under their own heading and count', () => {
+    const html = renderToStaticMarkup(<FollowRequestsList {...followProps} items={[ada, bo]} />)
+    expect(html).toContain('>Follow requests')
+    expect(html).toMatch(/data-request-count[^>]*>2</)
+    expect(html).toContain('aria-label="Accept follow request from Ada"')
+    expect(html).toContain('aria-label="Decline follow request from Bo"')
+    expect(html).toContain('Wants to follow you')
+    expect(html).toContain('href="/u/ada"')
+    expect((html.match(/>Accept<\/button>/g) ?? []).length).toBe(2)
+    expect(html).not.toContain('Show more follow requests')
+  })
+
+  test('only the answered row waits; more pages show a count with + and a way to load them', () => {
+    const html = renderToStaticMarkup(<FollowRequestsList {...followProps} items={[ada, bo]} pendingId={ada.user_id} hasMore />)
+    expect(html).toMatch(/aria-label="Accept follow request from Ada"[^>]*disabled=""|disabled=""[^>]*aria-label="Accept follow request from Ada"/)
+    expect(html).not.toMatch(/disabled=""[^>]*aria-label="Accept follow request from Bo"|aria-label="Accept follow request from Bo"[^>]*disabled=""/)
+    expect(html).toMatch(/data-request-count[^>]*>2\+</)
+    expect(html).toContain('Show more follow requests')
+  })
+
+  test('no follow requests: an empty state that says why, and an error reads as a sentence', () => {
+    const empty = renderToStaticMarkup(<FollowRequestsList {...followProps} items={[]} />)
+    expect(empty).toContain('No follow requests.')
+    expect(empty).not.toContain('data-request-count')
+    const failed = renderToStaticMarkup(<FollowRequestsList {...followProps} items={[ada]} error="This request is no longer pending." />)
+    expect(failed).toContain('role="alert"')
+    expect(failed).toContain('This request is no longer pending.')
+  })
+
+  test('the Requests tab carries the pending badge; other tabs none', () => {
+    const html = renderToStaticMarkup(<ActivityTabs active="all" onSelect={() => undefined} badges={{ requests: '3' }} />)
+    expect((html.match(/data-tab-badge/g) ?? []).length).toBe(1)
+    expect(html).toMatch(/id="activity-tab-requests"[\s\S]*Requests<span data-tab-badge[^>]*>3</)
+    expect(renderToStaticMarkup(<ActivityTabs active="all" onSelect={() => undefined} badges={{ requests: null }} />)).not.toContain('data-tab-badge')
+  })
+
+  test('a follow-request notification row answers in place, beside its link, not inside it', () => {
+    const rows = decodeNotificationPage({
+      data: [
+        row('f1', { type: 'follow_request', actor_user_id: ada.user_id, actor: { id: ada.user_id, display_name: 'Ada' }, deep_link: '/u/ada' }),
+        row('n2', { type: 'post.liked' }),
+      ],
+    }).notifications
+    const html = renderToStaticMarkup(
+      <ActivityList
+        notifications={rows}
+        onOpen={() => undefined}
+        renderActions={(n) => (isFollowRequestNotification(n.type, n.actor_id) ? <FollowRequestInlineView state={{ kind: 'idle' }} actorName={n.actor_name} onAnswer={() => undefined} /> : null)}
+      />,
+    )
+    expect((html.match(/>Accept<\/button>/g) ?? []).length).toBe(1)
+    expect(html).toContain('aria-label="Decline follow request from Ada"')
+    // No button inside an anchor.
+    expect(html).not.toMatch(/<a [^>]*>(?:(?!<\/a>)[\s\S])*<button/)
+    expect(html).toContain('href="/u/ada"')
+    expect(html).toContain('href="/post/p1"')
+  })
+
+  test('the inline answer shows its outcome or its refusal', () => {
+    expect(renderToStaticMarkup(<FollowRequestInlineView state={{ kind: 'done', decision: 'accept' }} onAnswer={() => undefined} />)).toContain('Request accepted')
+    expect(renderToStaticMarkup(<FollowRequestInlineView state={{ kind: 'done', decision: 'decline' }} onAnswer={() => undefined} />)).toContain('Request declined')
+    const pending = renderToStaticMarkup(<FollowRequestInlineView state={{ kind: 'pending', decision: 'accept' }} onAnswer={() => undefined} />)
+    expect((pending.match(/disabled=""/g) ?? []).length).toBe(2)
+    const failed = renderToStaticMarkup(<FollowRequestInlineView state={{ kind: 'error', message: 'This request is no longer pending.' }} onAnswer={() => undefined} />)
+    expect(failed).toContain('role="alert"')
+    expect(failed).toContain('>Accept</button>')
   })
 
   test('activity badge text', () => {

@@ -36,15 +36,12 @@ export const EMPTY_COPY: Record<Exclude<InboxTab, 'requests'>, string> = {
   followers: 'New followers and friend requests will show up here.',
 }
 
-function Row({ n, onOpen, now }: { n: InboxNotification; onOpen: (n: InboxNotification) => void; now?: number }) {
+function Row({ n, onOpen, now, actions }: { n: InboxNotification; onOpen: (n: InboxNotification) => void; now?: number; actions?: ReactNode }) {
   const qa = describeQA(n.type, n.server_title)
   // No one to show (no actor, or no name for it): the row's category glyph.
   const glyph = !qa && n.icon && !notificationHasActor(n.actor_id, n.actor_name) ? n.icon : undefined
-  const body = (
-    <div
-      className={`flex items-start gap-3 rounded-xl border border-border p-4 transition-colors hover:bg-muted ${n.is_read ? 'bg-brand-card' : 'bg-primary-tint'}`}
-      data-unread={n.is_read ? undefined : 'true'}
-    >
+  const lead = (
+    <>
       {n.is_read ? (
         <span className="mt-2 h-2 w-2 shrink-0" aria-hidden />
       ) : (
@@ -57,14 +54,42 @@ function Row({ n, onOpen, now }: { n: InboxNotification; onOpen: (n: InboxNotifi
       ) : glyph ? (
         <NotificationGlyph icon={glyph} className="h-8 w-8" surface="bg-muted" />
       ) : null}
-      <span className="min-w-0 flex-1">
-        <span className={`block text-sm text-foreground ${n.is_read ? '' : 'font-semibold'}`}>{qa ? qa.message : n.title}</span>
-        {n.body ? <span className="mt-0.5 line-clamp-2 block text-sm text-muted-foreground">{n.body}</span> : null}
-        {/* "2h", the way IG and TikTok say it; the full date and time on hover. */}
-        <time dateTime={n.created_at} title={postTimeTitle(n.created_at)} className="mt-1 block text-xs text-muted-foreground">
-          {postTimeLabel(n.created_at, now)}
-        </time>
-      </span>
+    </>
+  )
+  const text = (
+    <>
+      <span className={`block text-sm text-foreground ${n.is_read ? '' : 'font-semibold'}`}>{qa ? qa.message : n.title}</span>
+      {n.body ? <span className="mt-0.5 line-clamp-2 block text-sm text-muted-foreground">{n.body}</span> : null}
+      {/* "2h", the way IG and TikTok say it; the full date and time on hover. */}
+      <time dateTime={n.created_at} title={postTimeTitle(n.created_at)} className="mt-1 block text-xs text-muted-foreground">
+        {postTimeLabel(n.created_at, now)}
+      </time>
+    </>
+  )
+  const surface = `flex items-start gap-3 rounded-xl border border-border p-4 transition-colors hover:bg-muted ${n.is_read ? 'bg-brand-card' : 'bg-primary-tint'}`
+
+  if (actions) {
+    // A row answered in place (a follow request): the buttons sit beside the
+    // link, never inside it.
+    return (
+      <div className={`${surface} flex-wrap`} data-unread={n.is_read ? undefined : 'true'}>
+        {lead}
+        {n.deep_link ? (
+          <Link href={n.deep_link} onClick={() => onOpen(n)} className="block min-w-0 flex-1 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            {text}
+          </Link>
+        ) : (
+          <span className="block min-w-0 flex-1">{text}</span>
+        )}
+        <div className="flex shrink-0 items-center gap-2">{actions}</div>
+      </div>
+    )
+  }
+
+  const body = (
+    <div className={surface} data-unread={n.is_read ? undefined : 'true'}>
+      {lead}
+      <span className="min-w-0 flex-1">{text}</span>
     </div>
   )
   return n.deep_link ? (
@@ -77,7 +102,13 @@ function Row({ n, onOpen, now }: { n: InboxNotification; onOpen: (n: InboxNotifi
 }
 
 /** The rows of a notification tab in time bands (Today, Yesterday, ...). */
-export function ActivityList({ notifications, onOpen, now }: { notifications: readonly InboxNotification[]; onOpen: (n: InboxNotification) => void; now?: Date }) {
+export function ActivityList({ notifications, onOpen, now, renderActions }: {
+  notifications: readonly InboxNotification[]
+  onOpen: (n: InboxNotification) => void
+  now?: Date
+  /** In-place answers for a row (Accept / Decline on a follow request); null for none. */
+  renderActions?: (n: InboxNotification) => ReactNode
+}) {
   const groups = groupInboxByTime(notifications, now)
   return (
     <div className="space-y-6">
@@ -89,7 +120,7 @@ export function ActivityList({ notifications, onOpen, now }: { notifications: re
           <ul className="space-y-2">
             {g.items.map((n) => (
               <li key={n.id}>
-                <Row n={n} onOpen={onOpen} now={now?.getTime()} />
+                <Row n={n} onOpen={onOpen} now={now?.getTime()} actions={renderActions?.(n) ?? undefined} />
               </li>
             ))}
           </ul>

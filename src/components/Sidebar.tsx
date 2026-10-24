@@ -8,31 +8,8 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Avatar from '@/components/ui/Avatar';
 import { useMyProfile } from '@/hooks/useEditProfile';
-import {
-  Bell,
-  BookOpen,
-  Bookmark,
-  Briefcase,
-  Film,
-  Flame,
-  // Globe2, // Communities feature disabled
-  HelpCircle,
-  Home,
-  LayoutGrid,
-  PanelsTopLeft,
-  Menu,
-  MessageSquare,
-  Radio,
-  ShoppingBag,
-  Tv,
-  UtensilsCrossed,
-  House,
-  Heart,
-  User,
-  UserRoundPlus,
-  Users,
-  Video,
-} from 'lucide-react';
+import { LayoutGrid, Menu, User } from 'lucide-react';
+import { moreItems, primaryItems, type SidebarItem } from '@/components/sidebarNav';
 
 interface SidebarProps {
   activeTab: NavItem;
@@ -46,58 +23,9 @@ interface SidebarProps {
   inFlow?: boolean;
 }
 
-type Item = {
-  id: string;
-  label: string;
-  icon: typeof Home;
-  href?: string;
-  /**
-   * Icon colour class. Every item now inherits the rail's own colour so the
-   * nav reads as ONE surface: eight different hues down the rail was the
-   * "stitched" look the founder objected to. The ACTIVE item is the only
-   * thing that takes the accent, which is what makes it findable.
-   */
-  color: string;
-  /** Opens in a new browser tab (used for PostTube — a separate surface). */
-  newTab?: boolean;
-};
-
-// Primary rail — always visible. Sized so the rail never scrolls.
-const primaryItems: Item[] = [
-  { id: 'Home', label: 'Home', icon: Home, href: '/', color: 'text-current' },
-  { id: 'Feed', label: 'Feed', icon: PanelsTopLeft, href: '/feed', color: 'text-current' },
-  { id: 'Reels', label: 'Reels', icon: Film, href: '/reels', color: 'text-current' },
-  { id: 'Circle', label: 'Connections', icon: UserRoundPlus, href: '/connections', color: 'text-current' },
-  { id: 'Groups', label: 'Groups', icon: Users, href: '/groups', color: 'text-current' },
-  /*
-    No Channels entry. Channels are a MOBILE product now: the API and the
-    messenger's channel panel both stay, but the web has no /channels pages,
-    so a nav item pointing at them would be a link to nothing.
-  */
-  // Communities feature disabled — consolidated into Groups.
-  // Service + pages kept; only the entry points are hidden.
-  // { id: 'Communities', label: 'Communities', icon: Globe2, href: '/communities', color: 'text-current' },
-];
-
-// Everything else opens from the "More" button instead of overflowing.
-//
-// Go Live sits right after PostTube — the post composer no longer hosts a
-// "go live" button, so this is the canonical entry point for creators.
-const moreItems: Item[] = [
-  { id: 'Trending', label: 'Trending', icon: Flame, href: '/trending', color: 'text-current' },
-  { id: 'Messenger', label: 'Messenger', icon: MessageSquare, color: 'text-current' },
-  { id: 'Notifications', label: 'Notifications', icon: Bell, color: 'text-current' },
-  { id: 'PostTube', label: 'PostTube', icon: Tv, href: '/posttube', newTab: true, color: 'text-current' },
-  { id: 'GoLive', label: 'Go Live', icon: Video, href: '/live/new', color: 'text-current' },
-  { id: 'Ask', label: 'Ask', icon: HelpCircle, href: '/qa', color: 'text-current' },
-  { id: 'Pages', label: 'Pages', icon: Briefcase, href: '/pages', color: 'text-current' },
-  { id: 'Shop', label: 'Shop', icon: ShoppingBag, href: '/shop', color: 'text-current' },
-  { id: 'Feast', label: 'Feast', icon: UtensilsCrossed, href: '/feast', color: 'text-current' },
-  { id: 'Doorstep', label: 'Doorstep', icon: House, href: '/doorstep', color: 'text-current' },
-  { id: 'PostMatch', label: 'Pulse', icon: Heart, href: '/dating', color: 'text-current' },
-  { id: 'Saved', label: 'Saved', icon: Bookmark, href: '/saved', color: 'text-current' },
-  { id: 'Memories', label: 'Memories', icon: BookOpen, href: '/memories', color: 'text-current' },
-];
+// The entries themselves, and the list of parked products kept out of them,
+// live in components/sidebarNav.ts.
+type Item = SidebarItem;
 
 const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
@@ -112,7 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const pathname = usePathname();
   const appItems = resolveAppNavigation(pathname);
   const brand = resolveAppBrand(pathname);
-  const contextualItems: Item[] = appItems?.map(item => ({ ...item, id: item.label, color: 'text-current' })) ?? primaryItems;
+  const contextualItems: readonly Item[] = appItems?.map(item => ({ ...item, id: item.label, color: 'text-current' })) ?? primaryItems;
 
   const isItemActive = (item: Item) => appItems
     ? item.href?.split('?')[0] === pathname && !item.href?.includes('?')

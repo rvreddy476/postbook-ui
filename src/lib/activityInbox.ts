@@ -7,9 +7,11 @@ import { decodeNotificationPage, type InboxNotification } from '@/lib/notificati
   (notification-service inbox_tabs.go). The server derives the category
   from the notification type, so the client keeps no type lists of its own.
 
-  Requests is not a notification category: it is the pending connection
-  requests list (GET /v1/graph/connection-requests), shown in place, with a
-  way into message requests.
+  Requests is not a notification category: it is the incoming follow
+  requests of a private account (GET /v1/graph/follow-requests/incoming,
+  lib/followRequests.ts) and the pending connection requests
+  (GET /v1/graph/connection-requests), each in its own labelled section and
+  answered in place, with a way into message and credit requests.
 
   Paging contract: a filtered page can come back short or EMPTY and still
   carry next_cursor, because the server filters a window of the whole inbox.

@@ -6,7 +6,9 @@ import { useActivityInbox, useMarkAllRead, useMarkNotificationRead } from '@/hoo
 import { flattenInboxLoads, isInboxTab, shouldAutoLoadMore, type InboxTab } from '@/lib/activityInbox'
 import { ActivityTabs, ACTIVITY_PANEL_ID, activityTabId } from './ActivityTabs'
 import { ActivityList, EMPTY_COPY } from './ActivityList'
-import { RequestsPanel } from './RequestsPanel'
+import { RequestsPanel, useRequestsBadge } from './RequestsPanel'
+import { FollowRequestInlineActions } from './FollowRequestActions'
+import { isFollowRequestNotification } from '@/lib/followRequests'
 
 /*
   Activity: All · Likes · Comments · Mentions · Followers · Requests.
@@ -64,6 +66,7 @@ export default function NotificationsInboxPage() {
   }, [autoLoad, fetchNext, pages?.length])
 
   const isRequests = tab === 'requests'
+  const requestsBadge = useRequestsBadge()
 
   return (
     <AppShell>
@@ -82,7 +85,7 @@ export default function NotificationsInboxPage() {
           ) : null}
         </div>
 
-        <ActivityTabs active={tab} onSelect={selectTab} />
+        <ActivityTabs active={tab} onSelect={selectTab} badges={{ requests: requestsBadge }} />
 
         <div role="tabpanel" id={ACTIVITY_PANEL_ID} aria-labelledby={activityTabId(tab)} tabIndex={0} className="focus-visible:outline-none">
           {markRead.isError || markAll.isError ? (
@@ -101,7 +104,13 @@ export default function NotificationsInboxPage() {
           ) : (
             <>
               {notifs.length > 0 ? (
-                <ActivityList notifications={notifs} onOpen={(n) => { if (!n.is_read) markRead.mutate([n]) }} />
+                <ActivityList
+                  notifications={notifs}
+                  onOpen={(n) => { if (!n.is_read) markRead.mutate([n]) }}
+                  renderActions={(n) => (isFollowRequestNotification(n.type, n.actor_id) && n.actor_id
+                    ? <FollowRequestInlineActions requesterId={n.actor_id} actorName={n.actor_name} />
+                    : null)}
+                />
               ) : lastCapped && inbox.hasNextPage ? (
                 <p className="py-16 text-center text-sm text-muted-foreground">Nothing here in your recent activity.</p>
               ) : !inbox.hasNextPage ? (
