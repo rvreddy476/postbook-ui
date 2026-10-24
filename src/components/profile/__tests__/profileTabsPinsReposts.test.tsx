@@ -32,11 +32,11 @@ describe("profile tabs: the list", () => {
         ])
     })
 
-    test("Reposts shows for everyone once enabled, and stays hidden until the route is reachable", () => {
+    test("Reposts shows for everyone now the route is reachable, and the switch can still hide it", () => {
         expect(visibleProfileTabKeys({ isOwn: false, repostsEnabled: true })).toContain("reposts")
         expect(visibleProfileTabKeys({ isOwn: true, repostsEnabled: false })).not.toContain("reposts")
-        expect(REPOSTS_TAB_ENABLED).toBe(false)
-        expect(visibleProfileTabKeys({ isOwn: true })).not.toContain("reposts")
+        expect(REPOSTS_TAB_ENABLED).toBe(true)
+        expect(visibleProfileTabKeys({ isOwn: true })).toContain("reposts")
     })
 
     test("the tab row draws theme tokens only: one accent, no raw palette colours", () => {

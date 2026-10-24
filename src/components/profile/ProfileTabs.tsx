@@ -72,15 +72,12 @@ const tabDefinitions: TabDef[] = [
 const QA_TAB_ENABLED = false
 
 /*
-  Reposts waits on one server change. post-service registers
-  GET /v1/users/:userId/reposts, but the gateway sends every /v1/users/*
-  path to user-service (api-gateway routeDefinitions), which has no such
-  route: on dev it answers an empty 200, which would read as "no reposts"
-  for everyone. The server is adding the same handler at
-  GET /v1/creators/:creatorId/reposts, and the reader already asks there
-  (REPOSTS_PATH in tabs/reposts.ts). Flip this once that route has shipped.
+  Reposts read GET /v1/creators/:creatorId/reposts (REPOSTS_PATH in
+  tabs/reposts.ts), which post-service serves with the viewer's rules since
+  febe0e20b. The old /v1/users/:userId/reposts never reached post-service
+  through the gateway. Keep this switch to hide the tab again if needed.
 */
-export const REPOSTS_TAB_ENABLED = false
+export const REPOSTS_TAB_ENABLED = true
 
 /**
  * The tabs a viewer sees. Videos and Reels are always there (an empty grid
