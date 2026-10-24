@@ -64,7 +64,7 @@ function MediaGridItem({ post, index }: { post: PostDetail; index: number }) {
             {/* Video indicators */}
             {isVideo && (
                 <>
-                    <div className="absolute top-3 left-3 flex items-center gap-1 bg-black/60 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-1 rounded-lg">
+                    <div className="absolute top-3 left-3 flex items-center gap-1 bg-black/60 backdrop-blur-xs text-white text-xs font-semibold px-2 py-1 rounded-lg">
                         <Play className="h-3 w-3 fill-white" />
                         {duration ? formatDuration(duration) : "Video"}
                     </div>
@@ -73,7 +73,7 @@ function MediaGridItem({ post, index }: { post: PostDetail; index: number }) {
 
             {/* Type badge */}
             {!isVideo && post.media && post.media.length > 1 && (
-                <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-1 rounded-lg">
+                <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-xs text-white text-xs font-semibold px-2 py-1 rounded-lg">
                     +{post.media.length - 1}
                 </div>
             )}

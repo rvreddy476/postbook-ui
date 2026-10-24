@@ -972,7 +972,7 @@ export function ReelsScreen() {
             <ReelConfirmDialog
               open={deleteOpen}
               title="Delete this reel?"
-              description="It goes to Recently deleted. You can undo right away."
+              description={<>It goes to <Link href="/settings/recently-deleted" className="font-semibold text-brand-text underline underline-offset-2">Recently deleted</Link>. You can undo right away.</>}
               confirmLabel="Delete"
               danger
               pending={remove.isPending}

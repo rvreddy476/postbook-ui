@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthUser } from "@/store/auth"
 import { profileErrorStatus, useAggregatedProfile } from "@/hooks/useAggregatedProfile"
@@ -12,7 +12,9 @@ import { ReportProfileDialog } from "./ReportProfileDialog"
 import { ShareSheet } from "@/features/reels/components/ShareSheet"
 import { followButtonState, profileShareUrl, profileViewState } from "./profileParity"
 import { withShareRef } from "@/features/share/shareRef"
-import { ProfileTabs } from "./ProfileTabs"
+import { ProfileTabs, type ProfileTabKey } from "./ProfileTabs"
+import { PinnedPosts } from "./PinnedPosts"
+import { RepostsTab } from "./tabs/RepostsTab"
 import ProfileQASection from "./ProfileQASection"
 import { CreationsTab } from "./tabs/CreationsTab"
 import { AboutTab } from "./tabs/AboutTab"
@@ -41,23 +43,17 @@ import { useMuteUser, useUnmuteUser } from "@/hooks/useMuting"
 import { useToast } from "@/components/ui/toast"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
-    Film,
-    Clapperboard,
-    Sparkles,
     ExternalLink,
-    Pin,
     QrCode,
     X,
     Plus,
     Loader2,
-    ShoppingBag,
-    CalendarCheck,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
-import type { UserProfile, ProfileTab, ProfilePin, PortfolioItem, ProfileQRCode } from "@/types/profile"
+import type { UserProfile, PortfolioItem, ProfileQRCode } from "@/types/profile"
 
 interface ProfilePageProps {
     username: string
@@ -139,69 +135,6 @@ function QRCodeModal({ username, onClose }: { username: string; onClose: () => v
     )
 }
 
-// ── Pinned Posts section ───────────────────────────────────────────────────────
-function PinnedSection({ userId, isOwn }: { userId: string; isOwn: boolean }) {
-    const qc = useQueryClient()
-    const { data: pins = [] } = useQuery<ProfilePin[]>({
-        queryKey: ["pins", userId],
-        queryFn: () =>
-            api.get(`/v1/users/${userId}/pins`).then((r) => r.data?.data?.items ?? []),
-    })
-
-    const unpinMutation = useMutation({
-        mutationFn: (id: string) => api.delete(`/v1/users/me/pins/${id}`),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ["pins", userId] }),
-    })
-
-    if (pins.length === 0) return null
-
-    const CONTENT_TYPE_COLORS: Record<string, string> = {
-        post: "bg-blue-50 text-blue-600 border-blue-100",
-        video: "bg-brand-text/10 text-brand-text border-brand-text/20",
-        reel: "bg-rose-50 text-rose-500 border-rose-100",
-    }
-
-    return (
-        <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-                <Pin className="w-3.5 h-3.5 text-brand-text" />
-                <span className="text-xs font-black tracking-[0.2em] text-brand-highlight">Pinned</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-                {pins.map((pin) => (
-                    <div
-                        key={pin.id}
-                        className="flex items-center gap-2 bg-brand-card border border-brand-divider rounded-xl px-3 py-2 shadow-xs"
-                    >
-                        <Pin className="w-3 h-3 text-brand-text shrink-0" />
-                        <span className="text-xs font-medium text-brand-text max-w-[120px] truncate">
-                            {pin.content_id}
-                        </span>
-                        <span
-                            className={`text-xs font-bold tracking-wider border px-1.5 py-0.5 rounded-md ${
-                                CONTENT_TYPE_COLORS[pin.content_type] ?? "bg-brand-secondary text-brand-text/60 border-brand-divider"
-                            }`}
-                        >
-                            {pin.content_type}
-                        </span>
-                        {isOwn && (
-                            <button
-                                onClick={() => unpinMutation.mutate(pin.id)}
-                                disabled={unpinMutation.isPending}
-                                className="ml-1 text-brand-text/30 hover:text-brand-text transition-colors disabled:opacity-40"
-                                title="Unpin"
-                                aria-label={`Unpin ${pin.content_type}`}
-                            >
-                                <X className="w-3 h-3" />
-                            </button>
-                        )}
-                    </div>
-                ))}
-            </div>
-        </div>
-    )
-}
-
 // ── Profile tab content: Portfolio ────────────────────────────────────────────
 function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean }) {
     const qc = useQueryClient()
@@ -236,13 +169,8 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
         },
     })
 
-    const ITEM_TYPE_COLORS: Record<string, string> = {
-        project: "bg-blue-50 text-blue-600 border-blue-100",
-        article: "bg-emerald-50 text-emerald-600 border-emerald-100",
-        video: "bg-brand-text/10 text-brand-text border-brand-text/20",
-        design: "bg-violet-50 text-violet-600 border-violet-100",
-        other: "bg-brand-secondary text-brand-highlight border-brand-divider",
-    }
+    // One theme-token chip for every item type; the word says which.
+    const ITEM_TYPE_CHIP = "bg-brand-secondary text-brand-highlight border-brand-divider"
 
     return (
         <div className="space-y-4">
@@ -328,9 +256,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
                             <div className="flex items-start justify-between gap-2">
                                 <p className="text-sm font-bold text-brand-text line-clamp-1">{item.title}</p>
                                 <span
-                                    className={`shrink-0 text-xs font-bold tracking-wider border px-1.5 py-0.5 rounded-md ${
-                                        ITEM_TYPE_COLORS[item.item_type] ?? ITEM_TYPE_COLORS.other
-                                    }`}
+                                    className={`shrink-0 text-xs font-bold tracking-wider border px-1.5 py-0.5 rounded-md ${ITEM_TYPE_CHIP}`}
                                 >
                                     {item.item_type}
                                 </span>
@@ -357,43 +283,10 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
     )
 }
 
-function ComingSoonTab({
-    icon,
-    title,
-    description,
-    accent,
-}: {
-    icon: ReactNode
-    title: string
-    description: string
-    accent: string
-}) {
-    return (
-        <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className={`relative overflow-hidden rounded-3xl border border-brand-divider bg-linear-to-br ${accent} px-6 py-16 text-center`}
-        >
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-card shadow-xs">
-                {icon}
-            </div>
-            <h3 className="mt-6 text-xl font-bold text-brand-text">{title}</h3>
-            <p className="mt-2 text-sm text-brand-highlight max-w-md mx-auto">
-                {description}
-            </p>
-            <span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-brand-card/80 backdrop-blur-sm px-3 py-1 text-xs font-bold tracking-[0.16em] text-brand-text shadow-xs">
-                <Sparkles className="w-3 h-3" />
-                Coming soon
-            </span>
-        </motion.div>
-    )
-}
-
 export function ProfilePage({ username }: ProfilePageProps) {
     const localUser = useAuthUser()
     const router = useRouter()
-    const [activeTab, setActiveTab] = useState<ProfileTab>("posts")
+    const [activeTab, setActiveTab] = useState<ProfileTabKey>("posts")
     const [blockDialogOpen, setBlockDialogOpen] = useState(false)
     const [unblockDialogOpen, setUnblockDialogOpen] = useState(false)
     const [removeCircleDialogOpen, setRemoveCircleDialogOpen] = useState(false)
@@ -747,7 +640,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
             <div className="max-w-[1200px] mx-auto px-4 sm:px-8 mt-6">
                 {/* Pinned posts (shown above tabs content for all tab states) */}
                 {activeTab === "posts" && (
-                    <PinnedSection userId={profile.id} isOwn={isOwn} />
+                    <PinnedPosts userId={profile.id} isOwn={isOwn} />
                 )}
 
                 <div className={`flex gap-6 ${hasCreatorContent ? "" : ""}`}>
@@ -790,21 +683,8 @@ export function ProfilePage({ username }: ProfilePageProps) {
                                 {activeTab === "appears" && hasAppearances && (
                                     <AppearsInTab userId={profile.id} />
                                 )}
-                                {activeTab === "orders" && (
-                                    <ComingSoonTab
-                                        icon={<ShoppingBag className="w-10 h-10 text-emerald-500" />}
-                                        title="Orders"
-                                        description="Your purchase history, deliveries, and order tracking will live here."
-                                        accent="from-emerald-50 to-emerald-100/40"
-                                    />
-                                )}
-                                {activeTab === "bookings" && (
-                                    <ComingSoonTab
-                                        icon={<CalendarCheck className="w-10 h-10 text-blue-500" />}
-                                        title="Bookings"
-                                        description="Appointments, reservations, and scheduled sessions will appear here."
-                                        accent="from-blue-50 to-blue-100/40"
-                                    />
+                                {activeTab === "reposts" && (
+                                    <RepostsTab userId={profile.id} isOwn={isOwn} />
                                 )}
                                 {activeTab === "stashed" && isOwn && <StashedTab userId={profile.id} />}
                                 {activeTab === "liked" && isOwn && <LikedTab />}

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface ReelConfirmDialogProps {
   open: boolean;
   title: string;
-  description?: string;
+  /** Text, or text with a link (the delete confirm links Recently deleted). */
+  description?: ReactNode;
   confirmLabel: string;
   /** A red confirm for destructive actions (block, delete). */
   danger?: boolean;

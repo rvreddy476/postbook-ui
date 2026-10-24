@@ -42,7 +42,7 @@ export function TagChip({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             className={`inline-flex items-center gap-1.5 border rounded-full transition-all ${colorClasses} ${
-                isSmall ? "px-2.5 py-0.5 text-[10px]" : "px-3 py-1 text-xs"
+                isSmall ? "px-2.5 py-0.5 text-xs" : "px-3 py-1 text-xs"
             } ${disabled ? "opacity-50" : ""} font-semibold`}
         >
             {showVisibility && VisIcon && visibility !== "public" && (

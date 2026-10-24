@@ -42,6 +42,10 @@ export interface PrivacySettings {
     who_can_message: MessageAudience
     who_can_send_connection_request: ConnectionRequestAudience
     who_can_see_read_receipts: VisibilityAudience
+    /** Enforced by graph-service (see_last_seen), and mutual: no_one hides everyone else's from you too. */
+    who_can_see_last_seen: VisibilityAudience
+    /** Enforced by profile-service photo access (via graph-service view_profile); signed-out viewers see it only for everyone. */
+    who_can_see_profile_photo: VisibilityAudience
     auto_filter_abusive_content: boolean
     strict_privacy_mode?: boolean
     under_18_mode?: boolean
@@ -55,6 +59,8 @@ export type PrivacyPatch = Partial<
         | "who_can_message"
         | "who_can_send_connection_request"
         | "who_can_see_read_receipts"
+        | "who_can_see_last_seen"
+        | "who_can_see_profile_photo"
         | "auto_filter_abusive_content"
     >
 >
@@ -65,6 +71,8 @@ const WRITABLE_KEYS = [
     "who_can_message",
     "who_can_send_connection_request",
     "who_can_see_read_receipts",
+    "who_can_see_last_seen",
+    "who_can_see_profile_photo",
     "auto_filter_abusive_content",
 ] as const satisfies readonly (keyof PrivacyPatch)[]
 
@@ -88,6 +96,10 @@ export const READ_RECEIPT_OPTIONS: Option<VisibilityAudience>[] = [
     { value: "connections_only", label: "Connections only" },
     { value: "no_one", label: "No one" },
 ]
+
+/** Last seen and profile photo share the visibility vocabulary with read receipts. */
+export const LAST_SEEN_OPTIONS: Option<VisibilityAudience>[] = READ_RECEIPT_OPTIONS
+export const PROFILE_PHOTO_OPTIONS: Option<VisibilityAudience>[] = READ_RECEIPT_OPTIONS
 
 /*
   "Who can message you" has ONE control: Settings › Inbox & messaging
@@ -144,6 +156,8 @@ export function parsePrivacySettings(body: unknown): PrivacySettings | null {
             "everyone",
         ),
         who_can_see_read_receipts: pick(VISIBILITY_AUDIENCE, s.who_can_see_read_receipts, "connections_only"),
+        who_can_see_last_seen: pick(VISIBILITY_AUDIENCE, s.who_can_see_last_seen, "connections_only"),
+        who_can_see_profile_photo: pick(VISIBILITY_AUDIENCE, s.who_can_see_profile_photo, "everyone"),
         auto_filter_abusive_content: s.auto_filter_abusive_content === true,
         strict_privacy_mode: s.strict_privacy_mode === true,
         under_18_mode: s.under_18_mode === true,
@@ -217,6 +231,8 @@ export interface PrivacyForm {
     accountVisibility: AccountVisibility
     allowCommentsFrom: CommentAudience
     readReceipts: VisibilityAudience
+    lastSeen: VisibilityAudience
+    profilePhoto: VisibilityAudience
     filterAbusiveContent: boolean
 }
 
@@ -225,6 +241,8 @@ export function privacyFormFromSettings(s: PrivacySettings): PrivacyForm {
         accountVisibility: s.account_visibility,
         allowCommentsFrom: s.allow_comments_from,
         readReceipts: s.who_can_see_read_receipts,
+        lastSeen: s.who_can_see_last_seen,
+        profilePhoto: s.who_can_see_profile_photo,
         filterAbusiveContent: s.auto_filter_abusive_content,
     }
 }
@@ -234,6 +252,8 @@ export function privacyPatch(original: PrivacySettings, form: PrivacyForm): Priv
         account_visibility: form.accountVisibility,
         allow_comments_from: form.allowCommentsFrom,
         who_can_see_read_receipts: form.readReceipts,
+        who_can_see_last_seen: form.lastSeen,
+        who_can_see_profile_photo: form.profilePhoto,
         auto_filter_abusive_content: form.filterAbusiveContent,
     })
 }

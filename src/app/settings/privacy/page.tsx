@@ -17,6 +17,8 @@ import { useMySettings, useUpdateMySettings } from "@/hooks/useMySettings"
 import {
     ACCOUNT_VISIBILITY_OPTIONS,
     COMMENT_AUDIENCE_OPTIONS,
+    LAST_SEEN_OPTIONS,
+    PROFILE_PHOTO_OPTIONS,
     READ_RECEIPT_OPTIONS,
     isEmptyPatch,
     privacyFormFromSettings,
@@ -118,8 +120,13 @@ function SectionCard({
  *
  *   Who can see my profile     account_visibility          public | private
  *   Who can comment            allow_comments_from         everyone | friends
+ *   Who can see my photo       who_can_see_profile_photo   everyone | connections_only | no_one
  *   Read receipts              who_can_see_read_receipts   everyone | connections_only | no_one
+ *   Last seen                  who_can_see_last_seen       everyone | connections_only | no_one
  *   Abusive content filter     auto_filter_abusive_content boolean
+ *
+ * Feed filter words are their own page (/settings/keyword-filters, a
+ * trust-safety list, not a field of this document).
  *
  * The form is rendered only after that document has loaded, and Save sends
  * only the fields that differ from it.
@@ -223,6 +230,24 @@ export default function PrivacyPage() {
                                 With approved followers only, people must request to follow you before they see your posts.
                             </p>
                         </div>
+                        <div className="mt-5 space-y-1.5">
+                            <label htmlFor="profile-photo" className="block text-xs font-semibold text-brand-highlight">
+                                Who can see my profile photo
+                            </label>
+                            <select
+                                id="profile-photo"
+                                value={form.profilePhoto}
+                                onChange={(e) => set("profilePhoto", e.target.value as VisibilityAudience)}
+                                className={selectClasses}
+                            >
+                                {PROFILE_PHOTO_OPTIONS.map((o) => (
+                                    <option key={o.value} value={o.value}>{o.label}</option>
+                                ))}
+                            </select>
+                            <p className="pt-1 text-xs text-brand-highlight">
+                                Anyone else sees a plain placeholder instead. People who aren&apos;t signed in see your photo only with Everyone.
+                            </p>
+                        </div>
                     </SectionCard>
 
                     {/* Section 1b — Comments */}
@@ -280,6 +305,24 @@ export default function PrivacyPage() {
                                 Turning this off also hides other people&apos;s read receipts from you.
                             </p>
                         </div>
+                        <div className="mt-5 space-y-1.5">
+                            <label htmlFor="last-seen" className="block text-xs font-semibold text-brand-highlight">
+                                Who can see when I was last active
+                            </label>
+                            <select
+                                id="last-seen"
+                                value={form.lastSeen}
+                                onChange={(e) => set("lastSeen", e.target.value as VisibilityAudience)}
+                                className={selectClasses}
+                            >
+                                {LAST_SEEN_OPTIONS.map((o) => (
+                                    <option key={o.value} value={o.value}>{o.label}</option>
+                                ))}
+                            </select>
+                            <p className="pt-1 text-xs text-brand-highlight">
+                                With No one, you won&apos;t see when other people were last active either.
+                            </p>
+                        </div>
                         <Link
                             href="/settings/messaging"
                             className="mt-4 flex items-center gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-brand-text/5 group"
@@ -319,6 +362,16 @@ export default function PrivacyPage() {
                                 onChange={(v) => set("filterAbusiveContent", v)}
                             />
                         </div>
+                        <Link
+                            href="/settings/keyword-filters"
+                            className="flex items-center gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-brand-text/5 group"
+                        >
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-brand-text">Filter keywords</p>
+                                <p className="text-xs text-brand-highlight">Hide posts that mention words or hashtags you choose</p>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-brand-text/60 group-hover:text-brand-text/80 transition-colors shrink-0" />
+                        </Link>
                         {enforced && (
                             <p className="text-xs text-brand-highlight">
                                 Your account has strict privacy protections, so some of these settings are fixed.

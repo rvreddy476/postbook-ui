@@ -56,7 +56,7 @@ export default function ProfileQASection({ userId }: Props) {
               <div className="text-lg font-black text-brand-text leading-tight">
                 {(qaProfile?.reputation_score ?? 0).toLocaleString()}
               </div>
-              <div className="text-[11px] tracking-wider font-bold text-brand-text/50">
+              <div className="text-xs tracking-wider font-bold text-brand-text/50">
                 Reputation
               </div>
             </div>
@@ -66,7 +66,7 @@ export default function ProfileQASection({ userId }: Props) {
               {badges.slice(0, 4).map(b => (
                 <span
                   key={b.id}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[10px] font-semibold"
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-semibold"
                   title={b.badge_name}
                 >
                   <Award className="w-3 h-3" />
@@ -79,7 +79,7 @@ export default function ProfileQASection({ userId }: Props) {
 
         {/* Recent questions */}
         <div>
-          <p className="text-[11px] font-bold tracking-wider text-brand-text/50 mb-2">
+          <p className="text-xs font-bold tracking-wider text-brand-text/50 mb-2">
             Recent questions
           </p>
           {questions && questions.length > 0 ? (
@@ -102,7 +102,7 @@ export default function ProfileQASection({ userId }: Props) {
 
         {/* Recent answers */}
         <div>
-          <p className="text-[11px] font-bold tracking-wider text-brand-text/50 mb-2">
+          <p className="text-xs font-bold tracking-wider text-brand-text/50 mb-2">
             Recent answers
           </p>
           {answers && answers.length > 0 ? (

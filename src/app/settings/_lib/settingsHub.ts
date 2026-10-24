@@ -11,6 +11,7 @@ import {
   Globe,
   Hourglass,
   LayoutGrid,
+  ListFilter,
   Lock,
   LogOut,
   MapPin,
@@ -18,6 +19,7 @@ import {
   Receipt,
   ShieldCheck,
   SunMoon,
+  Trash2,
   Tv,
   User,
   UserCheck,
@@ -70,6 +72,8 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
       { key: "tax-profile", label: "Tax profile", icon: Receipt, href: "/settings/tax-profile" },
       // Paid memberships: the creators I'm a member of (renew, change level, cancel).
       { key: "memberships", label: "Memberships", icon: Crown, href: "/memberships" },
+      // Deleted posts wait here until post-service purges them; Restore brings one back.
+      { key: "recently-deleted", label: "Recently deleted", icon: Trash2, href: "/settings/recently-deleted" },
     ],
   },
   {
@@ -104,6 +108,8 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
     rows: [
       { key: "appearance", label: "Appearance", icon: SunMoon, action: "theme" },
       { key: "wellbeing", label: "Time & wellbeing", icon: Hourglass, href: "/settings/wellbeing" },
+      // Feed filter words (trust-safety); the DM word filter is on Inbox & messaging.
+      { key: "keyword-filters", label: "Filter keywords", icon: ListFilter, href: "/settings/keyword-filters" },
       { key: "modules", label: "Module profiles", icon: Globe, href: "/settings/modules" },
       { key: "channel", label: "Channel settings", icon: Tv, href: "/settings/channel" },
       { key: "mini-apps", label: "Mini apps", icon: LayoutGrid, href: "/apps" },

@@ -37,6 +37,7 @@ describe("settings hub: groups and rows", () => {
             ["Addresses", "/settings/addresses"],
             ["Tax profile", "/settings/tax-profile"],
             ["Memberships", "/memberships"],
+            ["Recently deleted", "/settings/recently-deleted"],
         ])
         expect(rows.privacy).toEqual([
             ["Privacy", "/settings/privacy"],
@@ -51,6 +52,7 @@ describe("settings hub: groups and rows", () => {
         expect(rows.display).toEqual([
             ["Appearance", "theme"],
             ["Time & wellbeing", "/settings/wellbeing"],
+            ["Filter keywords", "/settings/keyword-filters"],
             ["Module profiles", "/settings/modules"],
             ["Channel settings", "/settings/channel"],
             ["Mini apps", "/apps"],

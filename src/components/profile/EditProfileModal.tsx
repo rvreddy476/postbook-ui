@@ -181,7 +181,7 @@ export function EditProfileModal({ profile, open, onClose }: EditProfileModalPro
                                 )}
                             </div>
                         </div>
-                        <p className="text-[10px] text-muted-foreground font-medium mt-6">Click to change photo</p>
+                        <p className="text-xs text-muted-foreground font-medium mt-6">Click to change photo</p>
                     </div>
                 </div>
 

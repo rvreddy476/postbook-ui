@@ -48,10 +48,22 @@ describe("parsePrivacySettings", () => {
             who_can_message: "followers_message_requests",
             who_can_send_connection_request: "friends_of_friends",
             who_can_see_read_receipts: "no_one",
+            who_can_see_last_seen: "connections_only",
+            who_can_see_profile_photo: "everyone",
             auto_filter_abusive_content: true,
             strict_privacy_mode: false,
             under_18_mode: false,
         })
+    })
+
+    test("last seen and profile photo read the server's vocabulary; an unknown value or a gap takes the column default", () => {
+        const odd = parsePrivacySettings({ data: { ...privateAccount.data, who_can_see_last_seen: "friends", who_can_see_profile_photo: "no_one" } })
+        expect(odd?.who_can_see_last_seen).toBe("connections_only")
+        expect(odd?.who_can_see_profile_photo).toBe("no_one")
+        const { who_can_see_last_seen: _a, who_can_see_profile_photo: _b, ...rest } = privateAccount.data
+        const gap = parsePrivacySettings({ data: rest })
+        expect(gap?.who_can_see_last_seen).toBe("connections_only")
+        expect(gap?.who_can_see_profile_photo).toBe("everyone")
     })
 
     test("refuses a body that is not a settings document, so no form is seeded with defaults", () => {
@@ -125,9 +137,25 @@ describe("privacy page (T-08)", () => {
             accountVisibility: "private",
             allowCommentsFrom: "friends",
             readReceipts: "no_one",
+            lastSeen: "connections_only",
+            profilePhoto: "everyone",
             filterAbusiveContent: true,
         })
         expect(privacyPatch(s, form)).toEqual({})
+    })
+
+    test("last seen alone sends ONLY who_can_see_last_seen, and the request is a PUT of that field", () => {
+        const s = stored()
+        const patch = privacyPatch(s, { ...privacyFormFromSettings(s), lastSeen: "no_one" })
+        expect(patch).toEqual({ who_can_see_last_seen: "no_one" })
+        expect(settingsSaveRequest(patch)).toEqual({ method: "put", url: "/v1/users/me/settings", body: { who_can_see_last_seen: "no_one" } })
+    })
+
+    test("profile photo alone sends ONLY who_can_see_profile_photo; a private account stays private", () => {
+        const s = stored()
+        const req = settingsSaveRequest(privacyPatch(s, { ...privacyFormFromSettings(s), profilePhoto: "connections_only" }))
+        expect(req?.body).toEqual({ who_can_see_profile_photo: "connections_only" })
+        expect(req?.body.account_visibility).toBeUndefined()
     })
 
     test("who-can-comment is sent as allow_comments_from with the server's values", () => {
@@ -142,12 +170,16 @@ describe("privacy page (T-08)", () => {
             accountVisibility: "public",
             allowCommentsFrom: "everyone",
             readReceipts: "everyone",
+            lastSeen: "everyone",
+            profilePhoto: "no_one",
             filterAbusiveContent: false,
         })
         expect(patch).toEqual({
             account_visibility: "public",
             allow_comments_from: "everyone",
             who_can_see_read_receipts: "everyone",
+            who_can_see_last_seen: "everyone",
+            who_can_see_profile_photo: "no_one",
             auto_filter_abusive_content: false,
         })
     })

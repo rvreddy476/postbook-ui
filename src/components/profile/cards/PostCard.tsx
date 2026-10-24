@@ -380,7 +380,7 @@ export function PostCard({ post }: PostCardProps) {
             </div>
 
             {/* Timestamp */}
-            <div className="mt-2 text-[11px] text-brand-text/60 text-right">
+            <div className="mt-2 text-xs text-brand-text/60 text-right">
                 {formatRelativeTime(post.created_at)}
             </div>
         </motion.article>

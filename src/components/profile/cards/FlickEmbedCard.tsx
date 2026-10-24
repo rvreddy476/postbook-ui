@@ -62,7 +62,7 @@ export function FlickEmbedCard({ embedRef }: FlickEmbedCardProps) {
 
                 {/* Duration badge */}
                 {durationSeconds > 0 && (
-                    <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/70 text-white text-[11px] font-medium tabular-nums">
+                    <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/70 text-white text-xs font-medium tabular-nums">
                         {formatDuration(durationSeconds)}
                     </span>
                 )}
