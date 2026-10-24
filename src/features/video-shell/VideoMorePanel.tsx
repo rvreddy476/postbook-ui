@@ -5,7 +5,8 @@ import Link from "next/link";
 import { ChevronRight, X } from "lucide-react";
 
 import { useMyProfile } from "@/hooks/useEditProfile";
-import { REELS_MORE_PANEL, REELS_MORE_SETTINGS, type MorePanelItem } from "./nav";
+import { REELS_MORE_SETTINGS, openMorePanel, type MorePanelItem } from "./nav";
+import { useHiddenProducts } from "@/hooks/useProductFeatures";
 import { useVideoShell } from "./useVideoShell";
 
 interface VideoMorePanelProps {
@@ -29,6 +30,7 @@ interface VideoMorePanelProps {
 */
 export function VideoMorePanel({ onClose, onNavigate }: VideoMorePanelProps) {
   const { openExplore } = useVideoShell();
+  const { appKeys: hiddenAppKeys } = useHiddenProducts();
   const closeRef = useRef<HTMLButtonElement>(null);
 
   // Opened by a click on "More": focus moves into the panel, to its ✕.
@@ -74,7 +76,7 @@ export function VideoMorePanel({ onClose, onNavigate }: VideoMorePanelProps) {
       <div className="video-more__scroll">
         <ProfileRow onNavigate={onNavigate} />
 
-        {REELS_MORE_PANEL.map((section) => (
+        {openMorePanel(hiddenAppKeys).map((section) => (
           <section key={section.key} className="video-more__section" aria-label={section.title}>
             <h3 className="video-more__heading">{section.title}</h3>
             {section.layout === "tiles" ? (

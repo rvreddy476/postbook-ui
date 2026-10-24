@@ -44,7 +44,7 @@ describe("notification preferences (T-06)", () => {
             "messages",
             "super_likes",
             "replies",
-            "friend_requests",
+            // "friend_requests" removed: Connect is gone (founder, 24 Oct 2026).
             "group_posts",
             "group_mentions",
             "channel_updates",

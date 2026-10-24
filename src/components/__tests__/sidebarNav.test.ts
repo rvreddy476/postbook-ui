@@ -5,7 +5,8 @@ const ids = (items: readonly { id: string }[]) => items.map((i) => i.id)
 
 describe('launch navigation', () => {
   test('the rail offers Social and Shorts, without Groups', () => {
-    expect(ids(primaryItems)).toEqual(['Home', 'Feed', 'Reels', 'Circle'])
+    // No Connections (Circle) entry: Connect is gone (founder, 24 Oct 2026).
+    expect(ids(primaryItems)).toEqual(['Home', 'Feed', 'Reels'])
   })
 
   test('More keeps the launch products and chat, and no parked product', () => {

@@ -142,12 +142,11 @@ describe('notifications and badge', () => {
     expect(isFollowRequestNotification('friend_request', A)).toBe(false)
   })
 
-  test('badge text counts both kinds, says + when more pages wait, caps at 99+', () => {
-    expect(requestsBadgeText(0, false, 0)).toBeNull()
-    expect(requestsBadgeText(2, false, 1)).toBe('3')
-    expect(requestsBadgeText(20, true, 0)).toBe('20+')
-    expect(requestsBadgeText(0, false, 4)).toBe('4')
-    expect(requestsBadgeText(90, false, 10)).toBe('99+')
+  test('badge text counts follow requests, says + when more pages wait, caps at 99+', () => {
+    expect(requestsBadgeText(0, false)).toBeNull()
+    expect(requestsBadgeText(3, false)).toBe('3')
+    expect(requestsBadgeText(20, true)).toBe('20+')
+    expect(requestsBadgeText(100, false)).toBe('99+')
   })
 
   test('refusals read as sentences', () => {

@@ -9,7 +9,8 @@ import Link from 'next/link';
 import Avatar from '@/components/ui/Avatar';
 import { useMyProfile } from '@/hooks/useEditProfile';
 import { LayoutGrid, Menu, User } from 'lucide-react';
-import { moreItems, primaryItems, type SidebarItem } from '@/components/sidebarNav';
+import { ALL_MORE_ITEMS, ALL_PRIMARY_ITEMS, launchedItems, type SidebarItem } from '@/components/sidebarNav';
+import { useHiddenProducts } from '@/hooks/useProductFeatures';
 
 interface SidebarProps {
   activeTab: NavItem;
@@ -38,7 +39,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { data: myProfile } = useMyProfile();
   const [moreOpen, setMoreOpen] = useState(false);
   const pathname = usePathname();
-  const appItems = resolveAppNavigation(pathname);
+  // Parked products and whatever GET /v1/features closes (hooks/useProductFeatures).
+  const hidden = useHiddenProducts();
+  const primaryItems = launchedItems(ALL_PRIMARY_ITEMS, hidden.navIds);
+  const moreItems = launchedItems(ALL_MORE_ITEMS, hidden.navIds);
+  const appItems = resolveAppNavigation(pathname, hidden.navIds, hidden.appKeys);
   const brand = resolveAppBrand(pathname);
   const contextualItems: readonly Item[] = appItems?.map(item => ({ ...item, id: item.label, color: 'text-current' })) ?? primaryItems;
 

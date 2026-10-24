@@ -21,7 +21,8 @@ import {
 import { decodeNotificationPage, type InboxNotification } from '@/lib/notificationInbox'
 import { ActivityTabs } from '../ActivityTabs'
 import { ActivityList, EMPTY_COPY } from '../ActivityList'
-import { FollowRequestsList, RequestLinks, RequestsList } from '../RequestsPanel'
+import * as requestsPanel from '../RequestsPanel'
+import { FollowRequestsList, RequestLinks } from '../RequestsPanel'
 import { FollowRequestInlineView } from '../FollowRequestActions'
 import { isFollowRequestNotification } from '@/lib/followRequests'
 
@@ -199,18 +200,12 @@ describe('rendering', () => {
     for (const t of INBOX_TABS) if (t.key !== 'requests') expect(EMPTY_COPY[t.key].length).toBeGreaterThan(10)
   })
 
-  test('connection requests are their own labelled section with confirm/delete', () => {
-    const html = renderToStaticMarkup(
-      <RequestsList items={[{ user_id: 'u1', display_name: 'Ada', username: 'ada', created_at: '2026-10-14T09:00:00Z' }]} busy={false} onAccept={() => undefined} onDecline={() => undefined} />,
-    )
-    expect(html).toContain('>Connection requests')
-    expect(html).toContain('aria-label="Connection requests"')
-    expect(html).toContain('href="/u/ada"')
-    expect(html).toContain('Wants to connect')
-    expect(html).toContain('>Confirm</button>')
-    expect(html).toContain('>Delete</button>')
-    expect(html).toContain('aria-label="Confirm connection request from Ada"')
-    expect(renderToStaticMarkup(<RequestsList items={[]} busy={false} onAccept={() => undefined} onDecline={() => undefined} />)).toContain('No pending connection requests.')
+  test('connection requests are gone from Requests (founder, 24 Oct): follow and message requests stay', () => {
+    expect('RequestsList' in requestsPanel).toBe(false)
+    const html = renderToStaticMarkup(<><FollowRequestsList pendingId={null} hasMore={false} loadingMore={false} error={null} items={[]} onAccept={() => undefined} onDecline={() => undefined} onLoadMore={() => undefined} /><RequestLinks /></>)
+    expect(html).toContain('Follow requests')
+    expect(html).toContain('Message requests')
+    expect(html).not.toMatch(/connection request|Wants to connect/i)
   })
 
   test('the message and credit request inboxes stay one tap away', () => {

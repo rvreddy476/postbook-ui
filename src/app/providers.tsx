@@ -12,6 +12,7 @@ import { getSession, logoutUser } from "@/services/authService"
 import CallOverlay from "@/components/CallOverlay"
 import { CurrentLocationProvider } from "@/features/maps/CurrentLocation"
 import WebPushRoot from "@/features/webPush/WebPushRoot"
+import ProductRouteGate from "@/components/ProductRouteGate"
 import { applyReadTickColour, loadReadTickColour, parseReadTickColour, READ_TICK_COLOUR_STORAGE_KEY } from "@/lib/chat/readTickColour"
 
 /**
@@ -130,7 +131,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 {/* Web push: the sign-in sync and the soft prompt. Inert
                     unless the NEXT_PUBLIC_FIREBASE_* values are all set. */}
                 <WebPushRoot />
-                <AppNotifications><CurrentLocationProvider>{children}</CurrentLocationProvider></AppNotifications>
+                {/* A product the gateway has closed (GET /v1/features) shows "Not available" on a direct visit. */}
+                <AppNotifications><CurrentLocationProvider><ProductRouteGate>{children}</ProductRouteGate></CurrentLocationProvider></AppNotifications>
             </ToastProvider>
         </QueryClientProvider>
     )

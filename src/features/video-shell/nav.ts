@@ -136,14 +136,13 @@ export const VIDEO_NAV_FOOTER: readonly VideoNavItem[] = [
 ];
 
 /**
- * The reels menu: the ten the rail shows as icons. Shop (MStore) sits after
+ * The reels menu: the nine the rail shows as icons (Friends went with Connect, 24 Oct 2026). Shop (MStore) sits after
  * LIVE, as the shell plan reads (audit T-33).
  */
 export const REELS_NAV_TOP: readonly VideoNavItem[] = [
   { key: "for-you", label: "For You", icon: Home, href: "/reels", exact: true, absentParams: ["feed"] },
   { key: "explore", label: "Explore", icon: Compass, action: "explore" },
   { key: "following", label: "Following", icon: UserRoundCheck, href: "/reels?feed=following", exact: true },
-  { key: "friends", label: "Friends", icon: Users, href: "/connections" },
   { key: "live", label: "LIVE", icon: Radio, href: "/reels/live" },
   { key: "shop", label: "Shop", icon: ShoppingBag, href: "/shop" },
   { key: "messages", label: "Messages", icon: MessageSquare, href: "/messenger" },
@@ -289,6 +288,18 @@ export const REELS_MORE_PANEL: readonly MorePanelSection[] = [
 ];
 
 /** The one row under the lists: the way to the full settings page. */
+/**
+ * The More panel without the tiles of closed products: an app tile's key is
+ * its app key (lib/appBrand.ts), so Groups goes while Groups is parked or
+ * GET /v1/features closes it (hooks/useProductFeatures). A section left
+ * empty goes too.
+ */
+export function openMorePanel(hiddenAppKeys: ReadonlySet<string>, sections: readonly MorePanelSection[] = REELS_MORE_PANEL): MorePanelSection[] {
+  return sections
+    .map((section) => ({ ...section, items: section.items.filter((item) => !hiddenAppKeys.has(item.key)) }))
+    .filter((section) => section.items.length > 0);
+}
+
 export const REELS_MORE_SETTINGS: MorePanelItem = { key: "settings", label: "Settings & privacy", icon: Settings, href: "/settings" };
 
 /**

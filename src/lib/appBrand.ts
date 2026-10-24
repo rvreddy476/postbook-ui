@@ -10,7 +10,6 @@ import {
   ShoppingBag,
   Sparkles,
   Tv,
-  UserRoundPlus,
   Users,
   Home, Compass, SquarePlus, Bookmark, History, ListVideo,
   Bell, BookOpen, Flame, Bike, UtensilsCrossed,
@@ -72,7 +71,6 @@ export const APP_BRANDS: readonly AppBrand[] = [
   { key: "tube", name: "PostTube", href: "/posttube", icon: Tv, searchPlaceholder: "Search videos and channels...", searchHref: "/posttube/search", prefixes: ["/posttube", "/tube"] },
   { key: "groups", name: "Groups", href: "/groups", icon: Users, searchPlaceholder: "Search groups...", prefixes: ["/groups"] },
   { key: "communities", name: "Communities", href: "/communities", icon: Globe2, searchPlaceholder: "Search communities...", prefixes: ["/communities"] },
-  { key: "connections", name: "Connections", href: "/connections", icon: UserRoundPlus, searchPlaceholder: "Search people...", prefixes: ["/connections"] },
   { key: "messenger", name: "Messenger", href: "/messenger", icon: MessageSquare, searchPlaceholder: "Search conversations...", prefixes: ["/messages", "/messenger", "/chat"] },
   { key: "live", name: "Live", href: "/live", icon: Radio, searchPlaceholder: "Search live streams...", prefixes: ["/live"] },
   { key: "ask", name: "Ask", href: "/qa", icon: HelpCircle, searchPlaceholder: "Search questions...", prefixes: ["/qa"] },
@@ -109,10 +107,12 @@ export interface AppNavigationItem { label: string; href: string; icon: LucideIc
 export function resolveAppNavigation(
   pathname: string | null | undefined,
   parked: ReadonlySet<string> = PARKED_NAV_IDS,
+  /** App keys to treat as closed instead (hooks/useProductFeatures: parked plus what GET /v1/features closes). */
+  hiddenKeys: ReadonlySet<string> = parkedAppKeys(parked),
 ): AppNavigationItem[] | null {
   const brand = resolveAppBrand(pathname);
   if (brand.key === 'home') return null;
-  if (parkedAppKeys(parked).has(brand.key)) return null;
+  if (hiddenKeys.has(brand.key)) return null;
   const items: AppNavigationItem[] = [{ label: brand.name, href: brand.href, icon: brand.icon }];
   if (brand.key === 'reels') items.push(
     { label: 'Explore', href: '/search', icon: Compass },
@@ -167,7 +167,6 @@ export const ALL_APP_LAUNCHER: readonly AppLauncherTile[] = [
   { key: "tube", name: "PostTube", description: "Long video, channels and playlists", href: "/posttube", icon: Tv },
   { key: "groups", name: "Groups", description: "Private and public groups", href: "/groups", icon: Users },
   { key: "communities", name: "Communities", description: "Broadcast channels around a topic", href: "/communities", icon: Globe2 },
-  { key: "connections", name: "Connections", description: "People you know and may know", href: "/connections", icon: UserRoundPlus },
   { key: "messenger", name: "Messenger", description: "Chats, calls and channels", href: "/messenger", icon: MessageSquare },
   { key: "live", name: "Live", description: "Watch and go live", href: "/live", icon: Radio },
   { key: "ask", name: "Ask", description: "Questions and answers", href: "/qa", icon: HelpCircle },
@@ -186,9 +185,10 @@ export const ALL_APP_LAUNCHER: readonly AppLauncherTile[] = [
 export function launchedTiles(
   tiles: readonly AppLauncherTile[],
   parked: ReadonlySet<string> = PARKED_NAV_IDS,
+  /** App keys to leave out instead (hooks/useProductFeatures: parked plus what GET /v1/features closes). */
+  hiddenKeys: ReadonlySet<string> = parkedAppKeys(parked),
 ): AppLauncherTile[] {
-  const keys = parkedAppKeys(parked);
-  return tiles.filter((tile) => !keys.has(tile.key));
+  return tiles.filter((tile) => !hiddenKeys.has(tile.key));
 }
 
 export const APP_LAUNCHER: readonly AppLauncherTile[] = launchedTiles(ALL_APP_LAUNCHER);

@@ -17,7 +17,6 @@ import {
 import type { GroupMember } from '@/types/groups'
 // Used only by the commented-out chat dock at the end of this file.
 // import type { User } from '@/types'
-import { FriendRequestButton } from '@/components/connections/FriendRequestButton'
 
 interface GroupMembersTabProps {
   groupId: string
@@ -90,7 +89,7 @@ function MemberCard({
         </div>
       </div>
 
-      {/* Relationship CTA (Add friend / Message / Requested) */}
+      {/* Relationship CTA (Follow / Following / Message) */}
       {cta}
 
       {/* Role tag — admins/mods only; regular members carry no badge */}
@@ -229,8 +228,7 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
   // CTA matrix (DB-driven via the graph relationships batch):
   //   creator / hub / page  -> Follow/Following toggle only (no Message)
   //   user, already friend  -> "Following" state + Message
-  //   user, request pending -> Requested / Respond
-  //   user, not friend      -> Add friend
+  //   anyone else           -> Follow/Following (Connect is gone, founder 24 Oct 2026)
   const ctaFor = (m: GroupMember): React.ReactNode => {
     if (!authUser || m.user_id === authUser.id) return null
     const prof = profileMap?.get(m.user_id) as (Record<string, unknown> | undefined)
@@ -239,31 +237,30 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
     const isFriend = !!rel?.is_connection || rel?.connection_status === 'accepted'
     const following = followOverride.get(m.user_id) ?? !!rel?.following
 
-    if (isPage) {
-      const handleToggleFollow = () => {
-        const target = m.user_id
-        if (following) {
-          setOverride(m.user_id, false)
-          unfollowUser.mutate(target, { onError: () => setOverride(m.user_id, true) })
-        } else {
-          setOverride(m.user_id, true)
-          followUser.mutate(target, { onError: () => setOverride(m.user_id, false) })
-        }
+    const handleToggleFollow = () => {
+      const target = m.user_id
+      if (following) {
+        setOverride(m.user_id, false)
+        unfollowUser.mutate(target, { onError: () => setOverride(m.user_id, true) })
+      } else {
+        setOverride(m.user_id, true)
+        followUser.mutate(target, { onError: () => setOverride(m.user_id, false) })
       }
-      return (
-        <button
-          onClick={handleToggleFollow}
-          className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all ${
-            following
-              ? 'bg-brand-text/8 text-brand-text/60 hover:bg-brand-text/12'
-              : 'bg-brand-text text-brand-bg hover:opacity-90'
-          }`}
-        >
-          {following ? <Check className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
-          {following ? 'Following' : 'Follow'}
-        </button>
-      )
     }
+    const followButton = (
+      <button
+        onClick={handleToggleFollow}
+        className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all ${
+          following
+            ? 'bg-brand-text/8 text-brand-text/60 hover:bg-brand-text/12'
+            : 'bg-brand-text text-brand-bg hover:opacity-90'
+        }`}
+      >
+        {following ? <Check className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
+        {following ? 'Following' : 'Follow'}
+      </button>
+    )
+    if (isPage) return followButton
 
     if (isFriend) {
       return (
@@ -283,19 +280,7 @@ export default function GroupMembersTab({ groupId, currentUserRole }: GroupMembe
       )
     }
 
-    return (
-      <FriendRequestButton
-                allowSend={false}
-        targetUserId={m.user_id}
-        targetUsername={m.username}
-        relationship={rel}
-        addLabel="Add friend"
-        className="flex items-center gap-1.5 rounded-lg bg-primary-ink px-3 py-1.5 text-[11px] font-bold text-white transition-all hover:bg-primary-hover disabled:opacity-50"
-        sentClassName="bg-brand-text/8 text-brand-text/50 hover:opacity-100"
-        acceptClassName="flex items-center gap-1.5 rounded-lg bg-primary-ink px-3 py-1.5 text-[11px] font-bold text-white transition-all hover:bg-primary-hover disabled:opacity-50"
-        declineClassName="rounded-lg border border-brand-divider px-3 py-1.5 text-[11px] font-bold text-brand-text transition-all hover:bg-brand-text/5 disabled:opacity-50"
-      />
-    )
+    return followButton
   }
 
   // Enrich members with profile data

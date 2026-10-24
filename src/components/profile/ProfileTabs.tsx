@@ -51,7 +51,8 @@ type TabDef = {
 const tabDefinitions: TabDef[] = [
     { key: "posts", label: "Media", icon: Images },
     { key: "about", label: "About", icon: User },
-    { key: "connections", label: "Connections", icon: Users },
+    // Followers / Following (and Blocked on your own); no Connections list: Connect is gone (24 Oct 2026).
+    { key: "connections", label: "People", icon: Users },
     { key: "qa", label: "Q&A", icon: HelpCircle },
     { key: "videos", label: "Videos", icon: Video, requiresContent: true },
     { key: "flicks", label: "Reels", icon: Film, requiresContent: true },

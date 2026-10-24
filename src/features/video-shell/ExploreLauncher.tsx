@@ -5,7 +5,8 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Search, X } from "lucide-react";
-import { APP_LAUNCHER, filterAppLauncher } from "@/lib/appBrand";
+import { ALL_APP_LAUNCHER, filterAppLauncher, launchedTiles } from "@/lib/appBrand";
+import { useHiddenProducts } from "@/hooks/useProductFeatures";
 import "./video-shell.css";
 
 export interface ExploreLauncherProps {
@@ -27,7 +28,9 @@ export function ExploreLauncher({ open, onClose }: ExploreLauncherProps) {
   const firstTileRef = useRef<HTMLAnchorElement | HTMLButtonElement | null>(null);
   const reduceMotion = useReducedMotion();
   const titleId = useId();
-  const tiles = useMemo(() => filterAppLauncher(query, APP_LAUNCHER), [query]);
+  // Parked products and whatever GET /v1/features closes stay out of the grid.
+  const { navIds, appKeys } = useHiddenProducts();
+  const tiles = useMemo(() => filterAppLauncher(query, launchedTiles(ALL_APP_LAUNCHER, navIds, appKeys)), [query, navIds, appKeys]);
 
   useEffect(() => setMounted(true), []);
 

@@ -9,9 +9,8 @@ import { decodeNotificationPage, type InboxNotification } from '@/lib/notificati
 
   Requests is not a notification category: it is the incoming follow
   requests of a private account (GET /v1/graph/follow-requests/incoming,
-  lib/followRequests.ts) and the pending connection requests
-  (GET /v1/graph/connection-requests), each in its own labelled section and
-  answered in place, with a way into message and credit requests.
+  lib/followRequests.ts), answered in place, with a way into message and
+  credit requests. Connection requests are gone (founder, 24 Oct 2026).
 
   Paging contract: a filtered page can come back short or EMPTY and still
   carry next_cursor, because the server filters a window of the whole inbox.

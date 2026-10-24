@@ -18,9 +18,7 @@ import {
     useDeleteNotification,
     type ActivityNotification,
 } from '@/hooks/useActivityNotifications';
-import { useAcceptFriendRequest, useRejectFriendRequest } from '@/hooks/useConnections';
 import NotificationPostPopup from '@/components/NotificationPostPopup';
-import { useGlobalToast } from '@/contexts/ToastContext';
 import { bellRow, notificationActorId } from '@/lib/notificationPresentation';
 import { creditNotificationHref } from '@/lib/notificationInbox';
 import { NotificationGlyph } from '@/components/notifications/NotificationGlyph';
@@ -73,10 +71,6 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
     const markRead = useMarkNotificationRead();
     const deleteNotification = useDeleteNotification();
 
-    const toast = useGlobalToast();
-    const acceptFriend = useAcceptFriendRequest();
-    const rejectFriend = useRejectFriendRequest();
-    const [handledIds, setHandledIds] = useState<Set<string>>(new Set());
     const [dismissingIds, setDismissingIds] = useState<Set<string>>(new Set());
 
     // Notification popup state
@@ -376,8 +370,6 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                         ) : (
                                             <AnimatePresence initial={false}>
                                                 {activityNotifs.filter(n => !dismissingIds.has(n.notification_id)).map(notif => {
-                                                    const isHandled = handledIds.has(notif.notification_id);
-                                                    const isFriendReq = notif.type === 'friend_request' && !isHandled;
                                                     const row = bellRow(notif, describeNotification(notif.type), actorProfiles.get(notif.actor_user_id)?.display_name);
                                                     const actorName = row.name;
                                                     const actorAvatar = getActorAvatar(notif.actor_user_id);
@@ -426,44 +418,6 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                                     </p>
                                                                 </button>
 
-                                                                {isFriendReq && (
-                                                                    <div className="flex items-center gap-2 mt-2">
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                // graph-service accept is keyed by the
-                                                                                // requester's user_id — actor_user_id is exactly that.
-                                                                                acceptFriend.mutate(notif.actor_user_id, {
-                                                                                    onSuccess: () => {
-                                                                                        setHandledIds(prev => new Set(prev).add(notif.notification_id));
-                                                                                        toast({ type: 'success', title: 'Friend request accepted' });
-                                                                                    },
-                                                                                });
-                                                                            }}
-                                                                            disabled={acceptFriend.isPending}
-                                                                            className="px-3 py-1.5 rounded-lg text-[9px] font-black tracking-wider bg-violet-600 hover:bg-violet-700 text-white shadow-xs active:scale-95 transition-all"
-                                                                        >
-                                                                            Accept
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                rejectFriend.mutate(notif.actor_user_id, {
-                                                                                    onSuccess: () => {
-                                                                                        setHandledIds(prev => new Set(prev).add(notif.notification_id));
-                                                                                        toast({ type: 'info', title: 'Friend request declined' });
-                                                                                    },
-                                                                                });
-                                                                            }}
-                                                                            disabled={rejectFriend.isPending}
-                                                                            className="px-3 py-1.5 rounded-lg text-[9px] font-black tracking-wider bg-brand-secondary text-brand-highlight hover:bg-brand-secondary/80 active:scale-95 transition-all"
-                                                                        >
-                                                                            Decline
-                                                                        </button>
-                                                                    </div>
-                                                                )}
-
-                                                                {notif.type === 'friend_request' && isHandled && (
-                                                                    <p className="text-[9px] font-black text-emerald-600 tracking-widest mt-1.5">Responded</p>
-                                                                )}
                                                             </div>
 
                                                             <div className="flex flex-col items-center gap-1.5 shrink-0 mt-1">

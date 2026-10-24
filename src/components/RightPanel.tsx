@@ -115,12 +115,6 @@ const RightPanel: React.FC<RightPanelProps> = () => {
               <Users aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-brand-text/50" />
               <h2 className="text-sm font-semibold leading-5 text-brand-text">People you might be interested in</h2>
             </div>
-            <button
-              onClick={() => router.push('/connections')}
-              className="shrink-0 py-1 text-xs font-medium text-primary-ink transition-colors hover:text-primary-hover"
-            >
-              See all
-            </button>
           </div>
           {suggestionsLoading ? (
             <div className="space-y-4 animate-pulse">

@@ -13,9 +13,11 @@ interface MembersResponse { data: ChannelMember[] }
 
 // === QUERIES ===
 
-export function useMyBroadcastChannels() {
+export function useMyBroadcastChannels(enabled = true) {
   return useQuery({
     queryKey: ["my-broadcast-channels"],
+    // Off while broadcast channels are closed (GET /v1/features): no request the gateway would refuse.
+    enabled,
     queryFn: async () => {
       const res = await api.get<ChannelsResponse>("/v1/broadcast-channels/my")
       return res.data.data

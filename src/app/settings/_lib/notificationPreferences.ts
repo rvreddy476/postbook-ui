@@ -17,6 +17,8 @@
  * why its category toggles were ignored.
  */
 
+import type { ProductKey } from "@/lib/productFeatures"
+
 export interface NotificationCategory {
     key: string
     label: string
@@ -34,7 +36,7 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     { key: "messages", label: "Messages", primary: true },
     { key: "super_likes", label: "Super likes", primary: false },
     { key: "replies", label: "Replies", primary: false },
-    { key: "friend_requests", label: "Connection requests", primary: false },
+    // No "Connection requests" row: Connect is gone (founder, 24 Oct 2026).
     { key: "group_posts", label: "Group posts", primary: false },
     { key: "group_mentions", label: "Group mentions", primary: false },
     { key: "channel_updates", label: "Channel updates", primary: false },
@@ -48,6 +50,28 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     { key: "memberships", label: "Memberships", primary: false },
     { key: "system", label: "Security and system", primary: false },
 ]
+
+/** The product a category belongs to (lib/productFeatures.ts); a category not listed is always shown. */
+export const CATEGORY_PRODUCT: Readonly<Record<string, ProductKey>> = {
+    group_posts: "groups",
+    group_mentions: "groups",
+    channel_updates: "broadcast_channels",
+    channel_urgent: "broadcast_channels",
+    community_posts: "communities",
+    community_mentions: "communities",
+}
+
+/**
+ * The rows the page shows: a closed product (parked, or closed by GET
+ * /v1/features) has no switches on it. The stored values are untouched; the
+ * switches come back when the product opens.
+ */
+export function openCategories(categories: readonly NotificationCategory[], isOpen: (product: ProductKey) => boolean): NotificationCategory[] {
+    return categories.filter((c) => {
+        const product = CATEGORY_PRODUCT[c.key]
+        return !product || isOpen(product)
+    })
+}
 
 export type Channel = "inapp" | "push"
 

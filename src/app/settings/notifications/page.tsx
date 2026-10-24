@@ -20,9 +20,12 @@ import {
     useUpdateNotificationPreferences,
 } from "@/hooks/useActivityNotifications"
 import api from "@/lib/api"
+import { useProductFeatures } from "@/hooks/useProductFeatures"
+import { productEntryVisible } from "@/lib/productFeatures"
 import {
     NOTIFICATION_CATEGORIES,
     categoryTogglePatch,
+    openCategories,
     channelKey,
     globalTogglePatch,
     quietHoursPatch,
@@ -357,8 +360,11 @@ export default function NotificationPreferencesPage() {
     }
 
     const busy = pendingKey !== null
-    const primaries = NOTIFICATION_CATEGORIES.filter((c) => c.primary)
-    const secondaries = NOTIFICATION_CATEGORIES.filter((c) => !c.primary)
+    const features = useProductFeatures()
+    // No switches for a closed product (parked, or closed by GET /v1/features).
+    const shown = openCategories(NOTIFICATION_CATEGORIES, (product) => productEntryVisible(product, features.state))
+    const primaries = shown.filter((c) => c.primary)
+    const secondaries = shown.filter((c) => !c.primary)
 
     return (
         <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">

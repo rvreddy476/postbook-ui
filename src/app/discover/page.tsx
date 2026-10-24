@@ -107,11 +107,6 @@ function DiscoverContent() {
                             id="explore-people"
                             icon={<Users className="h-4 w-4" />}
                             title="People to follow"
-                            action={
-                                <Link href="/connections" className="text-xs font-semibold text-brand-highlight hover:text-brand-text">
-                                    See all
-                                </Link>
-                            }
                         />
                         <SuggestedCreators viewerId={viewerId} variant="row" limit={12} label="People to follow" />
                     </section>

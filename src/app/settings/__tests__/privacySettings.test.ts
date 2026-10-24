@@ -5,8 +5,6 @@ import {
     parsePrivacySettings,
     privacyFormFromSettings,
     privacyPatch,
-    socialFormFromSettings,
-    socialPatch,
     type PrivacySettings,
 } from "../_lib/privacySettings"
 import { settingsSaveRequest } from "@/hooks/useMySettings"
@@ -50,7 +48,6 @@ describe("parsePrivacySettings", () => {
             account_visibility: "private",
             allow_comments_from: "friends",
             who_can_message: "followers_message_requests",
-            who_can_send_connection_request: "friends_of_friends",
             who_can_see_read_receipts: "no_one",
             who_can_see_last_seen: "connections_only",
             who_can_see_profile_photo: "everyone",
@@ -79,35 +76,13 @@ describe("parsePrivacySettings", () => {
     })
 })
 
-describe("social preferences (T-04)", () => {
-    test("an untouched form sends nothing, and no request is built", () => {
+describe("Connect is gone (founder, 24 Oct 2026)", () => {
+    test("the connection-request audience is neither read nor ever written", () => {
         const s = stored()
-        const patch = socialPatch(s, socialFormFromSettings(s))
+        expect(s).not.toHaveProperty("who_can_send_connection_request")
+        const patch = diffPrivacySettings(s, { who_can_send_connection_request: "no_one" } as never)
         expect(patch).toEqual({})
         expect(settingsSaveRequest(patch)).toBeNull()
-    })
-
-    test("toggling friend requests off sends ONLY that field and never account_visibility", () => {
-        const s = stored()
-        const form = { ...socialFormFromSettings(s), allowConnectionRequests: false }
-        const patch = socialPatch(s, form)
-        expect(patch).toEqual({ who_can_send_connection_request: "no_one" })
-        expect(Object.keys(patch)).not.toContain("account_visibility")
-    })
-
-    test("a private account stays private when another control is saved", () => {
-        const s = stored()
-        const form = { ...socialFormFromSettings(s), allowConnectionRequests: false }
-        const req = settingsSaveRequest(socialPatch(s, form))
-        expect(req).toEqual({ method: "put", url: "/v1/users/me/settings", body: { who_can_send_connection_request: "no_one" } })
-        expect(req?.body.account_visibility).toBeUndefined()
-    })
-
-    test("who can message you is not on this page (one control, in Inbox & messaging)", () => {
-        const s = stored()
-        expect(Object.keys(socialFormFromSettings(s))).not.toContain("whoCanMessage")
-        const all = socialPatch(s, { allowConnectionRequests: false, requireFollowApproval: false })
-        expect(all).not.toHaveProperty("who_can_message")
     })
 
     test("the contract's new value and the retired ones are read as stored", () => {
@@ -115,24 +90,6 @@ describe("social preferences (T-04)", () => {
             expect(parsePrivacySettings({ data: { ...privateAccount.data, who_can_message: v } })?.who_can_message).toBe(v as never)
         }
     })
-
-    test("turning friend requests back on restores the stored audience instead of widening it", () => {
-        const s = stored()
-        const off = { ...socialFormFromSettings(s), allowConnectionRequests: false }
-        const backOn = { ...off, allowConnectionRequests: true }
-        expect(socialPatch(s, backOn)).toEqual({})
-
-        const closed = { ...s, who_can_send_connection_request: "no_one" as const }
-        const opened = { ...socialFormFromSettings(closed), allowConnectionRequests: true }
-        expect(socialPatch(closed, opened)).toEqual({ who_can_send_connection_request: "everyone" })
-    })
-
-    test("require follow approval maps to account_visibility public/private", () => {
-        const s = stored()
-        const form = { ...socialFormFromSettings(s), requireFollowApproval: false }
-        expect(socialPatch(s, form)).toEqual({ account_visibility: "public" })
-    })
-
 })
 
 describe("privacy page (T-08)", () => {

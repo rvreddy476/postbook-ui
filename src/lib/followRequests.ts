@@ -180,9 +180,9 @@ export function isFollowRequestNotification(type: string, actorId: string | unde
   return FOLLOW_REQUEST_NOTIFICATION_TYPES.includes(type) && !!actorId && UUID_RE.test(actorId)
 }
 
-/** The Requests tab badge: both kinds pending; "20+" style when more pages exist. null for none. */
-export function requestsBadgeText(followCount: number, followHasMore: boolean, connectionCount: number): string | null {
-  const total = Math.max(0, followCount) + Math.max(0, connectionCount)
+/** The Requests tab badge: follow requests pending; "20+" style when more pages exist. null for none. */
+export function requestsBadgeText(followCount: number, followHasMore: boolean): string | null {
+  const total = Math.max(0, followCount)
   if (total < 1) return null
   if (total > 99) return '99+'
   return followHasMore ? `${total}+` : String(total)

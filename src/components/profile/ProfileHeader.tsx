@@ -3,7 +3,7 @@
 import { useRef, useCallback, useState, useEffect } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { UserProfile, UserLink, Relationship, GraphCounts } from "@/types/profile"
-import { getBadges, BADGE_CREATOR, BADGE_BUSINESS } from "@/types/profile"
+import { getBadges } from "@/types/profile"
 import {
     BadgeCheck,
     Briefcase,
@@ -30,7 +30,6 @@ import { uploadMedia } from "@/lib/mediaUpload"
 import { ProfileJoinButton } from "@/features/memberships/components/JoinButton"
 import { ActionPill } from "@/features/action-button/components/ActionPill"
 import { useProfileAction } from "@/features/action-button/hooks"
-import { FriendRequestButton } from "@/components/connections/FriendRequestButton"
 import MessageButton from "@/components/connections/MessageButton"
 import { ImageAdjustEditor } from "@/components/media/ImageAdjustEditor"
 import { ImageAdjustDialog } from "@/components/media/ImageAdjustDialog"
@@ -49,7 +48,6 @@ interface ProfileHeaderProps {
     graphCounts: GraphCounts
     onFollow: () => void
     onUnfollow: () => void
-    onRemoveFromCircle: () => void
     onEditProfile: () => void
     onMessage?: () => void
     onBlock?: () => void
@@ -98,7 +96,6 @@ export function ProfileHeader({
     graphCounts,
     onFollow,
     onUnfollow,
-    onRemoveFromCircle,
     onEditProfile,
     onMessage,
     onBlock,
@@ -172,7 +169,6 @@ export function ProfileHeader({
     const resolvedCover = coverSources[coverFails] ?? null
     const followsYou = relationship?.followed_by ?? false
     const followState = followButtonState(profile, relationship)
-    const isCreatorOrBusiness = !!(profile.badge_flags & (BADGE_CREATOR | BADGE_BUSINESS))
 
     const uploadMutation = useMutation({
         mutationFn: async ({ file, field }: { file: File; field: ProfileImageField }) => {
@@ -460,22 +456,6 @@ export function ProfileHeader({
                                     onUnmute={onUnmute}
                                     onReport={onReport}
                                     signInHref={signInHref}
-                                    connectionSlot={
-                                        signedIn && !isCreatorOrBusiness ? (
-                                            <FriendRequestButton
-                                                allowSend={false}
-                                                targetUserId={profile.id}
-                                                targetUsername={profile.username}
-                                                relationship={relationship}
-                                                className="flex h-10 items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 text-xs font-bold tracking-wider text-brand-bg shadow-xs transition-all hover:opacity-90 disabled:opacity-60"
-                                                sentClassName="border border-brand-divider bg-transparent text-brand-text/50 hover:bg-brand-secondary hover:opacity-100"
-                                                friendClassName="border border-brand-divider bg-transparent text-brand-text hover:bg-brand-secondary hover:opacity-100"
-                                                acceptClassName="flex h-10 items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 text-xs font-bold tracking-wider text-brand-bg shadow-xs transition-all hover:opacity-90 disabled:opacity-60"
-                                                declineClassName="flex h-10 items-center justify-center gap-2 rounded-xl border border-brand-divider px-4 text-xs font-bold tracking-wider text-brand-text/60 shadow-xs transition-all hover:bg-brand-secondary disabled:opacity-60"
-                                                onFriendsClick={onRemoveFromCircle}
-                                            />
-                                        ) : null
-                                    }
                                     messageSlot={
                                         <MessageButton
                                             targetUserId={profile.id}

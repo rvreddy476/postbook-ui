@@ -8,6 +8,8 @@ import { useToggleLike } from "@/hooks/usePostReaction"
 import { useToggleBookmark } from "@/hooks/usePostActions"
 import { useUserProfile } from "@/hooks/useEditProfile"
 import ShareDialog from "@/components/ShareDialog"
+import { isPostLiked } from "@/components/feed/postHeart"
+import { canRepostContentType } from "@/features/share/shareOptions"
 
 interface EmbedCardProps {
     post: PostDetail
@@ -35,7 +37,7 @@ export default function EmbedCard({ post }: EmbedCardProps) {
         view_count?: number
     } | null
 
-    const liked = !!post.viewer_reaction
+    const liked = isPostLiked(post.viewer_reaction)
     const likesCount = post.counts?.likes ?? 0
     const commentsCount = post.counts?.comments ?? 0
     const sharesCount = post.counts?.shares ?? 0
@@ -165,12 +167,10 @@ export default function EmbedCard({ post }: EmbedCardProps) {
 
             {/* Action Bar */}
             <div className="px-4 py-2 flex items-center justify-between border-t border-brand-divider">
-                {/* Spark */}
-                <button onClick={toggleLike} aria-label="Spark"
-                    className={`flex items-center gap-1.5 transition-all ${liked ? 'text-brand-text scale-110' : 'text-brand-text/40 hover:text-brand-text'}`}>
-                    <svg viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={liked ? 0 : 2} className="w-[18px] h-[18px]">
-                        <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
-                    </svg>
+                {/* Like: the heart, the only reaction a post takes (founder, 24 Oct) */}
+                <button onClick={toggleLike} aria-label={liked ? "Unlike" : "Like"} aria-pressed={liked}
+                    className={`flex items-center gap-1.5 transition-all ${liked ? 'text-danger scale-110' : 'text-brand-text/40 hover:text-brand-text'}`}>
+                    <Heart className={`w-[18px] h-[18px] ${liked ? 'fill-current' : ''}`} aria-hidden="true" />
                     {likesCount > 0 && <span className="text-[11px] font-mono">{likesCount}</span>}
                 </button>
 
@@ -196,7 +196,7 @@ export default function EmbedCard({ post }: EmbedCardProps) {
             </div>
 
             {/* Share Dialog */}
-            <ShareDialog postId={post.id} isOpen={showShareDialog} onClose={() => setShowShareDialog(false)} />
+            <ShareDialog postId={post.id} isOpen={showShareDialog} onClose={() => setShowShareDialog(false)} allowRepost={canRepostContentType(post.content_type)} />
         </div>
     )
 }

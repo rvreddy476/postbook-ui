@@ -31,8 +31,8 @@ import { ShareIcon } from "@/components/icons/ShareIcon";
            your own profile.
   Visitor: Follow · Message · Share · ⋮ (Copy link, Mute, Block/Unblock,
            Report). Message is the existing request-only MessageButton,
-           passed in untouched as `messageSlot`; the circle (connection)
-           control is passed in as `connectionSlot`.
+           passed in untouched as `messageSlot`. No Connect control: Connect
+           is gone (founder, 24 Oct 2026).
 
   The menu is a WAI-ARIA menu button: Enter/Space/ArrowDown opens it on the
   first item, arrows and Home/End move, Escape closes it and returns focus
@@ -60,7 +60,6 @@ interface ProfileActionsProps {
     settingsHref?: string
     signInHref?: string
     messageSlot?: ReactNode
-    connectionSlot?: ReactNode
     /** Start with the menu open (static renders in tests). */
     defaultMenuOpen?: boolean
 }
@@ -102,7 +101,6 @@ export function ProfileActions({
     settingsHref = "/settings",
     signInHref = "/login",
     messageSlot,
-    connectionSlot,
     defaultMenuOpen = false,
 }: ProfileActionsProps) {
     const [menuOpen, setMenuOpen] = useState(defaultMenuOpen)
@@ -239,7 +237,6 @@ export function ProfileActions({
     return (
         <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start @3xl:justify-end" data-testid="profile-actions-visitor">
             {followButton}
-            {!blocked ? connectionSlot : null}
             {!blocked ? messageSlot : null}
             {shareButton}
             <div className="relative">

@@ -7,15 +7,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Repeat2, Quote, Link2, Send, MessageSquare } from 'lucide-react';
 import { SendInMessagesPanel, useCanSendInMessages } from '@/components/messenger/SendInMessagesPanel';
 import { withShareRef } from '@/features/share/shareRef';
+import { shareOptions } from '@/features/share/shareOptions';
+import { postActionErrorText } from '@/components/feed/postHeart';
 
 interface ShareDialogProps {
   postId: string;
   isOpen: boolean;
   onClose: () => void;
   shareUrl?: string;
+  /** False on a reel: no Repost and no Quote (founder, 24 Oct). Feed posts keep both. */
+  allowRepost?: boolean;
 }
 
-const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose, shareUrl }) => {
+const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose, shareUrl, allowRepost = true }) => {
   const [quoteText, setQuoteText] = useState('');
   const [selectedType, setSelectedType] = useState<'repost' | 'quote' | 'external' | 'message' | null>(null);
   const [error, setError] = useState('');
@@ -23,6 +27,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose, shar
   const shareMutation = useSharePost();
   // "Send in Messages" (audit T-25): signed-in viewers only.
   const canMessage = useCanSendInMessages(postId);
+  const options = shareOptions({ canMessage, allowRepost });
 
   // Reopening starts from the options, not from a picker left open.
   useEffect(() => {
@@ -40,6 +45,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose, shar
   };
 
   const handleShare = async (type: 'repost' | 'quote' | 'external') => {
+    if (type !== 'external' && !allowRepost) return;
 
     if (type === 'external') {
       // The link carries a share ref (features/share/shareRef) and nothing else.
@@ -67,6 +73,8 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose, shar
             const code = err?.response?.data?.error?.code;
             if (code === 'ALREADY_SHARED' || code === 'ALREADY_REPOSTED') {
               setError('You already reposted this');
+            } else if (postActionErrorText(code)) {
+              setError(postActionErrorText(code)!);
             } else if (code === 'CIRCLE_SHARE_RESTRICTED' || code === 'NOT_ELIGIBLE') {
               setError('This post cannot be reposted');
             } else {
@@ -102,6 +110,8 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose, shar
           const code = err?.response?.data?.error?.code;
           if (code === 'CIRCLE_SHARE_RESTRICTED' || code === 'NOT_ELIGIBLE') {
             setError('This post cannot be reposted');
+          } else if (postActionErrorText(code)) {
+            setError(postActionErrorText(code)!);
           } else if (code === 'QUOTE_TEXT_REQUIRED') {
             setError('Add your thoughts to quote repost');
           } else if (code === 'QUOTE_TEXT_TOO_LONG') {
@@ -166,9 +176,9 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose, shar
               onBack={() => setSelectedType(null)}
               onSent={(recipient) => showSuccessAndClose(`Sent to ${recipient.name}`)}
             />
-          ) : selectedType !== 'quote' ? (
+          ) : selectedType !== 'quote' || !allowRepost ? (
             <div className="p-4 space-y-2">
-              {canMessage && (
+              {options.includes('message') && (
                 <button
                   onClick={() => { setError(''); setSelectedType('message'); }}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-brand-secondary transition-colors text-left group/item"
@@ -183,6 +193,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose, shar
                 </button>
               )}
 
+              {options.includes('repost') && (
               <button
                 onClick={() => handleShare('repost')}
                 disabled={shareMutation.isPending}
@@ -196,7 +207,9 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose, shar
                   <p className="text-[10px] text-brand-text/60 mt-0.5">Share to your followers</p>
                 </div>
               </button>
+              )}
 
+              {options.includes('quote') && (
               <button
                 onClick={() => handleShare('quote')}
                 disabled={shareMutation.isPending}
@@ -210,6 +223,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, isOpen, onClose, shar
                   <p className="text-[10px] text-brand-text/60 mt-0.5">Add your thoughts</p>
                 </div>
               </button>
+              )}
 
               <button
                 onClick={() => handleShare('external')}

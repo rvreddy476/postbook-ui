@@ -45,7 +45,7 @@ describe('the Explore launcher offers no parked product', () => {
   })
 
   test('the launched products stay, in registry order', () => {
-    expect(keys(APP_LAUNCHER)).toEqual(['home', 'reels', 'tube', 'connections', 'messenger', 'live', 'shop', 'trending', 'saved', 'notifications', 'ride'])
+    expect(keys(APP_LAUNCHER)).toEqual(['home', 'reels', 'tube', 'messenger', 'live', 'shop', 'trending', 'saved', 'notifications', 'ride'])
   })
 
   test('searching cannot reach a parked tile', () => {

@@ -74,8 +74,9 @@ const copy: Record<string, [string, string]> = {
   'comment_mention': ['You were mentioned', 'Someone mentioned you in a comment.'],
   'group.mention': ['You were mentioned', 'Someone mentioned you in a group.'],
   'community.mention': ['You were mentioned', 'Someone mentioned you in a community.'],
-  'friend_request': ['New friend request', 'Open the request to respond.'],
-  'user.friend_request': ['New friend request', 'Open the request to respond.'],
+  // Connect is gone (founder, 24 Oct 2026): an old request cannot be answered, so the row says what to do instead.
+  'friend_request': ['Connection request', 'Connections have ended. Follow or message them instead.'],
+  'user.friend_request': ['Connection request', 'Connections have ended. Follow or message them instead.'],
   'friend_accepted': ['Friend request accepted', 'Your friend request was accepted.'],
   'user.friend_accepted': ['Friend request accepted', 'Your friend request was accepted.'],
 }

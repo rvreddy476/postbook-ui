@@ -2,15 +2,19 @@
 
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, Bookmark, ChevronDown, Clapperboard, History, Layers3, MessageCircle, PenLine, Play, Radio, Users } from 'lucide-react';
-import { PARKED_NAV_IDS } from '@/lib/parkedProducts';
+import { useProductEntryVisible } from '@/hooks/useProductFeatures';
 import './creative-home.css';
 
 /** Real destinations only: no Home data fetches, feed, inferred location or
  * invented activity. Unlaunched services stay non-interactive. */
 export default function CreativeHome({ onCreateClick }: { onCreateClick: () => void }) {
-  // Groups is parked (lib/parkedProducts.ts): no card until it launches, and
-  // Feed takes the full row so the grid has no hole.
-  const groupsLaunched = !PARKED_NAV_IDS.has('Groups');
+  // Groups is parked (lib/parkedProducts.ts) and can be closed by GET
+  // /v1/features: no card until it is open, and Feed takes the full row so
+  // the grid has no hole.
+  return <CreativeHomeView onCreateClick={onCreateClick} groupsLaunched={useProductEntryVisible('groups')} />;
+}
+
+export function CreativeHomeView({ onCreateClick, groupsLaunched }: { onCreateClick: () => void; groupsLaunched: boolean }) {
   return (
     <div className="creative-home">
       <header className="home-heading">
@@ -20,7 +24,6 @@ export default function CreativeHome({ onCreateClick }: { onCreateClick: () => v
       <nav className="home-return" aria-label="Your shortcuts">
         <Link href="/posttube/history" prefetch={false}><History size={17} /> Watch history <ArrowUpRight size={14} /></Link>
         <Link href="/saved" prefetch={false}><Bookmark size={17} /> Saved items <ArrowUpRight size={14} /></Link>
-        <Link href="/connections" prefetch={false}><Users size={17} /> Connections <ArrowUpRight size={14} /></Link>
       </nav>
       <div className="home-destinations">
         <section className="home-watch" aria-labelledby="home-watch-heading">

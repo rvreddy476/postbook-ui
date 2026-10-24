@@ -23,9 +23,7 @@ import {
   Trash2,
   Tv,
   User,
-  UserCheck,
   UserX,
-  Users,
   type LucideIcon,
 } from "lucide-react";
 
@@ -82,8 +80,6 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
     title: "Privacy & safety",
     rows: [
       { key: "privacy", label: "Privacy", icon: Lock, href: "/settings/privacy" },
-      { key: "social-preferences", label: "Who can connect with you", icon: Users, href: "/settings/social-preferences" },
-      { key: "friend-requests", label: "Friend requests", icon: UserCheck, href: "/settings/friend-requests" },
       { key: "blocked", label: "Blocked accounts", icon: UserX, href: "/settings/blocked" },
       { key: "hidden-channels", label: "Hidden channels", icon: EyeOff, href: "/settings/hidden-channels" },
       { key: "hidden-chats", label: "Hidden chats", icon: Lock, href: "/settings/hidden-chats" },

@@ -33,7 +33,7 @@ export const EMPTY_COPY: Record<Exclude<InboxTab, 'requests'>, string> = {
   likes: 'When someone likes your posts or comments, you will see it here.',
   comments: 'Comments and replies on your posts will show up here.',
   mentions: 'When someone mentions you, you will see it here.',
-  followers: 'New followers and friend requests will show up here.',
+  followers: 'New followers will show up here.',
 }
 
 function Row({ n, onOpen, now, actions }: { n: InboxNotification; onOpen: (n: InboxNotification) => void; now?: number; actions?: ReactNode }) {

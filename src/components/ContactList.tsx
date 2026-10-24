@@ -282,7 +282,7 @@ const ContactList: React.FC<ContactListProps> = ({
                           {search ? 'No matching friends' : 'No circle members yet'}
                         </p>
                         <p className="mt-1 text-[10px] text-brand-text/60">
-                          {search ? 'Try a different search term' : 'Add friends to start chatting'}
+                          {search ? 'Try a different search term' : 'Follow people or search to start chatting'}
                         </p>
                       </div>
                     )}

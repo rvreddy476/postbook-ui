@@ -139,18 +139,19 @@ describe("videoNav (reels, header chrome)", () => {
     const sections = videoNav("reels");
     expect(sections.map((s) => s.key)).toEqual(["top", "apps", "footer"]);
     const top = sections[0];
-    expect(top.items.map((i) => i.label)).toEqual(["For You", "Explore", "Following", "Friends", "LIVE", "Shop", "Messages", "Activity", "Upload", "Profile"]);
+    // No Friends row: it opened /connections, and Connect is gone (founder, 24 Oct 2026).
+    expect(top.items.map((i) => i.label)).toEqual(["For You", "Explore", "Following", "LIVE", "Shop", "Messages", "Activity", "Upload", "Profile"]);
     expect(top.items.map((i) => i.href ?? i.action)).toEqual([
-      "/reels", "explore", "/reels?feed=following", "/connections", "/reels/live", "/shop", "/messenger", "/notifications", "/reels/create", "/profile",
+      "/reels", "explore", "/reels?feed=following", "/reels/live", "/shop", "/messenger", "/notifications", "/reels/create", "/profile",
     ]);
     expect(sections[1].items.map((i) => [i.label, i.href])).toEqual([["Home", "/"], ["PostTube", "/posttube"], ["Liked reels", "/reels/liked"], ["Offline", "/posttube/offline"]]);
     expect(sections[2].items).toEqual([...VIDEO_NAV_FOOTER]);
   });
 
-  test("only the first ten are in the rail; nothing is app-highlighted", () => {
+  test("only the first nine are in the rail; nothing is app-highlighted", () => {
     const sections = videoNav("reels");
     expect(sections.filter((s) => s.rail).map((s) => s.key)).toEqual(["top"]);
-    expect(sections[0].items.length).toBe(10);
+    expect(sections[0].items.length).toBe(9);
     for (const s of sections) for (const i of s.items) expect(Boolean(i.active)).toBe(false);
   });
 });
@@ -164,10 +165,10 @@ describe("videoNav (reels, sidebar chrome)", () => {
     const top = sections[0];
     expect(top.rail).toBe(true);
     expect(top.items.map((i) => i.label)).toEqual([
-      "For You", "Explore", "Following", "Friends", "LIVE", "Shop", "Messages", "Activity", "Upload", "Profile", "More",
+      "For You", "Explore", "Following", "LIVE", "Shop", "Messages", "Activity", "Upload", "Profile", "More",
     ]);
     expect(top.items.map((i) => i.href ?? i.action)).toEqual([
-      "/reels", "explore", "/reels?feed=following", "/connections", "/reels/live", "/shop", "/messenger", "/notifications", "/reels/create", "/profile", "more",
+      "/reels", "explore", "/reels?feed=following", "/reels/live", "/shop", "/messenger", "/notifications", "/reels/create", "/profile", "more",
     ]);
   });
 
@@ -215,15 +216,15 @@ describe("videoNav (reels, sidebar chrome)", () => {
     // The pill sits 16px under the 28px logo row that starts at 20; the list 24px under the pill.
     expect(m.logoTop + m.logoHeight + 16).toBe(m.searchTop);
     expect(m.searchTop + m.searchHeight + 24).toBe(m.listTop);
-    // Eleven rows (For You … LIVE, Shop, … Profile, More) on a 44px pitch from 128: TikTok's rows are
+    // Ten rows (For You … LIVE, Shop, … Profile, More) on a 44px pitch from 128: TikTok's rows are
     // not on one pitch, so this is the agreed approximation — the first row is within 5px of For You.
-    // Shop (audit T-33) adds one row, so More now starts at 568.
+    // Shop (audit T-33) added one row and Friends went with Connect (24 Oct), so More starts at 524.
     const rowTop = (i: number) => m.listTop + i * (m.rowHeight + m.rowGap);
     expect(rowTop(0)).toBe(128);
     expect(rowTop(1) - rowTop(0)).toBe(44);
     expect(Math.abs(rowTop(0) - 133)).toBeLessThanOrEqual(5);
-    expect(videoNav("reels", "sidebar")[0].items).toHaveLength(11);
-    expect(rowTop(10)).toBe(568);
+    expect(videoNav("reels", "sidebar")[0].items).toHaveLength(10);
+    expect(rowTop(9)).toBe(524);
     expect(m.railWidth + m.morePanelWidth).toBe(392);
 
     const css = readFileSync(resolve(import.meta.dir, "../video-shell.css"), "utf8");
@@ -268,7 +269,7 @@ describe("REELS_MORE_PANEL", () => {
     expect(src).toContain("REELS_MORE_SETTINGS");
     for (const gone of ["logoutUser", "chooseTheme", "radiogroup", "/api/auth/logout"]) expect(src).not.toContain(gone);
     // Order in the drawing: profile, the sections, the settings row, the legal line.
-    const order = ["<ProfileRow", "REELS_MORE_PANEL.map", "row(REELS_MORE_SETTINGS)", "video-more__legal"].map((needle) => src.indexOf(needle));
+    const order = ["<ProfileRow", "openMorePanel(hiddenAppKeys).map", "row(REELS_MORE_SETTINGS)", "video-more__legal"].map((needle) => src.indexOf(needle));
     for (const i of order) expect(i).toBeGreaterThan(-1);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
   });

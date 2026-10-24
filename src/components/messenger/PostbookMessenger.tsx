@@ -21,6 +21,8 @@ import { blockMessageRequest, reportMessageRequest } from '@/services/chatParity
 import { GRAPH_ROUTES, graphUserIdBody } from '@/lib/graphApi'
 import { useMyGroups } from '@/hooks/useGroups'
 import { useMyBroadcastChannels } from '@/hooks/useBroadcastChannels'
+import { useProductEntryVisible, useProductOpen } from '@/hooks/useProductFeatures'
+import { laneChips, visibleLane, type MessengerLane } from './messengerLanes'
 import { useMyProfile } from '@/hooks/useEditProfile'
 import type { User } from '@/types'
 import { decodeRequestSender, type ChatPeer, type InboxRow } from '@/lib/chat/contract'
@@ -116,7 +118,7 @@ interface OpenGroupChat {
 export default function PostbookMessenger() {
   // The scopes the chip row shows, in that order. Requests only appears
   // when someone is actually waiting.
-  const [contactTab, setContactTab] = useState<'channels' | 'groups' | 'friends' | 'requests'>('friends')
+  const [requestedTab, setContactTab] = useState<MessengerLane>('friends')
   const [unreadOnly, setUnreadOnly] = useState(false)
   const [search, setSearch] = useState('')
   const [activeDm, setActiveDm] = useState<(User & { lastActiveAt?: string | null }) | null>(null)
@@ -157,7 +159,15 @@ export default function PostbookMessenger() {
   const currentUser = getSession()
   const myId = currentUser?.id ?? ''
   const { data: myProfile } = useMyProfile()
-  const { data: myGroups } = useMyGroups()
+  /*
+    Closed products leave no way in (GET /v1/features, hooks/useProductFeatures):
+    broadcast channels lose their lane, panel and New Channel sheet (hidden too
+    while the route has not answered or failed), and the Groups lane goes when
+    the gateway closes groups.
+  */
+  const channelsOpen = useProductEntryVisible('broadcast_channels')
+  const groupsOpen = useProductOpen('groups')
+  const { data: myGroups } = useMyGroups(groupsOpen)
 
   const openConversationId = activeGroupChat?.conversationId ?? activeConversationId
   const inbox = useInbox(myId, openConversationId)
@@ -371,7 +381,7 @@ export default function PostbookMessenger() {
   const unreadTotal = useMemo(() => inboxUnreadTotal(rows, myId), [rows, myId])
 
   // Channels the signed-in user belongs to.
-  const { data: myChannels } = useMyBroadcastChannels()
+  const { data: myChannels } = useMyBroadcastChannels(channelsOpen)
   const filteredChannels = useMemo(() => {
     const list = myChannels ?? []
     if (!search.trim()) return list
@@ -616,7 +626,12 @@ export default function PostbookMessenger() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inbox.loadMore, inbox.state.hasMore])
 
-  const anyOpen = Boolean(activeDm || activeGroupChat || activeGroupId || activeChannelId)
+  // The lane of a closed product shows Direct instead. The request is kept,
+  // so a /messenger?lane=channels&channel=<id> link still lands once the
+  // features answer says channels are open.
+  const contactTab = visibleLane(requestedTab, { channelsOpen, groupsOpen })
+
+  const anyOpen = Boolean(activeDm || activeGroupChat || (groupsOpen && activeGroupId) || (channelsOpen && activeChannelId))
   const myName = myProfile?.display_name || currentUser?.name || 'You'
   const myAvatar = myProfile?.avatar_media_id ? `/v1/media/${myProfile.avatar_media_id}/serve` : null
   const searching = search.trim().length > 0
@@ -683,14 +698,7 @@ export default function PostbookMessenger() {
           </div>
 
           <div className="flex items-center gap-1.5" role="tablist" aria-label="Conversations">
-            {([
-              { id: 'friends' as const, label: 'Direct', badge: 0 },
-              { id: 'groups' as const, label: 'Groups', badge: 0 },
-              { id: 'channels' as const, label: 'Channels', badge: 0 },
-              ...(requestCount > 0 || hiddenRequestCount > 0 || contactTab === 'requests'
-                ? [{ id: 'requests' as const, label: 'Requests', badge: requestCount }]
-                : []),
-            ]).map((chip) => {
+            {laneChips({ groupsOpen, channelsOpen }, { count: requestCount, hidden: hiddenRequestCount, current: contactTab }).map((chip) => {
               const active = contactTab === chip.id
               return (
                 <button
@@ -723,7 +731,7 @@ export default function PostbookMessenger() {
 
         {/* Contact list */}
         <div className="flex-1 overflow-y-auto px-2 pt-2 pb-3">
-          {contactTab === 'channels' ? (
+          {contactTab === 'channels' && channelsOpen ? (
             <>
             {filteredChannels.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16">
@@ -979,7 +987,7 @@ export default function PostbookMessenger() {
                 </button>
               )}
             </>
-          ) : (
+          ) : !groupsOpen ? null : (
             /* Groups list */
             <>
               {filteredGroups.length === 0 ? (
@@ -1081,7 +1089,7 @@ export default function PostbookMessenger() {
             onChatRemoved={() => { clearOpen(); void inbox.reload() }}
             onToast={showToast}
           />
-        ) : activeGroupId && selectedGroup ? (
+        ) : groupsOpen && activeGroupId && selectedGroup ? (
           <GroupPanel
             groupId={activeGroupId}
             groupName={selectedGroup.name}
@@ -1094,7 +1102,7 @@ export default function PostbookMessenger() {
             onClose={() => setActiveGroupId(null)}
             onCreateGroup={handleGroupClick}
           />
-        ) : activeChannelId ? (
+        ) : channelsOpen && activeChannelId ? (
           <ChannelPanel
             channelId={activeChannelId}
             onBack={() => setActiveChannelId(null)}
@@ -1104,7 +1112,7 @@ export default function PostbookMessenger() {
         )}
       </div>
 
-      {showCreateGroup && (
+      {groupsOpen && showCreateGroup && (
         <CreateGroupPanel
           onClose={() => setShowCreateGroup(false)}
           onCreated={(groupId) => {
@@ -1135,7 +1143,7 @@ export default function PostbookMessenger() {
         </div>
       )}
 
-      {showNewChannel && (
+      {channelsOpen && showNewChannel && (
         <div className="fixed inset-0 z-1000 flex items-start justify-center bg-brand-text/20 p-4 pt-16">
           <div className="relative max-h-[80vh] w-full max-w-md overflow-hidden rounded-2xl border border-brand-divider bg-brand-bg shadow-2xl">
             <NewChannelSheet

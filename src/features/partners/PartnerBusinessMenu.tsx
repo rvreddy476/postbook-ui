@@ -14,6 +14,8 @@ import { fetchCapabilitiesRaw } from "@/features/feast/kitchen/api/client"
 import { decodeCapabilities } from "@/features/feast/kitchen/model/wire"
 import { envelopeData } from "@/features/feast/kitchen/model/decode"
 import { BUSINESS_SECTIONS, registeredBusinesses, sectionIsCurrent } from "./businessNavigation"
+import { useProductFeatures } from "@/hooks/useProductFeatures"
+import { partnerOpen } from "@/lib/productFeatures"
 import "./businessNavigation.css"
 
 const icons = [House, ShoppingBag, Utensils, Bike, Truck]
@@ -23,6 +25,7 @@ export function PartnerBusinessMenu({ expanded = true, onNavigate }: { expanded?
   const search = useSearchParams()
   const current = BUSINESS_SECTIONS.find(b => pathname === b.href || pathname.startsWith(b.href + "/"))?.id
   const [open, setOpen] = useState<Record<string, boolean>>({})
+  const features = useProductFeatures()
   const query = useQuery({
     queryKey: ["partner-business-navigation", user?.id],
     enabled: !!user, staleTime: 60_000, gcTime: 0, retry: false, refetchOnWindowFocus: true,
@@ -41,6 +44,8 @@ export function PartnerBusinessMenu({ expanded = true, onNavigate }: { expanded?
     <li><Link href="/partners" onClick={onNavigate} className="video-nav__item" aria-label="All businesses"><BriefcaseBusiness size={20} className="video-nav__icon" /><span className="video-nav__label">All businesses</span></Link></li>
     {BUSINESS_SECTIONS.map((business, i) => {
       if (!query.data?.registered.includes(business.id) && current !== business.id) return null
+      // A business whose product the gateway has closed (GET /v1/features) has no way in.
+      if (!partnerOpen(business.id, features.state)) return null
       const Icon = icons[i], active = current === business.id
       const isOpen = open[business.id] ?? active
       return <li key={business.id} className="partner-business-menu">

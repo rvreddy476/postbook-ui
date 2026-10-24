@@ -21,8 +21,9 @@ describe("notification preferences: Credits", () => {
         const body = (contractFixture("notification_preferences_credits.json") as { data: Record<string, unknown> }).data
         const served = Object.keys(body).filter((k) => k.startsWith("inapp_")).map((k) => k.slice("inapp_".length))
         const listed = NOTIFICATION_CATEGORIES.map((c) => c.key)
-        // Food orders, shop orders and Doorstep belong to products the page does not list yet.
-        expect(served.filter((k) => !listed.includes(k)).sort()).toEqual(["doorstep", "food_orders", "orders"])
+        // Food orders, shop orders and Doorstep belong to products the page does not list yet;
+        // connection requests are gone (founder, 24 Oct 2026), so their switch has no row.
+        expect(served.filter((k) => !listed.includes(k)).sort()).toEqual(["doorstep", "food_orders", "friend_requests", "orders"])
         expect(listed).toContain("credits")
     })
 

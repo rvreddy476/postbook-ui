@@ -5,7 +5,7 @@ import { editorialFormat } from '@/components/feed/editorialFormat';
 import type { PostDetail } from '@/types/profile';
 import HomePage from '@/app/page';
 import FeedPage from '@/app/feed/page';
-import CreativeHome from '@/components/home/CreativeHome';
+import CreativeHome, { CreativeHomeView } from '@/components/home/CreativeHome';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -69,7 +69,7 @@ describe('launch Home is a service destination, not another feed', () => {
   });
   test('create retains the existing composer callback', () => {
     let calls = 0;
-    const tree = CreativeHome({ onCreateClick: () => { calls++; } });
+    const tree = CreativeHomeView({ onCreateClick: () => { calls++; }, groupsLaunched: false });
     const header = tree.props.children[0];
     header.props.children[1].props.onClick();
     expect(calls).toBe(1);

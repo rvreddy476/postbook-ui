@@ -34,9 +34,6 @@ import { ProfileSkeleton } from "./states/ProfileSkeleton"
 import { BlockedProfileView } from "./states/BlockedProfileView"
 import { UnavailableProfileView } from "./states/UnavailableProfileView"
 import { useFollowUser, useUnfollowUser } from "@/hooks/useEditProfile"
-import {
-    useRemoveFriend,
-} from "@/hooks/useConnections"
 import { useContentCounts } from "@/hooks/useProfilePosts"
 import { useBlockUser, useUnblockUser } from "@/hooks/useBlocking"
 import { useMuteUser, useUnmuteUser } from "@/hooks/useMuting"
@@ -289,7 +286,6 @@ export function ProfilePage({ username }: ProfilePageProps) {
     const [activeTab, setActiveTab] = useState<ProfileTabKey>("posts")
     const [blockDialogOpen, setBlockDialogOpen] = useState(false)
     const [unblockDialogOpen, setUnblockDialogOpen] = useState(false)
-    const [removeCircleDialogOpen, setRemoveCircleDialogOpen] = useState(false)
     const [isMuted, setIsMuted] = useState(false)
     const [isTabsSticky, setIsTabsSticky] = useState(false)
     const [qrModalOpen, setQrModalOpen] = useState(false)
@@ -385,7 +381,6 @@ export function ProfilePage({ username }: ProfilePageProps) {
     // Mutations
     const followMutation = useFollowUser()
     const unfollowMutation = useUnfollowUser()
-    const removeFromCircle = useRemoveFriend()
     const blockMutation = useBlockUser()
     const unblockMutation = useUnblockUser()
     const muteMutation = useMuteUser()
@@ -435,15 +430,6 @@ export function ProfilePage({ username }: ProfilePageProps) {
             onError: (e) => toast({ type: "error", title: authErrMsg(e) }),
         })
     }, [profile, unfollowMutation, toast])
-
-    const handleRemoveFromCircle = useCallback(() => setRemoveCircleDialogOpen(true), [])
-
-    const handleConfirmRemoveFromCircle = useCallback(() => {
-        if (!profile) return
-        removeFromCircle.mutate(profile.username || profile.id, {
-            onSuccess: () => setRemoveCircleDialogOpen(false),
-        })
-    }, [profile, removeFromCircle])
 
     const handleBlock = useCallback(() => setBlockDialogOpen(true), [])
 
@@ -566,7 +552,6 @@ export function ProfilePage({ username }: ProfilePageProps) {
                 graphCounts={graphCounts}
                 onFollow={handleFollow}
                 onUnfollow={handleUnfollow}
-                onRemoveFromCircle={handleRemoveFromCircle}
                 onEditProfile={() => router.push("/settings/profile")}
                 onBlock={handleBlock}
                 onUnblock={handleUnblock}
@@ -664,7 +649,6 @@ export function ProfilePage({ username }: ProfilePageProps) {
                                     <ConnectionsTab
                                         userId={profile.id}
                                         graphCounts={graphCounts}
-                                        platform="postboek"
                                         isOwn={isOwn}
                                     />
                                 )}
@@ -780,16 +764,6 @@ export function ProfilePage({ username }: ProfilePageProps) {
                 description={`Are you sure you want to unblock @${profile.username}? They will be able to see your profile and interact with you again.`}
                 confirmLabel="Unblock"
                 loading={unblockMutation.isPending}
-            />
-            <ConfirmDialog
-                open={removeCircleDialogOpen}
-                onClose={() => setRemoveCircleDialogOpen(false)}
-                onConfirm={handleConfirmRemoveFromCircle}
-                title="Remove from Circle?"
-                description={`Remove @${profile.username} from your Circle? They won't see your circle-only posts or message you.`}
-                confirmLabel="Remove"
-                destructive
-                loading={removeFromCircle.isPending}
             />
 
             <ToastContainer />

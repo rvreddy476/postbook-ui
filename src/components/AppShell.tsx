@@ -36,10 +36,6 @@ function routeForTab(tab: NavItem, currentUser: User | null): string | null {
     case 'Messenger':
     case 'Chat':
       return '/messenger';
-    case 'Circle':
-    case 'Friends':
-    case 'My Circle':
-      return '/connections';
     case 'Ask':
       return '/qa';
     case 'Pages':

@@ -57,7 +57,6 @@ function render(relationship: Relationship | null, isOwn = false) {
         graphCounts={{ follower_count: 1, following_count: 2, friend_count: 0 }}
         onFollow={noop}
         onUnfollow={noop}
-        onRemoveFromCircle={noop}
         onEditProfile={noop}
         signedIn
       />
@@ -66,6 +65,14 @@ function render(relationship: Relationship | null, isOwn = false) {
 }
 
 describe("profile header identity row", () => {
+  test("no Connect control (founder, 24 Oct 2026): not for a stranger, an old pending request or an accepted connection", () => {
+    for (const r of [rel(), rel({ connection_status: "pending_received" } as Partial<Relationship>), rel({ is_connection: true, connection_status: "accepted" } as Partial<Relationship>)]) {
+      const html = render(r);
+      for (const word of [">Connect<", ">Connected<", ">Accept<", ">Decline<", "Request sent", "Remove from Circle"]) expect(html).not.toContain(word);
+      expect(html).toContain("Follow");
+    }
+  });
+
   test("no PostTube Channel card (it belongs to PostTube)", () => {
     const html = render(rel());
     expect(html).not.toContain("PostTube Channel");

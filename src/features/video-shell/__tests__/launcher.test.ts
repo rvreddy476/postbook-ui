@@ -17,7 +17,7 @@ describe("APP_LAUNCHER", () => {
     const byKey = new Map(ALL_APP_LAUNCHER.map((t) => [t.key, t]));
     for (const [key, href] of [
       ["home", "/"], ["reels", "/reels"], ["tube", "/posttube"], ["groups", "/groups"],
-      ["communities", "/communities"], ["connections", "/connections"], ["messenger", "/messenger"],
+      ["communities", "/communities"], ["messenger", "/messenger"],
       ["live", "/live"], ["ask", "/qa"], ["pages", "/pages"], ["shop", "/shop"], ["match", "/dating"],
       ["trending", "/trending"], ["memories", "/memories"], ["saved", "/saved"], ["notifications", "/notifications"], ["feast", "/feast"],
     ] as const) {
@@ -25,6 +25,8 @@ describe("APP_LAUNCHER", () => {
       expect(byKey.get(key)?.soon).toBeFalsy();
     }
     expect(byKey.get("ride")?.soon).toBe(true);
+    // Connections went with Connect (founder, 24 Oct 2026).
+    expect(byKey.has("connections")).toBe(false);
   });
 });
 

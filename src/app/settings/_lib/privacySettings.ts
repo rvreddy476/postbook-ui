@@ -19,12 +19,6 @@
 
 export type AccountVisibility = "public" | "private"
 export type CommentAudience = "everyone" | "friends"
-export type ConnectionRequestAudience =
-    | "no_one"
-    | "friends_of_friends_or_contacts"
-    | "friends_of_friends"
-    | "contacts_only"
-    | "everyone"
 export type MessageAudience =
     | "no_one"
     | "people_i_follow"
@@ -48,7 +42,6 @@ export interface PrivacySettings {
     account_visibility: AccountVisibility
     allow_comments_from: CommentAudience
     who_can_message: MessageAudience
-    who_can_send_connection_request: ConnectionRequestAudience
     who_can_see_read_receipts: VisibilityAudience
     /** Enforced by graph-service (see_last_seen), and mutual: no_one hides everyone else's from you too. */
     who_can_see_last_seen: VisibilityAudience
@@ -69,7 +62,6 @@ export type PrivacyPatch = Partial<
         | "account_visibility"
         | "allow_comments_from"
         | "who_can_message"
-        | "who_can_send_connection_request"
         | "who_can_see_read_receipts"
         | "who_can_see_last_seen"
         | "who_can_see_profile_photo"
@@ -83,7 +75,6 @@ const WRITABLE_KEYS = [
     "account_visibility",
     "allow_comments_from",
     "who_can_message",
-    "who_can_send_connection_request",
     "who_can_see_read_receipts",
     "who_can_see_last_seen",
     "who_can_see_profile_photo",
@@ -141,13 +132,6 @@ const MESSAGE_AUDIENCE = new Set<string>([
     "connections_and_mutual_followers",
     "friends_of_friends_requests",
 ])
-const CONNECTION_REQUEST_AUDIENCE = new Set<string>([
-    "no_one",
-    "friends_of_friends_or_contacts",
-    "friends_of_friends",
-    "contacts_only",
-    "everyone",
-])
 const VISIBILITY_AUDIENCE = new Set<string>(["everyone", "connections_only", "no_one"])
 const MENTION_TAG_AUDIENCE = new Set<string>(["everyone", "following", "no_one"])
 
@@ -174,11 +158,6 @@ export function parsePrivacySettings(body: unknown): PrivacySettings | null {
         account_visibility: pick(ACCOUNT_VISIBILITY, s.account_visibility, "public"),
         allow_comments_from: pick(COMMENT_AUDIENCE, s.allow_comments_from, "everyone"),
         who_can_message: pick(MESSAGE_AUDIENCE, s.who_can_message, "everyone_message_requests"),
-        who_can_send_connection_request: pick(
-            CONNECTION_REQUEST_AUDIENCE,
-            s.who_can_send_connection_request,
-            "everyone",
-        ),
         who_can_see_read_receipts: pick(VISIBILITY_AUDIENCE, s.who_can_see_read_receipts, "connections_only"),
         who_can_see_last_seen: pick(VISIBILITY_AUDIENCE, s.who_can_see_last_seen, "connections_only"),
         who_can_see_profile_photo: pick(VISIBILITY_AUDIENCE, s.who_can_see_profile_photo, "everyone"),
@@ -212,43 +191,12 @@ export function isEmptyPatch(patch: object): boolean {
     return Object.keys(patch).length === 0
 }
 
-/* ------------------------------------------------------------------ */
-/*  Social preferences page                                            */
-/* ------------------------------------------------------------------ */
-
-export interface SocialForm {
-    /** On unless who_can_send_connection_request is `no_one`. */
-    allowConnectionRequests: boolean
-    /** account_visibility === "private". */
-    requireFollowApproval: boolean
-}
-
-export function socialFormFromSettings(s: PrivacySettings): SocialForm {
-    return {
-        allowConnectionRequests: s.who_can_send_connection_request !== "no_one",
-        requireFollowApproval: s.account_visibility === "private",
-    }
-}
-
-/**
- * Turning connection requests back on restores whatever narrower audience the
- * account already had (e.g. friends_of_friends) rather than widening it to
- * `everyone`; only an account that was at `no_one` goes to `everyone`.
- */
-function connectionRequestValue(on: boolean, original: ConnectionRequestAudience): ConnectionRequestAudience {
-    if (!on) return "no_one"
-    return original === "no_one" ? "everyone" : original
-}
-
-export function socialPatch(original: PrivacySettings, form: SocialForm): PrivacyPatch {
-    return diffPrivacySettings(original, {
-        who_can_send_connection_request: connectionRequestValue(
-            form.allowConnectionRequests,
-            original.who_can_send_connection_request,
-        ),
-        account_visibility: form.requireFollowApproval ? "private" : "public",
-    })
-}
+/*
+  Connect is gone (founder, 24 Oct 2026): no connection requests anywhere,
+  so the "who can send me connection requests" control and the Social
+  preferences page that held it were removed. Follow approval (a private
+  account) is the Privacy page's "Who can see my profile".
+*/
 
 /* ------------------------------------------------------------------ */
 /*  Privacy page                                                       */

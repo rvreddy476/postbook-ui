@@ -13,7 +13,6 @@ import {
   PanelsTopLeft,
   ShoppingBag,
   Tv,
-  UserRoundPlus,
   Users,
   UtensilsCrossed,
   Video,
@@ -57,7 +56,6 @@ export const ALL_PRIMARY_ITEMS: readonly SidebarItem[] = [
   { id: 'Home', label: 'Home', icon: Home, href: '/', color: 'text-current' },
   { id: 'Feed', label: 'Feed', icon: PanelsTopLeft, href: '/feed', color: 'text-current' },
   { id: 'Reels', label: 'Reels', icon: Film, href: '/reels', color: 'text-current' },
-  { id: 'Circle', label: 'Connections', icon: UserRoundPlus, href: '/connections', color: 'text-current' },
   { id: 'Groups', label: 'Groups', icon: Users, href: '/groups', color: 'text-current' },
 ];
 

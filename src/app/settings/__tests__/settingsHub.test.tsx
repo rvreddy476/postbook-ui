@@ -41,8 +41,6 @@ describe("settings hub: groups and rows", () => {
         ])
         expect(rows.privacy).toEqual([
             ["Privacy", "/settings/privacy"],
-            ["Who can connect with you", "/settings/social-preferences"],
-            ["Friend requests", "/settings/friend-requests"],
             ["Blocked accounts", "/settings/blocked"],
             ["Hidden channels", "/settings/hidden-channels"],
             ["Hidden chats", "/settings/hidden-chats"],

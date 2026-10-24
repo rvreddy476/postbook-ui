@@ -11,18 +11,14 @@ import {
     fetchRelationshipsBatch,
     useInfiniteFollowers,
     useInfiniteFollowing,
-    useFriends,
-    usePendingFriendRequests,
-    useAcceptFriendRequest,
-    useRejectFriendRequest,
 } from "@/hooks/useConnections"
 import type { ConnectionUser } from "@/hooks/useConnections"
 import { useFollowUser, useUnfollowUser } from "@/hooks/useEditProfile"
 import { useBlockedUsers } from "@/hooks/useBlocking"
 import { useAuthUser } from "@/store/auth"
 import { useGlobalToast } from "@/contexts/ToastContext"
-import type { GraphCounts, AppPlatform, Relationship } from "@/types/profile"
-import { Check, X, ShieldOff, ChevronDown, Loader2 } from "lucide-react"
+import type { GraphCounts, Relationship } from "@/types/profile"
+import { ShieldOff, ChevronDown, Loader2 } from "lucide-react"
 import {
     ROW_PILL_LABELS,
     bumpFollowingCount,
@@ -36,13 +32,17 @@ import {
 interface ConnectionsTabProps {
     userId: string
     graphCounts: GraphCounts
-    platform: AppPlatform
     isOwn: boolean
 }
 
-type ConnectionType = ConnectionListType | "blocked"
+/*
+  The profile's people lists: Followers, Following and (own profile)
+  Blocked. Connect is gone (founder, 24 Oct 2026), so there is no
+  Connections list and no pending connection requests here.
+*/
+type ConnectionType = Exclude<ConnectionListType, "friends"> | "blocked"
 
-/** Rows asked for per page, and the step "Load more" adds to the friends list. */
+/** Rows asked for per page. */
 const PAGE_SIZE = 20
 
 function getInitials(displayName: string): string {
@@ -137,23 +137,14 @@ function uniqueRows(rows: ConnectionUser[]): ConnectionUser[] {
     })
 }
 
-function chunk<T>(items: T[], size: number): T[][] {
-    const out: T[][] = []
-    for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size))
-    return out
-}
-
-export function ConnectionsTab({ userId, graphCounts, platform, isOwn }: ConnectionsTabProps) {
-    const showFriends = platform === "postboek"
-    const [activeType, setActiveType] = useState<ConnectionType>(showFriends ? "friends" : "followers")
-    const [friendsLimit, setFriendsLimit] = useState(PAGE_SIZE)
+export function ConnectionsTab({ userId, graphCounts, isOwn }: ConnectionsTabProps) {
+    const [activeType, setActiveType] = useState<ConnectionType>("followers")
     const viewerId = useAuthUser()?.id ?? ""
     const qc = useQueryClient()
     const toast = useGlobalToast()
 
     const followers = useInfiniteFollowers(activeType === "followers" ? userId : undefined, PAGE_SIZE)
     const following = useInfiniteFollowing(activeType === "following" ? userId : undefined, PAGE_SIZE)
-    const friends = useFriends(activeType === "friends" ? userId : undefined, friendsLimit)
     const { data: blockedData } = useBlockedUsers(isOwn && activeType === "blocked")
 
     // The rows on screen, and the id groups the relationship batch is asked
@@ -171,23 +162,12 @@ export function ConnectionsTab({ userId, graphCounts, platform, isOwn }: Connect
                 loadingMore: q.isFetchingNextPage,
             }
         }
-        if (activeType === "friends") {
-            const items = friends.data?.items ?? []
-            return {
-                users: uniqueRows(items),
-                idGroups: chunk(items.map((u) => u.user_id), PAGE_SIZE),
-                isLoading: friends.isLoading,
-                hasMore: !!friends.data?.meta.has_next,
-                loadingMore: friends.isPlaceholderData,
-            }
-        }
         return { users: [], idGroups: [], isLoading: false, hasMore: false, loadingMore: false }
-    }, [activeType, followers, following, friends])
+    }, [activeType, followers, following])
 
     const loadMore = () => {
         if (activeType === "followers") void followers.fetchNextPage()
         else if (activeType === "following") void following.fetchNextPage()
-        else if (activeType === "friends") setFriendsLimit((n) => n + PAGE_SIZE)
     }
 
     // The viewer's relationship to each row, from the graph batch route.
@@ -295,9 +275,6 @@ export function ConnectionsTab({ userId, graphCounts, platform, isOwn }: Connect
     )
 
     const tabs: { key: ConnectionType; label: string; count: number }[] = []
-    if (showFriends) {
-        tabs.push({ key: "friends", label: "Connections", count: graphCounts.friend_count })
-    }
     tabs.push(
         { key: "followers", label: "Followers", count: graphCounts.follower_count },
         { key: "following", label: "Following", count: graphCounts.following_count },
@@ -325,11 +302,6 @@ export function ConnectionsTab({ userId, graphCounts, platform, isOwn }: Connect
                     </button>
                 ))}
             </div>
-
-            {/* Pending friend requests (own profile, friends tab) */}
-            {isOwn && activeType === "friends" && showFriends && (
-                <PendingRequestsList />
-            )}
 
             {/* Blocked users tab */}
             {activeType === "blocked" && isOwn && (
@@ -406,60 +378,6 @@ export function ConnectionsTab({ userId, graphCounts, platform, isOwn }: Connect
                       document.body,
                   )
                 : null}
-        </div>
-    )
-}
-
-function PendingRequestsList() {
-    const { data: requestsData, isLoading } = usePendingFriendRequests()
-    const acceptMutation = useAcceptFriendRequest()
-    const rejectMutation = useRejectFriendRequest()
-
-    const requests = requestsData?.items ?? []
-
-    if (isLoading || requests.length === 0) return null
-
-    return (
-        <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-brand-text/60">
-                Pending Requests ({requests.length})
-            </h3>
-            {requests.map((req) => (
-                <div
-                    key={req.user_id}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-brand-text/50 border border-brand-text/10"
-                >
-                    <ConnectionUserAvatar user={req} size="md" />
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-brand-text truncate">
-                            {req.display_name}
-                        </p>
-                        {req.username && (
-                            <p className="text-xs text-brand-text/60 truncate">
-                                @{req.username}
-                            </p>
-                        )}
-                    </div>
-                    <div className="flex gap-1">
-                        <Button
-                            size="sm"
-                            variant="default"
-                            onClick={() => acceptMutation.mutate(req.user_id)}
-                            disabled={acceptMutation.isPending}
-                        >
-                            <Check className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => rejectMutation.mutate(req.user_id)}
-                            disabled={rejectMutation.isPending}
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
-                    </div>
-                </div>
-            ))}
         </div>
     )
 }

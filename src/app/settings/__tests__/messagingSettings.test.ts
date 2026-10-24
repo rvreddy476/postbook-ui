@@ -454,8 +454,8 @@ describe("hub and page", () => {
         expect(sizes.every((n) => n >= 11 && n <= 15)).toBe(true)
     })
 
-    test("Privacy and Social preferences link to the new page", () => {
-        for (const p of ["settings/privacy/page.tsx", "settings/social-preferences/page.tsx"]) {
+    test("Privacy links to the new page (Social preferences went with Connect, 24 Oct 2026)", () => {
+        for (const p of ["settings/privacy/page.tsx"]) {
             const src = readFileSync(resolve(appDir, p), "utf8")
             expect(src).toContain('href="/settings/messaging"')
             expect(src).toContain("Inbox &amp; messaging settings")

@@ -5,8 +5,9 @@ import { WordsOnColour } from '@/components/feed/WordsOnColour';
 import React, { useState, useRef, useEffect } from 'react';
 import type { PostDetail } from '@/types/profile';
 import { useFeedReaction } from '@/hooks/useFeedReaction';
-import { normalizeReaction } from '@/lib/reactions';
-import FeedReactionControl from '@/components/reactions/FeedReactionControl';
+import PostHeartButton from '@/components/feed/PostHeartButton';
+import { heartRequest, isPostLiked } from '@/components/feed/postHeart';
+import { canRepostContentType } from '@/features/share/shareOptions';
 import Link from 'next/link';
 import { useSetBookmark, useTogglePin, useHidePost, useDeletePost, useEditPost } from '@/hooks/usePostActions';
 import { useSavePostToCollection } from '@/hooks/useSavedItems';
@@ -62,7 +63,7 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
-  const liked = !!post.viewer_reaction;
+  const liked = isPostLiked(post.viewer_reaction);
   const likesCount = post.counts?.likes ?? 0;
   const commentsCount = post.counts?.comments ?? 0;
   const sharesCount = post.counts?.shares ?? 0;
@@ -121,7 +122,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     if (post.no_likes) return;
     setHeartBurst((n) => n + 1);
     if (liked || likeMutation.busy) return;
-    likeMutation.mutate({ next: 'like', current: normalizeReaction(post.viewer_reaction) });
+    likeMutation.mutate(heartRequest(false));
   };
   const onMediaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
     // Taps on the gallery arrows, links and the video player are theirs.
@@ -811,7 +812,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           <div className="absolute bottom-4 right-2 sm:right-3 flex flex-col gap-3 z-10">
             {/* Like */}
             {!post.no_likes && (
-              <div className="rounded-xl bg-brand-card/95"><FeedReactionControl post={post} align="end" /></div>
+              <PostHeartButton post={post} variant="pillar" />
             )}
 
             {/* Comment */}
@@ -895,9 +896,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             {/* Four equal buttons that say what they do. */}
             <div className={`post-card-actions mx-2 sm:mx-3 py-1 flex items-stretch gap-1 ${hasSummary || !hasMedia ? 'border-t border-brand-divider' : ''}`}>
               {!post.no_likes && (
-                <div className="post-card-action flex flex-1 min-w-0 [&_.reaction-control]:w-full [&_.reaction-trigger]:w-full [&_.reaction-trigger>button:first-child]:flex-1 [&_.reaction-trigger>button:first-child]:text-sm [&_.reaction-trigger>button:first-child]:font-semibold">
-                  <FeedReactionControl post={post} showLabel />
-                </div>
+                <PostHeartButton post={post} className="post-card-action flex flex-1 min-w-0" />
               )}
 
               {!post.no_comments && (
@@ -938,7 +937,8 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       </AnimatePresence>
 
       {/* Share Dialog */}
-      <ShareDialog postId={post.id} isOpen={showShareDialog} onClose={() => setShowShareDialog(false)} />
+      {/* Reels take no repost and no quote (founder, 24 Oct); feed posts keep both. */}
+      <ShareDialog postId={post.id} isOpen={showShareDialog} onClose={() => setShowShareDialog(false)} allowRepost={canRepostContentType(post.content_type)} />
 
       {/* Report Dialog — the same one the reels stage uses */}
       <ReelReportDialog
