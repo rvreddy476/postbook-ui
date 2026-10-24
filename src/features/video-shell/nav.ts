@@ -21,6 +21,7 @@ import {
   LogOut,
   MessageSquare,
   Moon,
+  Music2,
   Radio,
   Settings,
   Shapes,
@@ -280,6 +281,7 @@ export const REELS_MORE_PANEL: readonly MorePanelSection[] = [
     items: [
       { key: "hub", label: "Creator Hub", icon: LayoutDashboard, href: "/posttube/hub" },
       { key: "upload", label: "Upload", icon: Upload, href: "/reels/create" },
+      { key: "trending-sounds", label: "Trending sounds", icon: Music2, href: "/reels/sounds/trending" },
       { key: "live-tools", label: "LIVE tools", icon: Radio, href: "/live" },
       { key: "channel", label: "Your channel", icon: UserRound, href: "/posttube/channel" },
     ],

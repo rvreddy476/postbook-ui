@@ -257,7 +257,7 @@ describe("REELS_MORE_PANEL", () => {
     const rows = Object.fromEntries(REELS_MORE_PANEL.map((s) => [s.key, s.items.map((i) => [i.label, i.href ?? i.action])]));
     expect(rows.apps).toEqual([["Home", "/"], ["PostTube", "/posttube"], ["Explore", "explore"], ["Groups", "/groups"]]);
     expect(rows.activity).toEqual([["Liked reels", "/reels/liked"], ["Saved", "/saved"], ["Watch history", "/posttube/history"], ["Offline", "/posttube/offline"]]);
-    expect(rows.creator).toEqual([["Creator Hub", "/posttube/hub"], ["Upload", "/reels/create"], ["LIVE tools", "/live"], ["Your channel", "/posttube/channel"]]);
+    expect(rows.creator).toEqual([["Creator Hub", "/posttube/hub"], ["Upload", "/reels/create"], ["Trending sounds", "/reels/sounds/trending"], ["LIVE tools", "/live"], ["Your channel", "/posttube/channel"]]);
   });
 
   test("then ONE Settings & privacy row to the settings page; no settings list, theme switch or Log out in the panel", () => {

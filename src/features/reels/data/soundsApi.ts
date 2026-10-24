@@ -3,6 +3,7 @@ import { isAxiosError } from "axios";
 
 import type { ReelSound } from "@/features/reels/model";
 import { soundFromUseResponse, soundListLength, toSoundInfo, toSoundList, toSoundReelsPage, type SoundInfo, type SoundReelsPage } from "@/features/reels/sounds";
+import { toTrendingSoundsPage, trendingSoundsRequest, type TrendingFilter, type TrendingSoundsPage } from "@/features/reels/trendingSounds";
 
 interface Envelope<T> {
   data: T;
@@ -110,4 +111,19 @@ export async function fetchSoundList(
   const offset = Number(request.params.offset);
   const length = soundListLength(data);
   return { items: toSoundList(data), nextOffset: length >= limit ? offset + length : undefined };
+}
+
+/* ── trending sounds (the picker's shelf, /reels/sounds/trending) ── */
+
+/**
+ * GET /v1/audio/trending?filter=&cursor=&limit= — one page of the ranked
+ * list. An older answer (a bare sound list) still reads, as one page.
+ */
+export async function fetchTrendingSounds(
+  params: { filter?: TrendingFilter; cursor?: string | null; limit?: number; signal?: AbortSignal } = {},
+): Promise<TrendingSoundsPage> {
+  const request = trendingSoundsRequest(params);
+  const res = await api.get<Envelope<unknown>>(request.url, { params: request.params, signal: params.signal });
+  const body = res.data;
+  return toTrendingSoundsPage(body?.data ?? body, body?.meta, { filter: request.params.filter as TrendingFilter });
 }

@@ -1,4 +1,5 @@
 import { soundServeHref, type SoundInfo } from "@/features/reels/sounds";
+import { trendingUsesLabel, type TrendingSound } from "@/features/reels/trendingSounds";
 import { librarySoundUseFailure, requestLibrarySoundUse, type HubLibrarySound, type HubLibrarySoundUse } from "@/features/posttube/hub/hubApi";
 
 /*
@@ -6,7 +7,7 @@ import { librarySoundUseFailure, requestLibrarySoundUse, type HubLibrarySound, t
   rows it lists, how a library sound becomes a sound the reel can carry,
   the search debounce, and the one preview element.
 
-    Trending  GET /v1/audio/trending              (sounds this viewer may hear)
+    Trending  GET /v1/audio/trending?filter=all   (the top 20 this week, then the library)
     Search    GET /v1/audio/search?q=             (2+ characters)
     Library   GET /v1/audio-library?genre=        (curated; audio_url plays)
 
@@ -51,8 +52,40 @@ export function nextTabIndex(current: number, key: string, count: number = SOUND
 
 /** One row of any tab. `key` is unique across tabs, so one preview state serves them all. */
 export type SoundPickerRow =
-  | { key: string; kind: "sound"; title: string; artist: string; durationMs: number; previewSrc: string; sound: SoundInfo }
+  | { key: string; kind: "sound"; title: string; artist: string; durationMs: number; previewSrc: string; sound: SoundInfo; trending?: SoundRowTrending }
   | { key: string; kind: "library"; title: string; artist: string; durationMs: number; previewSrc: string; library: HubLibrarySound };
+
+/** What a Trending shelf row adds: its place, the Rising chip, and "42 reels this week". */
+export interface SoundRowTrending {
+  rank: number;
+  rising: boolean;
+  usesLabel: string;
+}
+
+/** A row of the Trending shelf: the sound, with its rank and this week's uses. */
+export function rowFromTrending(entry: TrendingSound): SoundPickerRow {
+  const { sound } = entry;
+  return {
+    key: `sound:${sound.id}`,
+    kind: "sound",
+    title: sound.title,
+    artist: sound.artist,
+    durationMs: sound.durationMs,
+    previewSrc: soundServeHref(sound.id),
+    sound,
+    trending: { rank: entry.rank, rising: entry.rising, usesLabel: trendingUsesLabel(entry.uses7d) },
+  };
+}
+
+/**
+ * The library rows under the shelf, leaving out the library tracks the
+ * shelf already lists (a library sound plays as an audio_tracks id, which
+ * is what the shelf lists).
+ */
+export function libraryRowsBesideShelf(library: readonly SoundPickerRow[], shelf: readonly SoundPickerRow[]): SoundPickerRow[] {
+  const onShelf = new Set(shelf.flatMap((r) => (r.kind === "sound" ? [r.sound.id] : [])));
+  return library.filter((r) => !(r.kind === "library" && r.library.audio_track_id && onShelf.has(r.library.audio_track_id)));
+}
 
 export function rowFromSound(sound: SoundInfo): SoundPickerRow {
   return {

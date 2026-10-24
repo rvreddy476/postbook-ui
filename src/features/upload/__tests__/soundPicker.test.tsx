@@ -554,7 +554,9 @@ describe("previews", () => {
     expect(sheet).toContain("startPreview(audio, row.previewSrc)");
     expect(sheet).toContain("stopPreview(audio);\n      body.style.overflow = overflow;");
     expect(sheet).toContain("const changeTab = useCallback(\n    (next: SoundPickerTab, focus = false) => {\n      stop();");
-    expect(sheet).toContain("onGenre={(g) => {\n                stop();");
+    // One genre handler for both places the library shows (the Library tab and under the Trending shelf).
+    expect(sheet).toContain("const changeGenre = (g: string) => {\n    stop();");
+    expect(sheet.match(/onGenre=\{changeGenre\}/g)).toHaveLength(2);
   });
 
   test("opening the picker pauses the chosen sound's own preview", () => {

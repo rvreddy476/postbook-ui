@@ -19,9 +19,28 @@ export function soundPreviewLabel(state: SoundPreviewState): string {
   cannot be loaded disables the button and says so in its own label —
   nothing else is raised.
 */
-export function SoundPreviewButton({ state, onToggle, className }: { state: SoundPreviewState; onToggle: () => void; className?: string }) {
+export function SoundPreviewButton({
+  state,
+  onToggle,
+  className,
+  soundTitle,
+}: {
+  state: SoundPreviewState;
+  onToggle: () => void;
+  className?: string;
+  /** In a list of sounds: names the sound in the button's label ("Preview Kitchen take"). */
+  soundTitle?: string;
+}) {
   return (
-    <button type="button" className={className} data-preview={state} aria-pressed={state === "playing"} disabled={state === "failed"} onClick={onToggle}>
+    <button
+      type="button"
+      className={className}
+      data-preview={state}
+      aria-pressed={state === "playing"}
+      aria-label={soundTitle ? `${soundPreviewLabel(state)} ${soundTitle}` : undefined}
+      disabled={state === "failed"}
+      onClick={onToggle}
+    >
       {state === "playing" ? <Pause size={15} aria-hidden /> : <Play size={15} aria-hidden />}
       {soundPreviewLabel(state)}
     </button>

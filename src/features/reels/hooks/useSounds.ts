@@ -6,11 +6,13 @@ import {
   fetchSound,
   fetchSoundList,
   fetchSoundReels,
+  fetchTrendingSounds,
   resolveReelSound,
   soundSearchTerm,
   SOUND_REELS_PAGE_SIZE,
   type SoundListKind,
 } from "@/features/reels/data/soundsApi";
+import { TRENDING_PAGE_SIZE, type TrendingFilter } from "@/features/reels/trendingSounds";
 
 export const SOUND_KEY = ["reels", "sound"] as const;
 
@@ -64,6 +66,28 @@ export function useSoundList(kind: SoundListKind, query: string | null = null) {
     enabled: kind === "trending" || q !== null,
     refetchOnWindowFocus: false,
     staleTime: 60_000,
+    retry: false,
+  });
+}
+
+export function trendingSoundsKey(filter: TrendingFilter, limit: number = TRENDING_PAGE_SIZE) {
+  return [...SOUND_KEY, "trending", filter, limit] as const;
+}
+
+/**
+ * The ranked trending list on one tab, a page at a time (cursor paging).
+ * The server recomputes it every 15 minutes, so a few minutes stale is fine.
+ */
+export function useTrendingSounds(filter: TrendingFilter, options: { limit?: number; enabled?: boolean } = {}) {
+  const limit = options.limit ?? TRENDING_PAGE_SIZE;
+  return useInfiniteQuery({
+    queryKey: trendingSoundsKey(filter, limit),
+    queryFn: ({ pageParam, signal }) => fetchTrendingSounds({ filter, cursor: pageParam, limit, signal }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor,
+    enabled: options.enabled ?? true,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60_000,
     retry: false,
   });
 }

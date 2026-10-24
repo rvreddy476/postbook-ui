@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { Check, Loader2, Music, Pause, Play, Search, X } from "lucide-react";
+import { Check, ExternalLink, Loader2, Music, Pause, Play, Search, TrendingUp, X } from "lucide-react";
 
-import { useSoundList } from "@/features/reels/hooks/useSounds";
+import { useSoundList, useTrendingSounds } from "@/features/reels/hooks/useSounds";
 import { soundSearchTerm } from "@/features/reels/data/soundsApi";
 import { signInHref, type SoundInfo } from "@/features/reels/sounds";
+import { TRENDING_PAGE_SIZE, trendingSoundsHref } from "@/features/reels/trendingSounds";
 import { useLibrarySoundUse, useSoundLibrary } from "@/features/posttube/hub/hooks/useHub";
 
 import {
@@ -16,8 +17,10 @@ import {
   mergeGenres,
   nextTabIndex,
   pickLibrarySound,
+  libraryRowsBesideShelf,
   rowFromLibrary,
   rowFromSound,
+  rowFromTrending,
   rowIsChosen,
   soundRowMeta,
   SOUND_PICKER_TABS,
@@ -30,7 +33,8 @@ import {
 
 /*
   The Audio section's sound picker: a sheet with three tabs — Trending,
-  Search, Library. Each row plays a preview only when its play button is
+  Search, Library. Trending opens first: this week's top 20 (rank, a Rising
+  chip, "N reels this week"), then the curated library under it. Each row plays a preview only when its play button is
   pressed (one muted <audio> element for the whole sheet), and "Use" puts
   the sound on the reel. A library sound is turned into its audio_tracks id
   first (POST /v1/audio-library/:id/use); the library id never reaches the
@@ -66,9 +70,16 @@ export function SoundPickerRows({ rows, playingKey, usingKey = null, chosenTrack
         const playing = playingKey === row.key;
         const chosen = rowIsChosen(row, chosenTrackId);
         const using = usingKey === row.key;
-        const meta = soundRowMeta(row);
+        const trending = row.kind === "sound" ? row.trending : undefined;
+        const meta = [soundRowMeta(row), trending?.usesLabel ?? ""].filter(Boolean).join(" · ");
         return (
-          <li key={row.key} className="flex items-center gap-3 py-2.5" data-sound-row={row.kind}>
+          <li key={row.key} className="flex items-center gap-3 py-2.5" data-sound-row={row.kind} data-sound-rank={trending ? trending.rank : undefined}>
+            {trending ? (
+              <span className="w-6 shrink-0 text-center text-[13px] font-bold tabular-nums text-muted-foreground">
+                <span className="sr-only">Number </span>
+                {trending.rank}
+              </span>
+            ) : null}
             <button
               type="button"
               onClick={() => onTogglePreview(row)}
@@ -82,7 +93,14 @@ export function SoundPickerRows({ rows, playingKey, usingKey = null, chosenTrack
               {playing ? <Pause className="h-4 w-4" aria-hidden /> : <Play className="h-4 w-4" aria-hidden />}
             </button>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-semibold text-brand-text">{row.title}</p>
+              {trending?.rising ? (
+                <p className="flex min-w-0 items-center gap-1.5">
+                  <span className="truncate text-[13px] font-semibold text-brand-text">{row.title}</span>
+                  <RisingChip />
+                </p>
+              ) : (
+                <p className="truncate text-[13px] font-semibold text-brand-text">{row.title}</p>
+              )}
               {meta ? <p className="truncate text-[12px] text-muted-foreground">{meta}</p> : null}
             </div>
             {chosen ? (
@@ -281,21 +299,72 @@ function listStatus(q: { isPending: boolean; isError: boolean }, count: number):
   return count === 0 ? "empty" : "ready";
 }
 
-function TrendingPanel({ rowsProps }: PanelProps) {
-  const list = useSoundList("trending");
-  const rows = useMemo(() => uniqueRows((list.data?.pages ?? []).flatMap((p) => p.items).map(rowFromSound)), [list.data]);
+/** The "Rising" chip on a trending row. */
+export function RisingChip() {
   return (
-    <SoundPickerList
-      status={listStatus(list, rows.length)}
-      emptyText="No trending sounds yet."
-      errorText="Sounds are not available right now."
-      onRetry={() => void list.refetch()}
-      hasMore={Boolean(list.hasNextPage)}
-      loadingMore={list.isFetchingNextPage}
-      onMore={() => void list.fetchNextPage()}
-    >
-      <SoundPickerRows rows={rows} {...rowsProps} />
-    </SoundPickerList>
+    <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-primary-tint px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-primary-ink" data-rising>
+      <TrendingUp className="h-3 w-3" aria-hidden />
+      Rising
+    </span>
+  );
+}
+
+export interface TrendingShelfProps extends PanelProps {
+  status: "loading" | "error" | "empty" | "ready";
+  rows: readonly SoundPickerRow[];
+  onRetry?: () => void;
+}
+
+/**
+ * The Trending tab's top: this week's top 20 with their ranks and Rising
+ * chips, and "See all" to the full page. That page opens in a new tab so
+ * the reel being made here is not left behind.
+ */
+export function TrendingShelf({ status, rows, onRetry, rowsProps }: TrendingShelfProps) {
+  return (
+    <section aria-labelledby="sound-picker-trending-title" data-trending-shelf>
+      <div className="mt-2 flex items-center justify-between gap-3">
+        <h3 id="sound-picker-trending-title" className="text-[13px] font-semibold text-brand-text">
+          Trending this week
+        </h3>
+        <a
+          href={trendingSoundsHref()}
+          target="_blank"
+          rel="noopener"
+          data-action="see-all-trending"
+          className="flex items-center gap-1 rounded-lg px-2 py-1 text-[12px] font-semibold text-primary-ink transition-colors hover:bg-brand-secondary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          See all
+          <ExternalLink className="h-3 w-3" aria-hidden />
+          <span className="sr-only"> trending sounds (opens in a new tab)</span>
+        </a>
+      </div>
+      <SoundPickerList
+        status={status}
+        emptyText="No sounds are trending yet. Pick one from the library below."
+        errorText="Trending sounds are not available right now."
+        onRetry={onRetry}
+      >
+        <SoundPickerRows rows={rows} {...rowsProps} />
+      </SoundPickerList>
+    </section>
+  );
+}
+
+/** Trending first (top 20), then the curated library. */
+function TrendingPanel({ rowsProps, genre, onGenre }: PanelProps & { genre: string; onGenre: (g: string) => void }) {
+  const list = useTrendingSounds("all", { limit: TRENDING_PAGE_SIZE });
+  const rows = useMemo(() => uniqueRows((list.data?.pages[0]?.items ?? []).slice(0, TRENDING_PAGE_SIZE).map(rowFromTrending)), [list.data]);
+  return (
+    <div className="space-y-4">
+      <TrendingShelf status={listStatus(list, rows.length)} rows={rows} onRetry={() => void list.refetch()} rowsProps={rowsProps} />
+      <section aria-labelledby="sound-picker-library-title" data-library-below-shelf>
+        <h3 id="sound-picker-library-title" className="text-[13px] font-semibold text-brand-text">
+          Sound library
+        </h3>
+        <LibraryPanel rowsProps={rowsProps} genre={genre} onGenre={onGenre} beside={rows} />
+      </section>
+    </div>
   );
 }
 
@@ -359,13 +428,18 @@ function SearchPanel({ rowsProps, query, onQuery }: PanelProps & { query: string
   );
 }
 
-function LibraryPanel({ rowsProps, genre, onGenre }: PanelProps & { genre: string; onGenre: (g: string) => void }) {
+function LibraryPanel({
+  rowsProps,
+  genre,
+  onGenre,
+  beside = EMPTY_ROWS,
+}: PanelProps & { genre: string; onGenre: (g: string) => void; /** The shelf above, whose sounds are not listed twice. */ beside?: readonly SoundPickerRow[] }) {
   const library = useSoundLibrary(genre);
   const [genres, setGenres] = useState<string[]>([]);
   useEffect(() => {
     setGenres((prev) => mergeGenres(prev, library.rows));
   }, [library.rows]);
-  const rows = useMemo(() => library.rows.map(rowFromLibrary), [library.rows]);
+  const rows = useMemo(() => libraryRowsBesideShelf(library.rows.map(rowFromLibrary), beside), [library.rows, beside]);
   const options = ["", ...genres];
   return (
     <div className="space-y-3">
@@ -403,6 +477,8 @@ function LibraryPanel({ rowsProps, genre, onGenre }: PanelProps & { genre: strin
     </div>
   );
 }
+
+const EMPTY_ROWS: readonly SoundPickerRow[] = [];
 
 function uniqueRows(rows: SoundPickerRow[]): SoundPickerRow[] {
   const seen = new Set<string>();
@@ -528,6 +604,11 @@ export function SoundPickerSheet({ onClose, onChoose, chosenTrackId = null }: So
     }
   };
 
+  const changeGenre = (g: string) => {
+    stop();
+    setGenre(g);
+  };
+
   const rowsProps = { playingKey, usingKey, chosenTrackId, onTogglePreview: togglePreview, onUse: (row: SoundPickerRow) => void use(row) };
 
   return createPortal(
@@ -548,18 +629,9 @@ export function SoundPickerSheet({ onClose, onChoose, chosenTrackId = null }: So
         className="flex h-[100dvh] w-full flex-col bg-brand-card text-brand-text shadow-xl sm:h-[640px] sm:max-h-[85vh] sm:max-w-lg sm:rounded-2xl sm:border sm:border-brand-text/10"
       >
         <SoundPickerFrame tab={tab} onTab={changeTab} onClose={onClose} idBase={idBase} tabRefs={tabRefs} message={message}>
-          {tab === "trending" ? <TrendingPanel rowsProps={rowsProps} /> : null}
+          {tab === "trending" ? <TrendingPanel rowsProps={rowsProps} genre={genre} onGenre={changeGenre} /> : null}
           {tab === "search" ? <SearchPanel rowsProps={rowsProps} query={query} onQuery={setQuery} /> : null}
-          {tab === "library" ? (
-            <LibraryPanel
-              rowsProps={rowsProps}
-              genre={genre}
-              onGenre={(g) => {
-                stop();
-                setGenre(g);
-              }}
-            />
-          ) : null}
+          {tab === "library" ? <LibraryPanel rowsProps={rowsProps} genre={genre} onGenre={changeGenre} /> : null}
         </SoundPickerFrame>
         {/* Muted, preload="none" and no source until a play press: nothing is heard or downloaded on open. */}
         <audio
