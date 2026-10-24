@@ -12,7 +12,10 @@ import {
   incompleteFrom,
   listingColumns,
   notPatchableFrom,
+  priceAboveMrpFrom,
+  returnPolicyInvalidFrom,
   revalidationFrom,
+  skuLockedFor,
   skuLockedFrom,
   singleVariantPayload,
   stepForGap,
@@ -47,6 +50,24 @@ describe("the write routes' refusals", () => {
     expect(skuLockedFrom(refusal(409, "SKU_LOCKED", {}, ""))).toMatch(/cannot be changed/)
     expect(skuLockedFrom(refusal(409, "SKU_TAKEN"))).toBeNull()
     expect(skuLockedFrom(refusal(400, "SKU_LOCKED"))).toBeNull()
+  })
+  it("the SKU is read-only on an existing listing past draft, editable before", () => {
+    // postgres.ProductEditability's editable-without-revalidation arm.
+    for (const open of ["draft", "pending", "rejected", "changes_requested", "flagged"]) expect(skuLockedFor(open)).toBe(false)
+    for (const closed of ["approved", "submitted", "under_review", "hidden", "archived", "live", "something_new"]) expect(skuLockedFor(closed)).toBe(true)
+    // A listing that does not exist yet has nothing to lock.
+    for (const none of [undefined, null, ""]) expect(skuLockedFor(none)).toBe(false)
+    expect(skuLockedFor(42)).toBe(true)
+  })
+  it("400 PRICE_ABOVE_MRP → the server's sentence; nothing for the other price refusals", () => {
+    expect(priceAboveMrpFrom(refusal(400, "PRICE_ABOVE_MRP", { field: "selling_price_minor" }, "the selling price cannot be above the MRP"))).toBe("the selling price cannot be above the MRP")
+    expect(priceAboveMrpFrom(refusal(400, "PRICE_ABOVE_MRP", {}, ""))).toMatch(/above the MRP/)
+    expect(priceAboveMrpFrom(refusal(400, "PRICE_NOT_POSITIVE"))).toBeNull()
+    expect(priceAboveMrpFrom(refusal(409, "PRICE_ABOVE_MRP"))).toBeNull()
+  })
+  it("400 RETURN_POLICY_INVALID → the message and the server's windows", () => {
+    expect(returnPolicyInvalidFrom(refusal(400, "RETURN_POLICY_INVALID", { field: "return_policy_type", allowed: ["no_return", "7_days", 3] }, "no"))).toEqual({ message: "no", allowed: ["no_return", "7_days"] })
+    expect(returnPolicyInvalidFrom(refusal(400, "INVALID_VALUE"))).toBeNull()
   })
   it("400 FIELD_NOT_PATCHABLE → the message and the allowlist", () => {
     expect(notPatchableFrom(refusal(400, "FIELD_NOT_PATCHABLE", { fields: ["slug"], patchable: ["title", "hsn_code"] }, "no"))).toEqual({ message: "no", patchable: ["title", "hsn_code"] })

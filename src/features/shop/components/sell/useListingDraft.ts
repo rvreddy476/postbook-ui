@@ -19,7 +19,9 @@ import {
   incompleteFrom,
   notPatchableFrom,
   patchVariantsPayload,
+  priceAboveMrpFrom,
   problemsOntoRows,
+  returnPolicyInvalidFrom,
   revalidationFrom,
   skuLockedFrom,
   variationProblemsFrom,
@@ -110,9 +112,12 @@ export function useListingDraft(existingProductId: string | null): ListingDraft 
     return out
   }
 
-  // `revalidate` travels with every reprice: on an approved listing a price
-  // change is 409 REVALIDATION_REQUIRED until acknowledged, and the
-  // acknowledgement the seller gave for this save covers the variants too.
+  // A price change goes live at once (the MSeller rule: price and stock are
+  // not sent back for review); the server refuses it only when the selling
+  // price would be above the MRP (400 PRICE_ABOVE_MRP). `revalidate` still
+  // travels when the seller has acknowledged this save, because the same
+  // PATCH re-sends the SKU, and an acknowledgement given for the save covers
+  // everything in it.
   async function repriceTouchedRows(rows: MatrixRow[], revalidate: boolean): Promise<void> {
     for (const row of rows) {
       if (!row.variantId || !row.dirty) continue
@@ -195,6 +200,16 @@ export function useListingDraft(existingProductId: string | null): ListingDraft 
       const locked = skuLockedFrom(err)
       if (locked) {
         setNotice(locked)
+        return null
+      }
+      const aboveMrp = priceAboveMrpFrom(err)
+      if (aboveMrp) {
+        setNotice(`${aboveMrp.charAt(0).toUpperCase()}${aboveMrp.slice(1)}.`)
+        return null
+      }
+      const badReturns = returnPolicyInvalidFrom(err)
+      if (badReturns) {
+        setNotice("Choose one of the return windows offered. Nothing was changed.")
         return null
       }
       const refused = notPatchableFrom(err)

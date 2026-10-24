@@ -27,6 +27,7 @@ import {
   EDITOR_STEPS,
   EDITOR_STEP_LABEL,
   RETURN_POLICIES,
+  SKU_LOCKED_HELP,
   arrangeGroups,
   attributeValuesFromProduct,
   axesPayload,
@@ -43,6 +44,7 @@ import {
   matrixRows,
   minorToRupees,
   singleVariantPayload,
+  skuLockedFor,
   stepForGap,
   toAttributePayload,
   validateBasics,
@@ -148,6 +150,9 @@ function Editor({ initialProductId }: { initialProductId: string | null }) {
   const categoryPath = useMemo(() => (categoryId && tree.data ? (pathTo(tree.data, categoryId) ?? []).map((n) => n.name) : []), [categoryId, tree.data])
 
   const stem = offer.sku
+  // Once approved, an existing variant's SKU is locked server-side (409
+  // SKU_LOCKED); the control says so instead of accepting a change the save refuses.
+  const skuLocked = skuLockedFor(existing.data?.product?.approval_status)
   const rows = useMemo(() => matrixRows(matrix, stem), [matrix, stem])
   const varying = matrix.axes.length > 0
   const basicsErrors = validateBasics(basics)
@@ -326,13 +331,13 @@ function Editor({ initialProductId }: { initialProductId: string | null }) {
               <>
                 <Panel title="Price and variants" sub={varying ? "Money is per row once the listing varies." : "Prices in rupees; the server stores paise exactly as typed."}>
                   {candidates.length > 0 ? (
-                    <VariationMatrix candidates={candidates} value={matrix} onChange={setMatrix} stem={offer.sku} problems={attempted || Object.keys(draft.variantErrors).length > 0 ? gridProblems : {}} editing={!!draft.productId} />
+                    <VariationMatrix candidates={candidates} value={matrix} onChange={setMatrix} stem={offer.sku} problems={attempted || Object.keys(draft.variantErrors).length > 0 ? gridProblems : {}} editing={!!draft.productId} skuLocked={skuLocked} />
                   ) : null}
                   {varying ? (
                     <TextField id="l-stem" label="SKU stem" value={offer.sku} onChange={(v) => setOffer((o) => ({ ...o, sku: v }))} help="Row SKUs are suggested from it." />
                   ) : (
                     <>
-                      <TextField id="l-sku" label="SKU" required value={offer.sku} onChange={(v) => { setOfferDirty(true); setOffer((o) => ({ ...o, sku: v })) }} error={attempted ? offerErrors.sku : null} />
+                      <TextField id="l-sku" label="SKU" required value={offer.sku} onChange={(v) => { setOfferDirty(true); setOffer((o) => ({ ...o, sku: v })) }} error={attempted ? offerErrors.sku : null} disabled={skuLocked && !!singleVariantId} help={skuLocked && singleVariantId ? SKU_LOCKED_HELP : undefined} />
                       <div className="shop-sell-form__row">
                         <TextField id="l-mrp" label="MRP (₹)" required inputMode="decimal" value={offer.mrp} onChange={(v) => { setOfferDirty(true); setOffer((o) => ({ ...o, mrp: v })) }} error={attempted ? offerErrors.mrp : null} />
                         <TextField id="l-price" label="Selling price (₹)" required inputMode="decimal" value={offer.price} onChange={(v) => { setOfferDirty(true); setOffer((o) => ({ ...o, price: v })) }} error={attempted ? offerErrors.price : null} />

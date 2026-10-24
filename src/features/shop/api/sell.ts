@@ -229,9 +229,11 @@ export async function addVariant(productId: string, body: { sku: string; mrp_min
 /**
  * PATCH /variants/:id — price by variant id, never product id.
  *
- * On an approved listing a price (or SKU, option, image) change is 409
- * REVALIDATION_REQUIRED until re-sent with `revalidate: true`, exactly as
- * PATCH /products/:id; the SKU itself is 409 SKU_LOCKED once approved.
+ * A price change goes live at once, approved listing or not; it is 400
+ * PRICE_ABOVE_MRP when the selling price would be above the MRP. On an
+ * approved listing an option or image change is 409 REVALIDATION_REQUIRED
+ * until re-sent with `revalidate: true`, exactly as PATCH /products/:id, and
+ * a SKU change is 409 SKU_LOCKED whatever the acknowledgement says.
  */
 export async function patchVariant(variantId: string, body: { mrp_minor?: number; selling_price_minor?: number; sku?: string; revalidate?: boolean }): Promise<void> {
   await api.patch(`${BASE}/variants/${encodeURIComponent(variantId)}`, body)
