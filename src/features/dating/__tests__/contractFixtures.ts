@@ -13,9 +13,12 @@ import { resolve } from "node:path"
 const HERE = import.meta.dir
 export const LOCAL_CONTRACTS = resolve(HERE, "contracts")
 
-/** The backend checkouts this machine may have, first match wins. */
+/**
+ * The backend checkout, when this machine has one. Only the main tree: an
+ * agent worktree goes stale once its branch merges, and comparing against it
+ * fails for fixtures that were rightly changed since.
+ */
 const BACKEND_CANDIDATES = [
-  "C:/workspace/modernsmapp/.claude/worktrees/determined-herschel-21fb46/Architecture/services/dating-service/internal/http/testdata/contracts",
   "C:/workspace/modernsmapp/Architecture/services/dating-service/internal/http/testdata/contracts",
 ]
 

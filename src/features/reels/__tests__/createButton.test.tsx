@@ -1,9 +1,15 @@
-import { expect, test } from 'bun:test';
-import React from 'react';
+import { expect, mock, test } from 'bun:test';
+import React, { useContext } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PathnameContext } from 'next/dist/shared/lib/hooks-client-context.shared-runtime';
+
+// Bun's mock.module is process-wide: another file's next/navigation mock
+// (a fixed usePathname) outlives that file and answers here in a full run.
+// Pin usePathname back to the context this file provides.
+const navigation = await import('next/navigation');
+mock.module('next/navigation', () => ({ ...navigation, usePathname: () => useContext(PathnameContext) }));
 
 import { CreateButton, createMenuContext, createMenuItems } from '../components/CreateButton';
 

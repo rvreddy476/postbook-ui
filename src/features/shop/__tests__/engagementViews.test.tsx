@@ -288,7 +288,7 @@ describe("product link preview", () => {
       const meta = await run("hidden")
       expect(meta).toEqual(PRODUCT_FALLBACK_METADATA)
       const og = meta.openGraph as { title: string; url?: string; images: Array<{ url: string }> }
-      expect(og.title).toBe("Content on Clee Studio")
+      expect(og.title).toBe("Content on VChat")
       expect(og.url).toBeUndefined()
       expect(og.images[0].url).toBe("https://cleestudio.com/api/share/image")
       expect(JSON.stringify(meta)).not.toContain("hidden")
