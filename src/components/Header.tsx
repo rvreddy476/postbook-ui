@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { User, NavItem } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -21,14 +20,15 @@ import {
   useDeleteNotification,
   type ActivityNotification,
 } from '@/hooks/useActivityNotifications';
-import { useAcceptFriendRequest, useRejectFriendRequest } from '@/hooks/useConnections';
 import NotificationPostPopup from '@/components/NotificationPostPopup';
 import { playNotificationSound } from '@/hooks/useNotificationSound';
-import { useGlobalToast } from '@/contexts/ToastContext';
 import './header.css';
 import { resolveAppBrand } from '@/lib/appBrand';
 import { RoleMenuLink } from '@/components/auth/RoleMenuLink';
 import { useFeedSearchAlignment } from './feed/useFeedSearchAlignment';
+import { bellRow, notificationActorId } from '@/lib/notificationPresentation';
+import { creditNotificationHref } from '@/lib/notificationInbox';
+import { NotificationGlyph } from '@/components/notifications/NotificationGlyph';
 
 /**
  * The sentence shown beside the actor's name.
@@ -37,10 +37,13 @@ import { useFeedSearchAlignment } from './feed/useFeedSearchAlignment';
  * follow, reaction, comment, comment_reaction, friend_request and
  * friend_accepted — and nothing else. A `dm` notification, which is most of
  * a real inbox, matched none of them and rendered a name followed by
- * NOTHING: a count in the badge and rows that said nothing. Anything
- * unrecognised now falls back to a sentence rather than to emptiness.
+ * NOTHING: a count in the badge and rows that said nothing.
+ *
+ * null for any other type: the row then shows the server's own sentence
+ * (`title`), and only an older server without one falls back to the
+ * generic line (bellRow in lib/notificationPresentation).
  */
-function describeNotification(type: string): string {
+function describeNotification(type: string): string | null {
   switch (type) {
     case 'friend_request':
       return 'sent you a connection request'
@@ -66,6 +69,10 @@ function describeNotification(type: string): string {
       return 'uploaded a new flick'
     case 'creator_went_live':
       return 'is live now'
+    case 'credit_request':
+      return 'credited you in a video'
+    case 'credit_accepted':
+      return 'accepted your credit'
     case 'incoming_call':
       return 'called you'
     case 'incoming_video_call':
@@ -73,7 +80,7 @@ function describeNotification(type: string): string {
     case 'missed_call':
       return 'tried to call you'
     default:
-      return 'sent you a notification'
+      return null
   }
 }
 
@@ -161,40 +168,6 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
   const markRead = useMarkNotificationRead();
   const deleteNotification = useDeleteNotification();
 
-  const toast = useGlobalToast();
-  const acceptFriend = useAcceptFriendRequest();
-  const rejectFriend = useRejectFriendRequest();
-  const [handledIds, setHandledIds] = useState<Set<string>>(new Set());
-  const qc = useQueryClient();
-
-  /**
-   * Accept / Decline used to have onSuccess and nothing else. A failure —
-   * the founder hit six 500s in a row from a notification whose request
-   * had already been cancelled — showed no message, re-enabled the button,
-   * and invited the next click. "Nothing is happening" was exactly right.
-   *
-   * Now the server's reason is shown, and if the request is simply gone
-   * (already accepted, declined or cancelled elsewhere) the row is settled
-   * and the lists refreshed, so a stale notification cannot be clicked
-   * forever.
-   */
-  const settleRequestFailure = (err: unknown, notif: ActivityNotification) => {
-    const message =
-      (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
-        ?.message ?? (err instanceof Error ? err.message : 'Request failed');
-    const gone = /no pending connection request/i.test(message);
-    if (gone) {
-      setHandledIds(prev => new Set(prev).add(notif.notification_id));
-      if (notif.bucket != null && notif.ts != null) {
-        markRead.mutate({ bucket: notif.bucket, ts: notif.ts });
-      }
-      qc.invalidateQueries({ queryKey: ['friend-requests'] });
-      qc.invalidateQueries({ queryKey: ['activity-notifications'] });
-      toast({ type: 'info', title: 'This request is no longer pending' });
-      return;
-    }
-    toast({ type: 'error', title: "Couldn't update the request", description: message });
-  };
 
   // Theme toggle state
   const [theme, setTheme] = useState<string>('light');
@@ -234,13 +207,9 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
   const [dismissingIds, setDismissingIds] = useState<Set<string>>(new Set());
 
   // Actor profiles for display names
-  const actorIds = activityNotifs.map(n => n.actor_user_id);
+  // No lookup for a row with no actor (the zero UUID): there is no one to fetch.
+  const actorIds = activityNotifs.map(n => n.actor_user_id).filter(id => !!notificationActorId(id));
   const actorProfiles = useActorProfiles(actorIds);
-
-  const getActorName = (id: string) => {
-    const p = actorProfiles.get(id);
-    return p?.display_name || id.slice(0, 8);
-  };
 
   const getActorAvatar = (id: string) => {
     const p = actorProfiles.get(id);
@@ -357,7 +326,9 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
       }
     } else {
       // Navigate for user-related notifications (follow, friend_request, dm…)
-      router.push(notificationHref(notif.deep_link, notif.actor_user_id, actorUsername));
+      // A credit request is answered on its own page, whatever link the row
+      // carries; an accepted credit's /tube/watch link lands on /posttube.
+      router.push(notificationHref(creditNotificationHref(notif.type, notif.deep_link) ?? notif.deep_link, notif.actor_user_id, actorUsername));
       setIsNotifOpen(false);
     }
   };
@@ -651,11 +622,10 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                   ) : (
                     <AnimatePresence initial={false}>
                       {activityNotifs.filter(n => !dismissingIds.has(n.notification_id)).map(notif => {
-                        const isHandled = handledIds.has(notif.notification_id);
-                        const isFriendReq = notif.type === 'friend_request' && !isHandled;
-                        const actorName = getActorName(notif.actor_user_id);
+                        const row = bellRow(notif, describeNotification(notif.type), actorProfiles.get(notif.actor_user_id)?.display_name);
+                        const actorName = row.name;
                         const actorAvatar = getActorAvatar(notif.actor_user_id);
-                        const actorUsername = actorProfiles.get(notif.actor_user_id)?.username;
+                        const actorUsername = actorProfiles.get(notif.actor_user_id)?.username || notif.actor?.username;
 
                         return (
                           <motion.div
@@ -665,7 +635,10 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                             transition={{ duration: 0.3 }}
                             className={`group/notif flex items-start gap-3 px-4 py-3 hover:bg-brand-secondary/60 transition-colors ${!notif.is_read || justReadIds.has(notif.notification_id) ? "bg-brand-text/30" : ""}`}
                           >
-                            {/* Avatar — click to go to profile */}
+                            {/* Avatar — click to go to profile; a row with no actor shows its category glyph */}
+                            {row.glyph ? (
+                              <NotificationGlyph icon={row.glyph} className="w-10 h-10 mt-0.5" />
+                            ) : (
                             <button
                               onClick={() => {
                                 router.push(`/u/${actorUsername || notif.actor_user_id}`);
@@ -675,6 +648,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                             >
                               <img src={actorAvatar} alt={actorName} className="w-full h-full object-cover" />
                             </button>
+                            )}
 
                             {/* Content */}
                             <div className="flex-1 min-w-0">
@@ -683,63 +657,21 @@ const Header: React.FC<HeaderProps> = ({ currentUser, activeTab, setActiveTab, o
                                 className="text-left w-full"
                               >
                                 <p className="text-[11px] font-bold text-brand-text/80 leading-snug">
-                                  <span className="font-black text-brand-text">{actorName}</span>
-                                  {' '}
-                                  {describeNotification(notif.type)}
+                                  {row.line.kind === 'title' ? (
+                                    row.line.title
+                                  ) : (
+                                    <>
+                                      <span className="font-black text-brand-text">{actorName}</span>
+                                      {' '}
+                                      {row.line.sentence}
+                                    </>
+                                  )}
                                 </p>
                                 <p className="text-[9px] text-brand-text/60 font-bold tracking-widest mt-0.5">
                                   {formatTimeAgo(notif.created_at)}
                                 </p>
                               </button>
 
-                              {/* Accept / Reject buttons for friend requests */}
-                              {isFriendReq && (
-                                <div className="flex items-center gap-2 mt-2">
-                                  <button
-                                    onClick={() => {
-                                      // graph-service accept is keyed by the requester's
-                                      // user_id — actor_user_id is exactly that.
-                                      acceptFriend.mutate(notif.actor_user_id, {
-                                        onSuccess: () => {
-                                          setHandledIds(prev => new Set(prev).add(notif.notification_id));
-                                          if (notif.bucket != null && notif.ts != null) {
-                                            markRead.mutate({ bucket: notif.bucket, ts: notif.ts });
-                                          }
-                                          toast({ type: 'success', title: 'Connection request accepted' });
-                                        },
-                                        onError: (err) => settleRequestFailure(err, notif),
-                                      });
-                                    }}
-                                    disabled={acceptFriend.isPending}
-                                    className="px-3 py-1.5 rounded-lg text-[9px] font-black tracking-wider bg-primary-ink hover:bg-primary-hover text-white shadow-xs active:scale-95 transition-all"
-                                  >
-                                    Accept
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      rejectFriend.mutate(notif.actor_user_id, {
-                                        onSuccess: () => {
-                                          setHandledIds(prev => new Set(prev).add(notif.notification_id));
-                                          if (notif.bucket != null && notif.ts != null) {
-                                            markRead.mutate({ bucket: notif.bucket, ts: notif.ts });
-                                          }
-                                          toast({ type: 'info', title: 'Connection request declined' });
-                                        },
-                                        onError: (err) => settleRequestFailure(err, notif),
-                                      });
-                                    }}
-                                    disabled={rejectFriend.isPending}
-                                    className="px-3 py-1.5 rounded-lg text-[9px] font-black tracking-wider bg-brand-secondary text-brand-highlight hover:bg-brand-secondary/80 active:scale-95 transition-all"
-                                  >
-                                    Decline
-                                  </button>
-                                </div>
-                              )}
-
-                              {/* Show "Accepted" / "Declined" after handling */}
-                              {notif.type === 'friend_request' && isHandled && (
-                                <p className="text-[9px] font-black text-success tracking-widest mt-1.5">Responded</p>
-                              )}
                             </div>
 
                             {/* Unread dot + delete button */}

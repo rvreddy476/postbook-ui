@@ -92,9 +92,9 @@ export function TrimControls({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Scissors className="h-4 w-4 text-brand-text" />
-          <h3 className="text-[14px] font-semibold text-brand-text">Trim Video</h3>
+          <h3 className="text-sm font-semibold text-brand-text">Trim Video</h3>
         </div>
-        <div className="flex items-center gap-2 text-[12px] text-brand-text">
+        <div className="flex items-center gap-2 text-xs text-brand-text">
           {saving && <span className="text-brand-text/60">Saving...</span>}
           <span>Duration: {effectiveDuration}s</span>
         </div>
@@ -102,7 +102,7 @@ export function TrimControls({
 
       <div className="space-y-3">
         <div>
-          <label className="text-[12px] text-brand-text mb-1 block">
+          <label className="text-xs text-brand-text mb-1 block">
             Start: {fmtTime(startMs)}
           </label>
           <input
@@ -117,7 +117,7 @@ export function TrimControls({
         </div>
 
         <div>
-          <label className="text-[12px] text-brand-text mb-1 block">
+          <label className="text-xs text-brand-text mb-1 block">
             End: {fmtTime(endMs)}
           </label>
           <input

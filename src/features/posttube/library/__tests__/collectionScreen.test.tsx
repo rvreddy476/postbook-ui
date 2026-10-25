@@ -160,8 +160,8 @@ describe("the library speaks the RUTUBE words and never bypasses the tokens", ()
     const css = readFileSync(resolve(import.meta.dir, "../components/library.css"), "utf8");
     expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
     expect(css).toContain(".tube-library__thumb { position: relative; display: block; width: 160px; height: 90px;");
-    expect(css).toContain(".tube-library__row-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 13px;");
-    expect(css).toContain(".tube-library__row-meta { margin: 0; font-size: 11px;");
+    expect(css).toContain(".tube-library__row-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--type-sm);");
+    expect(css).toContain(".tube-library__row-meta { margin: 0; font-size: var(--type-xs);");
   });
   test("none of the retired labels in the screens", () => {
     for (const f of ["CollectionView.tsx", "CollectionsIndex.tsx", "RecentScreen.tsx", "CollectionRow.tsx"]) {

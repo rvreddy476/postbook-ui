@@ -1,0 +1,27 @@
+{
+  "data": {
+    "subscription_id": "5ab0c0de-0000-4000-8000-000000000010",
+    "creator": {
+      "id": "c0ffee00-0000-4000-8000-000000000001",
+      "username": "asha",
+      "display_name": "Asha Rao",
+      "avatar_url": "https://cdn.example.test/avatars/asha.jpg"
+    },
+    "tier": {
+      "id": "6f1c2a10-1111-4a3b-9c00-000000000002",
+      "name": "Superfan",
+      "price_paise": 19900,
+      "perks": ["Members-only videos", "Monthly live Q&A"]
+    },
+    "status": "active",
+    "current_period_end": "2026-11-23T09:00:00Z",
+    "access_until": "2026-11-23T09:00:00Z",
+    "renew_available": true,
+    "pending_downgrade": {
+      "tier_id": "6f1c2a10-1111-4a3b-9c00-000000000001",
+      "tier_name": "Supporter",
+      "price_paise": 4900,
+      "effective_at": "2026-11-23T09:00:00Z"
+    }
+  }
+}

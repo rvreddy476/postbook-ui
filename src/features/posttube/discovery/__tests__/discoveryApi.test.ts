@@ -136,6 +136,18 @@ describe("buildVideoSearchParams", () => {
     });
   });
 
+  test("genre and year (video credits) pass through when set; bad values never reach the request", () => {
+    const f: SearchFilters = { ...DEFAULT_SEARCH_FILTERS, q: "asha rao", genre: "drama", year: "2024" };
+    expect(buildVideoSearchParams(f)).toMatchObject({ genre: "drama", year: "2024" });
+    expect("genre" in buildVideoSearchParams({ ...DEFAULT_SEARCH_FILTERS, q: "x" })).toBe(false);
+    const href = searchHref(f);
+    expect(href).toBe("/posttube/search?q=asha+rao&genre=drama&year=2024");
+    const sp = new URL(`https://x${href}`).searchParams;
+    expect(parseSearchFilters((k) => sp.get(k))).toEqual(f);
+    expect(parseSearchFilters(get({ q: "x", genre: "../etc", year: "1800" }))).toEqual({ ...DEFAULT_SEARCH_FILTERS, q: "x" });
+    expect(parseSearchFilters(get({ q: "x", genre: "Sci-Fi", year: "abcd" }))).toEqual({ ...DEFAULT_SEARCH_FILTERS, q: "x", genre: "sci-fi" });
+  });
+
   test("channel and collection searches carry q and limit only", () => {
     expect(buildChannelSearchParams("cats")).toEqual({ q: "cats", limit: "30" });
     expect(buildCollectionSearchParams("cats", 5)).toEqual({ q: "cats", limit: "5" });

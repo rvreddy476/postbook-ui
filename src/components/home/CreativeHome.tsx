@@ -2,11 +2,19 @@
 
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, Bookmark, ChevronDown, Clapperboard, History, Layers3, MessageCircle, PenLine, Play, Radio, Users } from 'lucide-react';
+import { useProductEntryVisible } from '@/hooks/useProductFeatures';
 import './creative-home.css';
 
 /** Real destinations only: no Home data fetches, feed, inferred location or
  * invented activity. Unlaunched services stay non-interactive. */
 export default function CreativeHome({ onCreateClick }: { onCreateClick: () => void }) {
+  // Groups is parked (lib/parkedProducts.ts) and can be closed by GET
+  // /v1/features: no card until it is open, and Feed takes the full row so
+  // the grid has no hole.
+  return <CreativeHomeView onCreateClick={onCreateClick} groupsLaunched={useProductEntryVisible('groups')} />;
+}
+
+export function CreativeHomeView({ onCreateClick, groupsLaunched }: { onCreateClick: () => void; groupsLaunched: boolean }) {
   return (
     <div className="creative-home">
       <header className="home-heading">
@@ -16,7 +24,6 @@ export default function CreativeHome({ onCreateClick }: { onCreateClick: () => v
       <nav className="home-return" aria-label="Your shortcuts">
         <Link href="/posttube/history" prefetch={false}><History size={17} /> Watch history <ArrowUpRight size={14} /></Link>
         <Link href="/saved" prefetch={false}><Bookmark size={17} /> Saved items <ArrowUpRight size={14} /></Link>
-        <Link href="/connections" prefetch={false}><Users size={17} /> Connections <ArrowUpRight size={14} /></Link>
       </nav>
       <div className="home-destinations">
         <section className="home-watch" aria-labelledby="home-watch-heading">
@@ -36,11 +43,13 @@ export default function CreativeHome({ onCreateClick }: { onCreateClick: () => v
           <div className="home-messages__art" aria-hidden="true"><span><i /><i /><i /></span><span><MessageCircle size={29} /></span></div>
           <div><h2>Your conversations,<br />one place.</h2><p>Direct messages, requests and group chats.</p><span className="home-text-link">Open messages <ArrowRight size={17} /></span></div>
         </Link>
-        <Link className="home-groups home-destination" href="/groups" prefetch={false}>
-          <div className="home-card-top"><span className="home-service-icon"><Users size={23} /></span><ArrowUpRight size={20} /></div>
-          <h2>Groups</h2><p>Shared interests. Ongoing conversations.</p><span className="home-text-link">Explore groups <ArrowRight size={17} /></span>
-        </Link>
-        <Link className="home-social home-destination" href="/feed" prefetch={false}>
+        {groupsLaunched ? (
+          <Link className="home-groups home-destination" href="/groups" prefetch={false}>
+            <div className="home-card-top"><span className="home-service-icon"><Users size={23} /></span><ArrowUpRight size={20} /></div>
+            <h2>Groups</h2><p>Shared interests. Ongoing conversations.</p><span className="home-text-link">Explore groups <ArrowRight size={17} /></span>
+          </Link>
+        ) : null}
+        <Link className={`home-social home-destination${groupsLaunched ? '' : ' home-destination--wide'}`} href="/feed" prefetch={false}>
           <div className="home-card-top"><span className="home-service-icon"><Radio size={23} /></span><ArrowUpRight size={20} /></div>
           <h2>Feed</h2><p>Posts, perspectives and people.</p><span className="home-text-link">Open your feed <ArrowRight size={17} /></span>
         </Link>

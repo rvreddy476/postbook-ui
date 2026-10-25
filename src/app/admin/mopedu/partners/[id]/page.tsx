@@ -64,7 +64,7 @@ interface ReasonDialogState {
 function DocPreview({ url, alt }: { url?: string; alt: string }) {
   if (!url) {
     return (
-      <div className="flex h-20 w-20 items-center justify-center rounded-lg border border-dashed border-brand-divider text-[10px] text-text-muted">
+      <div className="flex h-20 w-20 items-center justify-center rounded-lg border border-dashed border-brand-divider text-[10px] text-muted-foreground">
         No file
       </div>
     )
@@ -463,7 +463,7 @@ export default function MopeduPartnerDetailPage() {
           <EmptyState title="No rides yet" />
         ) : (
           <table className="w-full text-sm">
-            <thead className="text-left text-[11px] tracking-wider text-text-muted">
+            <thead className="text-left text-[11px] tracking-wider text-muted-foreground">
               <tr>
                 <th className="pb-2 pr-4">Ride</th>
                 <th className="pb-2 pr-4">Status</th>

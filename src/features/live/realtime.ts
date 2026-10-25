@@ -1,4 +1,4 @@
-import type { LiveChatMessage, LiveEndedReason, LiveStream, LiveStreamStatus } from "./model"
+import type { LiveChatAuthor, LiveChatMessage, LiveEndedReason, LiveStream, LiveStreamStatus } from "./model"
 import { num, str } from "./model"
 import { parseHeartsFrame } from "./hearts"
 import { parseChatAuthor } from "./author"
@@ -19,9 +19,17 @@ import { parseChatAuthor } from "./author"
 // Either one switches this client to polling the authorized HTTP chat list.
 //
 // Types read here: status.changed, chat.message, chat.removed, viewer.count,
-// moderation.ban, moderation.unban, moderation.moderators, hearts. The other
-// moderation.* types (mute, unmute, word_filter_*, pin, unpin) are not
-// shown on the web and parse to null.
+// viewer.joined, moderation.ban, moderation.unban, moderation.moderators,
+// moderation.mute, moderation.unmute, moderation.pin, moderation.unpin,
+// hearts. moderation.word_filter_* parse to null: the word list is the
+// host's alone, and the host's own panel keeps it current.
+//
+// viewer.joined (parity audit T-29, live-service-v2 service/joins.go):
+//   {"type":"viewer.joined","stream_id","at","user_id",
+//    "user":{...the chat author card...},"joined_at":"<RFC3339>","payload":{...}}
+// Throttled server-side to one per viewer per stream per minute; never the
+// host, never a signed-out viewer. There is no HTTP read of joins: the web
+// shows them as client-side system rows only (features/live/joins.ts).
 
 export type LiveFrame =
   | {
@@ -42,6 +50,13 @@ export type LiveFrame =
   | { kind: "refused"; stream_id: string }
   /** Free hearts since the last frame (aggregated, no user ids) and the stream total (0 when absent). */
   | { kind: "hearts"; stream_id: string; count: number; heart_count: number }
+  /** A signed-in viewer joined: a system row only, never stored with the chat history. */
+  | { kind: "joined"; stream_id: string; user_id: string; author: LiveChatAuthor | null; joined_at: string }
+  | { kind: "mute"; stream_id: string; user_id: string }
+  | { kind: "unmute"; stream_id: string; user_id: string }
+  /** The pinned message as moderation.pin carries it (no author card; the client finds one). */
+  | { kind: "pin"; stream_id: string; message_id: string; user_id: string; text: string }
+  | { kind: "unpin"; stream_id: string; message_id: string }
 
 type Obj = Record<string, unknown>
 
@@ -117,6 +132,31 @@ export function parseLiveFrame(raw: unknown): LiveFrame | null {
     case "hearts": {
       const hearts = parseHeartsFrame(field)
       return hearts ? { kind: "hearts", stream_id: streamId, ...hearts } : null
+    }
+    case "viewer.joined": {
+      const userId = str(field("user_id"))
+      if (!userId) return null
+      return {
+        kind: "joined", stream_id: streamId, user_id: userId,
+        // `user` is exactly a chat row's `author` card.
+        author: parseChatAuthor(field("user"), userId),
+        joined_at: str(field("joined_at")) || str(frame.at),
+      }
+    }
+    case "moderation.mute":
+    case "moderation.unmute": {
+      const userId = str(field("user_id"))
+      if (!userId) return null
+      return { kind: type === "moderation.mute" ? "mute" : "unmute", stream_id: streamId, user_id: userId }
+    }
+    case "moderation.pin": {
+      const id = str(field("message_id"))
+      if (!id) return null
+      return { kind: "pin", stream_id: streamId, message_id: id, user_id: str(field("user_id")), text: str(field("text")) }
+    }
+    case "moderation.unpin": {
+      const id = str(field("message_id"))
+      return id ? { kind: "unpin", stream_id: streamId, message_id: id } : null
     }
   }
   return null

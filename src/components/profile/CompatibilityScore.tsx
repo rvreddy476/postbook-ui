@@ -8,10 +8,13 @@ interface CompatibilityScoreProps {
 }
 
 function getCompatibilityColor(score: number): string {
-    if (score >= 80) return "#3C2415"
-    if (score >= 60) return "#7B5B3A"
-    if (score >= 40) return "#D4A574"
-    return "#F0E6DC"
+    // Theme tokens (the white theme has no browns): good is the success
+    // green, fair the brand ink, some overlap the warning amber, little the
+    // muted grey.
+    if (score >= 80) return "rgb(var(--success))"
+    if (score >= 60) return "rgb(var(--brand-ink))"
+    if (score >= 40) return "rgb(var(--warning))"
+    return "rgb(var(--text-muted))"
 }
 
 function getCompatibilityLabel(score: number): string {
@@ -45,7 +48,7 @@ export function CompatibilityScore({ userId }: CompatibilityScoreProps) {
 
     return (
         <div className="flex flex-col items-center gap-2 p-4 bg-brand-card rounded-2xl border border-border shadow-xs">
-            <p className="text-[10px] font-bold text-muted-foreground tracking-wide">
+            <p className="text-xs font-bold text-muted-foreground tracking-wide">
                 Compatibility
             </p>
 
@@ -58,7 +61,7 @@ export function CompatibilityScore({ userId }: CompatibilityScoreProps) {
                         cy="40"
                         r={radius}
                         fill="none"
-                        stroke="#F0E6DC"
+                        stroke="var(--brand-divider)"
                         strokeWidth="6"
                     />
                     {/* Progress circle */}

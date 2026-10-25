@@ -44,6 +44,16 @@ export function soundToAudioTrack(sound: SoundInfo): AudioTrack {
 type SoundChoice = Pick<StudioFormState, "audioTrack" | "audioStartMs">;
 
 /**
+ * What choosing a sound in the studio's picker writes to the form: the
+ * sound, from its start. The id is always an audio_tracks id (a library
+ * sound is first turned into one by its use route); the level the creator
+ * set is kept.
+ */
+export function chosenSoundPatch(sound: SoundInfo): SoundChoice {
+  return { audioTrack: soundToAudioTrack(sound), audioStartMs: 0 };
+}
+
+/**
  * The sound's two request fields: both with a sound chosen, neither
  * without. Spread into the create fields and the draft save.
  */

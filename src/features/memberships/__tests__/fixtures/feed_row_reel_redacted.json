@@ -1,0 +1,24 @@
+{
+  "id": "a0000000-0000-4000-8000-000000000003",
+  "author_id": "c0ffee00-0000-4000-8000-000000000001",
+  "content_type": "flick",
+  "title": "Studio tour",
+  "text": "",
+  "cover_media_id": "cccc0000-0000-4000-8000-000000000003",
+  "tier_required_id": "6f1c2a10-1111-4a3b-9c00-000000000002",
+  "body_redacted": true,
+  "duration_ms": 42000,
+  "media": [],
+  "hashtags": [],
+  "counts": {
+    "likes": 5,
+    "comments": 2,
+    "shares": 0
+  },
+  "author": {
+    "id": "c0ffee00-0000-4000-8000-000000000001",
+    "username": "asha",
+    "display_name": "Asha"
+  },
+  "created_at": "2026-10-21T08:00:00Z"
+}

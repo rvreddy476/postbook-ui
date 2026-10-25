@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronDown, ChevronUp, ListVideo, Loader2 } from "lucide-react";
@@ -10,10 +10,11 @@ import ShareDialog from "@/components/ShareDialog";
 import { useToast } from "@/components/ui/toast";
 import { useDeletePost } from "@/hooks/usePostActions";
 import { useToggleLike } from "@/hooks/usePostReaction";
-import { useSubmitReport, REPORT_REASONS } from "@/hooks/useReport";
+import { useSubmitReport, VIDEO_REPORT_REASONS } from "@/hooks/useReport";
 import { useChannelByRef } from "@/hooks/useChannels";
 import { useDataSaver } from "@/hooks/useDataSaver";
-import { useEntitlement } from "@/hooks/useMonetization";
+import { useMembershipAccess } from "@/features/memberships/hooks";
+import { membersLocked } from "@/features/memberships/model";
 import { useVideoTracker } from "@/hooks/useVideoTracker";
 import { useSeries, useWatchProgress } from "@/hooks/usePosttubeExtras";
 import { useAuthUser } from "@/store/auth";
@@ -51,13 +52,19 @@ import {
 import { ambientAllowed } from "../watch/ambient";
 import { chapterIndexAt } from "../watch/chapters";
 import { collectionNeighbours, collectionWatchHref } from "../watch/collectionNav";
-import { useCollectionPlayback, useCreatorSupport, useReducedMotion, useStoryboard, useUpNext, useVideoElements, useWatchDetail, useWatchPrefs } from "../watch/hooks/useWatch";
+import { useCollectionPlayback, useCreatorSupport, useReducedMotion, useStoryboard, useUpNext, useVideoElements, useWatchDetail, useWatchPrefs, WATCH_KEYS } from "../watch/hooks/useWatch";
+import { CreditsBlock } from "../credits/components/CreditsBlock";
+import { removeMyCredit } from "../credits/creditsApi";
+import type { VideoCredit } from "../credits/creditsModel";
+import { useGenres } from "../credits/useCredits";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { endBoxesAtEnd } from "../watch/endScreenView";
 import { TubeStage } from "../watch/miniPlayer";
 import { RAIL_IDLE, railReducer } from "../watch/railState";
 import { showThanks } from "../watch/thanks";
 import { upNextPills, type UpNextChip } from "../watch/upNext";
-import { ageGateFromError, recordElementEvent, sendThanks, setCommentHeart, setCommentPin, setPass, thanksErrorMessage, viewerSubtitleTracks, type ElementEvent, type ElementSurface } from "../watch/watchApi";
+import { ageGateFromError, recordElementEvent, sendThanks, setPass, thanksErrorMessage, viewerSubtitleTracks, type ElementEvent, type ElementSurface } from "../watch/watchApi";
+import { commentCreatorTools } from "@/components/comments/creatorTools";
 import { ThanksSheet } from "../watch/components/ThanksSheet";
 import { UpNext, type UpNextRow } from "../watch/components/UpNext";
 import { VideoElementsOverlay } from "../watch/components/VideoElementsOverlay";
@@ -66,6 +73,8 @@ import { AgeGateCard, MembershipCard, WatchDetails } from "../watch/components/W
 import { WatchMoreMenu, watchMoreRows } from "../watch/components/WatchMoreMenu";
 import { WatchActions } from "../watch/components/WatchActions";
 import "@/features/reels/components/reels-screen.css";
+import { withShareRef } from "@/features/share/shareRef";
+import { ActionPill } from "@/features/action-button/components/ActionPill";
 import "./tube.css";
 import "../watch/watch.css";
 
@@ -91,9 +100,9 @@ function SeriesPanel({ series, currentId }: { series: SeriesInfo; currentId: str
       <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between px-4 py-3 text-left" aria-expanded={open}>
         <span className="flex items-center gap-2">
           <ListVideo className="h-4 w-4 text-brand-text" />
-          <span className="text-[13px] font-bold text-brand-text">In this series · {title}</span>
+          <span className="text-sm font-bold text-brand-text">In this series · {title}</span>
           {typeof currentNum === "number" ? (
-            <span className="text-[12px] text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               Episode {currentNum} of {series.episodes.length}
             </span>
           ) : null}
@@ -101,7 +110,7 @@ function SeriesPanel({ series, currentId }: { series: SeriesInfo; currentId: str
         {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
       </button>
       {open ? (
-        <ol className="max-h-[320px] overflow-y-auto border-t border-border">
+        <ol className="max-h-[40vh] overflow-y-auto border-t border-border">
           {series.episodes.map((ep) => {
             const isCurrent = ep.post_id === currentId;
             const thumb = ep.thumbnail_url || (ep.cover_media_id ? mediaServeUrl(ep.cover_media_id) : null);
@@ -112,16 +121,16 @@ function SeriesPanel({ series, currentId }: { series: SeriesInfo; currentId: str
                   aria-current={isCurrent ? "page" : undefined}
                   className={`flex items-center gap-3 px-3 py-2 hover:bg-brand-secondary ${isCurrent ? "bg-brand-secondary" : ""}`}
                 >
-                  <span className="w-6 shrink-0 text-center text-[12px] font-semibold tabular-nums text-muted-foreground">{ep.episode_num}</span>
+                  <span className="w-6 shrink-0 text-center text-xs font-semibold tabular-nums text-muted-foreground">{ep.episode_num}</span>
                   <span className="relative aspect-video w-[96px] shrink-0 overflow-hidden rounded-md bg-brand-secondary">
                     {thumb ? <img src={thumb} alt="" className="h-full w-full object-cover" loading="lazy" /> : null}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className={`line-clamp-2 text-[13px] leading-tight ${isCurrent ? "font-bold text-primary-ink" : "font-medium text-brand-text"}`}>
+                    <span className={`line-clamp-2 text-sm leading-tight ${isCurrent ? "font-bold text-primary-ink" : "font-medium text-brand-text"}`}>
                       {ep.title?.trim() || `Episode ${ep.episode_num}`}
                     </span>
                     {typeof ep.duration_ms === "number" && ep.duration_ms > 0 ? (
-                      <span className="block text-[11px] text-muted-foreground">{formatDuration(ep.duration_ms / 1000)}</span>
+                      <span className="block text-xs text-muted-foreground">{formatDuration(ep.duration_ms / 1000)}</span>
                     ) : null}
                   </span>
                 </Link>
@@ -140,9 +149,11 @@ interface WatchPageProps {
   videoId?: string;
   /** `?list=<playlistId>`: play through that collection. */
   listId?: string | null;
+  /** `?t=<seconds>`: start there (a "Copy link at current time" link) instead of the saved resume point. */
+  startSeconds?: number | null;
 }
 
-function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
+function WatchPageContent({ videoId, listId = null, startSeconds = null }: WatchPageProps) {
   const router = useRouter();
   const user = useAuthUser();
   const { effective: dataSaver } = useDataSaver();
@@ -203,13 +214,26 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   const activeAudioTrack = pickAudioTrack(audioTracks, watchPrefs.audioLanguage);
 
   const isOwner = !!user && !!video && user.id === video.author_id;
+
+  /* Credits: genre labels only when the video has genres; "Remove me" for the viewer's own accepted credit. */
+  const genresQuery = useGenres(!!detail && detail.credits.genres.length > 0);
+  const [removeCredit, setRemoveCredit] = useState<VideoCredit | null>(null);
+  const queryClient = useQueryClient();
+  const removeMe = useMutation({
+    mutationFn: (creditId: string) => removeMyCredit(creditId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: WATCH_KEYS.detail(videoId) });
+      if (user?.id) void queryClient.invalidateQueries({ queryKey: ["posttube", "credits", "appearances", user.id] });
+    },
+  });
   /* The offline copy (features/offline): the More row's state, and the stored copy the player prefers. Never a file download. */
   const notifyOffline = useCallback((notice: OfflineNotice) => void toast(notice), [toast]);
   const offlineRow = useOfflineRow({ postId: videoId, surface: "video", hasMedia: !!mediaAssetId, signedIn: !!user, notify: notifyOffline });
   const offlineSource = useOfflineSource(videoId);
   const gateCreator = detail?.tierRequiredId && !isOwner ? video?.author_id : null;
-  const entitlement = useEntitlement(gateCreator, detail?.tierRequiredId ?? null);
-  const gated = !!gateCreator && (!user || (entitlement.data ? !entitlement.data.allowed : false));
+  const access = useMembershipAccess(gateCreator, detail?.tierRequiredId ?? null, !!user);
+  // Members only, fail closed: the lock stays until the entitlement says yes (it used to open while the check loaded).
+  const gated = !!detail && membersLocked({ tierRequiredId: detail.tierRequiredId, bodyRedacted: detail.bodyRedacted, isOwner, access, trustServedBody: false });
 
   /* End screen + cards: once per video; none for made-for-kids or a gated video. */
   const videoElements = useVideoElements(videoId, !!detail && !detail.madeForKids && !gated);
@@ -232,8 +256,8 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   /* ── playback urls ─────────────────────────────────── */
   const hlsUrl = mediaAssetId ? hlsMasterUrl(mediaAssetId) : null;
   const fileUrl = videoMetadataQuery.data?.playback_url || video?.video_url || (mediaAssetId ? mediaServeUrl(mediaAssetId) : "");
-  const startPositionMs = resumePositionMs(progressQuery.data);
-  const startReady = !user || !progressQuery.isLoading;
+  const startPositionMs = startSeconds != null ? startSeconds * 1000 : resumePositionMs(progressQuery.data);
+  const startReady = startSeconds != null || !user || !progressQuery.isLoading;
 
   /* ── progress + telemetry ──────────────────────────── */
   const latestRef = useRef({ positionMs: 0, durationMs: 0 });
@@ -545,7 +569,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
     }
   };
 
-  const creatorTools = useMemo(() => ({ onHeart: setCommentHeart, onPin: setCommentPin }), []);
+  const creatorTools = commentCreatorTools;
 
   /* ── render ────────────────────────────────────────── */
   if (videoId && detailQuery.isLoading) {
@@ -581,11 +605,11 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
     }
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
-        <h2 className="text-[18px] font-bold text-brand-text">{videoId ? "Video not found" : "No video selected"}</h2>
-        <p className="mt-2 text-[13px] text-muted-foreground">
+        <h2 className="text-lg font-bold text-brand-text">{videoId ? "Video not found" : "No video selected"}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
           {videoId ? "This video may still be processing or has been removed." : "Browse PostTube to find videos to watch."}
         </p>
-        <Link href="/posttube" className="mt-5 rounded-full bg-primary-ink px-5 py-2.5 text-[13px] font-semibold text-primary-foreground hover:bg-primary-hover">
+        <Link href="/posttube" className="mt-5 rounded-full bg-primary-ink px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover">
           Back to Watch
         </Link>
       </div>
@@ -640,8 +664,8 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
     <div className="w-full text-center">
       {countdownActive && nextTarget ? (
         <div className="flex flex-col items-center gap-3">
-          <p className="text-[12px] uppercase tracking-wider opacity-70">Up next in {autoplay.remaining}s</p>
-          <p className="text-[15px] font-semibold">{nextTarget.label}</p>
+          <p className="text-xs uppercase tracking-wider opacity-70">Up next in {autoplay.remaining}s</p>
+          <p className="text-base font-semibold">{nextTarget.label}</p>
           <div className="h-1 w-56 overflow-hidden rounded-full bg-white/25">
             <div
               className="h-full bg-brand-accent transition-all duration-1000"
@@ -649,18 +673,18 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
             />
           </div>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={() => dispatch({ type: "cancel" })} className="rounded-full border border-white/50 px-4 py-2 text-[13px] font-semibold hover:bg-white/10">
+            <button type="button" onClick={() => dispatch({ type: "cancel" })} className="rounded-full border border-white/50 px-4 py-2 text-sm font-semibold hover:bg-white/10">
               Cancel
             </button>
-            <button type="button" onClick={() => dispatch({ type: "playNow" })} className="rounded-full bg-brand-accent px-4 py-2 text-[13px] font-semibold text-white hover:opacity-90">
+            <button type="button" onClick={() => dispatch({ type: "playNow" })} className="rounded-full bg-brand-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
               Play now
             </button>
           </div>
         </div>
       ) : nextTarget ? (
         <div className="flex flex-col items-center gap-2">
-          <p className="text-[12px] uppercase tracking-wider opacity-70">Up next</p>
-          <Link href={nextTarget.href} className="rounded-full bg-brand-accent px-4 py-2 text-[13px] font-semibold text-white hover:opacity-90">
+          <p className="text-xs uppercase tracking-wider opacity-70">Up next</p>
+          <Link href={nextTarget.href} className="rounded-full bg-brand-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
             {nextTarget.label}
           </Link>
         </div>
@@ -691,7 +715,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
 
   const copyLink = async () => {
     try {
-      await navigator.clipboard.writeText(shareUrl ?? window.location.href);
+      await navigator.clipboard.writeText(withShareRef(shareUrl ?? window.location.href));
       toast({ type: "success", title: "Link copied" });
     } catch {
       toast({ type: "error", title: "Could not copy the link" });
@@ -701,7 +725,10 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   const moreRowList = watchMoreRows({
     channelName,
     isOwner,
-    hasDescription: video.description.trim().length > 0 || video.hashtags.length > 0,
+    // A description that only repeats the title is not one (the about card hides it too).
+    hasDescription:
+      (video.description.trim().length > 0 && video.description.trim().toLowerCase() !== video.title.trim().toLowerCase()) ||
+      video.hashtags.length > 0,
     shareHidden: detail.shareHidden,
     downloadAllowed: detail.allowDownload,
     audioTrackCount: gated ? 0 : audioOptions.length,
@@ -770,6 +797,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
       onPass={handlePass}
       onQueue={() => void handleQueue()}
       onAdd={() => requireUser() && setPlaylistOpen(true)}
+      onShare={detail.shareHidden ? undefined : () => setShareOpen(true)}
       onMore={() => setMoreOpen((o) => !o)}
       moreOpen={moreOpen}
       moreMenu={moreMenu}
@@ -782,7 +810,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
         <div className="tube-watch__player">
           {playingOffline ? <OfflineBadge /> : null}
           {gated ? (
-            <MembershipCard channelName={channelName} poster={video.thumbnail_url || undefined} />
+            <MembershipCard channelName={channelName} poster={video.thumbnail_url || undefined} creatorId={video.author_id} tierRequiredId={detail?.tierRequiredId ?? null} requiredPricePaise={detail?.tierRequiredPricePaise ?? null} />
           ) : (
             <TubeStage
               miniplayerOn={miniOn}
@@ -832,7 +860,9 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
               onEndedChange={onEndedChange}
               onTheater={toggleTheater}
               theater={theater}
-              onMiniplayer={toggleMini}
+              // Miniplayer hidden for now (founder, 2026-10-19): no button and no I key.
+              // The dock stays in the code; pass toggleMini here to bring it back.
+              onMiniplayer={undefined}
               miniplayer={miniOn}
               onNext={nextTarget ? goNext : undefined}
               chapters={detail.chapters}
@@ -858,6 +888,8 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
         </div>
 
         <div className="tube-watch__primary">
+          {/* The Action button, under the player (the end screen's own link keeps working). Never on a locked video. */}
+          {detail?.action ? <ActionPill action={detail.action} isAuthor={isOwner} locked={gated} variant="card" className="mt-3" /> : null}
           <WatchDetails
             title={video.title}
             authorId={video.author_id}
@@ -889,7 +921,37 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
             description={video.description}
             hashtags={video.hashtags}
             related={detail.relatedPost}
+            disclosures={detail.disclosures}
             revealAbout={revealAbout}
+            credits={
+              <CreditsBlock
+                info={detail.credits}
+                genres={genresQuery.data}
+                viewerId={user?.id ?? null}
+                isOwner={isOwner}
+                onRemoveMe={(credit) => setRemoveCredit(credit)}
+                removingId={removeMe.isPending ? (removeMe.variables ?? null) : null}
+              />
+            }
+          />
+          <ConfirmDialog
+            open={!!removeCredit}
+            title="Remove yourself from this video?"
+            body="Your name stays in the credits as plain text, without a link to you, and the video leaves your profile."
+            confirmLabel="Remove me"
+            danger
+            pending={removeMe.isPending}
+            onClose={() => setRemoveCredit(null)}
+            onConfirm={() => {
+              if (!removeCredit) return;
+              removeMe.mutate(removeCredit.id, {
+                onSuccess: () => {
+                  setRemoveCredit(null);
+                  toast({ type: "success", title: "Removed", description: "You are no longer linked to this video." });
+                },
+                onError: () => toast({ type: "error", title: "Could not remove you", description: "Try again in a moment." }),
+              });
+            }}
           />
 
           {series && series.episodes.length > 0 ? <SeriesPanel series={series} currentId={video.id} /> : null}
@@ -942,29 +1004,29 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
           <div className="w-full max-w-[380px] overflow-hidden rounded-2xl border border-border bg-brand-card shadow-2xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
             {reportSubmitted ? (
               <div className="p-6 text-center">
-                <h3 className="text-[15px] font-bold text-brand-text">Report submitted</h3>
-                <p className="mt-1 text-[13px] text-muted-foreground">Our team will review this content shortly.</p>
-                <button type="button" onClick={() => setReportOpen(false)} className="mt-4 w-full rounded-full bg-primary-ink py-2.5 text-[13px] font-semibold text-primary-foreground">
+                <h3 className="text-base font-bold text-brand-text">Report submitted</h3>
+                <p className="mt-1 text-sm text-muted-foreground">Our team will review this content shortly.</p>
+                <button type="button" onClick={() => setReportOpen(false)} className="mt-4 w-full rounded-full bg-primary-ink py-2.5 text-sm font-semibold text-primary-foreground">
                   Done
                 </button>
               </div>
             ) : (
               <>
                 <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
-                  <h3 className="text-[14px] font-bold text-brand-text">Report video</h3>
-                  <button type="button" onClick={() => setReportOpen(false)} aria-label="Close" className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-brand-secondary">
+                  <h3 className="text-sm font-bold text-brand-text">Report video</h3>
+                  <button type="button" onClick={() => setReportOpen(false)} aria-label="Close" className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:bg-brand-secondary">
                     ×
                   </button>
                 </div>
                 <div className="px-5 py-4">
-                  <p className="mb-3 text-[12px] text-muted-foreground">Why are you reporting this?</p>
+                  <p className="mb-3 text-xs text-muted-foreground">Why are you reporting this?</p>
                   <div className="space-y-1.5">
-                    {REPORT_REASONS.map((reason) => (
+                    {VIDEO_REPORT_REASONS.map((reason) => (
                       <button
                         key={reason.value}
                         type="button"
                         onClick={() => setReportReason(reason.value)}
-                        className={`w-full rounded-xl px-3.5 py-2.5 text-left text-[13px] transition ${
+                        className={`w-full rounded-xl px-3.5 py-2.5 text-left text-sm transition ${
                           reportReason === reason.value ? "bg-primary-ink font-medium text-primary-foreground" : "bg-brand-secondary text-brand-text hover:bg-brand-divider"
                         }`}
                       >
@@ -986,7 +1048,7 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
                       setReportSubmitted(true);
                     }}
                     disabled={!reportReason || reportMutation.isPending}
-                    className="w-full rounded-full bg-danger py-2.5 text-[13px] font-semibold text-primary-foreground disabled:opacity-40"
+                    className="w-full rounded-full bg-danger py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-40"
                   >
                     {reportMutation.isPending ? "Submitting..." : "Submit report"}
                   </button>
@@ -1002,6 +1064,6 @@ function WatchPageContent({ videoId, listId = null }: WatchPageProps) {
   );
 }
 
-export function WatchPage({ videoId, listId }: WatchPageProps) {
-  return <WatchPageContent key={`${videoId ?? "posttube-watch"}:${listId ?? ""}`} videoId={videoId} listId={listId ?? null} />;
+export function WatchPage({ videoId, listId, startSeconds }: WatchPageProps) {
+  return <WatchPageContent key={`${videoId ?? "posttube-watch"}:${listId ?? ""}`} videoId={videoId} listId={listId ?? null} startSeconds={startSeconds ?? null} />;
 }

@@ -48,3 +48,45 @@ describe("middleware: channel feed", () => {
     expect(passes(visit("/posttube/channel/raghu.builds/feed.xml", "pb_auth=1"))).toBe(true);
   });
 });
+
+describe("middleware: search", () => {
+  test("search passes signed out, with or without a query", () => {
+    expect(passes(visit("/search"))).toBe(true);
+    expect(passes(visit("/search?q=cats&tab=sounds"))).toBe(true);
+  });
+
+  test("only the search page itself is opened", () => {
+    const res = visit("/search/anything");
+    expect(passes(res)).toBe(false);
+    expect(new URL(res.headers.get("location") as string).pathname).toBe("/login");
+  });
+});
+
+describe("middleware: sound and hashtag pages (audit T-34)", () => {
+  test("a sound's page passes signed out — it renders without a session", () => {
+    expect(passes(visit("/reels/sound/22222222-2222-4222-8222-222222222222"))).toBe(true);
+  });
+
+  test("the reels stage a sound tile opens stays gated", () => {
+    const res = visit("/reels");
+    expect(passes(res)).toBe(false);
+    expect(new URL(res.headers.get("location") as string).pathname).toBe("/login");
+  });
+
+  test("the hashtag page passes signed out (21 Oct 2026): it sits in PublicPageChrome, not AppShell", () => {
+    expect(passes(visit("/hashtag/sunset"))).toBe(true);
+    expect(passes(visit("/hashtag/%23sunset"))).toBe(true);
+  });
+});
+
+describe("middleware: the Action button's redirect page", () => {
+  test("/l/<id> passes signed out: a public post's button opens for a visitor", () => {
+    expect(passes(visit("/l/0f8a2c10-1111-4a3b-9c00-000000000001"))).toBe(true);
+  });
+
+  test("only /l/ is opened, not every path that starts with an l", () => {
+    const res = visit("/live");
+    expect(passes(res)).toBe(false);
+    expect(new URL(res.headers.get("location") as string).pathname).toBe("/login");
+  });
+});

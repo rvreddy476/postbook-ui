@@ -50,6 +50,51 @@ export function useHandleAvailability(handle: string, currentHandle: string): Ha
   return q.data.available ? { state: "available" } : { state: "taken", suggestion: q.data.suggestion };
 }
 
+/* ── Name availability ──────────────────────────────────── */
+
+/** `GET /v1/channels/name-available?name=` → {available, suggestion}. Names are unique, ignoring case. */
+export async function checkNameAvailable(name: string): Promise<{ available: boolean; suggestion?: string }> {
+  const res = await api.get<{ data: { available: boolean; suggestion?: string } }>("/v1/channels/name-available", { params: { name } });
+  const d = res.data.data;
+  return { available: !!d?.available, suggestion: d?.suggestion || undefined };
+}
+
+/** The server's comparison: trimmed, case ignored. */
+export function sameChannelName(a: string, b: string): boolean {
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+/**
+ * Debounced availability for the channel name being typed, like the
+ * handle's. `currentName` is the saved one (in any case): typing it back is
+ * "idle". Too short or too long is left to the field's own validation.
+ */
+export function useNameAvailability(name: string, currentName: string): HandleAvailability {
+  const trimmed = name.trim();
+  const [debounced, setDebounced] = useState(trimmed);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(trimmed), 400);
+    return () => clearTimeout(t);
+  }, [trimmed]);
+
+  const same = sameChannelName(trimmed, currentName);
+  const length = Array.from(trimmed).length;
+  const valid = length >= 3 && length <= 40;
+  const q = useQuery({
+    queryKey: ["channel-name-available", debounced.toLowerCase()],
+    queryFn: () => checkNameAvailable(debounced),
+    enabled: valid && !same && debounced === trimmed,
+    staleTime: 30_000,
+    retry: false,
+  });
+
+  if (!trimmed || same) return { state: "idle" };
+  if (!valid) return { state: "invalid" };
+  if (debounced !== trimmed || q.isPending) return { state: "checking" };
+  if (q.isError || !q.data) return { state: "idle" };
+  return q.data.available ? { state: "available" } : { state: "taken", suggestion: q.data.suggestion };
+}
+
 /* ── Featured video picker ──────────────────────────────── */
 
 export function toVideoRow(v: PostTubeVideo): VideoRow {

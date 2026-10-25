@@ -75,7 +75,7 @@ export function MoreMenu({
         <span className="flex h-7 w-7 items-center justify-center">
           <MoreHorizontal className="h-[14px] w-[14px]" />
         </span>
-        <span className="text-[9px] font-medium">More</span>
+        <span className="text-xs font-medium">More</span>
       </motion.button>
 
       <AnimatePresence>
@@ -113,7 +113,7 @@ export function MoreMenu({
                     type="button"
                     role="menuitem"
                     onClick={() => select(item)}
-                    className={`flex w-full items-center gap-5 px-5 py-3.5 text-left text-[15px] transition active:bg-brand-secondary hover:bg-brand-secondary ${
+                    className={`flex w-full items-center gap-5 px-5 py-3.5 text-left text-base transition active:bg-brand-secondary hover:bg-brand-secondary ${
                       item.danger ? "text-rose-500" : "text-brand-text"
                     }`}
                   >

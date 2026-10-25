@@ -1,15 +1,21 @@
 'use client';
 
-import RichTextRenderer from '@/components/studio/RichTextRenderer';
 import JournalBody from '@/components/JournalBody';
-import { scrimFor } from '@/components/studio/postStyle';
+import { WordsOnColour } from '@/components/feed/WordsOnColour';
 import React, { useState, useRef, useEffect } from 'react';
 import type { PostDetail } from '@/types/profile';
 import { useFeedReaction } from '@/hooks/useFeedReaction';
-import { normalizeReaction } from '@/lib/reactions';
-import FeedReactionControl from '@/components/reactions/FeedReactionControl';
+import PostHeartButton from '@/components/feed/PostHeartButton';
+import { heartRequest, isPostLiked } from '@/components/feed/postHeart';
+import { canRepostContentType } from '@/features/share/shareOptions';
 import Link from 'next/link';
-import { useToggleBookmark, useTogglePin, useHidePost, useDeletePost } from '@/hooks/usePostActions';
+import { useSetBookmark, useTogglePin, useHidePost, useDeletePost, useEditPost } from '@/hooks/usePostActions';
+import { useSavePostToCollection } from '@/hooks/useSavedItems';
+import SaveToCollectionSheet from '@/features/saved/SaveToCollectionSheet';
+import { savedErrorText } from '@/features/saved/savedCollections';
+import SavedPostToast from '@/components/feed/SavedPostToast';
+import EditPostSheet from '@/components/feed/EditPostSheet';
+import { postEditErrorCopy, type PostEditBody } from '@/components/feed/postEdit';
 import { useGlobalToast } from '@/contexts/ToastContext';
 import HiddenPostToast from '@/components/feed/HiddenPostToast';
 import PostControls from '@/components/feed/PostControls';
@@ -18,18 +24,27 @@ import { useBlockUser } from '@/hooks/useBlocking';
 import { usePoll, useCastVote } from '@/hooks/usePollVote';
 import { useMyProfile, useUserProfile } from '@/hooks/useEditProfile';
 import CommentSection from '@/components/CommentSection';
+import { commentCreatorTools } from '@/components/comments/creatorTools';
 import CommentPreview from '@/components/CommentPreview';
 import ShareDialog from '@/components/ShareDialog';
 import VideoPlayer from '@/components/VideoPlayer';
 import EmbedCard from '@/components/EmbedCard';
 import { useDataSaver } from '@/hooks/useDataSaver';
-import api from '@/lib/api';
-import { resolveImageUrl } from '@/lib/imageUrl';
-import PaywallPreview from '@/components/monetization/PaywallPreview';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ReelReportDialog } from '@/features/reels/components/ReelReportDialog';
+import { embedCode, isEmbeddablePost } from '@/lib/postEmbed';
+import { onImageError, resolveImageUrl } from '@/lib/imageUrl';
+import { MembersBadge, PostLock } from '@/features/memberships/components/LockCards';
+import { membersLocked } from '@/features/memberships/model';
+import { ActionPill } from '@/features/action-button/components/ActionPill';
+import { decodeAction, visibleAction } from '@/features/action-button/model';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { postTimeLabel, postTimeTitle } from '@/lib/postTime';
+import { pinErrorCopy } from '@/components/profile/pinned';
+import { isDoubleTap, mediaFrameRatio, type Tap } from '@/components/feed/mediaFrame';
+import { compactCount, countWord } from '@/components/feed/cardSummary';
 import {
   MessageCircle,
-  SlidersHorizontal,
+  MoreHorizontal,
   Smile,
   Music,
   MapPin,
@@ -41,28 +56,14 @@ import {
   Repeat2,
   Heart,
 } from 'lucide-react';
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
 interface PostCardProps {
   post: PostDetail;
 }
 
-function timeAgo(dateStr: string): string {
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diffMs = now - then;
-  const diffSec = Math.floor(diffMs / 1000);
-  if (diffSec < 60) return 'just now';
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin}m`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h`;
-  const diffDay = Math.floor(diffHr / 24);
-  if (diffDay < 30) return `${diffDay}d`;
-  return new Date(dateStr).toLocaleDateString();
-}
-
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
-  const liked = !!post.viewer_reaction;
+  const liked = isPostLiked(post.viewer_reaction);
   const likesCount = post.counts?.likes ?? 0;
   const commentsCount = post.counts?.comments ?? 0;
   const sharesCount = post.counts?.shares ?? 0;
@@ -73,17 +74,24 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [showComments, setShowComments] = useState(false);
   const [bookmarked, setBookmarked] = useState(!!post.is_bookmarked);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [showEditSheet, setShowEditSheet] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
   const moreMenuRef = useRef<HTMLDivElement>(null);
 
   const { data: profile } = useMyProfile();
   const likeMutation = useFeedReaction(post.id);
-  const bookmarkMutation = useToggleBookmark();
+  const bookmarkMutation = useSetBookmark();
+  const saveToCollection = useSavePostToCollection();
+  const [collectionSheetOpen, setCollectionSheetOpen] = useState(false);
+  const [collectionError, setCollectionError] = useState<string | null>(null);
   const togglePinMutation = useTogglePin();
   const muteMutation = useMuteUser();
   const blockMutation = useBlockUser();
   const castVoteMutation = useCastVote();
   const hidePost = useHidePost();
   const deleteMutation = useDeletePost();
+  const editMutation = useEditPost();
   const toast = useGlobalToast();
 
   const { data: authorProfile } = useUserProfile(post.author_id);
@@ -94,24 +102,96 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const pollData = livePoll ?? post.poll;
 
   const isOwnPost = profile?.id === post.author_id;
+  // Members only: post-service redacts the row for a non-member (fail closed), so a body it sends is its yes.
+  const locked = membersLocked({ tierRequiredId: post.tier_required_id, bodyRedacted: post.body_redacted, isOwner: isOwnPost, access: 'unknown', trustServedBody: true });
+  const membersOnly = !!post.tier_required_id && !locked;
+  // The Action button (features/action-button): links to /l/<id>, never the raw url.
+  // A viewer sees only a live one; the author also sees theirs when it is blocked or under review.
+  const shownAction = visibleAction(decodeAction(post.action), { isAuthor: isOwnPost, locked });
 
-  const toggleLike = () => {
-    if (likeMutation.busy) return;
-    likeMutation.mutate({ next: liked ? null : 'like', current: normalizeReaction(post.viewer_reaction) });
+  /*
+    Double-tap a photo to like it. It only ever likes — a second double tap
+    on a liked post plays the heart again and leaves the like alone, because
+    an unlike you did not mean is worse than a like you did. The Like button
+    is still the way to remove it.
+  */
+  const reduceMotion = useReducedMotion();
+  const [heartBurst, setHeartBurst] = useState(0);
+  const lastTap = useRef<Tap | null>(null);
+  const likeFromDoubleTap = () => {
+    if (post.no_likes) return;
+    setHeartBurst((n) => n + 1);
+    if (liked || likeMutation.busy) return;
+    likeMutation.mutate(heartRequest(false));
+  };
+  const onMediaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    // Taps on the gallery arrows, links and the video player are theirs.
+    if ((event.target as HTMLElement).closest('button, a, video')) return;
+    const tap = { t: event.timeStamp, x: event.clientX, y: event.clientY };
+    if (isDoubleTap(lastTap.current, tap)) {
+      lastTap.current = null;
+      likeFromDoubleTap();
+    } else {
+      lastTap.current = tap;
+    }
   };
 
+  // A photo's frame: the first photo's own shape, between 4:5 and 1.91:1.
+  // The server usually sends the size; when it does not, the loaded image
+  // tells us once.
+  const firstMedia = post.media?.[0];
+  const [loadedRatio, setLoadedRatio] = useState<number | null>(null);
+  const photoRatio = firstMedia?.width && firstMedia?.height
+    ? mediaFrameRatio(firstMedia.width, firstMedia.height)
+    : loadedRatio ?? 1;
+
+
+  // Save lands in All Saved and the toast offers a collection; tapping
+  // Saved unsaves (DELETE — the POST is an idempotent set).
+  const openCollectionSheet = () => {
+    setCollectionError(null);
+    setCollectionSheetOpen(true);
+  };
 
   const handleBookmark = () => {
     const wasBookmarked = bookmarked;
     setBookmarked(!wasBookmarked);
-    bookmarkMutation.mutate(post.id, {
-      onError: () => setBookmarked(wasBookmarked),
+    bookmarkMutation.mutate({ postId: post.id, saved: !wasBookmarked }, {
+      onSuccess: () => {
+        if (!wasBookmarked) {
+          toast({ type: 'info', title: 'Saved', customContent: <SavedPostToast onChoose={openCollectionSheet} /> });
+        }
+      },
+      onError: (err) => {
+        setBookmarked(wasBookmarked);
+        toast({ type: 'error', title: savedErrorText(err, wasBookmarked ? 'unsave' : 'save') });
+      },
     });
     closeMenu();
   };
 
+  const handlePickCollection = (collection: { id: string | null; name: string }) => {
+    setCollectionError(null);
+    saveToCollection.mutate(
+      { postId: post.id, toCollectionId: collection.id, alreadySaved: bookmarked },
+      {
+        onSuccess: () => {
+          setBookmarked(true);
+          setCollectionSheetOpen(false);
+          toast({ type: 'success', title: `Saved to ${collection.name}` });
+        },
+        onError: (err) => setCollectionError(savedErrorText(err, 'save')),
+      },
+    );
+  };
+
   const handlePin = () => {
-    togglePinMutation.mutate({ postId: post.id, pinned: !post.is_pinned });
+    const pinning = !post.is_pinned;
+    togglePinMutation.mutate(
+      { postId: post.id, pinned: pinning },
+      // A 4th pin is refused (409 PIN_LIMIT): say so instead of failing silently.
+      { onError: (err) => toast({ type: 'error', title: pinErrorCopy(err, pinning) }) },
+    );
     closeMenu();
   };
 
@@ -123,14 +203,12 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     setIsMoreOpen(false);
   };
 
+  // The shared report dialog files to trust-safety (POST /v1/reports,
+  // entity_type "post") through useSubmitReport. There is no
+  // /v1/posts/:id/report route; the old free-text prompt posted there and was lost.
   const handleReport = () => {
     closeMenu();
-    const reason = prompt('Why are you reporting this post? (spam, abuse, hate, other)');
-    if (!reason) return;
-    void api
-      .post(`/v1/posts/${post.id}/report`, { reason })
-      .then(() => toast({ type: 'success', title: 'Report sent', description: 'Thanks — our team will review this post.' }))
-      .catch(() => toast({ type: 'error', title: "Couldn't send your report", description: 'Try again in a moment.' }));
+    setShowReportDialog(true);
   };
 
   /*
@@ -189,13 +267,35 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     });
   };
 
+  // The menu offers this only for a public video post (isEmbeddablePost);
+  // the /post/<id>/embed page refuses anything else on its own as well.
   const handleEmbed = () => {
     closeMenu();
-    const iframe = `<iframe src="${window.location.origin}/post/${post.id}/embed" width="550" height="420" frameborder="0" allowfullscreen></iframe>`;
+    const iframe = embedCode(window.location.origin, post.id);
     navigator.clipboard
       .writeText(iframe)
       .then(() => toast({ type: 'success', title: 'Embed code copied' }))
       .catch(() => toast({ type: 'error', title: "Couldn't copy the embed code" }));
+  };
+
+  const handleEdit = () => {
+    closeMenu();
+    setEditError(null);
+    setShowEditSheet(true);
+  };
+
+  const handleSaveEdit = (body: PostEditBody) => {
+    setEditError(null);
+    editMutation.mutate(
+      { postId: post.id, body },
+      {
+        onSuccess: () => {
+          setShowEditSheet(false);
+          toast({ type: 'success', title: 'Post updated' });
+        },
+        onError: (err) => setEditError(postEditErrorCopy(err)),
+      },
+    );
   };
 
   const handleDelete = () => {
@@ -243,6 +343,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const isReel = post.content_type === 'short';
   const hasMultipleMedia = post.media && post.media.length > 1;
   const hasMedia = post.media && post.media.length > 0;
+  const showLikeTotal = !post.no_likes && likesCount > 0;
+  const showCommentTotal = !post.no_comments && commentsCount > 0;
+  const hasSummary = showLikeTotal || showCommentTotal || sharesCount > 0;
+  const actionButton = 'flex flex-1 min-w-0 min-h-10 items-center justify-center gap-1.5 rounded-lg px-2 text-sm font-semibold transition-colors duration-200 hover:bg-brand-secondary active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
   const hasVoted = pollData?.viewer_votes && pollData.viewer_votes.length > 0;
   const pollEnded = pollData?.has_ended;
   const showResults = hasVoted || pollEnded;
@@ -281,11 +385,14 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       <div className="post-card-header px-3 sm:px-4 pt-2.5 sm:pt-3 pb-1.5 sm:pb-2 flex items-center justify-between">
         <div className="post-card-author flex min-w-0 items-center gap-3">
           <div className="relative">
-            <div className="post-card-avatar w-11 h-11 rounded-full overflow-hidden ring-2 ring-brand-divider hover:ring-primary-outline transition-all shrink-0">
+            <div className="post-card-avatar w-11 h-11 rounded-full overflow-hidden bg-brand-secondary ring-2 ring-brand-divider hover:ring-primary-outline transition-all shrink-0">
               {avatar ? (
                 <img
+                  onError={onImageError}
                   src={resolveImageUrl(avatar, { dataSaver, size: "small" })}
                   alt=""
+                  width={44}
+                  height={44}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -297,15 +404,20 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-x-2">
-              <h4 className="truncate text-[14px] font-bold text-brand-text hover:text-primary-ink cursor-pointer transition-colors">{name}</h4>
+              <h4 className="truncate text-sm font-bold text-brand-text hover:text-primary-ink cursor-pointer transition-colors">{name}</h4>
               {post.feeling && (
-                <span className="text-xs text-brand-text/60">
+                <span className="text-xs text-muted-foreground">
                   — feeling {post.feeling} <Smile className="w-3 h-3 inline text-warning" />
                 </span>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-brand-text/40 mt-0.5">
-              <span>{timeAgo(post.created_at)}</span>
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+              <Link href={`/post/${post.id}`} className="hover:underline">
+                <time dateTime={post.created_at} title={postTimeTitle(post.created_at)}>
+                  {postTimeLabel(post.created_at)}
+                </time>
+              </Link>
+              {membersOnly && <MembersBadge />}
               {post.location && (
                 <>
                   <span className="text-brand-text/30">·</span>
@@ -333,9 +445,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             aria-label="Post controls"
             aria-haspopup="menu"
             aria-expanded={isMoreOpen}
-            className={`p-2 rounded-full transition-all ${isMoreOpen ? 'bg-brand-divider text-brand-text' : 'text-brand-text/40 hover:bg-brand-divider hover:text-brand-text/80'}`}
+            className={`p-2 rounded-full transition-all ${isMoreOpen ? 'bg-brand-divider text-brand-text' : 'text-brand-text/55 hover:bg-brand-divider hover:text-brand-text/80'}`}
           >
-            <SlidersHorizontal className="w-5 h-5" />
+            <MoreHorizontal className="w-5 h-5" />
           </button>
 
           <AnimatePresence>
@@ -348,9 +460,11 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 className="absolute right-0 mt-2 z-100"
               >
                 <PostControls anchorRef={moreMenuRef} own={isOwnPost} pinned={!!post.is_pinned} deleting={deleteMutation.isPending}
+                  canEmbed={isEmbeddablePost(post)}
                   onRecommend={handleInterested} onHide={handleNotInterested} onMute={handleMuteAuthor}
                   onEmbed={handleEmbed} onReport={handleReport} onBlock={handleBlockAuthor}
                   onPin={handlePin} onDelete={handleDelete}
+                  canEdit={!post.is_repost} onEdit={handleEdit}
                   onClose={(restoreFocus) => {
                     closeMenu();
                     if (restoreFocus) moreMenuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
@@ -361,18 +475,35 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </div>
       </div>
 
-      {/* Tier 3c — Paywall preview if backend redacted the body. */}
-      {post.body_redacted && (
+      {/* Members only, for a non-member: the title (kept on the redacted row), a lock and Join. */}
+      {locked && post.title?.trim() && (
+        <h3 className="post-card-title px-3 sm:px-4 pb-1.5 text-lg font-bold leading-snug text-brand-text break-words">
+          {post.title.trim()}
+        </h3>
+      )}
+      {locked && (
         <div className="px-3 sm:px-4">
-          <PaywallPreview
+          <PostLock
             creatorId={post.author_id}
+            creatorName={authorProfile?.display_name || authorProfile?.username}
             tierRequiredId={post.tier_required_id ?? null}
+            requiredPricePaise={post.tier_required_price_paise ?? null}
+            durationMs={post.duration_ms ?? 0}
           />
         </div>
       )}
 
+      {/* The post's title, typed in its own field in the composer. It was
+          stored and sent but never drawn. A Journal entry draws its own
+          heading inside JournalBody, so it is left out here. */}
+      {!locked && post.title?.trim() && post.rich_text?.format !== 'tiptap' && (
+        <h3 className="post-card-title px-3 sm:px-4 pb-1.5 text-lg font-bold leading-snug text-brand-text break-words">
+          {post.title.trim()}
+        </h3>
+      )}
+
       {/* Post Text with clickable hashtags and @mentions */}
-      {!post.body_redacted && post.text && (() => {
+      {!locked && post.text && (() => {
         /*
           A styled post renders exactly as its author composed it.
 
@@ -402,7 +533,6 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           default now.
         */
         const align = rich?.align ?? (hasStyledBg ? 'center' : 'left');
-        const valign = rich?.valign ?? 'middle';
         const scale = Math.min(Math.max(rich?.scale ?? 1, 1), 2);
         const richDoc = rich?.format === 'tiptap' ? rich.doc : undefined;
 
@@ -423,51 +553,26 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             It is plain text from rich_text, rendered as text, never markup.
           */
           const heading = typeof rich?.title === 'string' ? rich.title.trim() : '';
-          const body = (
-            <RichTextRenderer
-              doc={richDoc}
-              className={`${hasStyledBg ? 'font-semibold' : 'text-brand-text'} ${align === 'center' ? 'text-center' : 'text-left'}`}
-            />
-          );
           if (!hasStyledBg) {
             // Set as an article: a measure, a title with display size, an
             // article's leading, a reading time, and a collapse for long
             // entries. See JournalBody.
             return <JournalBody doc={richDoc} title={heading || undefined} />;
           }
-          return (
-            <div
-              className={`relative mx-3 mb-3 overflow-hidden rounded-xl p-6 sm:mx-4 ${valign === 'middle' ? 'flex min-h-[200px] flex-col justify-center' : 'min-h-[160px]'}`}
-              style={{
-                background: bg || '#101828',
-                backgroundImage: bgImage ? `url(/v1/media/${bgImage}/serve)` : undefined,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                color: textColor || '#ffffff',
-                fontSize: `${scale}em`,
-              }}
-            >
-              {bgImage && (
-                <span aria-hidden className="pointer-events-none absolute inset-0" style={{ background: scrimFor(textColor) }} />
-              )}
-              <div className="relative">
-                {heading && <h2 className="mb-2 text-[1.15em] font-bold">{heading}</h2>}
-                {body}
-              </div>
-            </div>
-          );
+          // A few words on a colour: one renderer, shared with the post stage.
+          return <WordsOnColour text={post.text} rich={rich} />;
         }
 
         const textContent = (
           <p
-            className={`leading-relaxed whitespace-pre-wrap ${hasStyledBg ? `font-semibold ${align === 'center' ? 'text-center' : 'text-left'}` : 'text-[15px] text-brand-text'}`}
-            style={hasStyledBg ? { color: textColor || '#ffffff', fontSize: `${scale * 1.25}rem` } : undefined}
+            className={`leading-relaxed whitespace-pre-wrap ${hasStyledBg ? `font-semibold ${align === 'center' ? 'text-center' : 'text-left'}` : 'text-base text-brand-text'}`}
+            style={hasStyledBg ? { color: textColor || 'rgb(var(--theme-on-bubble))', fontSize: `${scale * 1.25}rem` } : undefined}
           >
             {post.text.split(/(#[\p{L}\p{M}\p{N}_]+|@\w+)/gu).map((part, i) => {
               if (part.startsWith('#')) {
                 const tag = part.slice(1);
                 return (
-                  <Link key={i} href={`/hashtag/${tag}`} className={hasStyledBg ? 'underline underline-offset-2' : 'text-brand-text hover:text-brand-text/80 font-medium'} style={hasStyledBg ? { color: textColor || '#ffffff' } : undefined}>
+                  <Link key={i} href={`/hashtag/${tag}`} className={hasStyledBg ? 'underline underline-offset-2' : 'text-brand-text hover:text-brand-text/80 font-medium'} style={hasStyledBg ? { color: textColor || 'rgb(var(--theme-on-bubble))' } : undefined}>
                     {part}
                   </Link>
                 );
@@ -475,7 +580,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               if (part.startsWith('@')) {
                 const username = part.slice(1);
                 return (
-                  <Link key={i} href={`/u/${username}`} className={hasStyledBg ? 'underline underline-offset-2' : 'text-brand-text hover:text-brand-text/80 font-medium'} style={hasStyledBg ? { color: textColor || '#ffffff' } : undefined}>
+                  <Link key={i} href={`/u/${username}`} className={hasStyledBg ? 'underline underline-offset-2' : 'text-brand-text hover:text-brand-text/80 font-medium'} style={hasStyledBg ? { color: textColor || 'rgb(var(--theme-on-bubble))' } : undefined}>
                     {part}
                   </Link>
                 );
@@ -485,26 +590,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           </p>
         );
 
-        if (hasStyledBg) {
-          return (
-            <div
-              className={`relative mx-3 mb-3 overflow-hidden rounded-xl p-6 sm:mx-4 ${
-                valign === 'middle' ? 'flex min-h-[160px] flex-col justify-center' : 'min-h-[160px]'
-              }`}
-              style={{
-                background: bg || '#101828',
-                backgroundImage: bgImage ? `url(/v1/media/${bgImage}/serve)` : undefined,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
-            >
-              {bgImage && (
-                <span aria-hidden className="pointer-events-none absolute inset-0" style={{ background: scrimFor(textColor) }} />
-              )}
-              <div className="relative">{textContent}</div>
-            </div>
-          );
-        }
+        if (hasStyledBg) return <WordsOnColour text={post.text} rich={rich} />;
 
         return (
           <div className={`post-card-copy px-3 sm:px-4 pb-3 ${isReel ? 'pr-16' : ''}`}>
@@ -563,7 +649,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                       )}
                       {isVoted && (
                         <div className="w-5 h-5 rounded-full bg-primary-ink flex items-center justify-center">
-                          <Check className="w-3 h-3 text-white" />
+                          <Check className="w-3 h-3 text-primary-foreground" />
                         </div>
                       )}
                     </div>
@@ -583,10 +669,16 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       {/* Content & Actions Layout */}
       <div className="post-card-content-actions relative">
         {/* Media Display */}
-        {hasMedia && (
+        {hasMedia && !locked && (
           // The home feed sizes this stage inside the reference-size card.
           // Other post surfaces retain their existing media layout.
-          <div className={`post-card-media relative overflow-hidden bg-brand-secondary ${isReel ? 'aspect-9/16 max-h-[700px]' : hasMultipleMedia ? 'h-[600px] max-h-[70vh]' : 'max-h-[70vh]'}`}>
+          // Photos fill the card's width at their own shape (see mediaFrame);
+          // a video sits in a 16:9 frame; a reel keeps its tall one.
+          <div
+            className={`post-card-media relative w-full overflow-hidden bg-brand-secondary select-none ${isReel ? 'aspect-9/16 max-h-[700px]' : firstMedia?.kind === 'video' ? 'aspect-video' : 'max-h-[85vh]'}`}
+            style={!isReel && firstMedia?.kind !== 'video' ? { aspectRatio: photoRatio } : undefined}
+            onPointerUp={onMediaPointerUp}
+          >
             <div className="post-card-media-content h-full w-full flex items-center justify-center">
               {post.media![activeMediaIndex].kind === 'video' ? (
                 <div className="relative w-full h-full">
@@ -602,12 +694,15 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                       />
                       <div className="absolute inset-0 pointer-events-none flex flex-col justify-end p-6 bg-linear-to-t from-black/60 via-transparent to-transparent">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/50">
+                          <div className="w-9 h-9 rounded-full overflow-hidden bg-brand-secondary border-2 border-white/50">
                             {avatar ? (
                               <img
+                                onError={onImageError}
                                 src={resolveImageUrl(avatar, { dataSaver, size: "small" })}
                                 className="w-full h-full object-cover"
                                 alt=""
+                                width={36}
+                                height={36}
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-brand-secondary text-brand-text/55 font-bold text-sm">
@@ -617,7 +712,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                           </div>
                           <div className="text-white">
                             <p className="text-sm font-semibold">{name} · Reel</p>
-                            <p className="text-[11px] text-white/60 flex items-center gap-1">
+                            <p className="text-xs text-white/60 flex items-center gap-1">
                               <Music className="w-3 h-3" /> Original Audio
                             </p>
                           </div>
@@ -634,27 +729,51 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               ) : (
                 <img
                   key={post.media![activeMediaIndex].media_id}
+                  onError={onImageError}
                   src={resolveImageUrl(
                     `/v1/media/${post.media![activeMediaIndex].media_id}/serve`,
                     { dataSaver, size: "large" },
                   )}
-                  alt=""
-                  className={`w-full h-full cursor-zoom-in ${isReel ? 'object-cover' : 'object-contain'} border-b border-brand-divider`}
+                  alt={post.media![activeMediaIndex].alt_text ?? ""}
+                  draggable={false}
+                  onLoad={(event) => {
+                    if (activeMediaIndex !== 0 || (firstMedia?.width && firstMedia?.height)) return;
+                    const img = event.currentTarget;
+                    setLoadedRatio(mediaFrameRatio(img.naturalWidth, img.naturalHeight));
+                  }}
+                  className="w-full h-full object-cover"
                 />
               )}
             </div>
+
+            {/* The heart a double tap plays. Under reduced motion it fades
+                in place instead of growing. */}
+            {heartBurst > 0 && (
+              <motion.div
+                key={heartBurst}
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
+                initial={reduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.4 }}
+                animate={reduceMotion ? { opacity: 0 } : { opacity: [0, 1, 1, 0], scale: [0.4, 1.15, 1, 1] }}
+                transition={reduceMotion ? { duration: 0.6 } : { duration: 0.85, times: [0, 0.25, 0.7, 1] }}
+              >
+                <Heart className="h-24 w-24 fill-white text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.35)]" />
+              </motion.div>
+            )}
 
             {/* Gallery Navigation */}
             {hasMultipleMedia && (
               <>
                 <button
                   onClick={() => setActiveMediaIndex((prev) => (prev > 0 ? prev - 1 : post.media!.length - 1))}
+                  aria-label="Previous"
                   className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-brand-card/90 backdrop-blur-xs text-brand-text shadow-lg hover:bg-brand-card transition-all"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => setActiveMediaIndex((prev) => (prev < post.media!.length - 1 ? prev + 1 : 0))}
+                  aria-label="Next"
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-brand-card/90 backdrop-blur-xs text-brand-text shadow-lg hover:bg-brand-card transition-all"
                 >
                   <ChevronRight className="w-5 h-5" />
@@ -679,12 +798,21 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           </div>
         )}
 
-        {/* Action Bar (Pillar for Reels, Horizontal row for others) */}
+        {/* The Action button, under the media (or the text): "Apply now · domain". */}
+        {shownAction && (
+          <div className="post-card-action-button px-3 sm:px-4 pt-2.5" data-post-action-button>
+            <ActionPill action={shownAction} isAuthor={isOwnPost} variant="card" />
+          </div>
+        )}
+
+        {/* Action bar: a pillar on a reel (the /post permalink and the profile Reels
+            tab render shorts through this card), a row on everything else. Both
+            say Like / Comment / Share / Save, the words the row and Android use. */}
         {isReel ? (
           <div className="absolute bottom-4 right-2 sm:right-3 flex flex-col gap-3 z-10">
-            {/* Spark (was Heart) */}
+            {/* Like */}
             {!post.no_likes && (
-              <div className="rounded-xl bg-brand-card/95"><FeedReactionControl post={post} align="end" /></div>
+              <PostHeartButton post={post} variant="pillar" />
             )}
 
             {/* Comment */}
@@ -701,33 +829,34 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   <MessageCircle className={`w-5 h-5 ${showComments ? 'fill-current' : ''}`} />
                 </div>
                 {commentsCount > 0 && (
-                  <span className={`text-[10px] sm:text-[11px] font-bold drop-shadow-md ${showComments ? 'text-brand-text' : 'text-brand-text/80'}`}>
+                  <span className={`text-xs font-bold drop-shadow-md ${showComments ? 'text-brand-text' : 'text-brand-text/80'}`}>
                     {commentsCount}
                   </span>
                 )}
               </button>
             )}
 
-            {/* Echo (was Share) */}
+            {/* Share */}
             <button
               onClick={handleShare}
-              aria-label="Echo"
+              aria-label="Share"
               className="flex flex-col items-center gap-1 group"
             >
               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-lg bg-brand-card/90 backdrop-blur-xs text-brand-text hover:bg-brand-card border border-brand-divider shadow-black/5 transition-all">
                 <Repeat2 className="w-5 h-5" />
               </div>
               {sharesCount > 0 && (
-                <span className="text-[10px] sm:text-[11px] font-bold text-brand-text/80 drop-shadow-md">
+                <span className="text-xs font-bold text-brand-text/80 drop-shadow-md">
                   {sharesCount}
                 </span>
               )}
             </button>
 
-            {/* Stash (Bookmark) */}
+            {/* Save */}
             <button
               onClick={handleBookmark}
-              aria-label="Stash"
+              aria-label={bookmarked ? 'Saved' : 'Save'}
+              aria-pressed={bookmarked}
               className="flex flex-col items-center gap-1 group"
             >
               <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${bookmarked
@@ -739,53 +868,106 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             </button>
           </div>
         ) : (
-          <div className="post-card-actions px-3 sm:px-4 py-2 flex items-center justify-around border-t border-brand-divider">
-            {/* Like / Love */}
-            {!post.no_likes && (
-              <FeedReactionControl post={post} />
+          <>
+            {/* The counts, on their own line: likes on the left, comments
+                and shares on the right. Nothing when there is nothing. */}
+            {hasSummary && (
+              <div className="post-card-summary px-3 sm:px-4 pt-2.5 pb-2 flex items-center justify-between gap-3 text-sm text-muted-foreground">
+                {showLikeTotal ? (
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span aria-hidden="true" className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-primary-ink text-primary-foreground">
+                      <Heart className="h-2.5 w-2.5 fill-current" />
+                    </span>
+                    <span className="tabular-nums" aria-label={countWord(likesCount, 'like', 'likes')}>{compactCount(likesCount)}</span>
+                  </span>
+                ) : <span />}
+                <span className="flex shrink-0 items-center gap-1.5">
+                  {showCommentTotal && (
+                    <button type="button" onClick={() => setShowComments(true)} className="hover:underline">
+                      {countWord(commentsCount, 'comment', 'comments')}
+                    </button>
+                  )}
+                  {showCommentTotal && sharesCount > 0 && <span aria-hidden="true">·</span>}
+                  {sharesCount > 0 && <span>{countWord(sharesCount, 'share', 'shares')}</span>}
+                </span>
+              </div>
             )}
 
-            {/* Comment */}
-            {!post.no_comments && (
-              <button onClick={() => setShowComments(!showComments)} aria-label="Comment" aria-expanded={showComments}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors duration-200 active:scale-95 ${showComments ? 'text-primary-ink bg-primary-tint' : 'text-brand-text/60 hover:text-primary-ink hover:bg-primary-tint/60'}`}>
-                <MessageCircle className={`w-[18px] h-[18px] ${showComments ? 'fill-current' : ''}`} />
-                <span className="text-[12px] font-semibold tabular-nums">{commentsCount > 0 ? commentsCount : 'Comment'}</span>
+            {/* Four equal buttons that say what they do. */}
+            <div className={`post-card-actions mx-2 sm:mx-3 py-1 flex items-stretch gap-1 ${hasSummary || !hasMedia ? 'border-t border-brand-divider' : ''}`}>
+              {!post.no_likes && (
+                <PostHeartButton post={post} className="post-card-action flex flex-1 min-w-0" />
+              )}
+
+              {!post.no_comments && (
+                <button onClick={() => setShowComments(!showComments)} aria-label="Comment" aria-expanded={showComments}
+                  className={`${actionButton} ${showComments ? 'text-primary-ink' : 'text-brand-text/65'}`}>
+                  <MessageCircle className="w-[18px] h-[18px]" />
+                  <span>Comment</span>
+                </button>
+              )}
+
+              {/* Share — opens ShareDialog: repost, with a quote, or send */}
+              <button onClick={handleShare} aria-label="Share" className={`${actionButton} text-brand-text/65`}>
+                <ShareIcon className="w-[18px] h-[18px]" />
+                <span>Share</span>
               </button>
-            )}
 
-            {/* Repost — opens ShareDialog with quote + media support */}
-            <button onClick={handleShare} aria-label="Repost"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-brand-text/60 hover:text-success hover:bg-success/5 transition-colors duration-200 active:scale-95">
-              <Repeat2 className="w-[18px] h-[18px]" />
-              <span className="text-[12px] font-semibold tabular-nums">{sharesCount > 0 ? sharesCount : 'Repost'}</span>
-            </button>
-
-            {/* Save (Bookmark) */}
-            <button onClick={handleBookmark} aria-label={bookmarked ? 'Saved' : 'Save'} aria-pressed={bookmarked}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors duration-200 active:scale-95 ${bookmarked ? 'text-primary-ink bg-primary-tint' : 'text-brand-text/60 hover:text-primary-ink hover:bg-primary-tint/60'}`}>
-              <Bookmark className={`w-[18px] h-[18px] ${bookmarked ? 'fill-current' : ''}`} />
-              <span className="text-[12px] font-semibold">{bookmarked ? 'Saved' : 'Save'}</span>
-            </button>
-          </div>
+              <button onClick={handleBookmark} aria-label={bookmarked ? 'Saved' : 'Save'} aria-pressed={bookmarked}
+                className={`${actionButton} ${bookmarked ? 'text-primary-ink' : 'text-brand-text/65'}`}>
+                <Bookmark className={`w-[18px] h-[18px] ${bookmarked ? 'fill-current' : ''}`} />
+                <span>{bookmarked ? 'Saved' : 'Save'}</span>
+              </button>
+            </div>
+          </>
         )}
       </div>
 
       {/* A comment under the post, so the feed shows people talking. Only
           when there ARE comments and the full section is closed. */}
-      {!isReel && !post.no_comments && !showComments && commentsCount > 0 && (
+      {!isReel && !locked && !post.no_comments && !showComments && commentsCount > 0 && (
         <CommentPreview postId={post.id} count={commentsCount} onOpen={() => setShowComments(true)} />
       )}
 
       {/* Comment Section */}
       <AnimatePresence>
         {showComments && !post.no_comments && (
-          <CommentSection postId={post.id} postAuthorId={post.author_id} commentsCount={commentsCount} alwaysExpanded />
+          <CommentSection postId={post.id} postAuthorId={post.author_id} commentsCount={commentsCount} alwaysExpanded creatorTools={commentCreatorTools} />
         )}
       </AnimatePresence>
 
       {/* Share Dialog */}
-      <ShareDialog postId={post.id} isOpen={showShareDialog} onClose={() => setShowShareDialog(false)} />
+      {/* Reels take no repost and no quote (founder, 24 Oct); feed posts keep both. */}
+      <ShareDialog postId={post.id} isOpen={showShareDialog} onClose={() => setShowShareDialog(false)} allowRepost={canRepostContentType(post.content_type)} />
+
+      {/* Report Dialog — the same one the reels stage uses */}
+      <ReelReportDialog
+        open={showReportDialog}
+        targetId={post.id}
+        targetType={isReel ? 'reel' : post.content_type === 'long_video' ? 'video' : 'post'}
+        onClose={() => setShowReportDialog(false)}
+      />
+
+      {collectionSheetOpen && (
+        <SaveToCollectionSheet
+          title="Save to collection"
+          busy={saveToCollection.isPending}
+          error={collectionError}
+          onPick={handlePickCollection}
+          onClose={() => { if (!saveToCollection.isPending) setCollectionSheetOpen(false); }}
+        />
+      )}
+
+      {/* Edit a published post: text, audience, comments, like count */}
+      {showEditSheet && isOwnPost && (
+        <EditPostSheet
+          post={post}
+          saving={editMutation.isPending}
+          error={editError}
+          onSave={handleSaveEdit}
+          onClose={() => { if (!editMutation.isPending) setShowEditSheet(false); }}
+        />
+      )}
     </article>
   );
 };

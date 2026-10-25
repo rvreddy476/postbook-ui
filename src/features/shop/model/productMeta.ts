@@ -2,9 +2,11 @@
 // product shared on WhatsApp shows its picture, name and price
 // (shop-engagement contract §4). Built from `GET /products/:id`, fetched on
 // the server without the viewer's cookie: a product a buyer may not see
-// answers 404 there and gets no preview at all.
+// answers 404 there and gets the neutral card (features/share/siteMeta):
+// the site's name and its generic picture, nothing about the product.
 
 import type { Metadata } from "next"
+import { FALLBACK_IMAGE_HEIGHT, FALLBACK_IMAGE_PATH, FALLBACK_IMAGE_WIDTH, neutralMetadata } from "@/features/share/siteMeta"
 import { inrMinor } from "../money"
 import { galleryImages, sellableVariants, type WireProductDetailBody } from "./catalogue"
 import { productPath } from "./share"
@@ -13,8 +15,15 @@ import { readMinor, STORE_NAME } from "./storefront"
 /** The public site. The canonical always names production, whichever host served the page. */
 export const SHOP_PUBLIC_ORIGIN = "https://cleestudio.com"
 
-/** The metadata for a page we have nothing to say about (unknown, hidden, or the API did not answer). */
-export const PRODUCT_FALLBACK_METADATA: Metadata = { title: "Product" }
+/**
+ * The metadata for a page we have nothing to say about (unknown, hidden, or
+ * the API did not answer): the neutral card, with no canonical, so it names
+ * no product and no address.
+ */
+export const PRODUCT_FALLBACK_METADATA: Metadata = neutralMetadata({ siteUrl: SHOP_PUBLIC_ORIGIN, mediaBaseUrl: "" })
+
+/** The generic card picture for a product with no image of its own. */
+const FALLBACK_IMAGE = { url: `${SHOP_PUBLIC_ORIGIN}${FALLBACK_IMAGE_PATH}`, width: FALLBACK_IMAGE_WIDTH, height: FALLBACK_IMAGE_HEIGHT, alt: STORE_NAME }
 
 /** "₹289 · MStore", or just "MStore" when the product has no price. */
 export function productMetaDescription(priceMinor: number | null): string {
@@ -59,7 +68,10 @@ export function productMetadata(productId: string, body: WireProductDetailBody |
   const canonical = `${SHOP_PUBLIC_ORIGIN}${productPath(product.id || productId)}`
   const first = galleryImages(Array.isArray(body?.media) ? body.media : null, product)[0]
   const image = first ? absoluteUrl(first.src) : null
-  const images = image ? [{ url: image, alt: title }] : undefined
+  // OpenGraph has no product type Next's Metadata can write (og:type
+  // "product" and product:price:* need property= tags); "website" with the
+  // price in the description is what every crawler reads.
+  const images = image ? [{ url: image, alt: title }] : [FALLBACK_IMAGE]
   return {
     title: `${title} · ${STORE_NAME}`,
     description,
@@ -73,10 +85,10 @@ export function productMetadata(productId: string, body: WireProductDetailBody |
       images,
     },
     twitter: {
-      card: image ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title,
       description,
-      images: image ? [image] : undefined,
+      images: [images[0].url],
     },
   }
 }

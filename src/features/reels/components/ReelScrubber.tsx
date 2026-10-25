@@ -79,7 +79,7 @@ export function ReelScrubber({ currentMs, durationMs, bufferedMs, onSeek, onScru
       onClick={(e) => e.stopPropagation()}
     >
       {dragMs !== null ? (
-        <div className="absolute bottom-6 -translate-x-1/2 rounded-md bg-black/80 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-white" style={{ left: `${pct}%` }}>
+        <div className="absolute bottom-6 -translate-x-1/2 rounded-md bg-black/80 px-2 py-0.5 text-xs font-semibold tabular-nums text-white" style={{ left: `${pct}%` }}>
           {formatClock(shown)} / {formatClock(durationMs)}
         </div>
       ) : null}
@@ -91,7 +91,7 @@ export function ReelScrubber({ currentMs, durationMs, bufferedMs, onSeek, onScru
         }`}
       >
         <div className="absolute inset-y-0 left-0 bg-white/40" style={{ width: `${bufPct}%` }} />
-        <div className="absolute inset-y-0 left-0 bg-brand-accent" style={{ width: `${pct}%` }} />
+        <div className="absolute inset-y-0 left-0 bg-playhead" style={{ width: `${pct}%` }} />
         <div
           className={`absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow transition-opacity ${
             dragMs !== null ? "opacity-100" : "opacity-0 group-hover/scrub:opacity-100"

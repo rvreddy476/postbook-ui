@@ -34,14 +34,14 @@ export function AvatarCoverSection({
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <label className="text-[11px] font-black text-brand-text tracking-[0.2em]">Cover Photo</label>
-                        <p className="text-[10px] font-bold text-brand-text/60 tracking-wider mt-0.5">Recommended: 1500x500px</p>
+                        <label className="text-xs font-black text-brand-text tracking-[0.2em]">Cover Photo</label>
+                        <p className="text-xs font-bold text-brand-text/60 tracking-wider mt-0.5">Recommended: 1500x500px</p>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => coverInputRef.current?.click()}
-                        className="text-[10px] font-black tracking-[0.15em] text-brand-text px-4 py-2 border border-brand-divider rounded-xl hover:bg-brand-secondary/40 transition-colors"
+                        className="text-xs font-black tracking-[0.15em] text-brand-text px-4 py-2 border border-brand-divider rounded-xl hover:bg-brand-secondary/40 transition-colors"
                     >
                         Replace Photo
                     </motion.button>
@@ -100,14 +100,14 @@ export function AvatarCoverSection({
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <label className="text-[11px] font-black text-brand-text tracking-[0.2em]">Profile Picture</label>
-                        <p className="text-[10px] font-bold text-brand-text/60 tracking-wider mt-0.5">Square, Min 400x400px</p>
+                        <label className="text-xs font-black text-brand-text tracking-[0.2em]">Profile Picture</label>
+                        <p className="text-xs font-bold text-brand-text/60 tracking-wider mt-0.5">Square, Min 400x400px</p>
                     </div>
                     <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => avatarInputRef.current?.click()}
-                        className="text-[10px] font-black tracking-[0.15em] text-brand-text px-4 py-2 border border-brand-divider rounded-xl hover:bg-brand-secondary/40 transition-colors"
+                        className="text-xs font-black tracking-[0.15em] text-brand-text px-4 py-2 border border-brand-divider rounded-xl hover:bg-brand-secondary/40 transition-colors"
                     >
                         Change Photo
                     </motion.button>

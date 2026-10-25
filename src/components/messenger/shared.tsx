@@ -2,23 +2,49 @@
 import React from 'react'
 
 // ---------------------------------------------------------------------------
-// Gradient array for avatar backgrounds
+// Gradient array for avatar backgrounds.
+//
+// Every stop is a theme token (src/ui/theme.css), so the gradients follow the
+// palette and lift with it in dark mode; nothing here names a colour of its
+// own. Each pair carries white initials: the bubble, send and tile tokens are
+// all tuned for white text on them.
 // ---------------------------------------------------------------------------
+const stop = (token: string) => `rgb(var(${token}))`
+const grad = (from: string, to: string) => `linear-gradient(135deg, ${stop(from)}, ${stop(to)})`
+
 export const GRADS = [
-  'linear-gradient(135deg, #667eea, #764ba2)', 'linear-gradient(135deg, #f093fb, #f5576c)',
-  'linear-gradient(135deg, #4facfe, #00f2fe)', 'linear-gradient(135deg, #43e97b, #38f9d7)',
-  'linear-gradient(135deg, #fa709a, #fee140)', 'linear-gradient(135deg, #a18cd1, #fbc2eb)',
-  'linear-gradient(135deg, #fccb90, #d57eeb)', 'linear-gradient(135deg, #e0c3fc, #8ec5fc)',
-  'linear-gradient(135deg, #ffecd2, #fcb69f)', 'linear-gradient(135deg, #ff9a9e, #fecfef)',
-  'linear-gradient(135deg, #D8103F, #E8445A)',
+  grad('--brand-lift', '--brand-deep'), grad('--theme-bubble-ocean', '--brand-lift'),
+  grad('--theme-bubble-ember', '--tile-tag'), grad('--theme-bubble-forest', '--tile-photo'),
+  grad('--theme-bubble-violet', '--tile-poll'), grad('--send', '--send-hover'),
+  grad('--brand-ink', '--theme-bubble-violet'), grad('--tile-photo', '--brand-lift'),
+  grad('--tile-tag', '--send'), grad('--tile-poll', '--brand-deep'),
+  grad('--theme-bubble-mono', '--brand-ink'),
 ]
 
-const GROUP_COLORS = ['#D8103F', '#EC4899', '#10B981', '#F59E0B', '#3B82F6', '#EF4444', '#8B5CF6', '#14B8A6']
+/*
+  A group's colour: its bubbles, its icon, its accents. The same token set
+  as the chat bubble styles plus the other solid tokens that carry white
+  text, so a group never gets a colour the theme does not already own.
+*/
+const GROUP_COLOR_TOKENS = [
+  '--theme-bubble-ocean', '--theme-bubble-ember', '--theme-bubble-forest', '--theme-bubble-violet',
+  '--send', '--brand-ink', '--tile-tag', '--tile-poll',
+]
 
+/** A CSS colour (`rgb(var(--token))`) chosen by the group's id. */
 export function getGroupColor(id: string): string {
   let hash = 0
   for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash)
-  return GROUP_COLORS[Math.abs(hash) % GROUP_COLORS.length]
+  return stop(GROUP_COLOR_TOKENS[Math.abs(hash) % GROUP_COLOR_TOKENS.length])
+}
+
+/**
+ * The group colour at an opacity, for tints and outlines — `rgb(var(--x) / a)`.
+ * Replaces the old `${hex}0f` suffixes, which only worked on a hex literal.
+ */
+export function groupColorAlpha(color: string, alpha: number): string {
+  const m = /^rgb\((var\(--[\w-]+\))\)$/.exec(color)
+  return m ? `rgb(${m[1]} / ${alpha})` : color
 }
 
 export function getInitials(name: string): string {

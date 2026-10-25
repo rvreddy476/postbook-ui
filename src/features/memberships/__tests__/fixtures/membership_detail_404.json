@@ -1,0 +1,9 @@
+{
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "Membership not found"
+  },
+  "meta": {
+    "request_id": "req-11"
+  }
+}

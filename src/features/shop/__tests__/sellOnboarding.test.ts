@@ -98,27 +98,31 @@ describe("sellerStatusBanner", () => {
 
 describe("wizard step gating", () => {
   const done = (...steps: WizardStep[]) => new Set<WizardStep>(steps)
-  it("basic is always open; nothing else opens before basic is saved", () => {
+  it("'What you sell' and basic are always open; nothing else opens before basic is saved", () => {
+    expect(WIZARD_STEPS[0]).toBe("scope")
     expect(stepUnlocked("basic", done())).toBe(true)
-    for (const s of WIZARD_STEPS.filter((x) => x !== "basic")) expect(stepUnlocked(s, done())).toBe(false)
+    expect(stepUnlocked("scope", done())).toBe(true)
+    for (const s of WIZARD_STEPS.filter((x) => x !== "basic" && x !== "scope")) expect(stepUnlocked(s, done())).toBe(false)
   })
   it("documents, fulfilment, payout and the optional storefront open after basic", () => {
     for (const s of ["storefront", "documents", "fulfillment", "payout"] as const) expect(stepUnlocked(s, done("basic"))).toBe(true)
     expect(stepUnlocked("readiness", done("basic"))).toBe(false)
   })
-  it("review opens only when every required step is complete", () => {
+  it("review opens only when every required step is complete, 'What you sell' included", () => {
     expect(stepUnlocked("readiness", done("basic", "documents", "fulfillment"))).toBe(false)
-    expect(stepUnlocked("readiness", done("basic", "documents", "fulfillment", "payout"))).toBe(true)
+    expect(stepUnlocked("readiness", done("basic", "documents", "fulfillment", "payout"))).toBe(false)
+    expect(stepUnlocked("readiness", done("scope", "basic", "documents", "fulfillment", "payout"))).toBe(true)
   })
   it("firstOpenStep lands on the first incomplete required step, skipping storefront", () => {
-    expect(firstOpenStep(done())).toBe("basic")
-    expect(firstOpenStep(done("basic"))).toBe("documents")
-    expect(firstOpenStep(done("basic", "documents"))).toBe("fulfillment")
-    expect(firstOpenStep(done("basic", "documents", "fulfillment"))).toBe("payout")
-    expect(firstOpenStep(done("basic", "documents", "fulfillment", "payout"))).toBe("readiness")
+    expect(firstOpenStep(done())).toBe("scope")
+    expect(firstOpenStep(done("scope"))).toBe("basic")
+    expect(firstOpenStep(done("scope", "basic"))).toBe("documents")
+    expect(firstOpenStep(done("scope", "basic", "documents"))).toBe("fulfillment")
+    expect(firstOpenStep(done("scope", "basic", "documents", "fulfillment"))).toBe("payout")
+    expect(firstOpenStep(done("scope", "basic", "documents", "fulfillment", "payout"))).toBe("readiness")
   })
   it("completedSteps reads the readiness detail", () => {
-    expect([...completedSteps({ ready: false, missing: [], detail: { has_store_name: true, has_email: true, has_pickup_address: true, has_payout_account: false, has_kyc_document: true } })].sort()).toEqual(["basic", "documents", "fulfillment"])
+    expect([...completedSteps({ ready: false, missing: [], detail: { sell_scope: "all_categories", has_gstin: true, has_store_name: true, has_email: true, has_pickup_address: true, has_payout_account: false, has_kyc_document: true } })].sort()).toEqual(["basic", "documents", "fulfillment", "scope"])
     expect([...completedSteps({ ready: false, missing: [], detail: { has_store_name: true, has_email: false } })]).toEqual([])
     expect([...completedSteps(null)]).toEqual([])
   })
@@ -126,8 +130,11 @@ describe("wizard step gating", () => {
 
 describe("missing[] mapping", () => {
   it("maps every code SellerReadiness.Missing() can name to a label and a step", () => {
-    expect(Object.keys(MISSING_CODES).sort()).toEqual(["email", "kyc_document", "payout_account", "pickup_address", "store_name"])
+    expect(Object.keys(MISSING_CODES).sort()).toEqual([
+      "address_proof", "business_address", "business_name", "email", "gstin", "kyc_document", "pan", "payout_account", "pickup_address", "sell_scope", "store_name",
+    ])
     expect(mapMissing(["store_name", "email", "pickup_address", "payout_account", "kyc_document"]).map((m) => m.step)).toEqual(["basic", "basic", "fulfillment", "payout", "documents"])
+    expect(mapMissing(["gstin", "pan", "business_name", "business_address", "address_proof", "sell_scope"]).map((m) => m.step)).toEqual(["scope", "scope", "scope", "scope", "documents", "scope"])
   })
   it("keeps an unknown code rather than dropping it", () => {
     expect(mapMissing(["gst_number"])).toEqual([{ code: "gst_number", label: "Gst number", step: "readiness" }])
@@ -145,7 +152,9 @@ describe("missing[] mapping", () => {
 
 describe("documents", () => {
   it("offers exactly the handler's vocabulary, alphabetical by label", () => {
-    expect([...DOCUMENT_TYPES].sort()).toEqual(["aadhaar", "address_proof", "business_registration", "cancelled_cheque", "gst_certificate", "other", "pan_card", "passport"])
+    expect([...DOCUMENT_TYPES].sort()).toEqual([
+      "aadhaar", "address_proof", "bank_statement", "business_registration", "cancelled_cheque", "electricity_bill", "gst_certificate", "other", "pan_card", "passport", "telephone_bill", "voter_id",
+    ])
     const labels = documentTypeOptions().map((o) => o.label)
     expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b, "en")))
   })

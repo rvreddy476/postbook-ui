@@ -139,8 +139,8 @@ describe("Search", () => {
   test("the CSS pins the result row: 160×90 thumb, 13px title, 11px meta", () => {
     const css = readFileSync(resolve(import.meta.dir, "../discovery.css"), "utf8");
     expect(css).toContain(".disco-row__thumb { position: relative; flex: 0 0 160px; width: 160px; height: 90px;");
-    expect(css).toContain(".disco-row__title { margin: 0; font-size: 13px;");
-    expect(css).toContain(".disco-row__meta { margin: 4px 0 0; font-size: 11px;");
+    expect(css).toContain(".disco-row__title { margin: 0; font-size: var(--type-sm);");
+    expect(css).toContain(".disco-row__meta { margin: 4px 0 0; font-size: var(--type-xs);");
     expect(css).not.toMatch(/#[0-9a-f]{3,8}\b/i);
   });
 });

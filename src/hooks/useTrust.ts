@@ -11,18 +11,41 @@ import api from "@/lib/api"
 //   POST  /v1/verification-requests       submit a verification request
 //   GET   /v1/verification-requests       ADMIN ONLY (403 for a normal user)
 //
+// The gateway routes `/v1/verification-requests` to trust-safety-service
+// (api-gateway cmd/server/main.go; internal key stamped per
+// pkg/internalroutes).
+//
 // Two caveats the paths alone don't show, both handled below:
 //   - the list responses are `{ data: { items: [...] } }`, not `{ data: [] }`
 //   - `/v1/verification-requests` has no self-service read, so a user cannot
 //     poll their own verification status. See useVerificationRequest.
-//
-// NOTE: `/v1/verification-requests` is also missing from the gateway's own
-// prefix table (only `/v1/reports`, `/v1/appeals`, `/v1/grievances` and
-// `/v1/users/me/keyword-filters` are routed to trust-safety-service), so the
-// submit path below needs a gateway entry before it can work from a browser.
 
 interface ContentAppeal { id: string; content_type: string; content_id: string; action_taken: string; appeal_reason: string; status: string; created_at: string }
-interface VerificationRequest { id: string; user_id: string; type: string; status: string; created_at: string }
+
+/** trust-safety store/postgres/trust_extras.go VerificationRequest. */
+export interface VerificationRequest {
+    id: string
+    user_id: string
+    type: string
+    status: string
+    rejection_reason?: string
+    created_at: string
+    updated_at?: string
+}
+
+/**
+ * The types trust-safety accepts (`validVerificationTypes` in
+ * internal/service/trust_extras.go). Anything else is a 400.
+ */
+export const VERIFICATION_TYPES = ["creator", "business", "organization", "government"] as const
+export type VerificationType = (typeof VERIFICATION_TYPES)[number]
+
+export const VERIFICATION_REQUESTS_PATH = "/v1/verification-requests"
+
+/** The submit body: `type` is required; `docs` is a flat string map upstream (map[string]string). */
+export function verificationRequestBody(type: VerificationType, docs: Record<string, string> = {}) {
+    return { type, docs }
+}
 
 export function useSubmitAppeal() {
     const qc = useQueryClient()
@@ -79,9 +102,11 @@ export function useVerificationRequest() {
 export function useSubmitVerification() {
     const qc = useQueryClient()
     return useMutation({
-        // `docs` is a flat string map upstream (map[string]string).
-        mutationFn: async (body: { type: string; docs?: Record<string, string> }) => {
-            const res = await api.post<{ data: VerificationRequest }>("/v1/verification-requests", body)
+        mutationFn: async (body: { type: VerificationType; docs?: Record<string, string> }) => {
+            const res = await api.post<{ data: VerificationRequest }>(
+                VERIFICATION_REQUESTS_PATH,
+                verificationRequestBody(body.type, body.docs),
+            )
             return res.data?.data ?? res.data
         },
         onSuccess: () => {

@@ -18,11 +18,19 @@
   .tube-watch[data-theater] .tube-watch__grid { grid-template-areas: "player player" "primary side"; }
 }
 .tube-stage { position: relative; aspect-ratio: 16 / 9; width: 100%; border-radius: 12px; background: rgb(var(--reel-stage)); }
-.tube-stage__note { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; border-radius: 12px; font-size: 13px; font-weight: 600; background: rgb(var(--reel-stage)); color: rgb(var(--reel-on-stage) / .8); }
+.tube-stage__note { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; border-radius: 12px; font-size: var(--type-sm); font-weight: 600; background: rgb(var(--reel-stage)); color: rgb(var(--reel-on-stage) / .8); }
 .tube-stage__note:hover { color: rgb(var(--reel-on-stage)); }
 /* Theater: a dark band across the main padding, the player at most 80vh tall. */
 .tube-watch[data-theater] .tube-watch__player { margin: -24px -24px 0; padding: 0 24px; background: rgb(var(--reel-stage)); }
-.tube-watch[data-theater] .tube-stage { max-height: 80vh; margin: 0 auto; border-radius: 0; }
+/*
+  The theater stage fits the window (2026-10-19): at most 80vh, and never
+  taller than the space under the header, so the controls at the frame's
+  foot stay on screen. It narrows to keep 16:9, centred in the dark band —
+  YouTube's theater. A max-height on a 16:9 box alone let the frame inside
+  run 110px past the window, controls and all.
+*/
+.tube-watch[data-theater] { --tube-theater-h: min(80vh, calc(100dvh - 88px)); }
+.tube-watch[data-theater] .tube-stage { width: min(100%, calc(var(--tube-theater-h) * 16 / 9)); max-height: none; margin: 0 auto; border-radius: 0; }
 .tube-watch[data-theater] .tube-player__frame { border-radius: 0; }
 @media (max-width: 767px) {
   .tube-watch[data-theater] .tube-watch__player { margin: -12px -12px 0; padding: 0; }
@@ -30,30 +38,38 @@
 
 /* ---- title and creator row -------------------------------------------- */
 .tube-details { display: flex; flex-direction: column; gap: 12px; }
-.tube-details__title { margin: 0; font-size: 20px; font-weight: 700; line-height: 1.3; letter-spacing: -.01em; color: rgb(var(--brand-text)); overflow-wrap: anywhere; }
-@media (max-width: 767px) { .tube-details__title { font-size: 17px; } }
-.tube-creator { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.tube-details__title { margin: 0; font-size: var(--type-xl); font-weight: 700; line-height: 1.3; letter-spacing: -.01em; color: rgb(var(--brand-text)); overflow-wrap: anywhere; }
+@media (max-width: 767px) { .tube-details__title { font-size: var(--type-lg); } }
+/*
+  RUTUBE's line under the title (2026-10-19): the channel at the left — a
+  rounded-square picture, the name over the subscriber count, Subscribe —
+  and the buttons at the right, all 36px with 8px corners.
+*/
+.tube-meta-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.tube-creator { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; min-width: 0; }
 .tube-creator__link { display: flex; min-width: 0; align-items: center; gap: 10px; color: inherit; text-decoration: none; }
-.tube-creator__avatar > * { width: 40px; height: 40px; }
-.tube-creator__name { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tube-creator__avatar > * { width: 36px; height: 36px; }
+.tube-creator__avatar :is(img, span, div) { border-radius: 8px !important; }
+.tube-creator__buttons button { border-radius: 8px !important; }
+.tube-creator__name { margin: 0; font-size: var(--type-base); font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tube-creator__name:hover { text-decoration: underline; }
-.tube-creator__followers { margin: 2px 0 0; font-size: 12px; color: rgb(var(--text-muted)); }
+.tube-creator__followers { margin: 2px 0 0; font-size: var(--type-xs); color: rgb(var(--text-muted)); }
 .tube-creator__buttons { display: inline-flex; align-items: center; gap: 8px; }
-.tube-creator__thanks { display: inline-flex; height: 36px; align-items: center; gap: 6px; padding: 0 14px; border: 0; border-radius: 999px; font-size: 13px; font-weight: 600; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); cursor: pointer; }
+.tube-creator__thanks { display: inline-flex; height: 36px; align-items: center; gap: 6px; padding: 0 14px; border: 0; border-radius: 8px; font-size: var(--type-sm); font-weight: 600; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); cursor: pointer; }
 .tube-creator__thanks:hover { background: rgb(var(--brand-text) / .12); }
 
 /* ---- action row --------------------------------------------------------- */
-.tube-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.tube-actions__vote { display: inline-flex; height: 36px; align-items: center; border-radius: 10px; background: rgb(var(--brand-text) / .06); }
-.tube-actions__btn { display: inline-flex; height: 36px; align-items: center; gap: 6px; padding: 0 12px; border: 0; border-radius: 10px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; background: transparent; color: rgb(var(--brand-text)); cursor: pointer; }
+.tube-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.tube-actions__vote { display: inline-flex; height: 36px; align-items: center; border-radius: 8px; background: rgb(var(--brand-text) / .06); }
+.tube-actions__btn { display: inline-flex; height: 36px; align-items: center; gap: 6px; padding: 0 10px; border: 0; border-radius: 8px; font-size: var(--type-sm); font-weight: 600; font-variant-numeric: tabular-nums; background: transparent; color: rgb(var(--brand-text)); cursor: pointer; }
 .tube-actions__btn:hover { background: rgb(var(--brand-text) / .08); }
 .tube-actions__btn.is-love.is-on { color: rgb(var(--danger)); }
 .tube-actions__btn.is-pass.is-on { color: rgb(var(--brand-text)); background: rgb(var(--brand-text) / .1); }
 .tube-actions__count { color: rgb(var(--brand-text)); }
 .tube-actions__divider { width: 1px; height: 18px; background: rgb(var(--brand-text) / .2); }
-.tube-actions__pill { display: inline-flex; height: 36px; align-items: center; gap: 7px; padding: 0 14px; border: 0; border-radius: 10px; font-size: 13px; font-weight: 600; white-space: nowrap; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); cursor: pointer; transition: background-color 120ms ease; }
+.tube-actions__pill { display: inline-flex; height: 36px; align-items: center; gap: 7px; padding: 0 14px; border: 0; border-radius: 8px; font-size: var(--type-sm); font-weight: 600; white-space: nowrap; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); cursor: pointer; transition: background-color 120ms ease; }
 .tube-actions__pill:hover, .tube-actions__pill.is-on { background: rgb(var(--brand-text) / .12); }
-.tube-actions__pill.is-icon { width: 42px; justify-content: center; padding: 0; }
+.tube-actions__pill.is-icon { width: 36px; justify-content: center; padding: 0; }
 .tube-actions__btn:focus-visible, .tube-actions__pill:focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 2px; }
 .tube-actions__more { position: relative; display: inline-flex; }
 @media (max-width: 767px) {
@@ -70,14 +86,14 @@
 /* Chapters: a horizontal strip of small pills; the playing one inverted. */
 .tube-chapters { display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px 0; }
 .tube-chapters::-webkit-scrollbar { display: none; }
-.tube-chapters__pill { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border: 0; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
+.tube-chapters__pill { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border: 0; border-radius: 999px; font-size: var(--type-xs); font-weight: 600; white-space: nowrap; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
 .tube-chapters__pill:hover { background: rgb(var(--brand-text) / .12); }
 .tube-chapters__pill[aria-current="true"] { background: rgb(var(--brand-text)); color: rgb(var(--brand-card)); }
 .tube-chapters__pill time { font-weight: 500; font-variant-numeric: tabular-nums; opacity: .7; }
 
 /* ---- the about card ------------------------------------------------------ */
-.tube-about { padding: 14px 18px; border-radius: 14px; background: rgb(var(--brand-text) / .05); font-size: 13px; line-height: 1.55; color: rgb(var(--brand-text)); }
-.tube-about__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0; font-size: 13px; font-weight: 600; color: rgb(var(--brand-text) / .8); }
+.tube-about { padding: 14px 18px; border-radius: 14px; background: rgb(var(--brand-text) / .05); font-size: var(--type-sm); line-height: 1.55; color: rgb(var(--brand-text)); }
+.tube-about__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0; font-size: var(--type-sm); font-weight: 600; color: rgb(var(--brand-text) / .8); }
 .tube-about__live { display: inline-flex; align-items: center; gap: 4px; color: rgb(var(--danger)); }
 .tube-about__rule { margin: 12px 0; border: 0; border-top: 1px solid rgb(var(--brand-text) / .14); }
 .tube-about__facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 24px; margin: 0 0 10px; }
@@ -91,43 +107,43 @@
 .tube-about__text a:hover { text-decoration: underline; }
 .tube-about__text button { font: inherit; color: rgb(var(--brand-ink)); background: transparent; border: 0; padding: 0; cursor: pointer; }
 .tube-about__text button:hover { text-decoration: underline; }
-.tube-about__toggle { margin-top: 8px; border: 0; padding: 0; background: transparent; font-size: 13px; font-weight: 600; color: rgb(var(--text-muted)); cursor: pointer; }
+.tube-about__toggle { margin-top: 8px; border: 0; padding: 0; background: transparent; font-size: var(--type-sm); font-weight: 600; color: rgb(var(--text-muted)); cursor: pointer; }
 .tube-about__toggle:hover { color: rgb(var(--brand-text)); }
 
 /* The join card on a gated video */
 .tube-gate { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; aspect-ratio: 16 / 9; width: 100%; padding: 24px; border-radius: 12px; text-align: center; background: rgb(var(--reel-stage)); color: rgb(var(--reel-on-stage)); }
 .tube-gate__icon { display: flex; width: 44px; height: 44px; align-items: center; justify-content: center; border-radius: 50%; background: rgb(var(--reel-on-stage) / .12); }
-.tube-gate__title { margin: 0; font-size: 15px; font-weight: 600; }
-.tube-gate__hint { margin: 0; font-size: 12px; color: rgb(var(--reel-on-stage) / .7); }
-.tube-gate__cta { display: inline-flex; align-items: center; height: 36px; padding: 0 18px; border-radius: 999px; font-size: 13px; font-weight: 600; background: rgb(var(--brand-accent)); color: rgb(var(--on-primary)); text-decoration: none; }
+.tube-gate__title { margin: 0; font-size: var(--type-base); font-weight: 600; }
+.tube-gate__hint { margin: 0; font-size: var(--type-xs); color: rgb(var(--reel-on-stage) / .7); }
+.tube-gate__cta { display: inline-flex; align-items: center; height: 36px; padding: 0 18px; border-radius: 999px; font-size: var(--type-sm); font-weight: 600; background: rgb(var(--brand-accent)); color: rgb(var(--on-primary)); text-decoration: none; }
 .tube-gate__cta:hover { opacity: .92; }
 .tube-gate__hint { max-width: 420px; line-height: 1.5; }
-.tube-gate__back { font-size: 12px; font-weight: 600; color: rgb(var(--reel-on-stage) / .8); text-decoration: none; }
+.tube-gate__back { font-size: var(--type-xs); font-weight: 600; color: rgb(var(--reel-on-stage) / .8); text-decoration: none; }
 .tube-gate__back:hover { text-decoration: underline; }
 @media (max-width: 480px) { .tube-gate { aspect-ratio: auto; min-height: 220px; padding: 20px 16px; } }
 
 /* the creator's related video, inside the about card */
 .tube-related { margin-top: 10px; }
-.tube-related__label { margin: 0 0 6px; font-size: 12px; font-weight: 600; color: rgb(var(--text-muted)); }
+.tube-related__label { margin: 0 0 6px; font-size: var(--type-xs); font-weight: 600; color: rgb(var(--text-muted)); }
 .tube-related__link { display: flex; align-items: center; gap: 10px; max-width: 420px; padding: 6px; margin: 0 -6px; border-radius: 10px; color: rgb(var(--brand-text)); text-decoration: none; }
 .tube-related__link:hover { background: rgb(var(--brand-text) / .06); }
 .tube-related__link:focus-visible { outline: 2px solid rgb(var(--brand-accent)); outline-offset: 1px; }
 .tube-related__thumb { position: relative; flex: 0 0 auto; width: 120px; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 8px; background: rgb(var(--brand-text) / .08); }
 .tube-related__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.tube-related__dur { position: absolute; right: 4px; bottom: 4px; padding: 1px 4px; border-radius: 4px; background: rgb(var(--reel-stage) / .8); color: rgb(var(--reel-on-stage)); font-size: 11px; font-weight: 600; line-height: 1.3; }
+.tube-related__dur { position: absolute; right: 4px; bottom: 4px; padding: 1px 4px; border-radius: 4px; background: rgb(var(--reel-stage) / .8); color: rgb(var(--reel-on-stage)); font-size: var(--type-xs); font-weight: 600; line-height: 1.3; }
 .tube-related__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.tube-related__title { font-size: 13px; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.tube-related__channel { font-size: 12px; color: rgb(var(--text-muted)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tube-related__title { font-size: var(--type-sm); font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tube-related__channel { font-size: var(--type-xs); color: rgb(var(--text-muted)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---- comments, inline under the about card -------------------------------- */
 .tube-comments { margin-top: 24px; }
 .tube-comments__head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 8px; }
-.tube-comments__title { margin: 0; font-size: 16px; font-weight: 700; color: rgb(var(--brand-text)); }
+.tube-comments__title { margin: 0; font-size: var(--type-base); font-weight: 700; color: rgb(var(--brand-text)); }
 .tube-comments__count { margin-left: 4px; font-weight: 600; color: rgb(var(--text-muted)); font-variant-numeric: tabular-nums; }
 .tube-comments__sort { display: inline-flex; align-items: center; gap: 4px; }
-.tube-comments__pill { display: inline-flex; height: 26px; align-items: center; padding: 0 10px; border: 0; border-radius: 999px; font-size: 11px; font-weight: 600; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); cursor: pointer; }
+.tube-comments__pill { display: inline-flex; height: 32px; align-items: center; padding: 0 10px; border: 0; border-radius: 999px; font-size: var(--type-xs); font-weight: 600; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); cursor: pointer; }
 .tube-comments__pill[aria-pressed="true"] { background: rgb(var(--brand-text)); color: rgb(var(--brand-card)); }
-.tube-comments__off { margin: 0; padding: 8px 0; font-size: 13px; color: rgb(var(--text-muted)); }
+.tube-comments__off { margin: 0; padding: 8px 0; font-size: var(--type-sm); color: rgb(var(--text-muted)); }
 /* CommentSection is built for a column; inline, the composer goes on top and the list flows with the page. */
 .tube-comments__body > div { height: auto; flex-direction: column-reverse; background: transparent; }
 .tube-comments__body > div > .shrink-0 { border-top: 0; border-bottom: 1px solid rgb(var(--brand-divider)); padding-left: 0; padding-right: 0; background: transparent; }
@@ -136,10 +152,10 @@
 /* ---- up next ---------------------------------------------------------- */
 .tube-upnext { display: flex; flex-direction: column; gap: 10px; }
 .tube-upnext__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.tube-upnext__title { margin: 0; font-size: 15px; font-weight: 700; }
+.tube-upnext__title { margin: 0; font-size: var(--type-base); font-weight: 700; }
 .tube-upnext__pills { display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; }
 .tube-upnext__pills::-webkit-scrollbar { display: none; }
-.tube-upnext__pill { flex: 0 0 auto; display: inline-flex; height: 26px; align-items: center; padding: 0 10px; border: 0; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); cursor: pointer; }
+.tube-upnext__pill { flex: 0 0 auto; display: inline-flex; height: 32px; align-items: center; padding: 0 10px; border: 0; border-radius: 999px; font-size: var(--type-xs); font-weight: 600; white-space: nowrap; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); cursor: pointer; }
 .tube-upnext__pill:hover { background: rgb(var(--brand-text) / .12); }
 .tube-upnext__pill[aria-pressed="true"] { background: rgb(var(--brand-text)); color: rgb(var(--brand-card)); }
 .tube-upnext__list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
@@ -148,20 +164,20 @@
 .tube-upnext__row[aria-current="page"] { background: rgb(var(--brand-text) / .06); }
 .tube-upnext__thumb { position: relative; flex: 0 0 168px; width: 168px; height: 94px; overflow: hidden; border-radius: 10px; background: rgb(var(--reel-stage)); }
 .tube-upnext__thumb img { width: 100%; height: 100%; object-fit: cover; }
-.tube-upnext__duration { position: absolute; right: 4px; bottom: 4px; padding: 1px 5px; border-radius: 5px; font-size: 10px; font-weight: 600; font-variant-numeric: tabular-nums; background: rgb(var(--reel-stage) / .85); color: rgb(var(--reel-on-stage)); }
-.tube-upnext__pos { position: absolute; left: 4px; top: 4px; padding: 1px 5px; border-radius: 5px; font-size: 10px; font-weight: 700; background: rgb(var(--reel-stage) / .75); color: rgb(var(--reel-on-stage)); }
+.tube-upnext__duration { position: absolute; right: 4px; bottom: 4px; padding: 1px 5px; border-radius: 5px; font-size: var(--type-xs); font-weight: 600; font-variant-numeric: tabular-nums; background: rgb(var(--reel-stage) / .85); color: rgb(var(--reel-on-stage)); }
+.tube-upnext__pos { position: absolute; left: 4px; top: 4px; padding: 1px 5px; border-radius: 5px; font-size: var(--type-xs); font-weight: 700; background: rgb(var(--reel-stage) / .75); color: rgb(var(--reel-on-stage)); }
 .tube-upnext__text { min-width: 0; flex: 1 1 auto; padding-top: 1px; }
-.tube-upnext__name { margin: 0; font-size: 14px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.tube-upnext__meta { margin: 3px 0 0; font-size: 12px; line-height: 1.4; color: rgb(var(--text-muted)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tube-upnext__more { align-self: flex-start; height: 28px; padding: 0 12px; border: 1px solid var(--brand-divider); border-radius: 999px; font-size: 11px; font-weight: 600; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); cursor: pointer; }
+.tube-upnext__name { margin: 0; font-size: var(--type-sm); font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tube-upnext__meta { margin: 3px 0 0; font-size: var(--type-xs); line-height: 1.4; color: rgb(var(--text-muted)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tube-upnext__more { align-self: flex-start; height: 32px; padding: 0 12px; border: 1px solid var(--brand-divider); border-radius: 999px; font-size: var(--type-xs); font-weight: 600; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); cursor: pointer; }
 .tube-upnext__more:disabled { opacity: .5; }
-.tube-upnext__empty { margin: 0; padding: 8px 4px; font-size: 12px; color: rgb(var(--text-muted)); }
+.tube-upnext__empty { margin: 0; padding: 8px 4px; font-size: var(--type-xs); color: rgb(var(--text-muted)); }
 .tube-upnext__bone { display: flex; gap: 10px; padding: 4px; }
 .tube-upnext__bone > span:first-child { flex: 0 0 168px; height: 94px; border-radius: 10px; background: rgb(var(--brand-secondary)); animation: tube-pulse 1.4s ease-in-out infinite; }
 .tube-upnext__bone > span:last-child { flex: 1 1 auto; height: 13px; margin-top: 4px; border-radius: 6px; background: rgb(var(--brand-secondary)); animation: tube-pulse 1.4s ease-in-out infinite; }
 
 /* "Playing from <collection>" with prev / next */
-.tube-collection-bar { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 6px 8px 6px 12px; border-radius: 10px; font-size: 12px; background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); }
+.tube-collection-bar { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 6px 8px 6px 12px; border-radius: 10px; font-size: var(--type-xs); background: rgb(var(--brand-text) / .06); color: rgb(var(--brand-text)); }
 .tube-collection-bar__title { min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tube-collection-bar__title strong { font-weight: 600; }
 .tube-collection-bar__title a { color: inherit; text-decoration: none; }
@@ -182,17 +198,30 @@
 
 /* ---- Thanks sheet: the reels confirm card with amount pills ----------- */
 .tube-thanks__pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
-.tube-thanks__pill { display: inline-flex; height: 30px; align-items: center; padding: 0 14px; border: 0; border-radius: 999px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
+.tube-thanks__pill { display: inline-flex; height: 30px; align-items: center; padding: 0 14px; border: 0; border-radius: 999px; font-size: var(--type-sm); font-weight: 600; font-variant-numeric: tabular-nums; background: rgb(var(--brand-secondary)); color: rgb(var(--brand-text)); cursor: pointer; transition: background-color 120ms ease, color 120ms ease; }
 .tube-thanks__pill:hover { background: rgb(var(--brand-text) / .12); }
 .tube-thanks__pill[aria-checked="true"] { background: rgb(var(--brand-text)); color: rgb(var(--brand-card)); }
-.tube-thanks__field { display: block; width: 100%; margin-top: 10px; padding: 8px 12px; border: 1px solid var(--brand-divider); border-radius: 10px; background: rgb(var(--brand-bg)); color: rgb(var(--brand-text)); font-size: 13px; outline: none; }
+.tube-thanks__field { display: block; width: 100%; margin-top: 10px; padding: 8px 12px; border: 1px solid var(--brand-divider); border-radius: 10px; background: rgb(var(--brand-bg)); color: rgb(var(--brand-text)); font-size: var(--type-sm); outline: none; }
 .tube-thanks__field:focus { border-color: rgb(var(--brand-accent)); }
 .tube-thanks__field::placeholder { color: rgb(var(--text-muted)); }
 .tube-thanks__field[aria-invalid="true"] { border-color: rgb(var(--danger)); }
-.tube-thanks__hint { margin-top: 6px; font-size: 11px; color: rgb(var(--text-muted)); }
+.tube-thanks__hint { margin-top: 6px; font-size: var(--type-xs); color: rgb(var(--text-muted)); }
 .tube-thanks__hint.is-error { color: rgb(var(--danger)); }
 
 @media (prefers-reduced-motion: reduce) {
   .tube-actions__pill, .tube-chapters__pill, .tube-upnext__row, .tube-thanks__pill { transition: none; }
   .tube-upnext__bone > span { animation: none; }
+}
+
+/*
+  Touch: the chapter, sort and Up-next pills draw at 32px (YouTube's chip
+  height) and take a 44px hit area through a transparent ::after, so a
+  thumb lands on them without the strip growing taller.
+*/
+@media (pointer: coarse) {
+  .tube-chapters__pill, .tube-comments__pill, .tube-upnext__pill, .tube-upnext__more, .tube-collection-bar__nav, .tube-player-box__dock-button { position: relative; }
+  .tube-chapters__pill::after, .tube-comments__pill::after, .tube-upnext__pill::after, .tube-upnext__more::after, .tube-collection-bar__nav::after, .tube-player-box__dock-button::after { content: ""; position: absolute; inset: calc((100% - 44px) / 2); }
+  .tube-actions__btn, .tube-actions__pill, .tube-creator__thanks { height: 44px; }
+  .tube-actions__pill.is-icon { width: 44px; }
+  .tube-actions__vote { height: 44px; }
 }

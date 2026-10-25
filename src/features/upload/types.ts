@@ -1,17 +1,17 @@
 import type { ContentType, StepId } from "./tokens";
 import type {
   ReelVisibility,
-  LicenseType,
-  CommentModeration,
   RemixSetting,
   CommentAccess,
-  CoverFrameResult,
   CopyrightCheck,
   AudioTrack,
 } from "@/features/reels/types";
 import type { MediaSubtitleTrack } from "@/features/posttube/types";
 import type { ChapterDraft } from "@/features/posttube/hub/chaptersModel";
 import type { SeriesChoice } from "./studioApi";
+import { EMPTY_CREDITS_FORM, type CreditsForm } from "@/features/posttube/credits/creditsModel";
+import type { ActionDraft } from "@/features/action-button/model";
+import type { CopyrightReview } from "@/features/copyright/model";
 
 export type { ContentType, StepId, ChapterDraft, SeriesChoice };
 
@@ -51,8 +51,6 @@ export interface StudioFormState {
   coverPreviewUrl: string | null;
   customCoverFile: File | null;
   customCoverPreviewUrl: string | null;
-  /** @deprecated kept for backward compat during transition; not used for new uploads */
-  coverResult: CoverFrameResult | null;
 
   /* ── Audio ──────────────────────── */
   audioTrack: AudioTrack | null;
@@ -65,41 +63,56 @@ export interface StudioFormState {
   ageRestricted: boolean;
   paidPromotion: boolean;
   alteredContent: boolean;
+  /** The "made with AI" label (post ai_generated), separate from altered content. */
+  aiGenerated: boolean;
 
   /* ── Engage step ────────────────── */
   commentsEnabled: boolean;
   commentAccess: CommentAccess;
-  commentModeration: CommentModeration;
   likesEnabled: boolean;
   remixSetting: RemixSetting;
 
-  /* ── Enrich step (long/podcast) ── */
-  autoChapters: boolean;
-  featuredPlaces: boolean;
-  autoConcepts: boolean;
+  /* ── Extras step (long/podcast) ── */
   language: string;
   subtitlesFile: File | null;
   subtitleTracks: MediaSubtitleTrack[];
   subtitleUploadState: "idle" | "uploading" | "done" | "error";
   subtitleUploadError: string | null;
-  recordingDate: string;
-  recordingLocation: string;
-  license: LicenseType;
-  allowEmbedding: boolean;
+  /** The place shown on the post (location_name); placeId set when picked from search. */
+  locationName: string;
+  locationPlaceId: string | null;
 
   /* ── Publish step ───────────────── */
   visibility: ReelVisibility;
   scheduleAt: string | null;
   category: string;
+  /**
+   * share_to_postbook on the post: whether the video may also appear in the
+   * home Feed. The server's default is true; an explicit false keeps it out
+   * of the Feed (post-service handler.go createPost + distribution.go).
+   */
   crossPostPostbook: boolean;
-  crossPostPosttube: boolean;
   publishToFeed: boolean;
+  /**
+   * Members only: the lowest membership level that sees it, or null for
+   * everyone. Sent as tier_required_id with the create and the draft save,
+   * so the post is gated from birth (features/memberships gateCreateField).
+   */
+  tierRequiredId: string | null;
+  /**
+   * The Action button (features/action-button): a label and a link, or null
+   * for none. Sent with the create and the draft save (`action`).
+   */
+  action: ActionDraft | null;
 
   /* ── Series + chapters (long videos; applied after publish) ── */
   seriesChoice: SeriesChoice;
   /** null = the default (one past the series' highest episode). */
   seriesEpisodeNum: number | null;
   chapterRows: ChapterDraft[];
+
+  /* ── Credits (long videos in a credits topic; sent with create / draft) ── */
+  credits: CreditsForm;
 
   /* ── Processing ─────────────────── */
   processingReady: boolean;
@@ -114,6 +127,8 @@ export interface StudioFormState {
   followUpFailures: FollowUpFailure[];
   /** The episode the post became, when a series was chosen and the add worked. */
   publishedEpisodeNum: number | null;
+  /** A long video the copyright title review held at publish (read back from the detail); null = published. */
+  publishedCopyrightReview: CopyrightReview | null;
   trimStartMs: number;
   trimEndMs: number | null;
   computedVideoCategory: "flick" | "long_video" | null;
@@ -143,7 +158,6 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   coverPreviewUrl: null,
   customCoverFile: null,
   customCoverPreviewUrl: null,
-  coverResult: null,
   audioTrack: null,
   audioStartMs: 0,
   originalAudioVolume: 1.0,
@@ -152,32 +166,29 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   ageRestricted: false,
   paidPromotion: false,
   alteredContent: false,
+  aiGenerated: false,
   commentsEnabled: true,
   commentAccess: "everyone",
-  commentModeration: "basic",
   likesEnabled: true,
   remixSetting: "allow",
-  autoChapters: true,
-  featuredPlaces: true,
-  autoConcepts: true,
   language: "en",
   subtitlesFile: null,
   subtitleTracks: [],
   subtitleUploadState: "idle",
   subtitleUploadError: null,
-  recordingDate: "",
-  recordingLocation: "",
-  license: "standard",
-  allowEmbedding: true,
+  locationName: "",
+  locationPlaceId: null,
   visibility: "public",
   scheduleAt: null,
   category: "",
-  crossPostPostbook: false,
-  crossPostPosttube: false,
+  crossPostPostbook: true,
   publishToFeed: true,
+  tierRequiredId: null,
+  action: null,
   seriesChoice: { kind: "none" },
   seriesEpisodeNum: null,
   chapterRows: [],
+  credits: EMPTY_CREDITS_FORM,
   processingReady: false,
   processingStatus: "idle",
   processingError: null,
@@ -187,6 +198,7 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   publishWarning: null,
   followUpFailures: [],
   publishedEpisodeNum: null,
+  publishedCopyrightReview: null,
   trimStartMs: 0,
   trimEndMs: null,
   computedVideoCategory: null,

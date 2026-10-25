@@ -43,7 +43,7 @@ export default function DatingAdminDashboard() {
     <div className="max-w-5xl mx-auto p-6 space-y-6">
       <header className="workspace-page-head">
         <h1 className="text-2xl font-semibold">Dating safety console</h1>
-        <p className="text-sm text-text-muted mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           Review reports, respond to safety events, and moderate profile photos.
           Sensitive actions require the appropriate permissions.
         </p>
@@ -81,7 +81,7 @@ export default function DatingAdminDashboard() {
 
       <section className="rounded-2xl border bg-brand-card p-5 text-sm space-y-2">
         <h2 className="font-semibold">Review with care</h2>
-        <ul className="list-disc pl-5 text-text-muted space-y-1">
+        <ul className="list-disc pl-5 text-muted-foreground space-y-1">
           <li>
             Read the original report and available evidence before changing an account's status.
           </li>

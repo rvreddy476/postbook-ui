@@ -1,0 +1,12 @@
+{
+  "data": {
+    "id": "7a1d0000-0000-4000-8000-000000000002",
+    "author_id": "a0700000-0000-4000-8000-000000000002",
+    "title": "A film review",
+    "text": "",
+    "content_type": "long_video",
+    "visibility": "public",
+    "status": "published",
+    "created_at": "2026-10-24T05:00:00Z"
+  }
+}

@@ -289,7 +289,7 @@ describe("selfie verification", () => {
     for (const reason of ["unsupported", "camera"] as const) {
       const out = html(<MobileOnlyNotice reason={reason} />)
       expect(out).toContain("Finish this step in the mobile app")
-      expect(out).toContain("Selfie verification is done in the Momentum mobile app")
+      expect(out).toContain("Selfie verification is done in the VChat mobile app")
       expect(out).not.toMatch(/skip|later/i)
       expect(out).not.toContain("<a ")
       expect(out).not.toContain("<button")
@@ -320,14 +320,14 @@ describe("selfie verification", () => {
 describe("settings", () => {
   test("the five privacy toggles, alphabetical, as switches", () => {
     const out = html(<PrivacyToggles privacy={{ incognito: false, hideLastActive: true, verifiedOnlyFilter: false, blurPhotosUntilMatch: false, echoesConsent: false }} busy={false} onChange={noop} />)
-    expect(ascending(out, ["Blur my photos until we match", "Hide when I was last active", "Incognito", "Show me verified people only", "Show my Momentum activity"])).toBe(true)
+    expect(ascending(out, ["Blur my photos until we match", "Hide when I was last active", "Incognito", "Show me verified people only", "Show my VChat activity"])).toBe(true)
     expect((out.match(/role="switch"/g) ?? []).length).toBe(5)
     expect((out.match(/checked=""/g) ?? []).length).toBe(1)
   })
 
   test("consents, alphabetical, reflecting what is granted", () => {
     const out = html(<ConsentToggles consents={toConsents(readFixture("consents_get_200").data)} busy={false} onChange={noop} />)
-    expect(ascending(out, [">Community<", ">Face check<", ">Momentum activity on your profile<", ">Religion<"])).toBe(true)
+    expect(ascending(out, [">Community<", ">Face check<", ">Religion<", ">VChat activity on your profile<"])).toBe(true)
     expect((out.match(/checked=""/g) ?? []).length).toBe(1)
   })
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { LayoutDashboard, Palette } from "lucide-react";
 
 import { Avatar } from "@/components/LetterAvatar";
+import { ActionPill } from "@/features/action-button/components/ActionPill";
 import { SubscribeButton } from "../../components/SubscribeButton";
 import { LiveRing } from "../../live/ChannelLive";
 import { formatCount } from "../../model";
@@ -98,6 +99,7 @@ export function ChannelMasthead({ channel, isOwner, signedIn, followerCount, onF
                 <LayoutDashboard aria-hidden />
                 <span>Creator Hub</span>
               </Link>
+              <ActionPill action={channel.action} isAuthor variant="profile" />
               <ChannelMoreMenu signedIn={signedIn} isOwner hasFeed={!channel.thin} onShare={() => onShare?.()} onReport={() => onReport?.()} onFeed={() => onFeed?.()} />
             </>
           ) : (
@@ -111,6 +113,8 @@ export function ChannelMasthead({ channel, isOwner, signedIn, followerCount, onF
                 labels={{ off: "Subscribe", on: "Subscribed" }}
                 onSubscribedChange={onFollowChange}
               />
+              {/* The channel's Action button, beside Subscribe; it opens /l/<id>. */}
+              <ActionPill action={channel.action} variant="profile" />
               <ChannelMoreMenu signedIn={signedIn} hasFeed={!channel.thin} onShare={() => onShare?.()} onReport={() => onReport?.()} onFeed={() => onFeed?.()} />
             </>
           )}

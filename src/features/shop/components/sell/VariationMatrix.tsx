@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import {
   MAX_AXES,
   MAX_COMBINATIONS,
+  SKU_LOCKED_HELP,
   applyToAll,
   candidateFor,
   countIfAdded,
@@ -28,6 +29,7 @@ export function VariationMatrix({
   stem,
   problems,
   editing,
+  skuLocked = false,
 }: {
   candidates: AxisCandidate[]
   value: MatrixState
@@ -36,6 +38,8 @@ export function VariationMatrix({
   problems: RowProblems
   /** True on an existing product: axes cannot be removed once variants carry them. */
   editing: boolean
+  /** True once the listing is approved: an existing variant's SKU is read-only (the server answers 409 SKU_LOCKED). */
+  skuLocked?: boolean
 }) {
   const rows = matrixRows(value, stem)
   const count = rows.filter((r) => !r.stranded).length
@@ -135,7 +139,7 @@ export function VariationMatrix({
                     ))}
                   </tr>
                   {rows.map((row) => (
-                    <MatrixRowView key={row.key} row={row} axes={value.axes} candidates={candidates} problems={problems[row.key] ?? []} onChange={(next) => onChange(withRow(value, next))} />
+                    <MatrixRowView key={row.key} row={row} axes={value.axes} candidates={candidates} problems={problems[row.key] ?? []} skuLocked={skuLocked && !!row.variantId} onChange={(next) => onChange(withRow(value, next))} />
                   ))}
                 </tbody>
               </table>
@@ -167,7 +171,7 @@ function ApplyAll({ label, onApply }: { label: string; onApply: (v: string) => v
   )
 }
 
-function MatrixRowView({ row, axes, candidates, problems, onChange }: { row: MatrixRow; axes: string[]; candidates: AxisCandidate[]; problems: string[]; onChange: (next: MatrixRow) => void }) {
+function MatrixRowView({ row, axes, candidates, problems, skuLocked, onChange }: { row: MatrixRow; axes: string[]; candidates: AxisCandidate[]; problems: string[]; skuLocked: boolean; onChange: (next: MatrixRow) => void }) {
   const combo = axes
     .map((axis) => {
       const cand = candidateFor(candidates, axis)
@@ -184,7 +188,7 @@ function MatrixRowView({ row, axes, candidates, problems, onChange }: { row: Mat
         </td>
         <td>{row.stranded ? `${row.sku} (not in the grid)` : combo}</td>
         <td>
-          <Input aria-label={`SKU for ${combo}`} value={row.sku} disabled={!row.included} onChange={(e) => set("sku")(e.target.value)} />
+          <Input aria-label={`SKU for ${combo}`} value={row.sku} disabled={!row.included} readOnly={skuLocked} aria-readonly={skuLocked || undefined} title={skuLocked ? SKU_LOCKED_HELP : undefined} onChange={(e) => { if (!skuLocked) set("sku")(e.target.value) }} />
         </td>
         <td>
           <Input aria-label={`MRP for ${combo}`} inputMode="decimal" value={row.mrp} disabled={!row.included} onChange={(e) => set("mrp")(e.target.value)} />

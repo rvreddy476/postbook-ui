@@ -32,7 +32,7 @@ const PostBoekApp: React.FC<{ initialSurface?: 'Home' | 'Feed' }> = ({ initialSu
   const initialTab = (() => {
     if (initialSurface === 'Feed') return 'Feed';
     const raw = searchParams?.get('tab');
-    const allowed: NavItem[] = ['Home', 'Chat', 'Reels', 'Friends', 'Profile', 'Messenger', 'Shop', 'Ask', 'Pages'];
+    const allowed: NavItem[] = ['Home', 'Chat', 'Reels', 'Profile', 'Messenger', 'Shop', 'Ask', 'Pages'];
     return raw && (allowed as string[]).includes(raw) ? (raw as NavItem) : 'Home';
   })();
   const [activeTab, setActiveTab] = useState<NavItem>(initialTab);
@@ -73,10 +73,6 @@ const PostBoekApp: React.FC<{ initialSurface?: 'Home' | 'Feed' }> = ({ initialSu
     }
     if (tab === 'Profile' && currentUser) {
       router.push(`/u/${currentUser.id}`);
-      return;
-    }
-    if (tab === 'Friends') {
-      router.push('/connections');
       return;
     }
     if (tab === 'Reels') {
@@ -326,8 +322,7 @@ const PostBoekApp: React.FC<{ initialSurface?: 'Home' | 'Feed' }> = ({ initialSu
           openChat. Uncomment this block to restore it.
 
           The SAME component is still live on two other pages, deliberately,
-          because nobody asked for those to change: the Circle friends list
-          (src/components/connections/FriendsView.tsx) and a group's members tab
+          because nobody asked for those to change: a group's members tab
           (src/components/groups/tabs/GroupMembersTab.tsx), where messaging
           someone in place is the point and navigating away would lose the
           list you were working through.

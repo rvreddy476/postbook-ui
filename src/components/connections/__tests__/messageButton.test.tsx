@@ -3,40 +3,33 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * The instruction was plain: tapping the message control sends a request and
- * does NOT open the messenger. It opened the messenger anyway — first because
- * I added a "they can already talk, so navigate" branch that was never asked
- * for, and then because the flag guarding that branch is ALSO false while the
- * permission check is in flight, so a quick tap raced it and navigated.
- *
- * Structural, because the failure is the PRESENCE of a navigation path rather
- * than a value some pure function returns. If the component has nothing to
- * navigate with, the bug cannot come back.
+ * DM consent contract §4: the Message control follows the server's decision
+ * and a tap OPENS THE THREAD (the earlier "a tap only sends, never navigates"
+ * rule is superseded). The labels and reasons are pure logic, tested in
+ * lib/chat/__tests__/dmConsent.test.ts; this guards the wiring.
  */
-const source = readFileSync(
-  join(import.meta.dir, '..', 'MessageButton.tsx'),
-  'utf8',
-);
+const source = readFileSync(join(import.meta.dir, '..', 'MessageButton.tsx'), 'utf8');
 
-describe('MessageButton never navigates', () => {
-  it('takes no navigation callback', () => {
-    expect(source).not.toContain('onMessage');
+describe('MessageButton', () => {
+  it('reads the decision through messageButtonView', () => {
+    expect(source).toContain("usePermissions([targetUserId], ['message'])");
+    expect(source).toContain('messageButtonView(');
   });
 
-  it('does not route by itself either', () => {
-    for (const escape of ['useRouter', 'router.push', 'next/link']) {
-      expect(source).not.toContain(escape);
-    }
-  });
-
-  it('sends by creating the conversation', () => {
+  it('opens the thread it created or found', () => {
     expect(source).toContain('getOrCreateDirectConversation');
+    expect(source).toContain('router.push(threadHref(created.id))');
   });
 
-  it('reports what the SERVER did, not what the client guessed', () => {
-    // The toast used to be chosen from the cached permission decision, which
-    // is precisely the value that is wrong while it is still loading.
-    expect(source).toContain('is_request');
+  it('decides "request" from the server flag, never from a missing one', () => {
+    // The bug: `is_request !== false` called a normal chat a request.
+    expect(source).not.toContain('is_request !== false');
+    expect(source).toContain('readCreatedConversation');
+  });
+
+  it('draws nothing for an unavailable person, and explains a refusal', () => {
+    expect(source).toContain("view.kind === 'hidden'");
+    expect(source).toContain('createConversationErrorText');
   });
 
   it('uses a round bubble', () => {

@@ -32,9 +32,9 @@ test("ascending alphabetical, always: the shared rows (the same as long video) p
   const html = renderToStaticMarkup(<ReelMoreMenu {...base} anchor="below" />);
   expect(drawnLabels(html)).toEqual([
     'Audio track', 'Auto scroll', 'Block Bee', 'Captions', 'Copy link', 'Description', "Don't recommend this channel",
-    'Not interested', 'Playback speed', 'Quality', 'Report', 'Save offline', 'Share', 'Use this sound',
+    'Not interested', 'Playback speed', 'Quality', 'Report', 'Use this sound',
   ]);
-  const marks = ['audio', 'auto-scroll', 'block', 'captions', 'copy-link', 'description', 'dont-recommend', 'not-interested', 'speed', 'quality', 'report', 'offline', 'share', 'use-sound'].map((k) => `data-row="${k}"`);
+  const marks = ['audio', 'auto-scroll', 'block', 'captions', 'copy-link', 'description', 'dont-recommend', 'not-interested', 'speed', 'quality', 'report', 'use-sound'].map((k) => `data-row="${k}"`);
   const at = marks.map((m) => html.indexOf(m));
   for (const [i, pos] of at.entries()) expect(pos, marks[i]).toBeGreaterThan(-1);
   expect([...at].sort((a, b) => a - b)).toEqual(at);
@@ -50,6 +50,9 @@ test("ascending alphabetical, always: the shared rows (the same as long video) p
   expect((html.match(/data-row="audio"/g) ?? []).length).toBe(1);
   expect(html).not.toContain('data-row="manage-audio"');
   expect(html).toContain('reel-frame-popover');
+  // No Share and no Save offline in More: Share is on the reel rail; copies are managed on the Offline page.
+  expect(html).not.toContain('data-row="share"');
+  expect(html).not.toContain('data-row="offline"');
 });
 
 test('a row appears only when it can work: one audio track, no captions, one rendition, sharing off, downloads off', () => {
@@ -92,11 +95,11 @@ test('quality, captions and audio show their current value; Auto scroll is a swi
 test('own reel: Audio tracks and Delete, no Edit, no feedback rows; the playback rows stay; Theater is not a row', () => {
   const html = renderToStaticMarkup(<ReelMoreMenu {...base} isOwn onManageAudio={noop} currentAudioTrack="t1" />);
   expect(drawnLabels(html)).toEqual([
-    'Audio track', 'Audio tracks', 'Auto scroll', 'Captions', 'Copy link', 'Delete', 'Description', 'Playback speed', 'Quality', 'Save offline', 'Share', 'Use this sound',
+    'Audio track', 'Audio tracks', 'Auto scroll', 'Captions', 'Copy link', 'Delete', 'Description', 'Playback speed', 'Quality', 'Use this sound',
   ]);
   expect((html.match(/data-row="audio"/g) ?? []).length).toBe(1);
   expect((html.match(/data-row="manage-audio"/g) ?? []).length).toBe(1);
-  for (const gone of ['block', 'report', 'not-interested', 'dont-recommend', 'edit', 'theater']) expect(html).not.toContain(`data-row="${gone}"`);
+  for (const gone of ['block', 'report', 'not-interested', 'dont-recommend', 'edit', 'theater', 'share', 'offline']) expect(html).not.toContain(`data-row="${gone}"`);
   // Without the audio dialog there is no Audio tracks row.
   const noDialog = renderToStaticMarkup(<ReelMoreMenu {...base} isOwn />);
   expect(noDialog).not.toContain('data-row="manage-audio"');
@@ -106,10 +109,10 @@ test("the card in CSS: the theme surface, radius 12, 4px padding, 40px rows 12px
   const css = readFileSync(resolve(import.meta.dir, '../components/reels-screen.css'), 'utf8');
   expect(css).toContain('.reel-more-menu[role="menu"] { padding: 4px; background: rgb(var(--brand-card)); color: rgb(var(--brand-text)); box-shadow: 0 12px 32px rgb(0 0 0 / .28); }');
   expect(css).toContain('.reel-more-menu[role="menu"] { width: 100%; border-radius: 12px;');
-  expect(css).toContain('.reel-more-menu__row { display: flex; width: 100%; min-width: 0; height: 40px; align-items: center; gap: 10px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: inherit; font-size: 14px; font-weight: 500;');
+  expect(css).toContain('.reel-more-menu__row { display: flex; width: 100%; min-width: 0; height: 40px; align-items: center; gap: 10px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: inherit; font-size: var(--type-sm); font-weight: 500;');
   expect(css).toContain('.reel-more-menu__icon { display: inline-flex; flex: 0 0 20px; width: 20px; height: 20px;');
-  expect(css).toContain('.reel-more-menu__value { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 2px; font-size: 12px; font-weight: 400; color: rgb(var(--brand-text) / .6); }');
-  expect(css).toContain('.reel-speed-panel__readout { font-size: 20px; font-weight: 700;');
+  expect(css).toContain('.reel-more-menu__value { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 2px; font-size: var(--type-xs); font-weight: 400; color: rgb(var(--brand-text) / .6); }');
+  expect(css).toContain('.reel-speed-panel__readout { font-size: var(--type-xl); font-weight: 700;');
   expect(css).toContain('.reel-speed-panel__slider input[type="range"] { flex: 1 1 auto; min-width: 0; height: 4px; margin: 0; accent-color: rgb(var(--brand-text)); cursor: pointer; }');
   expect(css).toContain('.reel-more-menu__chip { display: inline-flex; height: 30px;');
   expect(css).toContain('.reel-more-menu__switch { position: relative; display: inline-block; flex: 0 0 40px; width: 40px; height: 22px;');
@@ -122,7 +125,7 @@ test('Use this sound: last in the list, one row, gone when the creator turned re
   const html = renderToStaticMarkup(<ReelMoreMenu {...base} />);
   expect((html.match(/data-row="use-sound"/g) ?? []).length).toBe(1);
   expect(html).toContain('<span class="reel-more-menu__title">Use this sound</span>');
-  expect(html.indexOf('data-row="use-sound"')).toBeGreaterThan(html.indexOf('data-row="share"'));
+  expect(html.indexOf('data-row="use-sound"')).toBeGreaterThan(html.indexOf('data-row="report"'));
   const labels = drawnLabels(html);
   expect(labels.length).toBeGreaterThan(8);
   expect([...labels].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))).toEqual(labels);

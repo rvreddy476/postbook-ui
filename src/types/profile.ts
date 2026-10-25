@@ -28,12 +28,29 @@ export interface UserProfile {
     intro_media_type?: string
     cta_label?: string
     cta_url?: string
+    /**
+     * The profile Action button (contract 23 Oct 2026), the posts' read
+     * shape; features/action-button useProfileAction reads it (and asks the
+     * channel when a payload has no `action` key at all).
+     */
+    action?: unknown
     member_since_badge?: boolean
     timezone?: string
     follower_count: number
     following_count: number
     friend_count: number
     post_count: number
+    /**
+     * Private account (profile-service mirrors identity account_visibility).
+     * Display only: post-service gates the posts themselves.
+     */
+    is_private?: boolean
+    /**
+     * The signed-in viewer's edge toward this profile, from profile-service:
+     * none | requested (a pending follow request) | following. Absent for the
+     * owner, signed-out viewers and older services.
+     */
+    follow_status?: "none" | "requested" | "following"
     created_at: string
     updated_at: string
 }
@@ -96,6 +113,9 @@ export interface Relationship {
     // `connection_status` is one of: none, pending_sent, pending_received, accepted.
     is_connection?: boolean
     connection_status?: "none" | "pending_sent" | "pending_received" | "accepted"
+    // Private-account follow requests (graph-service): pending_sent means the
+    // viewer asked to follow and is waiting; pending_received the reverse.
+    follow_request_status?: "none" | "pending_sent" | "pending_received"
     // Block
     blocked: boolean
     blocked_by: boolean
@@ -141,11 +161,12 @@ export type ProfileTab =
     | "connections"
     | "videos"
     | "flicks"
+    | "members"
+    | "appears"
     | "stashed"
+    | "liked"
     | "portfolio"
     | "qa"
-    | "orders"
-    | "bookings"
 
 export interface PollOption {
     id: string
@@ -210,9 +231,14 @@ export interface PostDetail {
     no_likes?: boolean
     created_at: string
     updated_at: string
-    media?: { media_id: string; kind: string }[]
+    media?: PostMediaItem[]
     cover_media_id?: string
-    counts?: { likes: number; comments: number; shares?: number }
+    /**
+     * `saves` is post-service's bookmark count (post_detail.json golden);
+     * some older rows call it `bookmarks`. Absent on rows that do not carry
+     * it, which the post stage reads as "unknown", never as 0.
+     */
+    counts?: { likes: number; comments: number; shares?: number; saves?: number; bookmarks?: number }
     /** Display view count from analytics-service (videos/reels). */
     view_count?: number
     viewer_reaction?: string | null
@@ -244,13 +270,73 @@ export interface PostDetail {
     is_repost?: boolean
     reposted_by?: string
     feed_content_type?: string
-    // Tier 3c — Membership gating. tier_required_id != null means
-    // this post is members-only at that tier (or higher). When
-    // body_redacted is true, the heavy fields (text, rich_text,
-    // media, poll) are blanked by the backend; render a paywall
-    // preview instead.
+    // Members only (post-service members_read.go). tier_required_id != null
+    // means members of that level (or a dearer one) see it; it is on every
+    // gated row, members' too. body_redacted is true when this viewer is not
+    // one: text, rich_text, media, poll, tags and location are cleared and
+    // the card draws the lock (features/memberships). duration_ms is the
+    // longest video's length, kept on a redacted row.
     tier_required_id?: string | null
+    /** That level's monthly price on every gated row; absent when it could not be read (post-service members_tiers.go). */
+    tier_required_price_paise?: number | null
     body_redacted?: boolean
+    duration_ms?: number
+    /** Age-restricted (post-service age_gate.go): never embeddable. */
+    age_restricted?: boolean
+    /**
+     * The Action button (contract 23 Oct 2026), decoded by
+     * features/action-button decodeAction: {id, label, label_text, domain,
+     * href}; the author's copy adds url and status. Absent = none.
+     */
+    action?: unknown
+    /*
+      Declared labels and author settings, as post-service sends them on the
+      post read and feed-service passes them through on a feed row
+      (testdata/contracts/posts/post_detail.json, feed_row_photo_carousel.json).
+    */
+    paid_promotion?: boolean
+    is_branded?: boolean
+    ai_generated?: boolean
+    link_url?: string | null
+    language?: string | null
+    comment_access?: string | null
+    remix_setting?: string | null
+    hide_share?: boolean
+    allow_download?: boolean
+    has_reacted?: boolean
+    /** Hydrated by feed-service on a feed row; the direct post read leaves it out. */
+    author?: PostAuthor | null
+    /** The added sound, when the post plays one and this viewer may hear it. */
+    sound?: { id?: string | null; title?: string | null; artist?: string | null } | null
+    reason?: string | null
+    reason_text?: string | null
+}
+
+/** One media row on a post or feed row. Only media_id and kind are always present. */
+export interface PostMediaItem {
+    media_id: string
+    kind: string
+    position?: number
+    alt_text?: string | null
+    alt_decorative?: boolean
+    width?: number
+    height?: number
+    duration_ms?: number
+    status?: string
+    processing_status?: string
+    variants?: Record<string, string>
+    hls_url?: string | null
+    playback_url?: string | null
+    playback_kind?: string | null
+}
+
+/** The author block feed-service hydrates onto a row. */
+export interface PostAuthor {
+    id: string
+    display_name?: string
+    username?: string
+    avatar_media_id?: string | null
+    avatar_url?: string | null
 }
 
 // --- Stories ---
@@ -290,6 +376,9 @@ export interface ReactionToggleResult {
 }
 
 // --- Saved Items ---
+// The wire shapes (post-service store/postgres/saved.go:17-27,
+// service/saved_collections.go:82-90). The app reads them through the
+// decoders in features/saved/savedCollections.ts.
 
 export interface SavedItem {
     id: string
@@ -297,12 +386,19 @@ export interface SavedItem {
     target_type: string
     target_id: string
     collection_name: string
+    /** null = the default collection, All Saved. */
+    collection_id: string | null
     created_at: string
 }
 
 export interface SavedCollection {
+    /** null = the default collection, All Saved. */
+    id: string | null
     name: string
     count: number
+    is_default: boolean
+    created_at?: string
+    updated_at?: string
 }
 
 // --- About ---
@@ -652,15 +748,6 @@ export function getBadges(flags: number): string[] {
     if (flags & BADGE_CREATOR) badges.push("creator")
     if (flags & BADGE_BUSINESS) badges.push("business")
     return badges
-}
-
-export interface ProfilePin {
-    id: string
-    user_id: string
-    content_type: string
-    content_id: string
-    display_order: number
-    created_at: string
 }
 
 export interface PortfolioItem {

@@ -75,6 +75,12 @@ export interface ChannelPatch {
   links?: ChannelLink[];
   contact_email?: string;
   featured_post_id?: string | null;
+  /**
+   * The profile Action button: {label, url}, or null to remove it. Saved on
+   * its own from the Action button card (features/action-button), never by
+   * channelPatch.
+   */
+  action?: { label: string; url: string } | null;
 }
 
 export type FieldErrors = Partial<Record<BrandingField, string>> & {
@@ -284,6 +290,7 @@ export interface ApiFieldError {
 
 const CODE_TO_FIELD: Record<string, BrandingField> = {
   INVALID_NAME: "name",
+  CHANNEL_NAME_TAKEN: "name",
   INVALID_HANDLE: "handle",
   HANDLE_TAKEN: "handle",
   INVALID_ABOUT: "about",

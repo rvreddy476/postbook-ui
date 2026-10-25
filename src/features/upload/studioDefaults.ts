@@ -1,5 +1,4 @@
 import type { PublishDefaults } from "@/features/posttube/hub/publishDefaults";
-import type { LicenseType } from "@/features/reels/types";
 
 import type { ContentType } from "./tokens";
 import { keepChosenSound } from "./studioSound";
@@ -7,21 +6,18 @@ import { INITIAL_FORM_STATE, type StudioFormState } from "./types";
 
 /*
   Creator Hub → Preferences prefill a new long-video draft: visibility,
-  topic, comments, language and license. A field is filled only while it
-  still holds the studio's initial value — whatever the draft (or the
-  creator) already set is never overwritten. Reels and flicks keep their
-  own studio defaults: the preferences are for videos.
+  topic, comments and language. A field is filled only while it still
+  holds the studio's initial value — whatever the draft (or the creator)
+  already set is never overwritten. Reels and flicks keep their own studio
+  defaults: the preferences are for videos. The license preference is not
+  applied at upload any more (the studio no longer asks for a license,
+  2026-10-21); the Creator Hub sets it per video.
 */
 
 /** The studios the preferences apply to. */
 export function takesPublishDefaults(contentType: ContentType): boolean {
   return contentType === "long" || contentType === "podcast";
 }
-
-const LICENSE_FROM_DEFAULT: Record<PublishDefaults["license"], LicenseType> = {
-  standard: "standard",
-  "cc-by": "creative_commons",
-};
 
 /**
  * The patch that applies `defaults` to `form`: only the keys that are
@@ -38,8 +34,6 @@ export function mergePublishDefaults(form: StudioFormState, defaults: PublishDef
   if (untouched("category") && defaults.topic) patch.category = defaults.topic;
   if (untouched("commentsEnabled") && defaults.comments === false) patch.commentsEnabled = false;
   if (untouched("language") && defaults.language && defaults.language !== form.language) patch.language = defaults.language;
-  const license = LICENSE_FROM_DEFAULT[defaults.license];
-  if (untouched("license") && license && license !== form.license) patch.license = license;
 
   return patch;
 }

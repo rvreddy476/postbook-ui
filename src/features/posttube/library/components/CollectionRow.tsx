@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ChevronDown, ChevronUp, GripVertical, Loader2, X } from "lucide-react";
 import type { DragEvent } from "react";
 
-import { formatCount, formatDuration, rowToVideo, timeAgo } from "../../model";
+import { formatCount, formatDuration, rowToVideo, timeAgo, viewsLabel } from "../../model";
 import type { CollectionItem } from "../libraryApi";
 
 export interface CollectionRowProps {
@@ -34,7 +34,7 @@ export function CollectionRow({ item, index, count, listId, canEdit, removing, d
   const href = `/posttube/watch/${encodeURIComponent(item.postId)}?list=${encodeURIComponent(listId)}`;
   const title = video?.title || "Untitled video";
   const meta = video
-    ? [video.channel_name, video.view_count > 0 ? `${formatCount(video.view_count)} views` : null, video.published_at ? timeAgo(video.published_at) : null].filter(Boolean).join(" · ")
+    ? [video.channel_name, video.view_count > 0 ? viewsLabel(video.view_count) : null, video.published_at ? timeAgo(video.published_at) : null].filter(Boolean).join(" · ")
     : "";
   const className = [
     "tube-library__row",

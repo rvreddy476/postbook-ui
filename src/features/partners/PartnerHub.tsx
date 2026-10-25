@@ -9,6 +9,8 @@ import { VideoShell } from "@/features/video-shell/VideoShell"
 import { WorkspaceNavigation } from "@/features/video-shell/WorkspaceShell"
 import { BusinessPartnerSelect } from "@/components/auth/BusinessPartnerSelect"
 import { PARTNER_MENU, portalRole } from "@/components/auth/portalRoles"
+import { useProductFeatures } from "@/hooks/useProductFeatures"
+import { visiblePartnerItems } from "@/lib/productFeatures"
 import { businessSelections, type BusinessPartnerId } from "@/components/auth/partnerPortal"
 import "@/components/auth/partnerPortal.css"
 
@@ -29,7 +31,9 @@ function PartnerAccount({ userId, initial }: { userId: string; initial: Business
   useEffect(() => {
     if (ready) try { localStorage.setItem(key, selected.join(",")) } catch { /* Nothing security-sensitive is stored here. */ }
   }, [key, ready, selected])
-  const choices = selected.length ? PARTNER_MENU.filter(item => selected.includes(item.id)) : PARTNER_MENU
+  // A business whose product the gateway has closed (GET /v1/features) is not offered.
+  const menu = visiblePartnerItems(PARTNER_MENU, useProductFeatures().state)
+  const choices = selected.length ? menu.filter(item => selected.includes(item.id)) : menu
   return <div className="partner-hub"><VideoShell app="workspace" header={<HeaderBar hideSearch hideCreate brand={{ key: "partners", name: "Clee Partners", href: "/partners", icon: BriefcaseBusiness, searchPlaceholder: "", prefixes: ["/partners"] }} />} navigation={props => <WorkspaceNavigation {...props} partner title="Partner workspace" links={[]} />}>
     <main className="partner-hub__content"><h1>Your businesses. One partner account.</h1><p>Choose the workspaces you need. Complete each business's own details and verification before you can start operating.</p>
       <div className="partner-hub__selection"><BusinessPartnerSelect value={selected} onChange={setSelected} /><p>You can add more business types at any time. Choosing a type doesn't submit or approve an application.</p></div>

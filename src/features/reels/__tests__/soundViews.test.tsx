@@ -110,13 +110,14 @@ describe("where the sound line is drawn", () => {
     expect(screen).toContain("nextSoundStep({ reel: target, signedIn: Boolean(viewerId), intent })");
   });
 
-  test("the rail disc opens the sound's page when the reel plays one, the profile when not", () => {
+  test("no sound disc on the rail (19 Oct): its foot is the author's profile picture, even with a sound", () => {
     const base = { isOwn: false, following: false as const, followPending: false, onToggleFollow: noop, onLike: noop, onComments: noop, onShare: noop, onSave: noop };
-    const sounding = renderToStaticMarkup(<ReelRail {...base} reel={withSound} playing />);
-    expect(sounding).toContain('class="reel-rail-disc" aria-label="Sound: Original sound - Asha" data-sound="" data-playing="" href="/reels/sound/s-1"');
-    const silent = renderToStaticMarkup(<ReelRail {...base} reel={plain} />);
-    expect(silent).toContain('class="reel-rail-disc" aria-label="More from Bee" href="/u/bee"');
-    expect(renderToStaticMarkup(<ReelRail {...base} reel={withSound} variant="phone" />)).not.toContain("reel-rail-disc");
+    for (const variant of ["desktop", "phone"] as const) {
+      const html = renderToStaticMarkup(<ReelRail {...base} reel={withSound} variant={variant} />);
+      expect(html).not.toContain("reel-rail-disc");
+      expect(html).not.toContain("/reels/sound/");
+      expect(html).toContain('class="reel-rail-avatar"');
+    }
   });
 });
 
@@ -229,15 +230,15 @@ describe("the CSS: small type, tokens only", () => {
 
   test("the sound line is 12px/600 and takes its colour from the stage or the card", () => {
     expect(block).toContain(".reel-sound-line { display: flex; width: fit-content; max-width: 100%; min-width: 0; align-items: center; gap: 6px; margin: 6px 0 0;");
-    expect(block).toContain("font-size: 12px; line-height: 16px; font-weight: 600;");
+    expect(block).toContain("font-size: var(--type-xs); line-height: 16px; font-weight: 600;");
     expect(block).toContain(".reel-sound-line.is-stage { color: rgb(var(--reel-on-stage) / .9); }");
     expect(block).toContain(".reel-sound-line.is-card { margin-top: 8px; color: rgb(var(--brand-text) / .7); }");
   });
 
   test("the sound page's meta is 12-13px", () => {
-    expect(block).toContain(".sound-page__creator { margin: 2px 0 0; font-size: 13px;");
-    expect(block).toContain(".sound-page__count { margin: 2px 0 0; font-size: 12px;");
-    expect(block).toContain(".sound-page__badge { position: absolute; top: 8px; left: 8px; padding: 2px 8px; border-radius: 999px; font-size: 11px;");
+    expect(block).toContain(".sound-page__creator { margin: 2px 0 0; font-size: var(--type-sm);");
+    expect(block).toContain(".sound-page__count { margin: 2px 0 0; font-size: var(--type-xs);");
+    expect(block).toContain(".sound-page__badge { position: absolute; top: 8px; left: 8px; padding: 2px 8px; border-radius: 999px; font-size: var(--type-xs);");
   });
 
   test("no hex value and no literal colour anywhere in the new rules", () => {

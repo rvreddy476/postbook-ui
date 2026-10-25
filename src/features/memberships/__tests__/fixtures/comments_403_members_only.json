@@ -1,0 +1,9 @@
+{
+  "error": {
+    "code": "MEMBERS_ONLY",
+    "message": "Comments on this post are for members only"
+  },
+  "meta": {
+    "request_id": "req-7"
+  }
+}

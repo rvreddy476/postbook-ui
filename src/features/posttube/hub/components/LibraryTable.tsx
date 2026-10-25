@@ -4,6 +4,9 @@ import Link from "next/link";
 import { ArrowDown, ArrowUp } from "lucide-react";
 
 import { formatCount, formatDuration } from "@/features/posttube/model";
+import { ActionTaps } from "@/features/action-button/components/ActionPill";
+import { statusExplanation } from "@/features/action-button/model";
+import { CopyrightReviewNotice } from "@/features/copyright/components/CopyrightReviewNotice";
 import { isShortType, watchHref, type HubLibraryRow } from "../hubApi";
 import { formatDateTime, rowDate, type LibrarySortKey, type SortDir } from "../hubModel";
 import { useContentInsights, useInView } from "../hooks/useHub";
@@ -22,6 +25,21 @@ function RowSparkline({ postId }: { postId: string }) {
     <span ref={ref} title={q.data ? "Views per day, last 28 days" : undefined}>
       <Sparkline values={values} />
     </span>
+  );
+}
+
+/* ── Action button: its label and taps, asked once the row is on screen ── */
+
+function RowAction({ row }: { row: HubLibraryRow }) {
+  const [ref, seen] = useInView<HTMLDivElement>();
+  if (!row.action) return null;
+  const status = statusExplanation(row.action.status);
+  return (
+    <div ref={ref} className="hub-row-meta" data-row-action>
+      {row.action.labelText}
+      {status ? ` · ${status.title}` : null}
+      <ActionTaps postId={row.id} enabled={seen} prefix=" · " />
+    </div>
   );
 }
 
@@ -90,6 +108,7 @@ export function LibraryTable({ rows, selected, onToggle, onToggleAll, sortKey, s
             <th>Visibility</th>
             <SortHead label="Published" k="published" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
             <SortHead label="Views" k="views" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="num" />
+            <SortHead label="Likes" k="likes" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="num" />
             <SortHead label="Comments" k="comments" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="num" />
           </tr>
         </thead>
@@ -113,6 +132,8 @@ export function LibraryTable({ rows, selected, onToggle, onToggleAll, sortKey, s
                         {row.title}
                       </Link>
                       <div className="hub-row-meta">{rowMeta(row)}</div>
+                      <RowAction row={row} />
+                      {row.copyright_review ? <CopyrightReviewNotice postId={row.id} review={row.copyright_review} variant="row" /> : null}
                       <RowHoverActions row={row} onEdit={actions.onEdit} onCopyLink={actions.onCopyLink} onDelete={actions.onDelete} />
                     </span>
                   </div>
@@ -132,6 +153,7 @@ export function LibraryTable({ rows, selected, onToggle, onToggleAll, sortKey, s
                   {formatCount(row.view_count)}
                   <RowSparkline postId={row.id} />
                 </td>
+                <td className="num">{formatCount(row.like_count)}</td>
                 <td className="num">{formatCount(row.comment_count)}</td>
               </tr>
             );

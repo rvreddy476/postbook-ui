@@ -63,14 +63,14 @@ function ScheduledRow({ post, toast }: { post: ScheduledPost; toast: Toast }) {
         {video.thumbnail_url ? (
           <img src={video.thumbnail_url} alt="" className="h-full w-full object-cover" loading="lazy" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-[11px] text-muted-foreground">No poster</div>
+          <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">No poster</div>
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <Link href={isVideo ? `/posttube/watch/${post.id}` : `/post/${post.id}`} className="line-clamp-2 text-[14px] font-semibold leading-tight text-brand-text hover:text-primary-ink">
+        <Link href={isVideo ? `/posttube/watch/${post.id}` : `/post/${post.id}`} className="line-clamp-2 text-sm font-semibold leading-tight text-brand-text hover:text-primary-ink">
           {video.title}
         </Link>
-        <p className="mt-1 text-[12px] text-muted-foreground">
+        <p className="mt-1 text-xs text-muted-foreground">
           {publishAt ? `Goes live ${new Date(publishAt).toLocaleString()}` : "No time set"}
           {post.content_type ? ` · ${post.content_type.replace("_", " ")}` : ""}
         </p>
@@ -81,17 +81,17 @@ function ScheduledRow({ post, toast }: { post: ScheduledPost; toast: Toast }) {
               value={when}
               min={toLocalInputValue(new Date().toISOString())}
               onChange={(e) => setWhen(e.target.value)}
-              className="rounded-lg border border-border bg-brand-bg px-2 py-1.5 text-[12px] text-brand-text"
+              className="rounded-lg border border-border bg-brand-bg px-2 py-1.5 text-xs text-brand-text"
             />
             <button
               type="button"
               onClick={reschedule}
               disabled={update.isPending || !when}
-              className="rounded-full bg-primary-ink px-3 py-1.5 text-[12px] font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+              className="rounded-full bg-primary-ink px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
             >
               {update.isPending ? "Saving..." : "Save"}
             </button>
-            <button type="button" onClick={() => setEditing(false)} className="rounded-full px-3 py-1.5 text-[12px] font-semibold text-brand-text hover:bg-brand-secondary">
+            <button type="button" onClick={() => setEditing(false)} className="rounded-full px-3 py-1.5 text-xs font-semibold text-brand-text hover:bg-brand-secondary">
               Cancel
             </button>
           </div>
@@ -102,7 +102,7 @@ function ScheduledRow({ post, toast }: { post: ScheduledPost; toast: Toast }) {
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="flex items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-[12px] font-semibold text-brand-text hover:bg-brand-secondary"
+            className="flex items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-xs font-semibold text-brand-text hover:bg-brand-secondary"
           >
             <CalendarClock className="h-3.5 w-3.5" /> Reschedule
           </button>
@@ -110,7 +110,7 @@ function ScheduledRow({ post, toast }: { post: ScheduledPost; toast: Toast }) {
             type="button"
             onClick={publishNow}
             disabled={update.isPending}
-            className="flex items-center gap-1.5 rounded-full bg-primary-ink px-3.5 py-1.5 text-[12px] font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-full bg-primary-ink px-3.5 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
           >
             {update.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />} Publish now
           </button>
@@ -134,20 +134,20 @@ export default function PosttubeScheduledPage() {
         </div>
         <div>
           <h1 className="text-2xl font-semibold text-brand-text">Scheduled</h1>
-          <p className="text-[12px] text-muted-foreground">Posts and videos waiting for their publish time.</p>
+          <p className="text-xs text-muted-foreground">Posts and videos waiting for their publish time.</p>
         </div>
       </div>
 
       {!user ? (
-        <div className="py-16 text-center text-[13px] text-muted-foreground">Sign in to see your scheduled posts.</div>
+        <div className="py-16 text-center text-sm text-muted-foreground">Sign in to see your scheduled posts.</div>
       ) : scheduled.isLoading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : scheduled.isError ? (
-        <div className="py-16 text-center text-[13px] text-muted-foreground">Could not load your scheduled posts.</div>
+        <div className="py-16 text-center text-sm text-muted-foreground">Could not load your scheduled posts.</div>
       ) : rows.length === 0 ? (
-        <div className="py-16 text-center text-[13px] text-muted-foreground">
+        <div className="py-16 text-center text-sm text-muted-foreground">
           Nothing scheduled.{" "}
           <Link href="/posttube/upload?type=long" className="font-semibold text-primary-ink hover:underline">
             Upload a video

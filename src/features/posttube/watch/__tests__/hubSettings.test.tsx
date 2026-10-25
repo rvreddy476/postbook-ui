@@ -54,9 +54,10 @@ describe("hide_like_count", () => {
     expect(normalizeWatchDetail(base, rowToVideo(base)).likeCountHidden).toBe(false);
   });
 
-  test("the Like button reads Like with no number when hidden", () => {
+  test("the Like button is the thumb alone, with no number, when hidden", () => {
     const hidden = renderToStaticMarkup(<WatchActions {...actionsBase} likeCount={null} />);
-    expect(hidden).toContain('class="tube-actions__count">Like<');
+    expect(hidden).not.toContain("tube-actions__count");
+    expect(hidden).toContain('aria-label="Like"');
     expect(hidden).not.toMatch(/tube-actions__count">\d/);
     const shown = renderToStaticMarkup(<WatchActions {...actionsBase} likeCount={1200} />);
     expect(shown).toContain('class="tube-actions__count">1.2K<');

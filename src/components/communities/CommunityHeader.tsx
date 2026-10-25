@@ -1,10 +1,11 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
-import { BadgeCheck, Bell, BellOff, Check, ChevronDown, Copy, MoreHorizontal, Pencil, Share2, Trash2, Flag, Users } from 'lucide-react'
+import { BadgeCheck, Bell, BellOff, Check, ChevronDown, Copy, MoreHorizontal, Pencil, Trash2, Flag, Users } from 'lucide-react'
 import { useJoinCommunity, useLeaveCommunity } from '@/hooks/useCommunities'
 import { isAtLeast } from '@/lib/communityRoles'
 import type { Community } from '@/types/communities'
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
 interface CommunityHeaderProps {
   community: Community
@@ -173,7 +174,7 @@ const CommunityHeader: React.FC<CommunityHeaderProps> = ({ community, canEdit, o
                 onClick={copyLink}
                 className="p-2 text-brand-text/70 hover:text-brand-text hover:bg-white dark:hover:bg-brand-bg rounded-xl transition-all shadow-xs"
               >
-                <Share2 className="w-4 h-4" />
+                <ShareIcon className="w-4 h-4" />
               </button>
               <div className="relative" ref={moreMenuRef}>
                 <button

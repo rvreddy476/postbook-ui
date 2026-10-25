@@ -89,6 +89,10 @@ export interface SellerWire {
   business_page_id?: string
   seller_type?: string
   business_type?: string
+  /** all_categories | books_only (migration 045). Absent from an older server: read as all_categories. */
+  sell_scope?: string
+  /** The business name the books-only path asks for. */
+  legal_business_name?: string
   store_name: string
   brand_name?: string
   owner_name?: string
@@ -227,10 +231,12 @@ export function sellerNeedsWizard(status: string): boolean {
 
 // ── The wizard ──────────────────────────────────────────────────
 
-export const WIZARD_STEPS = ["basic", "storefront", "documents", "fulfillment", "payout", "readiness"] as const
+/** "scope" is "What will you sell?" — first, because it decides what the rest of the application asks for. */
+export const WIZARD_STEPS = ["scope", "basic", "storefront", "documents", "fulfillment", "payout", "readiness"] as const
 export type WizardStep = (typeof WIZARD_STEPS)[number]
 
 export const WIZARD_STEP_LABEL: Record<WizardStep, string> = {
+  scope: "What you sell",
   basic: "Basic details",
   storefront: "Storefront",
   documents: "Documents",
@@ -244,21 +250,46 @@ export interface ReadinessWire {
   ready: boolean
   missing: string[]
   detail?: {
+    sell_scope?: string
     has_store_name?: boolean
     has_email?: boolean
     has_pickup_address?: boolean
     has_payout_account?: boolean
     has_kyc_document?: boolean
+    has_gstin?: boolean
+    has_pan?: boolean
+    has_business_name?: boolean
+    has_business_address?: boolean
+    has_address_proof?: boolean
   }
 }
 
-/** The five `missing[]` codes SellerReadiness.Missing() can name, each with the step that fixes it. */
+/** Every `missing[]` code SellerReadiness.Missing() can name, each with the step that fixes it. */
 export const MISSING_CODES: Record<string, { label: string; step: WizardStep }> = {
+  sell_scope: { label: "What you sell", step: "scope" },
+  gstin: { label: "GSTIN", step: "scope" },
+  pan: { label: "PAN", step: "scope" },
+  business_name: { label: "Business name", step: "scope" },
+  business_address: { label: "Business address", step: "scope" },
+  address_proof: { label: "Proof of address", step: "documents" },
   store_name: { label: "Store name", step: "basic" },
   email: { label: "Contact email", step: "basic" },
   pickup_address: { label: "Pickup address", step: "fulfillment" },
   payout_account: { label: "Payout account", step: "payout" },
   kyc_document: { label: "A KYC document", step: "documents" },
+}
+
+const BASE_CHECKLIST = ["store_name", "email", "pickup_address", "payout_account", "kyc_document"] as const
+
+/** The review step's checklist for a scope, in SellerReadiness.Missing() order: the scope's own items, then the shared ones. */
+export function checklistCodes(scope: string | null | undefined): string[] {
+  if (scope === "books_only") return ["pan", "business_name", "business_address", "address_proof", ...BASE_CHECKLIST]
+  return ["gstin", ...BASE_CHECKLIST]
+}
+
+/** A seller row's scope; an older server sends none, which is the column default. */
+export function sellerScope(seller: Pick<SellerWire, "sell_scope"> | null | undefined): "all_categories" | "books_only" {
+  return seller?.sell_scope === "books_only" ? "books_only" : "all_categories"
 }
 
 export interface MissingItem {
@@ -300,29 +331,37 @@ export function missingFromSubmitError(error: unknown): string[] | null {
     .filter((s) => /^[a-z_]+$/.test(s))
 }
 
-/** Which steps the readiness answer says are done. Storefront is optional and never blocks. */
+/**
+ * Which steps the readiness answer says are done. Storefront is optional and never blocks.
+ *
+ * "What you sell" is done when the scope's own facts are: a GSTIN for all
+ * categories; PAN, business name and business address for books only. On the
+ * books path the documents step also needs the proof of address.
+ */
 export function completedSteps(readiness: ReadinessWire | null | undefined): Set<WizardStep> {
   const done = new Set<WizardStep>()
   const d = readiness?.detail
   if (!d) return done
+  const books = d.sell_scope === "books_only"
+  if (books ? d.has_pan && d.has_business_name && d.has_business_address : d.sell_scope === "all_categories" && d.has_gstin) done.add("scope")
   if (d.has_store_name && d.has_email) done.add("basic")
-  if (d.has_kyc_document) done.add("documents")
+  if (d.has_kyc_document && (!books || d.has_address_proof)) done.add("documents")
   if (d.has_pickup_address) done.add("fulfillment")
   if (d.has_payout_account) done.add("payout")
   return done
 }
 
 /**
- * Step gating. Basic details must exist before any other step (every other
- * write needs the seller row those two fields anchor). Storefront is optional.
- * Documents, fulfilment and payout unlock together after basic; the review
- * step is reachable once every REQUIRED step is complete, so the seller sees
- * the checklist before the server does.
+ * Step gating. "What you sell" and basic details are always open (both write
+ * the seller row /onboarding/start created). Every other step waits for basic
+ * details. Storefront is optional. The review step is reachable once every
+ * REQUIRED step is complete, so the seller sees the checklist before the
+ * server does.
  */
 export function stepUnlocked(step: WizardStep, done: ReadonlySet<WizardStep>): boolean {
-  if (step === "basic") return true
+  if (step === "basic" || step === "scope") return true
   if (!done.has("basic")) return false
-  if (step === "readiness") return done.has("documents") && done.has("fulfillment") && done.has("payout")
+  if (step === "readiness") return done.has("scope") && done.has("documents") && done.has("fulfillment") && done.has("payout")
   return true
 }
 
@@ -338,11 +377,12 @@ export function firstOpenStep(done: ReadonlySet<WizardStep>): WizardStep {
 
 // ── Step bodies ─────────────────────────────────────────────────
 
-/** POST /onboarding/start. */
+/** POST /onboarding/start. `sell_scope` is the "What will you sell?" answer; the server defaults it to all_categories. */
 export interface StartBody {
   store_name: string
   email: string
   seller_type: SellerType
+  sell_scope?: "all_categories" | "books_only"
 }
 
 /** sellers.seller_type CHECK (setup.sql): individual, business, brand_owner, local_retailer. The start form offers the two a person picks between. */
@@ -385,15 +425,19 @@ export interface StorefrontBody {
   support_email?: string
 }
 
-/** postgres.SellerDocumentTypes, minus nothing: the CHECK constraint's vocabulary. */
+/** postgres.SellerDocumentTypes, minus nothing: the CHECK constraint's vocabulary (widened by migration 045). */
 export const DOCUMENT_TYPES = [
   "address_proof",
+  "bank_statement",
   "business_registration",
   "cancelled_cheque",
+  "electricity_bill",
   "gst_certificate",
   "other",
   "pan_card",
   "passport",
+  "telephone_bill",
+  "voter_id",
   "aadhaar",
 ] as const
 export type DocumentType = (typeof DOCUMENT_TYPES)[number]
@@ -401,12 +445,38 @@ export type DocumentType = (typeof DOCUMENT_TYPES)[number]
 export const DOCUMENT_TYPE_LABEL: Record<DocumentType, string> = {
   aadhaar: "Aadhaar (document image only)",
   address_proof: "Address proof",
+  bank_statement: "Bank statement",
   business_registration: "Business registration",
   cancelled_cheque: "Cancelled cheque",
+  electricity_bill: "Electricity bill",
   gst_certificate: "GST certificate",
   other: "Other",
   pan_card: "PAN card",
   passport: "Passport",
+  telephone_bill: "Telephone bill",
+  voter_id: "Voter ID",
+}
+
+/** postgres.AddressProofDocumentTypes, in the order the books-only form lists them. */
+export const ADDRESS_PROOF_TYPES = ["voter_id", "passport", "electricity_bill", "telephone_bill", "bank_statement"] as const
+export type AddressProofType = (typeof ADDRESS_PROOF_TYPES)[number]
+
+/** postgres.TwoSidedDocumentTypes: the address is on the back, so both sides are uploaded. */
+export const TWO_SIDED_TYPES: readonly DocumentType[] = ["voter_id", "passport"]
+
+/** service.imageOnlyDocumentTypes: stored as the upload alone; the server refuses a number. */
+export const IMAGE_ONLY_TYPES: readonly DocumentType[] = ["electricity_bill", "telephone_bill", "bank_statement"]
+
+export function isAddressProofType(t: string): t is AddressProofType {
+  return (ADDRESS_PROOF_TYPES as readonly string[]).includes(t)
+}
+
+export function isTwoSided(t: string): boolean {
+  return (TWO_SIDED_TYPES as readonly string[]).includes(t)
+}
+
+export function isImageOnly(t: string): boolean {
+  return (IMAGE_ONLY_TYPES as readonly string[]).includes(t)
 }
 
 /** Alphabetical by label, for the picker. */
@@ -420,14 +490,18 @@ export function documentTypeOptions(): { value: DocumentType; label: string }[] 
 export interface DocumentBody {
   document_type: DocumentType
   media_id: string
-  /** Never for `aadhaar`; the server refuses it and this build never asks for it. */
+  /** Never for `aadhaar`, a bill or a bank statement; the server refuses it and this build never sends it. */
   document_number?: string
+  /** The back of a voter ID or passport (migration 045). Never on a single-sided document. */
+  back_media_id?: string
 }
 
 export interface DocumentDraft {
   document_type: DocumentType
   media_id: string
   document_number: string
+  /** Only read for a two-sided document. */
+  back_media_id?: string
 }
 
 /**
@@ -444,10 +518,12 @@ export function documentsPayload(drafts: readonly DocumentDraft[]): DocumentBody
     const media = d.media_id.trim()
     if (!media) continue
     const body: DocumentBody = { document_type: d.document_type, media_id: media }
-    if (d.document_type !== "aadhaar") {
+    if (d.document_type !== "aadhaar" && !isImageOnly(d.document_type)) {
       const number = d.document_number.trim()
       if (number) body.document_number = number
     }
+    const back = (d.back_media_id ?? "").trim()
+    if (back && isTwoSided(d.document_type)) body.back_media_id = back
     out.push(body)
   }
   return out
@@ -459,8 +535,15 @@ export function looksLikeAadhaar(raw: string): boolean {
   return /^\d{12}$/.test(digits)
 }
 
-/** What is wrong with the documents step before it is sent, or null. */
-export function validateDocuments(drafts: readonly DocumentDraft[]): string | null {
+/**
+ * What is wrong with the documents step before it is sent, or null.
+ *
+ * A books-only shop also needs one proof of address (readiness's
+ * `address_proof`): a voter ID or passport with BOTH sides, or a bill or bank
+ * statement. A two-sided document uploaded with one side is saved, but the
+ * step says so rather than pretending the proof is complete.
+ */
+export function validateDocuments(drafts: readonly DocumentDraft[], scope: string = "all_categories"): string | null {
   const sent = documentsPayload(drafts)
   if (sent.length === 0) return "Upload at least one document."
   const seen = new Set<string>()
@@ -469,6 +552,14 @@ export function validateDocuments(drafts: readonly DocumentDraft[]): string | nu
     seen.add(d.document_type)
     if (d.document_number && d.document_type !== "cancelled_cheque" && looksLikeAadhaar(d.document_number)) {
       return "That looks like an Aadhaar number. Leave the number blank; the uploaded document is enough."
+    }
+    if (d.back_media_id && d.back_media_id === d.media_id) return "The back must be a different photo from the front."
+  }
+  if (scope === "books_only") {
+    const proofs = sent.filter((d) => isAddressProofType(d.document_type))
+    if (proofs.length === 0) return "Upload a proof of address: a voter ID, passport, electricity bill, telephone bill or bank statement."
+    if (!proofs.some((d) => !isTwoSided(d.document_type) || !!d.back_media_id)) {
+      return "Upload the back of the voter ID or passport as well; the address is on the back."
     }
   }
   return null
@@ -497,7 +588,8 @@ export function fulfillmentPayload(input: { dispatch_sla_hours: number; return_s
 
 /** PUT /seller/address (sellerAddressReq). */
 export interface SellerAddressBody {
-  address_type: "pickup"
+  /** "business" is the books-only path's business address (migration 045); it never counts as the pickup point. */
+  address_type: "pickup" | "business"
   contact_name: string
   phone: string
   address_line_1: string
@@ -550,6 +642,11 @@ export function pickupAddressPayload(d: PickupAddressDraft): SellerAddressBody {
     country: "IN",
     is_default: true,
   }
+}
+
+/** The books-only path's business address: the same body and checks as the pickup point, filed as address_type "business". */
+export function businessAddressPayload(d: PickupAddressDraft): SellerAddressBody {
+  return { ...pickupAddressPayload(d), address_type: "business" }
 }
 
 /** PUT /onboarding/step/payout (savePayoutReq). */

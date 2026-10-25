@@ -1,16 +1,30 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthUser } from "@/store/auth"
-import { useAggregatedProfile } from "@/hooks/useAggregatedProfile"
+import { profileErrorStatus, useAggregatedProfile } from "@/hooks/useAggregatedProfile"
 import { ProfileHeader } from "./ProfileHeader"
-import { ProfileTabs } from "./ProfileTabs"
+import { LikedTab } from "./tabs/LikedTab"
+import { PrivateProfileView } from "./states/PrivateProfileView"
+import { ProfileTabError } from "./states/ProfileTabError"
+import { ReportProfileDialog } from "./ReportProfileDialog"
+import { ShareSheet } from "@/features/reels/components/ShareSheet"
+import { followButtonState, profileShareUrl, profileViewState } from "./profileParity"
+import { withShareRef } from "@/features/share/shareRef"
+import { ProfileTabs, type ProfileTabKey } from "./ProfileTabs"
+import { PinnedPosts } from "./PinnedPosts"
+import { RepostsTab } from "./tabs/RepostsTab"
 import ProfileQASection from "./ProfileQASection"
 import { CreationsTab } from "./tabs/CreationsTab"
 import { AboutTab } from "./tabs/AboutTab"
 import { ConnectionsTab } from "./tabs/ConnectionsTab"
 import { VideosTab } from "./tabs/VideosTab"
+import { AppearsInTab } from "./tabs/AppearsInTab"
+import { useAppearanceRows } from "@/features/posttube/credits/useCredits"
+import { MembersTab } from "@/features/memberships/components/MembersTab"
+import { useCreatorLevels } from "@/features/memberships/hooks"
+import { activeLevels } from "@/features/memberships/model"
 import { FlicksTab } from "./tabs/FlicksTab"
 import { StashedTab } from "./tabs/StashedTab"
 import MutualFriendsCard from "./sidebar/MutualFriendsCard"
@@ -20,40 +34,30 @@ import { ProfileSkeleton } from "./states/ProfileSkeleton"
 import { BlockedProfileView } from "./states/BlockedProfileView"
 import { UnavailableProfileView } from "./states/UnavailableProfileView"
 import { useFollowUser, useUnfollowUser } from "@/hooks/useEditProfile"
-import {
-    useRemoveFriend,
-} from "@/hooks/useConnections"
 import { useContentCounts } from "@/hooks/useProfilePosts"
 import { useBlockUser, useUnblockUser } from "@/hooks/useBlocking"
 import { useMuteUser, useUnmuteUser } from "@/hooks/useMuting"
-import { useUserChannels } from "@/hooks/useChannels"
 import { useToast } from "@/components/ui/toast"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
-    Film,
-    Clapperboard,
-    Sparkles,
     ExternalLink,
-    Pin,
     QrCode,
     X,
     Plus,
     Loader2,
-    ShoppingBag,
-    CalendarCheck,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
-import type { UserProfile, ProfileTab, ProfilePin, PortfolioItem, ProfileQRCode } from "@/types/profile"
+import type { UserProfile, PortfolioItem, ProfileQRCode } from "@/types/profile"
 
 interface ProfilePageProps {
     username: string
 }
 
 // ── QR Code modal ─────────────────────────────────────────────────────────────
-function QRCodeModal({ onClose }: { onClose: () => void }) {
+function QRCodeModal({ username, onClose }: { username: string; onClose: () => void }) {
     const { data: qr, isLoading } = useQuery<ProfileQRCode>({
         queryKey: ["qr-code"],
         queryFn: () =>
@@ -71,10 +75,10 @@ function QRCodeModal({ onClose }: { onClose: () => void }) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-            <div className="bg-brand-card rounded-2xl shadow-2xl w-full max-w-sm">
+            <div role="dialog" aria-modal="true" aria-labelledby="profile-qr-title" className="bg-brand-card rounded-2xl shadow-2xl w-full max-w-sm">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-brand-divider">
-                    <h2 className="text-base font-bold text-brand-text">Your Profile QR Code</h2>
-                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-brand-secondary transition-colors">
+                    <h2 id="profile-qr-title" className="text-base font-bold text-brand-text">Your Profile QR Code</h2>
+                    <button onClick={onClose} aria-label="Close" className="flex h-10 w-10 -mr-2 items-center justify-center rounded-xl hover:bg-brand-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                         <X className="w-4 h-4 text-brand-highlight" />
                     </button>
                 </div>
@@ -86,14 +90,14 @@ function QRCodeModal({ onClose }: { onClose: () => void }) {
                     ) : (
                         <>
                             {/* QR placeholder styled box */}
-                            <div className="border-4 border-slate-900 rounded-2xl p-4 mx-auto w-48 h-48 flex flex-col items-center justify-center bg-brand-card">
+                            <div className="border-4 border-brand-text rounded-2xl p-4 mx-auto w-48 h-48 flex flex-col items-center justify-center bg-brand-card">
                                 <div className="grid grid-cols-5 gap-0.5">
                                     {Array.from({ length: 25 }).map((_, i) => (
                                         <div
                                             key={i}
                                             className={`w-7 h-7 rounded-xs ${
                                                 [0,1,2,3,4,5,9,10,14,15,19,20,21,22,23,24,7,12,17].includes(i)
-                                                    ? "bg-slate-900"
+                                                    ? "bg-brand-text"
                                                     : "bg-brand-card"
                                             }`}
                                         />
@@ -103,13 +107,10 @@ function QRCodeModal({ onClose }: { onClose: () => void }) {
 
                             <div className="text-center space-y-1">
                                 <p className="text-xs font-semibold text-brand-highlight">Share Profile</p>
-                                {qr?.profile_url && (
-                                    <p className="text-[11px] text-brand-text/60 break-all font-mono bg-brand-secondary rounded-lg px-3 py-1.5">
-                                        {qr.profile_url}
-                                    </p>
-                                )}
+                                {/* The handle, not the raw address: the link itself is what Copy link hands over. */}
+                                {username && <p className="text-sm font-semibold text-brand-text">@{username}</p>}
                                 {typeof qr?.scan_count === "number" && (
-                                    <p className="text-[11px] text-brand-text/60">
+                                    <p className="text-xs text-muted-foreground">
                                         Scanned{" "}
                                         <span className="font-bold text-brand-highlight">{qr.scan_count}</span>{" "}
                                         {qr.scan_count === 1 ? "time" : "times"}
@@ -119,75 +120,13 @@ function QRCodeModal({ onClose }: { onClose: () => void }) {
 
                             <button
                                 onClick={handleCopy}
-                                className="w-full py-2.5 rounded-xl bg-primary-ink text-white text-xs font-bold hover:bg-primary-ink transition-colors"
+                                className="w-full py-2.5 rounded-xl bg-primary-ink text-white text-xs font-bold hover:bg-primary-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
-                                {copied ? "Copied!" : "Copy Link"}
+                                {copied ? "Copied!" : "Copy link"}
                             </button>
                         </>
                     )}
                 </div>
-            </div>
-        </div>
-    )
-}
-
-// ── Pinned Posts section ───────────────────────────────────────────────────────
-function PinnedSection({ userId, isOwn }: { userId: string; isOwn: boolean }) {
-    const qc = useQueryClient()
-    const { data: pins = [] } = useQuery<ProfilePin[]>({
-        queryKey: ["pins", userId],
-        queryFn: () =>
-            api.get(`/v1/users/${userId}/pins`).then((r) => r.data?.data?.items ?? []),
-    })
-
-    const unpinMutation = useMutation({
-        mutationFn: (id: string) => api.delete(`/v1/users/me/pins/${id}`),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ["pins", userId] }),
-    })
-
-    if (pins.length === 0) return null
-
-    const CONTENT_TYPE_COLORS: Record<string, string> = {
-        post: "bg-blue-50 text-blue-600 border-blue-100",
-        video: "bg-brand-text/10 text-brand-text border-brand-text/20",
-        reel: "bg-rose-50 text-rose-500 border-rose-100",
-    }
-
-    return (
-        <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-                <Pin className="w-3.5 h-3.5 text-brand-text" />
-                <span className="text-[10px] font-black tracking-[0.2em] text-brand-highlight">Pinned</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-                {pins.map((pin) => (
-                    <div
-                        key={pin.id}
-                        className="flex items-center gap-2 bg-brand-card border border-brand-divider rounded-xl px-3 py-2 shadow-xs"
-                    >
-                        <Pin className="w-3 h-3 text-brand-text shrink-0" />
-                        <span className="text-xs font-medium text-brand-text max-w-[120px] truncate">
-                            {pin.content_id}
-                        </span>
-                        <span
-                            className={`text-[9px] font-bold tracking-wider border px-1.5 py-0.5 rounded-md ${
-                                CONTENT_TYPE_COLORS[pin.content_type] ?? "bg-brand-secondary text-brand-text/60 border-brand-divider"
-                            }`}
-                        >
-                            {pin.content_type}
-                        </span>
-                        {isOwn && (
-                            <button
-                                onClick={() => unpinMutation.mutate(pin.id)}
-                                disabled={unpinMutation.isPending}
-                                className="ml-1 text-brand-text/30 hover:text-brand-text transition-colors disabled:opacity-40"
-                                title="Unpin"
-                            >
-                                <X className="w-3 h-3" />
-                            </button>
-                        )}
-                    </div>
-                ))}
             </div>
         </div>
     )
@@ -227,13 +166,8 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
         },
     })
 
-    const ITEM_TYPE_COLORS: Record<string, string> = {
-        project: "bg-blue-50 text-blue-600 border-blue-100",
-        article: "bg-emerald-50 text-emerald-600 border-emerald-100",
-        video: "bg-brand-text/10 text-brand-text border-brand-text/20",
-        design: "bg-violet-50 text-violet-600 border-violet-100",
-        other: "bg-brand-secondary text-brand-highlight border-brand-divider",
-    }
+    // One theme-token chip for every item type; the word says which.
+    const ITEM_TYPE_CHIP = "bg-brand-secondary text-brand-highlight border-brand-divider"
 
     return (
         <div className="space-y-4">
@@ -319,9 +253,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
                             <div className="flex items-start justify-between gap-2">
                                 <p className="text-sm font-bold text-brand-text line-clamp-1">{item.title}</p>
                                 <span
-                                    className={`shrink-0 text-[9px] font-bold tracking-wider border px-1.5 py-0.5 rounded-md ${
-                                        ITEM_TYPE_COLORS[item.item_type] ?? ITEM_TYPE_COLORS.other
-                                    }`}
+                                    className={`shrink-0 text-xs font-bold tracking-wider border px-1.5 py-0.5 rounded-md ${ITEM_TYPE_CHIP}`}
                                 >
                                     {item.item_type}
                                 </span>
@@ -334,7 +266,7 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
                                     href={item.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-text hover:underline"
+                                    className="inline-flex items-center gap-1 text-xs font-semibold text-brand-text hover:underline"
                                 >
                                     <ExternalLink className="w-3 h-3" />
                                     View
@@ -348,56 +280,22 @@ function PortfolioTabContent({ userId, isOwn }: { userId: string; isOwn: boolean
     )
 }
 
-function ComingSoonTab({
-    icon,
-    title,
-    description,
-    accent,
-}: {
-    icon: ReactNode
-    title: string
-    description: string
-    accent: string
-}) {
-    return (
-        <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className={`relative overflow-hidden rounded-3xl border border-brand-divider bg-linear-to-br ${accent} px-6 py-16 text-center`}
-        >
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-card shadow-xs">
-                {icon}
-            </div>
-            <h3 className="mt-6 text-xl font-bold text-brand-text">{title}</h3>
-            <p className="mt-2 text-sm text-brand-highlight max-w-md mx-auto">
-                {description}
-            </p>
-            <span className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-brand-card/80 backdrop-blur-sm px-3 py-1 text-[11px] font-bold tracking-[0.16em] text-brand-text shadow-xs">
-                <Sparkles className="w-3 h-3" />
-                Coming soon
-            </span>
-        </motion.div>
-    )
-}
-
 export function ProfilePage({ username }: ProfilePageProps) {
     const localUser = useAuthUser()
     const router = useRouter()
-    const [activeTab, setActiveTab] = useState<ProfileTab>("posts")
+    const [activeTab, setActiveTab] = useState<ProfileTabKey>("posts")
     const [blockDialogOpen, setBlockDialogOpen] = useState(false)
     const [unblockDialogOpen, setUnblockDialogOpen] = useState(false)
-    const [removeCircleDialogOpen, setRemoveCircleDialogOpen] = useState(false)
     const [isMuted, setIsMuted] = useState(false)
     const [isTabsSticky, setIsTabsSticky] = useState(false)
     const [qrModalOpen, setQrModalOpen] = useState(false)
+    const [shareOpen, setShareOpen] = useState(false)
+    const [reportOpen, setReportOpen] = useState(false)
     const tabsSentinelRef = useRef<HTMLDivElement>(null)
 
     const { toast, ToastContainer } = useToast()
-    const { data, isLoading } = useAggregatedProfile(username)
+    const { data, isLoading, error: profileError, refetch: refetchProfile, isRefetching } = useAggregatedProfile(username)
     const profile_ = data?.profile ?? null
-    const { data: userChannels } = useUserChannels(profile_?.id)
-    const primaryChannel = userChannels?.[0] ?? null
     const { data: directCounts } = useContentCounts(profile_?.id)
 
     // Sticky tabs with IntersectionObserver
@@ -473,11 +371,16 @@ export function ProfilePage({ username }: ProfilePageProps) {
     const hasVideos = contentCounts.video > 0
     const hasFlicks = contentCounts.reel > 0
     const hasCreatorContent = hasVideos || hasFlicks
+    // "Appears in": others' videos that credit this person and that they accepted; hidden when there are none.
+    const appearances = useAppearanceRows(profile?.id)
+    const hasAppearances = (appearances.data?.pages[0]?.items.length ?? 0) > 0
+    // "Members": members-only posts, when the person offers a membership level.
+    const memberLevels = useCreatorLevels(profile?.id)
+    const hasMembers = activeLevels(memberLevels.data ?? []).length > 0
 
     // Mutations
     const followMutation = useFollowUser()
     const unfollowMutation = useUnfollowUser()
-    const removeFromCircle = useRemoveFriend()
     const blockMutation = useBlockUser()
     const unblockMutation = useUnblockUser()
     const muteMutation = useMuteUser()
@@ -499,32 +402,40 @@ export function ProfilePage({ username }: ProfilePageProps) {
     // Handlers
     const handleFollow = useCallback(() => {
         if (!profile) return
-        followMutation.mutate(profile.username || profile.id, {
+        followMutation.mutate(profile.id || profile.username, {
+            onSuccess: (result) => {
+                // A private account turns a follow into a request.
+                if (result?.status === "requested") {
+                    toast({ type: "info", title: "Follow request sent" })
+                }
+            },
             onError: (e) => toast({ type: "error", title: authErrMsg(e) }),
         })
     }, [profile, followMutation, toast])
 
+    const shareUrl =
+        profile && typeof window !== "undefined" ? profileShareUrl(window.location.origin, profile) : ""
+
+    const handleCopyLink = useCallback(() => {
+        if (!shareUrl) return
+        navigator.clipboard
+            .writeText(withShareRef(shareUrl))
+            .then(() => toast({ type: "success", title: "Profile link copied" }))
+            .catch(() => toast({ type: "error", title: "Could not copy the link" }))
+    }, [shareUrl, toast])
+
     const handleUnfollow = useCallback(() => {
         if (!profile) return
-        unfollowMutation.mutate(profile.username || profile.id, {
+        unfollowMutation.mutate(profile.id || profile.username, {
             onError: (e) => toast({ type: "error", title: authErrMsg(e) }),
         })
     }, [profile, unfollowMutation, toast])
-
-    const handleRemoveFromCircle = useCallback(() => setRemoveCircleDialogOpen(true), [])
-
-    const handleConfirmRemoveFromCircle = useCallback(() => {
-        if (!profile) return
-        removeFromCircle.mutate(profile.username || profile.id, {
-            onSuccess: () => setRemoveCircleDialogOpen(false),
-        })
-    }, [profile, removeFromCircle])
 
     const handleBlock = useCallback(() => setBlockDialogOpen(true), [])
 
     const handleConfirmBlock = useCallback(() => {
         if (!profile) return
-        blockMutation.mutate(profile.username, {
+        blockMutation.mutate(profile.id || profile.username, {
             onSuccess: () => setBlockDialogOpen(false),
         })
     }, [profile, blockMutation])
@@ -533,7 +444,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
 
     const handleConfirmUnblock = useCallback(() => {
         if (!profile) return
-        unblockMutation.mutate(profile.username, {
+        unblockMutation.mutate(profile.id || profile.username, {
             onSuccess: () => setUnblockDialogOpen(false),
         })
     }, [profile, unblockMutation])
@@ -568,35 +479,68 @@ export function ProfilePage({ username }: ProfilePageProps) {
 
     // --- Render states ---
 
-    if (isLoading) return <ProfileSkeleton />
+    const viewState = profileViewState({
+        isLoading,
+        errorStatus: data ? undefined : profileErrorStatus(profileError),
+        profile,
+        relationship,
+        isOwn,
+    })
+    const signedIn = !!localUser
+    const followBusy = followMutation.isPending || unfollowMutation.isPending
+    const signInHref = `/login?next=${encodeURIComponent(`/u/${username}`)}`
 
-    if (relationship?.blocked_by) {
-        return (
-            <BlockedProfileView
-                variant="blocked_by_them"
-                onGoHome={() => router.push("/")}
-            />
-        )
-    }
+    if (viewState === "loading") return <ProfileSkeleton />
 
-    if (!profile) {
+    // Missing, or blocked either way round from their side: one neutral page.
+    if (viewState === "not_found" || !profile) {
         return <UnavailableProfileView />
     }
 
-    if (relationship?.blocked) {
+    if (viewState === "error") {
         return (
-            <BlockedProfileView
-                variant="blocked_by_viewer"
-                username={profile.username}
-                onUnblock={handleUnblock}
-                onGoHome={() => router.push("/")}
-            />
+            <div className="mx-auto max-w-md px-4 py-20">
+                <ProfileTabError
+                    subject="this profile"
+                    onRetry={() => {
+                        if (!isRefetching) void refetchProfile()
+                    }}
+                />
+            </div>
         )
     }
 
+    if (viewState === "blocked_by_viewer") {
+        return (
+            <>
+                <BlockedProfileView
+                    variant="blocked_by_viewer"
+                    username={profile.username}
+                    onUnblock={handleUnblock}
+                    onGoHome={() => router.push("/")}
+                />
+                <ConfirmDialog
+                    open={unblockDialogOpen}
+                    onClose={() => setUnblockDialogOpen(false)}
+                    onConfirm={handleConfirmUnblock}
+                    title={`Unblock @${profile.username}?`}
+                    description={`They will be able to see your profile and interact with you again.`}
+                    confirmLabel="Unblock"
+                    loading={unblockMutation.isPending}
+                />
+            </>
+        )
+    }
+
+    const isPrivateView = viewState === "private"
+
     return (
-        <div className="w-full pb-28 md:pb-12">
-            {/* Header: Cover + 3-col grid + Bio */}
+        // overflow-x-clip: nothing on the profile can make the shell's
+        // scroller scroll sideways and slide the page under the fixed
+        // sidebar (it clips without becoming a scroll container, so the
+        // sticky tab bar still sticks).
+        <div className="w-full min-w-0 overflow-x-clip pb-28 md:pb-12">
+            {/* Header: Cover + identity row + Bio */}
             <ProfileHeader
                 profile={profile}
                 links={links}
@@ -606,17 +550,21 @@ export function ProfilePage({ username }: ProfilePageProps) {
                 coverUrl={coverUrl}
                 isMuted={isMuted}
                 graphCounts={graphCounts}
-                contentCounts={contentCounts}
-                channel={primaryChannel}
                 onFollow={handleFollow}
                 onUnfollow={handleUnfollow}
-                onRemoveFromCircle={handleRemoveFromCircle}
                 onEditProfile={() => router.push("/settings/profile")}
                 onBlock={handleBlock}
                 onUnblock={handleUnblock}
                 onMute={handleMute}
                 onUnmute={handleUnmute}
                 onUploadError={(msg) => toast({ type: "error", title: msg })}
+                signedIn={signedIn}
+                followBusy={followBusy}
+                onShare={() => setShareOpen(true)}
+                onCopyLink={handleCopyLink}
+                onReport={() => setReportOpen(true)}
+                onOpenConnections={isPrivateView ? undefined : () => setActiveTab("connections")}
+                signInHref={signInHref}
             />
 
             {/* QR Code button (own profile only) */}
@@ -632,6 +580,21 @@ export function ProfilePage({ username }: ProfilePageProps) {
                 </div>
             )}
 
+            {isPrivateView ? (
+                // Private and not followed: the header above, this notice
+                // and Follow — no tabs, no grids, nothing to leak.
+                <div className="max-w-[1200px] mx-auto px-4 sm:px-8">
+                    <PrivateProfileView
+                        username={profile.username || profile.id}
+                        signedIn={signedIn}
+                        followState={followButtonState(profile, relationship)}
+                        followBusy={followBusy}
+                        onFollow={handleFollow}
+                        signInHref={signInHref}
+                    />
+                </div>
+            ) : (
+            <>
             {/* Sentinel for sticky tabs */}
             <div ref={tabsSentinelRef} className="h-0" />
 
@@ -651,6 +614,8 @@ export function ProfilePage({ username }: ProfilePageProps) {
                         hasVideos={hasVideos}
                         hasFlicks={hasFlicks}
                         hasMedia={false}
+                        hasAppearances={hasAppearances}
+                        hasMembers={hasMembers}
                         isSticky={isTabsSticky}
                     />
                 </div>
@@ -660,7 +625,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
             <div className="max-w-[1200px] mx-auto px-4 sm:px-8 mt-6">
                 {/* Pinned posts (shown above tabs content for all tab states) */}
                 {activeTab === "posts" && (
-                    <PinnedSection userId={profile.id} isOwn={isOwn} />
+                    <PinnedPosts userId={profile.id} isOwn={isOwn} />
                 )}
 
                 <div className={`flex gap-6 ${hasCreatorContent ? "" : ""}`}>
@@ -684,7 +649,6 @@ export function ProfilePage({ username }: ProfilePageProps) {
                                     <ConnectionsTab
                                         userId={profile.id}
                                         graphCounts={graphCounts}
-                                        platform="postboek"
                                         isOwn={isOwn}
                                     />
                                 )}
@@ -697,23 +661,17 @@ export function ProfilePage({ username }: ProfilePageProps) {
                                 {activeTab === "flicks" && (
                                     <FlicksTab userId={profile.id} isOwn={isOwn} />
                                 )}
-                                {activeTab === "orders" && (
-                                    <ComingSoonTab
-                                        icon={<ShoppingBag className="w-10 h-10 text-emerald-500" />}
-                                        title="Orders"
-                                        description="Your purchase history, deliveries, and order tracking will live here."
-                                        accent="from-emerald-50 to-emerald-100/40"
-                                    />
+                                {activeTab === "members" && hasMembers && (
+                                    <MembersTab authorId={profile.id} authorName={profile.display_name || profile.username} isOwner={isOwn} />
                                 )}
-                                {activeTab === "bookings" && (
-                                    <ComingSoonTab
-                                        icon={<CalendarCheck className="w-10 h-10 text-blue-500" />}
-                                        title="Bookings"
-                                        description="Appointments, reservations, and scheduled sessions will appear here."
-                                        accent="from-blue-50 to-blue-100/40"
-                                    />
+                                {activeTab === "appears" && hasAppearances && (
+                                    <AppearsInTab userId={profile.id} />
                                 )}
-                                {activeTab === "stashed" && <StashedTab userId={profile.id} />}
+                                {activeTab === "reposts" && (
+                                    <RepostsTab userId={profile.id} isOwn={isOwn} />
+                                )}
+                                {activeTab === "stashed" && isOwn && <StashedTab userId={profile.id} />}
+                                {activeTab === "liked" && isOwn && <LikedTab />}
                                 {activeTab === "portfolio" && (
                                     <PortfolioTabContent userId={profile.id} isOwn={isOwn} />
                                 )}
@@ -762,9 +720,30 @@ export function ProfilePage({ username }: ProfilePageProps) {
                     )}
                 </div>
             </div>
+            </>
+            )}
 
             {/* QR Code modal */}
-            {qrModalOpen && <QRCodeModal onClose={() => setQrModalOpen(false)} />}
+            {qrModalOpen && <QRCodeModal username={profile.username} onClose={() => setQrModalOpen(false)} />}
+
+            {/* Share: the public /u/<username> address (resolves signed out). */}
+            <ShareSheet
+                open={shareOpen}
+                onClose={() => setShareOpen(false)}
+                url={shareUrl}
+                title={`${profile.display_name || profile.username} (@${profile.username})`}
+                heading="Share profile"
+            />
+
+            {/* Report: POST /v1/reports { entity_type: "user" }. Never on your own profile. */}
+            {!isOwn && signedIn && (
+                <ReportProfileDialog
+                    open={reportOpen}
+                    onClose={() => setReportOpen(false)}
+                    userId={profile.id}
+                    username={profile.username || profile.id}
+                />
+            )}
 
             {/* Confirmation Dialogs */}
             <ConfirmDialog
@@ -785,16 +764,6 @@ export function ProfilePage({ username }: ProfilePageProps) {
                 description={`Are you sure you want to unblock @${profile.username}? They will be able to see your profile and interact with you again.`}
                 confirmLabel="Unblock"
                 loading={unblockMutation.isPending}
-            />
-            <ConfirmDialog
-                open={removeCircleDialogOpen}
-                onClose={() => setRemoveCircleDialogOpen(false)}
-                onConfirm={handleConfirmRemoveFromCircle}
-                title="Remove from Circle?"
-                description={`Remove @${profile.username} from your Circle? They won't see your circle-only posts or message you.`}
-                confirmLabel="Remove"
-                destructive
-                loading={removeFromCircle.isPending}
             />
 
             <ToastContainer />

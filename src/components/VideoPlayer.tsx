@@ -19,6 +19,8 @@ import { useMediaVariants } from "@/hooks/useMediaVariants"
 interface VideoPlayerProps {
   mediaId: string
   className?: string
+  /** Start muted (a reel opens muted). The viewer can unmute. */
+  initialMuted?: boolean
 }
 
 const CONTROLS_HIDE_DELAY = 3000
@@ -30,7 +32,7 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, "0")}`
 }
 
-export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProps) {
+export default function VideoPlayer({ mediaId, className = "", initialMuted = false }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -44,7 +46,7 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
 
   // Volume state
   const [volume, setVolume] = useState(1)
-  const [isMuted, setIsMuted] = useState(false)
+  const [isMuted, setIsMuted] = useState(initialMuted)
   const [prevVolume, setPrevVolume] = useState(1)
 
   // UI state
@@ -336,6 +338,7 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
         ref={videoRef}
         src={videoSrc}
         className="w-full h-full object-contain"
+        muted={isMuted}
         preload="metadata"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
@@ -387,7 +390,7 @@ export default function VideoPlayer({ mediaId, className = "" }: VideoPlayerProp
               />
               {/* Progress fill */}
               <div
-                className="absolute inset-y-0 left-0 orchid-gradient rounded-full"
+                className="absolute inset-y-0 left-0 rounded-full bg-playhead"
                 style={{ width: `${progress}%` }}
               />
               {/* Scrubber thumb */}

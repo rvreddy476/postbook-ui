@@ -953,3 +953,17 @@ select.shop-input { appearance: auto; }
 
 .shop-checkout__arrives { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; font-size: 13px; font-weight: 500; color: rgb(var(--success)); }
 @media (prefers-reduced-motion: reduce) { .shop-react__btn { transition: none; } }
+
+/* ---- sell scope: "What will you sell?" (commerce migration 045) ------ */
+.shop-sell-scope { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 0; padding: 0; border: 0; }
+@media (min-width: 640px) { .shop-sell-scope { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.shop-sell-scope__legend { margin: 0 0 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: rgb(var(--text-muted)); }
+.shop-sell-scope__opt { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid var(--brand-divider); border-radius: 12px; background: rgb(var(--brand-card)); cursor: pointer; }
+.shop-sell-scope__opt:hover { border-color: rgb(var(--brand-outline)); }
+.shop-sell-scope__opt.is-chosen { border-color: rgb(var(--brand-outline)); background: rgb(var(--brand-tint)); }
+.shop-sell-scope__opt input { margin-top: 2px; accent-color: rgb(var(--brand-ink)); }
+.shop-sell-scope__title { display: block; font-size: 13px; font-weight: 600; color: rgb(var(--brand-text)); }
+.shop-sell-scope__help { display: block; margin-top: 2px; font-size: 11px; color: rgb(var(--text-muted)); }
+.shop-sell-scope__opt.is-disabled { opacity: 0.5; cursor: default; }
+.shop-sell-pan { margin: 0; font-size: 11px; color: rgb(var(--success)); }
+.shop-sell-upgrade { display: flex; flex-direction: column; gap: 12px; }

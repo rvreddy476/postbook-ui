@@ -8,6 +8,16 @@ import { useAuthUser } from "@/store/auth"
 import { playNotificationSound } from "@/hooks/useNotificationSound"
 import { notificationSseDecoder } from '@/lib/notificationSse'
 import { customerQueryPrefix } from '@/lib/customerTracking'
+import {
+    notificationPresentationFields,
+    type NotificationActorSummary,
+    type NotificationIcon,
+} from '@/lib/notificationPresentation'
+import {
+    decodeNotificationSettings,
+    type NotificationPatch,
+    type NotificationSettings,
+} from '@/app/settings/_lib/notificationPreferences'
 
 export interface ActivityNotification {
     user_id: string
@@ -21,6 +31,17 @@ export interface ActivityNotification {
     created_at: string
     bucket?: number        // partition key used for targeted read/delete operations
     ts?: string            // timestamp key used for targeted read/delete operations
+    /** The server's complete sentence for the row; undefined from older servers. */
+    title?: string
+    /** The server's glyph category; undefined from older servers or an unknown key. */
+    icon?: NotificationIcon
+    /** The actor hydrated at read time, when the server sent a usable one. */
+    actor?: NotificationActorSummary
+}
+
+/** One stored row with its presentation fields decoded (absent → undefined). */
+export function normaliseActivityNotification(row: ActivityNotification): ActivityNotification {
+    return { ...row, ...notificationPresentationFields(row) }
 }
 
 interface NotificationsResponse {
@@ -50,10 +71,10 @@ export function useActivityNotifications(limit = 20) {
             } | null
             const payload = body?.data
             if (Array.isArray(payload)) {
-                return { items: payload, next_cursor: null }
+                return { items: payload.map(normaliseActivityNotification), next_cursor: null }
             }
             return {
-                items: payload?.items ?? [],
+                items: (payload?.items ?? []).map(normaliseActivityNotification),
                 next_cursor: payload?.next_cursor ?? null,
             }
         },
@@ -341,25 +362,41 @@ export function useDeleteNotification() {
 
 // ---------- Notification preferences ----------
 
+// The detailed document (push_* / inapp_* per category), as Android reads it
+// in SettingsApi.kt. The page used to PATCH `muted_types` / `sms_enabled` to
+// `/v1/notifications/preferences`; no such fields exist upstream, so turning
+// a category off changed nothing.
+export const NOTIFICATION_PREFERENCES_PATH = "/v1/notifications/preferences/detailed"
+
 export function useNotificationPreferences() {
-    return useQuery({
-        queryKey: ["notification-preferences"],
+    return useQuery<NotificationSettings>({
+        queryKey: ["notification-preferences", "detailed"],
         queryFn: async () => {
-            const res = await api.get<{ data: unknown }>("/v1/notifications/preferences")
-            return res.data.data
+            const res = await api.get(NOTIFICATION_PREFERENCES_PATH)
+            const decoded = decodeNotificationSettings(res.data)
+            if (!decoded) throw new Error("The preferences response had no preferences document.")
+            return decoded
         },
+        staleTime: 0,
+        refetchOnWindowFocus: false,
     })
 }
 
+/**
+ * PUT only the keys that changed; the handler merges present keys onto the
+ * stored record and echoes the result, which becomes the cached value.
+ */
 export function useUpdateNotificationPreferences() {
     const qc = useQueryClient()
-    return useMutation({
-        mutationFn: async (body: unknown) => {
-            const res = await api.patch<{ data: unknown }>("/v1/notifications/preferences", body)
-            return res.data.data
+    return useMutation<NotificationSettings, unknown, NotificationPatch>({
+        mutationFn: async (patch) => {
+            const res = await api.put(NOTIFICATION_PREFERENCES_PATH, patch)
+            const decoded = decodeNotificationSettings(res.data)
+            if (!decoded) throw new Error("The server did not confirm the change.")
+            return decoded
         },
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ["notification-preferences"] })
+        onSuccess: (stored) => {
+            qc.setQueryData(["notification-preferences", "detailed"], stored)
         },
     })
 }

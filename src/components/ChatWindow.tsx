@@ -291,16 +291,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
           </div>
         </div>
         <div className="flex items-center gap-1.5 text-brand-text/60">
-          <button onClick={() => initiateCall(contact, 'audio')} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-brand-text active:scale-95">
+          <button onClick={() => initiateCall(contact, 'audio')} aria-label="Voice call" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-brand-text active:scale-95">
             <Phone className="h-4 w-4" />
           </button>
-          <button onClick={() => initiateCall(contact, 'video')} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-brand-text active:scale-95">
+          <button onClick={() => initiateCall(contact, 'video')} aria-label="Video call" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-brand-text active:scale-95">
             <Video className="h-4 w-4" />
           </button>
-          <button onClick={(e) => { e.stopPropagation(); setIsMinimized(!isMinimized); }} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-brand-highlight active:scale-95">
+          <button onClick={(e) => { e.stopPropagation(); setIsMinimized(!isMinimized); }} aria-label={isMinimized ? 'Expand chat' : 'Minimize chat'} aria-expanded={!isMinimized} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-brand-highlight active:scale-95">
             {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
           </button>
-          <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-red-500 active:scale-95">
+          <button onClick={(e) => { e.stopPropagation(); onClose(); }} aria-label="Close chat" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex h-8 w-8 items-center justify-center rounded-full transition-all hover:bg-brand-secondary hover:text-danger active:scale-95">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -358,6 +358,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                                 <button
                                   key={e}
                                   onClick={() => handleToggleReaction(msg, e)}
+                                  aria-label={`React with ${e}`}
                                   className="flex h-6 w-6 items-center justify-center rounded-full text-[13px] transition-all hover:scale-125 hover:bg-brand-secondary active:scale-90"
                                 >
                                   {e}
@@ -455,7 +456,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
           {/* Emoji Picker — rendered outside footer so it's not clipped */}
           <AnimatePresence>
             {showEmojiPicker && (
-              <div ref={emojiPickerRef} className="absolute bottom-16 right-3 z-50">
+              <div ref={emojiPickerRef} className="absolute bottom-16 right-3 z-50 w-[min(352px,calc(100vw-1.5rem))]">
                 <motion.div
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -463,14 +464,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ contact, onClose }) => {
                 >
                   <div className="overflow-hidden rounded-2xl border border-brand-divider shadow-xl">
                     <Suspense fallback={
-                      <div className="flex h-[380px] w-[352px] items-center justify-center bg-brand-card">
+                      <div className="flex h-[380px] w-full items-center justify-center bg-brand-card">
                         <span className="text-xs font-medium text-brand-text/30">Loading emojis...</span>
                       </div>
                     }>
                       <EmojiPicker
                         data={data}
                         onEmojiSelect={handleEmojiSelect}
-                        theme="light"
+                        theme="auto"
+                        dynamicWidth
                         previewPosition="none"
                         skinTonePosition="none"
                         perLine={9}

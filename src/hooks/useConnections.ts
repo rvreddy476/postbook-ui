@@ -5,6 +5,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import api from "@/lib/api"
 import { getSharedNotificationSocket } from "@/lib/notificationSocket"
 import type { Relationship, RelationshipBatchResponse, UserProfile } from "@/types/profile"
+import { GRAPH_ROUTES, UUID_RE, idsFromGraphList } from "@/lib/graphApi"
 
 export interface ConnectionUser {
     user_id: string
@@ -29,33 +30,12 @@ export interface PaginatedResponse<T> {
 }
 
 /**
- * A pending connection request from graph-service.
- *
- * graph-service has NO "friendship id" — a pending request is identified
- * solely by the COUNTERPARTY's user_id. For an incoming request that is the
- * sender; for an outgoing one it is the receiver. `user_id` always holds the
- * counterparty's id and is what accept/decline/cancel mutations must receive.
- */
-export interface FriendRequestEntry {
-    /** Counterparty user_id — sender (incoming) or receiver (outgoing). */
-    user_id: string
-    display_name: string
-    username?: string
-    avatar_media_id?: string
-    created_at: string
-    /** How the request originated — qr / contacts / group / etc. (spec §3.2). */
-    source?: string
-}
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-/**
  * graph-service mutations require a UUID. Callers historically pass either a
  * UUID or a username; this resolves a username to its user_id via
  * profile-service's by-username lookup. A value that already looks like a
  * UUID is returned untouched.
  */
-async function resolveUserId(usernameOrId: string): Promise<string> {
+export async function resolveUserId(usernameOrId: string): Promise<string> {
     if (!usernameOrId) throw new Error("User identifier is required")
     if (UUID_RE.test(usernameOrId)) return usernameOrId
     const res = await api.get<{ data: { user_id?: string; id?: string } }>(
@@ -123,8 +103,16 @@ function applyRequestSentToCaches(qc: ReturnType<typeof useQueryClient>, userId:
  */
 async function hydrateProfiles(userIds: string[]): Promise<Map<string, UserProfile>> {
     const map = new Map<string, UserProfile>()
-    const ids = userIds.slice(0, 100)
-    if (ids.length === 0) return map
+    // The batch route takes 100 ids; a longer list goes in chunks so the
+    // rows past 100 are not left as nameless "User" rows.
+    for (let i = 0; i < userIds.length; i += 100) {
+        await hydrateProfileChunk(userIds.slice(i, i + 100), map)
+    }
+    return map
+}
+
+async function hydrateProfileChunk(ids: string[], map: Map<string, UserProfile>): Promise<void> {
+    if (ids.length === 0) return
     const res = await api.post("/v1/profiles/batch", { user_ids: ids })
     const data = res.data
     if (data && typeof data === "object") {
@@ -142,7 +130,6 @@ async function hydrateProfiles(userIds: string[]): Promise<Map<string, UserProfi
             }
         }
     }
-    return map
 }
 
 /** Raw graph-service connection-request shape. */
@@ -157,16 +144,47 @@ interface GraphConnectionRequest {
     expires_at?: string
 }
 
+/**
+ * graph-service answers follower/following lists with ids only; hydrate them
+ * into ConnectionUser rows the same way useFriends does.
+ */
+async function connectionUsers(ids: string[]): Promise<ConnectionUser[]> {
+    const profiles = await hydrateProfiles(ids)
+    return ids.map((id) => {
+        const p = profiles.get(id)
+        return {
+            user_id: id,
+            display_name: p?.display_name || p?.username || "User",
+            username: p?.username || "",
+            avatar_media_id: p?.avatar_media_id,
+        }
+    })
+}
+
+/**
+ * One offset page of followers or following from graph-service
+ * (GET /v1/graph/{followers|following}/:id). The route returns no total, so
+ * one extra row is asked for to know whether there is a next page; the total
+ * shown in the tabs comes from the graph counts, not from here.
+ */
+async function graphConnectionPage(
+    path: string,
+    limit: number,
+): Promise<PaginatedResponse<ConnectionUser>> {
+    const res = await api.get<{ data: unknown }>(path, { params: { limit: limit + 1, offset: 0 } })
+    const { ids: all } = idsFromGraphList(res.data?.data)
+    const ids = all.slice(0, limit)
+    const items = await connectionUsers(ids)
+    return {
+        items,
+        meta: { limit, offset: 0, total: ids.length, has_next: all.length > limit },
+    }
+}
+
 export function useFollowers(userId: string | undefined, limit = 20) {
     return useQuery({
         queryKey: ["connections", "followers", userId, limit],
-        queryFn: async () => {
-            const res = await api.get<{ data: PaginatedResponse<ConnectionUser> }>(
-                `/v1/profiles/${userId}/followers`,
-                { params: { limit, offset: 0 } }
-            )
-            return res.data.data
-        },
+        queryFn: () => graphConnectionPage(GRAPH_ROUTES.followers(userId as string), limit),
         enabled: !!userId,
     })
 }
@@ -174,13 +192,7 @@ export function useFollowers(userId: string | undefined, limit = 20) {
 export function useFollowing(userId: string | undefined, limit = 20) {
     return useQuery({
         queryKey: ["connections", "following", userId, limit],
-        queryFn: async () => {
-            const res = await api.get<{ data: PaginatedResponse<ConnectionUser> }>(
-                `/v1/profiles/${userId}/following`,
-                { params: { limit, offset: 0 } }
-            )
-            return res.data.data
-        },
+        queryFn: () => graphConnectionPage(GRAPH_ROUTES.following(userId as string), limit),
         enabled: !!userId,
     })
 }
@@ -196,29 +208,24 @@ export interface FollowerCursorPage {
     limit: number
 }
 
+async function graphCursorPage(path: string, limit: number, pageParam: unknown): Promise<FollowerCursorPage> {
+    const params: Record<string, string | number> = { limit }
+    if (typeof pageParam === "string" && pageParam !== "") {
+        params.cursor = pageParam
+    } else {
+        params.paginate = "cursor"
+    }
+    const res = await api.get<{ data: unknown }>(path, { params })
+    const { ids, nextCursor } = idsFromGraphList(res.data?.data)
+    return { items: await connectionUsers(ids), next_cursor: nextCursor, limit }
+}
+
 export function useInfiniteFollowers(userId: string | undefined, limit = 20) {
     return useInfiniteQuery<FollowerCursorPage>({
         queryKey: ["connections", "followers", "cursor", userId, limit],
         initialPageParam: "",
         enabled: !!userId,
-        queryFn: async ({ pageParam }) => {
-            const params: Record<string, string | number> = { limit }
-            if (typeof pageParam === "string" && pageParam !== "") {
-                params.cursor = pageParam
-            } else {
-                params.paginate = "cursor"
-            }
-            const res = await api.get<{ data: FollowerCursorPage }>(
-                `/v1/profiles/${userId}/followers`,
-                { params },
-            )
-            const d = res.data.data
-            return {
-                items: d?.items ?? [],
-                next_cursor: d?.next_cursor ?? "",
-                limit: d?.limit ?? limit,
-            }
-        },
+        queryFn: ({ pageParam }) => graphCursorPage(GRAPH_ROUTES.followers(userId as string), limit, pageParam),
         getNextPageParam: (last) => (last.next_cursor ? last.next_cursor : undefined),
     })
 }
@@ -228,24 +235,7 @@ export function useInfiniteFollowing(userId: string | undefined, limit = 20) {
         queryKey: ["connections", "following", "cursor", userId, limit],
         initialPageParam: "",
         enabled: !!userId,
-        queryFn: async ({ pageParam }) => {
-            const params: Record<string, string | number> = { limit }
-            if (typeof pageParam === "string" && pageParam !== "") {
-                params.cursor = pageParam
-            } else {
-                params.paginate = "cursor"
-            }
-            const res = await api.get<{ data: FollowerCursorPage }>(
-                `/v1/profiles/${userId}/following`,
-                { params },
-            )
-            const d = res.data.data
-            return {
-                items: d?.items ?? [],
-                next_cursor: d?.next_cursor ?? "",
-                limit: d?.limit ?? limit,
-            }
-        },
+        queryFn: ({ pageParam }) => graphCursorPage(GRAPH_ROUTES.following(userId as string), limit, pageParam),
         getNextPageParam: (last) => (last.next_cursor ? last.next_cursor : undefined),
     })
 }
@@ -279,147 +269,21 @@ export function useFriends(userId: string | undefined, limit = 20) {
                 meta: { limit, offset: 0, total: allIds.length, has_next: allIds.length > ids.length },
             }
         },
+        // "Show more" asks again with a bigger limit; keep the rows already
+        // on screen while it loads (same person only, never another's list).
+        placeholderData: (previous, previousQuery) =>
+            previousQuery?.queryKey[2] === userId ? previous : undefined,
         enabled: !!userId,
     })
 }
 
-/**
- * Incoming pending connection requests — from graph-service. The endpoint
- * returns raw request rows ({sender_id, receiver_id, ...}); the sender_id is
- * hydrated and surfaced as `user_id` (the counterparty). { items, meta } shape
- * is preserved.
- */
-export function usePendingFriendRequests() {
-    return useQuery({
-        queryKey: ["friend-requests", "pending"],
-        queryFn: async (): Promise<PaginatedResponse<FriendRequestEntry>> => {
-            const res = await api.get<{ data: GraphConnectionRequest[] }>(
-                "/v1/graph/connection-requests"
-            )
-            const reqs = res.data?.data ?? []
-            const profiles = await hydrateProfiles(reqs.map((r) => r.sender_id))
-            const items: FriendRequestEntry[] = reqs.map((r) => {
-                const p = profiles.get(r.sender_id)
-                return {
-                    user_id: r.sender_id,
-                    display_name: p?.display_name || p?.username || "User",
-                    username: p?.username,
-                    avatar_media_id: p?.avatar_media_id,
-                    created_at: r.created_at,
-                    source: r.source,
-                }
-            })
-            return {
-                items,
-                meta: { limit: items.length, offset: 0, total: items.length, has_next: false },
-            }
-        },
-    })
-}
-
-/**
- * Accept an incoming connection request. The argument is the REQUESTER's
- * user_id (or username) — graph-service has no friendship id. A username is
- * resolved to a UUID first.
- */
-export function useAcceptFriendRequest() {
-    const qc = useQueryClient()
-    return useMutation({
-        mutationFn: async (senderIdOrUsername: string) => {
-            const userId = await resolveUserId(senderIdOrUsername)
-            await api.post("/v1/graph/connection-request/accept", { user_id: userId })
-        },
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ["friend-requests"] })
-            qc.invalidateQueries({ queryKey: ["friend-suggestions"] })
-            qc.invalidateQueries({ queryKey: ["connections"] })
-            qc.invalidateQueries({ queryKey: ["relationship"] })
-            qc.invalidateQueries({ queryKey: ["aggregated-profile"] })
-        },
-        onError: (error) => {
-            console.error("[Connections] Failed to accept friend request", error)
-        },
-    })
-}
-
-/**
- * Decline an incoming connection request. The argument is the REQUESTER's
- * user_id (or username).
- */
-export function useRejectFriendRequest() {
-    const qc = useQueryClient()
-    return useMutation({
-        mutationFn: async (senderIdOrUsername: string) => {
-            const userId = await resolveUserId(senderIdOrUsername)
-            await api.post("/v1/graph/connection-request/decline", { user_id: userId })
-        },
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ["friend-requests"] })
-            qc.invalidateQueries({ queryKey: ["friend-suggestions"] })
-            qc.invalidateQueries({ queryKey: ["connections"] })
-            qc.invalidateQueries({ queryKey: ["relationship"] })
-            qc.invalidateQueries({ queryKey: ["aggregated-profile"] })
-        },
-        onError: (error) => {
-            console.error("[Connections] Failed to reject friend request", error)
-        },
-    })
-}
-
-/**
- * Connection requests hidden by trust-safety. The endpoint
- * (GET /v1/graph/connection-requests/filtered) returns the SAME raw request
- * rows as the pending-requests endpoint ({sender_id, receiver_id, ...}); the
- * sender_id is hydrated and surfaced as `user_id` (the counterparty).
- * { items, meta } shape is preserved, matching usePendingFriendRequests.
- */
-export function useFilteredFriendRequests() {
-    return useQuery({
-        queryKey: ["friend-requests", "filtered"],
-        queryFn: async (): Promise<PaginatedResponse<FriendRequestEntry>> => {
-            const res = await api.get<{ data: GraphConnectionRequest[] }>(
-                "/v1/graph/connection-requests/filtered"
-            )
-            const reqs = res.data?.data ?? []
-            const profiles = await hydrateProfiles(reqs.map((r) => r.sender_id))
-            const items: FriendRequestEntry[] = reqs.map((r) => {
-                const p = profiles.get(r.sender_id)
-                return {
-                    user_id: r.sender_id,
-                    display_name: p?.display_name || p?.username || "User",
-                    username: p?.username,
-                    avatar_media_id: p?.avatar_media_id,
-                    created_at: r.created_at,
-                    source: r.source,
-                }
-            })
-            return {
-                items,
-                meta: { limit: items.length, offset: 0, total: items.length, has_next: false },
-            }
-        },
-    })
-}
-
-/**
- * Unfilter a connection request that trust-safety hid — moves it back into the
- * normal pending-requests list. The argument is the REQUESTER's (sender's)
- * user_id. POST /v1/graph/connection-request/unfilter with body { user_id }.
- */
-export function useUnfilterFriendRequest() {
-    const qc = useQueryClient()
-    return useMutation({
-        mutationFn: async (senderUserId: string) => {
-            await api.post("/v1/graph/connection-request/unfilter", { user_id: senderUserId })
-        },
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ["friend-requests"] })
-        },
-        onError: (error) => {
-            console.error("[Connections] Failed to unfilter connection request", error)
-        },
-    })
-}
+/*
+  Connect is gone (founder, 24 Oct 2026): graph-service refuses new
+  connection requests (410 CONNECTIONS_RETIRED), so the request, accept,
+  decline, cancel, filtered-request and remove-connection hooks were removed
+  with every surface that used them. useFriends stays: accepted connections
+  remain as data and the messenger's new-group picker still lists them.
+*/
 
 export interface SuggestionUser {
     user_id: string
@@ -541,122 +405,6 @@ export function useHideSuggestion() {
     })
 }
 
-/**
- * Send a connection request via graph-service. Accepts a username or a UUID;
- * a username is resolved to a UUID before the request is sent.
- */
-export function useSendFriendRequest() {
-    const qc = useQueryClient()
-    return useMutation({
-        mutationFn: async (usernameOrId: string) => {
-            const userId = await resolveUserId(usernameOrId)
-            await api.post("/v1/graph/connection-request", { user_id: userId })
-            return userId
-        },
-        onMutate: async (usernameOrId) => {
-            const userId = UUID_RE.test(usernameOrId) ? usernameOrId : undefined
-            if (!userId) return
-            await qc.cancelQueries({ queryKey: ["relationship"] })
-            await qc.cancelQueries({ queryKey: ["relationships", "batch"] })
-            await qc.cancelQueries({ queryKey: ["aggregated-profile"] })
-            applyRequestSentToCaches(qc, userId)
-        },
-        onSuccess: (userId) => {
-            applyRequestSentToCaches(qc, userId)
-            qc.invalidateQueries({ queryKey: ["friend-requests", "sent"] })
-            qc.invalidateQueries({ queryKey: ["friend-requests", "pending"] })
-        },
-        onSettled: () => {
-            qc.invalidateQueries({ queryKey: ["friend-suggestions"] })
-            qc.invalidateQueries({ queryKey: ["connections"] })
-        },
-        onError: (error) => {
-            console.error("[Connections] Failed to send friend request", error)
-        },
-    })
-}
-
-// ---------- Circle: Sent Requests ----------
-
-/**
- * Outgoing pending connection requests — from graph-service. The receiver_id
- * is hydrated and surfaced as `user_id` (the counterparty you sent the
- * request to). { items, meta } shape is preserved.
- */
-export function useSentFriendRequests() {
-    return useQuery({
-        queryKey: ["friend-requests", "sent"],
-        queryFn: async (): Promise<PaginatedResponse<FriendRequestEntry>> => {
-            const res = await api.get<{ data: GraphConnectionRequest[] }>(
-                "/v1/graph/connection-requests/sent"
-            )
-            const reqs = res.data?.data ?? []
-            const profiles = await hydrateProfiles(reqs.map((r) => r.receiver_id))
-            const items: FriendRequestEntry[] = reqs.map((r) => {
-                const p = profiles.get(r.receiver_id)
-                return {
-                    user_id: r.receiver_id,
-                    display_name: p?.display_name || p?.username || "User",
-                    username: p?.username,
-                    avatar_media_id: p?.avatar_media_id,
-                    created_at: r.created_at,
-                    source: r.source,
-                }
-            })
-            return {
-                items,
-                meta: { limit: items.length, offset: 0, total: items.length, has_next: false },
-            }
-        },
-    })
-}
-
-/**
- * Cancel an outgoing connection request. The argument is the RECEIVER's
- * user_id (or username) — the person you sent the request to.
- */
-export function useCancelFriendRequest() {
-    const qc = useQueryClient()
-    return useMutation({
-        mutationFn: async (receiverIdOrUsername: string) => {
-            const userId = await resolveUserId(receiverIdOrUsername)
-            await api.post("/v1/graph/connection-request/cancel", { user_id: userId })
-        },
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ["friend-requests"] })
-            qc.invalidateQueries({ queryKey: ["friend-suggestions"] })
-            qc.invalidateQueries({ queryKey: ["connections"] })
-            qc.invalidateQueries({ queryKey: ["aggregated-profile"] })
-        },
-        onError: (error) => {
-            console.error("[Connections] Failed to cancel friend request", error)
-        },
-    })
-}
-
-/**
- * Remove an existing connection. The argument is the other user's user_id
- * (or username). graph-service expects the id in the DELETE request body.
- */
-export function useRemoveFriend() {
-    const qc = useQueryClient()
-    return useMutation({
-        mutationFn: async (usernameOrId: string) => {
-            const userId = await resolveUserId(usernameOrId)
-            await api.delete("/v1/graph/connection", { data: { user_id: userId } })
-        },
-        onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ["connections"] })
-            qc.invalidateQueries({ queryKey: ["friend-requests"] })
-            qc.invalidateQueries({ queryKey: ["relationship"] })
-            qc.invalidateQueries({ queryKey: ["aggregated-profile"] })
-        },
-        onError: (error) => {
-            console.error("[Connections] Failed to remove friend", error)
-        },
-    })
-}
-
 // ---------- Follow Suggestions ----------
 
 export function useFollowSuggestions(userId: string | undefined, limit = 5) {
@@ -706,45 +454,63 @@ export function useDismissCategory() {
     })
 }
 
+/** The query key useBatchRelationships caches a set of targets under. */
+export function batchRelationshipsKey(viewerId: string, targetIds: string[]) {
+    return ["relationships", "batch", viewerId, ...targetIds.slice().sort()] as const
+}
+
+/**
+ * POST /v1/graph/relationships/batch for up to 100 targets, normalised to
+ * the UI Relationship. Shared by useBatchRelationships and the paged
+ * connection lists, which ask once per page.
+ */
+export async function fetchRelationshipsBatch(_viewerId: string, targetIds: string[]): Promise<Map<string, Relationship>> {
+    const capped = targetIds.slice(0, 100)
+    // No viewer_id: graph binds the viewer to the signed-in user on edge
+    // traffic (400 VIEWER_BOUND for anyone else). The caller's viewer id
+    // only keys its cache.
+    const res = await api.post<RelationshipBatchResponse>("/v1/graph/relationships/batch", {
+        target_ids: capped,
+    })
+    // graph-service returns a bare { "<uuid>": {...} } map (no
+    // envelope); tolerate a wrapped shape too. Wire field names
+    // differ from the UI Relationship type, so normalize:
+    // follows -> following, is_connection -> is_connection/accepted.
+    const raw = ((res.data as unknown as { relationships?: Record<string, unknown> }).relationships
+        ?? (res.data as unknown)) as Record<string, Record<string, unknown>>
+    const map = new Map<string, Relationship>()
+    for (const [userId, rel] of Object.entries(raw ?? {})) {
+        if (!rel || typeof rel !== 'object') continue
+        const isConnection = !!rel.is_connection
+        const status = (rel.connection_status as Relationship['connection_status']) ?? 'none'
+        map.set(userId, {
+            following: !!(rel.follows ?? rel.following),
+            followed_by: !!rel.followed_by,
+            is_connection: isConnection,
+            connection_status: isConnection ? 'accepted' : status,
+            // Private accounts: "pending_sent" is a follow request still
+            // waiting (graph-service store.Relationship.FollowRequestStatus).
+            follow_request_status: (rel.follow_request_status as Relationship['follow_request_status']) ?? 'none',
+            // Every field written explicitly, and no `as Relationship`
+            // cast: the cast asserted the whole type while the loop
+            // copied only some of it, so anything unnamed was
+            // undefined at runtime with no error anywhere.
+            blocked: !!rel.blocked,
+            blocked_by: !!rel.blocked_by,
+            is_muted: !!rel.is_muted,
+            can_dm: !!rel.can_dm,
+            can_see_online: !!rel.can_see_online,
+            can_add_to_group: !!rel.can_add_to_group,
+        })
+    }
+    return map
+}
+
 export function useBatchRelationships(viewerId: string, targetIds: string[]) {
     const capped = targetIds.slice(0, 100)
     return useQuery({
-        queryKey: ["relationships", "batch", viewerId, ...capped.slice().sort()],
-        queryFn: async () => {
-            const res = await api.post<RelationshipBatchResponse>("/v1/graph/relationships/batch", {
-                viewer_id: viewerId,
-                target_ids: capped,
-            })
-            // graph-service returns a bare { "<uuid>": {...} } map (no
-            // envelope); tolerate a wrapped shape too. Wire field names
-            // differ from the UI Relationship type, so normalize:
-            // follows -> following, is_connection -> is_connection/accepted.
-            const raw = ((res.data as unknown as { relationships?: Record<string, unknown> }).relationships
-                ?? (res.data as unknown)) as Record<string, Record<string, unknown>>
-            const map = new Map<string, Relationship>()
-            for (const [userId, rel] of Object.entries(raw ?? {})) {
-                if (!rel || typeof rel !== 'object') continue
-                const isConnection = !!rel.is_connection
-                const status = (rel.connection_status as Relationship['connection_status']) ?? 'none'
-                map.set(userId, {
-                    following: !!(rel.follows ?? rel.following),
-                    followed_by: !!rel.followed_by,
-                    is_connection: isConnection,
-                    connection_status: isConnection ? 'accepted' : status,
-                    // Every field written explicitly, and no `as Relationship`
-                    // cast: the cast asserted the whole type while the loop
-                    // copied only some of it, so anything unnamed was
-                    // undefined at runtime with no error anywhere.
-                    blocked: !!rel.blocked,
-                    blocked_by: !!rel.blocked_by,
-                    is_muted: !!rel.is_muted,
-                    can_dm: !!rel.can_dm,
-                    can_see_online: !!rel.can_see_online,
-                    can_add_to_group: !!rel.can_add_to_group,
-                })
-            }
-            return map
-        },
+        queryKey: batchRelationshipsKey(viewerId, capped),
+        queryFn: () => fetchRelationshipsBatch(viewerId, capped),
         staleTime: 30_000,
         enabled: !!viewerId && capped.length > 0,
     })
@@ -812,31 +578,3 @@ export function usePresence(userIds: string[]) {
     return query
 }
 
-/**
- * Mutual connections — "you both know N people" — for a whole list in one
- * request (POST /v1/graph/connections/mutual-counts).
- *
- * The pre-existing /v1/graph/mutuals is per pair AND counts mutual
- * FOLLOWERS, so a card grid using it would be N+1 requests answering a
- * different question. This hook is backed by one SQL query over the
- * connections table.
- *
- * Every requested id comes back, zero included, so an absent key means the
- * request has not resolved — not "no mutuals".
- */
-export function useMutualConnectionCounts(viewerId: string | undefined, targetIds: string[]) {
-    const capped = targetIds.slice(0, 100)
-    return useQuery({
-        queryKey: ["connections", "mutual-counts", viewerId, ...capped.slice().sort()],
-        queryFn: async (): Promise<Map<string, number>> => {
-            const res = await api.post<{ counts?: Record<string, number> }>(
-                "/v1/graph/connections/mutual-counts",
-                { viewer_id: viewerId, target_ids: capped },
-            )
-            const counts = res.data?.counts ?? {}
-            return new Map(Object.entries(counts))
-        },
-        staleTime: 60_000,
-        enabled: !!viewerId && capped.length > 0,
-    })
-}

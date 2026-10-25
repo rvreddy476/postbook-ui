@@ -179,12 +179,13 @@ export function useChannelByRef(ref: string | undefined) {
 }
 
 /** `GET /v1/channels/me` — 404 NO_CHANNEL → null. */
-export function useMyChannel() {
+export function useMyChannel(enabled = true) {
     return useQuery({
         queryKey: CHANNEL_REF_KEYS.mine,
         queryFn: () => getMyChannel(),
         staleTime: 60_000,
         retry: false,
+        enabled,
     })
 }
 

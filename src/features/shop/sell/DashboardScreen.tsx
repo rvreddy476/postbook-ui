@@ -1,12 +1,14 @@
 "use client"
 
-// /shop/sell: GET /dashboard counts and GET /seller/action-needed.
+// /shop/sell: GET /dashboard counts and GET /seller/action-needed. A books-only
+// shop also gets the "Sell more categories" prompt (migration 045).
 
 import Link from "next/link"
 import { useActionNeeded, useDashboard, useSellerStatus } from "../hooks/sell"
-import { sellerStatusBanner } from "../model/sell"
+import { sellerScope, sellerStatusBanner } from "../model/sell"
 import { ErrorState, Notice, PageHead, Panel, RowsSkeleton } from "../components/sell/primitives"
 import { NotTradingYet } from "../components/sell/SellerShell"
+import { SellMoreCategories } from "../components/sell/SellScope"
 
 export function DashboardScreen() {
   const status = useSellerStatus()
@@ -33,6 +35,8 @@ export function DashboardScreen() {
           <Stat label="Orders today" value={dashboard.data.orders_today} href="/shop/sell/orders" />
         </div>
       )}
+
+      {canTrade && sellerScope(seller) === "books_only" ? <SellMoreCategories panMasked={seller.pan_masked} /> : null}
 
       {!canTrade ? (
         <NotTradingYet seller={seller} />

@@ -283,11 +283,21 @@ describe("product link preview", () => {
       expect(meta.openGraph).toBeDefined()
     })
 
-    it("a 404 (a product a buyer may not see) gets no preview", async () => {
+    it("a 404 (a product a buyer may not see) gets the neutral card: nothing about the product", async () => {
       globalThis.fetch = (async () => new Response(JSON.stringify({ error: { code: "PRODUCT_NOT_FOUND", message: "x" } }), { status: 404 })) as unknown as typeof fetch
       const meta = await run("hidden")
       expect(meta).toEqual(PRODUCT_FALLBACK_METADATA)
-      expect(meta.openGraph).toBeUndefined()
+      const og = meta.openGraph as { title: string; url?: string; images: Array<{ url: string }> }
+      expect(og.title).toBe("Content on VChat")
+      expect(og.url).toBeUndefined()
+      expect(og.images[0].url).toBe("https://cleestudio.com/api/share/image")
+      expect(JSON.stringify(meta)).not.toContain("hidden")
+    })
+
+    it("a product with no picture gets the generic card picture", () => {
+      const meta = productMetadata("p1", { product: { id: "p1", title: "Earbuds" } })!
+      expect((meta.openGraph as { images: Array<{ url: string }> }).images[0].url).toBe("https://cleestudio.com/api/share/image")
+      expect((meta.twitter as { card: string; images: string[] }).images).toEqual(["https://cleestudio.com/api/share/image"])
     })
 
     it("a refused response is never read, whatever its body says", async () => {

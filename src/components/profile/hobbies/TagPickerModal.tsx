@@ -102,11 +102,11 @@ export function TagPickerModal({
             <div className="space-y-5">
                 {/* Counter */}
                 <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-bold text-brand-text/60 tracking-widest">
+                    <p className="text-xs font-bold text-brand-text/60 tracking-widest">
                         {remaining > 0 ? `${remaining} more available` : "Limit reached"}
                     </p>
                     {selected.length > 0 && (
-                        <span className="text-[10px] font-black bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
+                        <span className="text-xs font-black bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
                             {selected.length} selected
                         </span>
                     )}
@@ -130,7 +130,7 @@ export function TagPickerModal({
                     <button
                         type="button"
                         onClick={() => setActiveCategory(null)}
-                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider transition-colors ${
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold tracking-wider transition-colors ${
                             activeCategory === null
                                 ? "bg-brand-text text-brand-card"
                                 : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary"
@@ -143,7 +143,7 @@ export function TagPickerModal({
                             key={cat.id}
                             type="button"
                             onClick={() => setActiveCategory(cat.id === activeCategory ? null : cat.id)}
-                            className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider transition-colors ${
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold tracking-wider transition-colors ${
                                 activeCategory === cat.id
                                     ? "bg-brand-text text-brand-card"
                                     : "bg-brand-secondary text-brand-highlight hover:bg-brand-secondary"
@@ -169,7 +169,7 @@ export function TagPickerModal({
                                     initial={{ scale: 0.8, opacity: 0 }}
                                     animate={{ scale: 1, opacity: 1 }}
                                     exit={{ scale: 0.8, opacity: 0 }}
-                                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold border ${getCategoryColor(tag.category)}`}
+                                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${getCategoryColor(tag.category)}`}
                                 >
                                     {tag.name}
                                     <button
@@ -198,7 +198,7 @@ export function TagPickerModal({
                                         type="button"
                                         disabled={isExisting && !isSelected}
                                         onClick={() => toggleTag(tag)}
-                                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all ${
+                                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${
                                             isSelected
                                                 ? "bg-brand-text text-brand-bg border-brand-text"
                                                 : isExisting
@@ -246,7 +246,7 @@ export function TagPickerModal({
                 </div>
 
                 {customInput.length > 0 && (
-                    <p className="text-[10px] text-brand-text/60">
+                    <p className="text-xs text-brand-text/60">
                         {customInput.length}/{MAX_LABEL_LENGTH} characters
                     </p>
                 )}

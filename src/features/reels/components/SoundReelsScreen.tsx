@@ -7,10 +7,10 @@ import { Clapperboard, Heart, Music2, RefreshCw } from "lucide-react";
 import { VideoShell } from "@/features/video-shell";
 import { SoundPageHeader } from "@/features/reels/components/SoundPageHeader";
 import { useSoundPreview } from "@/features/reels/components/SoundPreview";
-import { useSoundReels } from "@/features/reels/hooks/useSounds";
+import { useSoundInfo, useSoundReels } from "@/features/reels/hooks/useSounds";
 import { formatCount } from "@/features/reels/model";
 import { readSessionUserId } from "@/features/reels/session";
-import { reelStageHref, soundReelTiles, studioHrefForSound, type SoundReelsPage } from "@/features/reels/sounds";
+import { reelStageHref, soundPageTrending, soundReelTiles, studioHrefForSound, type SoundReelsPage } from "@/features/reels/sounds";
 import "./reels-screen.css";
 
 /*
@@ -37,6 +37,9 @@ export function SoundReelsScreen({ soundId }: { soundId: string }) {
   const tiles = soundReelTiles(pages);
   const uses = tiles.filter((t) => !t.isOrigin).length;
   const preview = useSoundPreview(sound?.id ?? null);
+  // The badge: from the reels answer when it says, else from the sound read (GET /v1/audio/:id).
+  const info = useSoundInfo(sound && pages[0]?.trending === undefined ? soundId : null);
+  const trending = soundPageTrending(pages[0], info.data);
 
   // More pages as the end of the grid comes into view; the button does the same by hand.
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = reels;
@@ -66,6 +69,7 @@ export function SoundReelsScreen({ soundId }: { soundId: string }) {
             preview={preview.state}
             onTogglePreview={preview.toggle}
             useHref={studioHrefForSound(soundId, session !== "out")}
+            trending={trending}
           />
           {preview.element}
 

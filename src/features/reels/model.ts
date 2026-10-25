@@ -3,13 +3,18 @@
 
   GET /v1/feed/reels returns feed-service HydratedPost rows. Only short-form
   belongs on this page: the server already limits candidates to flick/reel,
-  but the 5-minute cap is enforced on the client too (exactly as the Android
+  but the 10-minute Shorts cap is enforced on the client too (exactly as the Android
   reels screen does), because post-service only checks the cap on a category
   override, not on create. A long video or a feed post never reaches the
   stage, whatever the server sends.
 */
 
-export const REEL_MAX_DURATION_MS = 5 * 60 * 1000;
+import { disclosuresFromWire, type Disclosures } from "@/lib/disclosures";
+import { SHORTS_MAX_DURATION_MS } from "@/lib/videoLimits";
+import { decodeAction, type PostAction } from "@/features/action-button/model";
+
+/** The Shorts boundary (10 minutes, inclusive), from the one constant in lib/videoLimits. */
+export const REEL_MAX_DURATION_MS = SHORTS_MAX_DURATION_MS;
 export const SHORT_FORM_TYPES = new Set(["flick", "reel", "short"]);
 
 /** A media row as feed-service hydrates it. Only the fields the stage reads. */
@@ -86,6 +91,20 @@ export interface FeedReelPost {
   remix_setting?: string | null;
   original_audio_volume?: number | null;
   overlay_audio_volume?: number | null;
+  /** Creator disclosures (feed-service HydratedPost, never omitted). */
+  ai_generated?: boolean;
+  paid_promotion?: boolean;
+  altered_content?: boolean;
+  /** Members only (post-service members_read.go): the level, on every gated row. */
+  tier_required_id?: string | null;
+  /** That level's monthly price (post-service members_tiers.go); absent when unknown. */
+  tier_required_price_paise?: number | null;
+  /** This viewer is not a member: caption, media, tags were cleared; the cover and title stay. */
+  body_redacted?: boolean;
+  /** The video's length, kept on a redacted row (its media is not). */
+  duration_ms?: number | null;
+  /** The Action button (features/action-button decodeAction); absent = none. */
+  action?: unknown;
 }
 
 /** The added sound a reel plays, normalised. */
@@ -138,6 +157,16 @@ export interface ReelItem {
    * sounds.ts adds that, because the model does not know the viewer.
    */
   soundReuseAllowed: boolean;
+  /** AI-generated / paid promotion / altered content, shown as labels on the reel. */
+  disclosures?: Disclosures;
+  /**
+   * Members only and this viewer is not a member (the row came redacted):
+   * the stage draws the lock card, never a player or the caption. Absent on
+   * every other reel.
+   */
+  locked?: { tierRequiredId: string; requiredPricePaise?: number };
+  /** The Action button: the pill above the caption. Absent when the reel has none (never on a locked reel). */
+  action?: PostAction;
   media: {
     mediaId: string;
     width: number;
@@ -173,7 +202,7 @@ export function primaryVideo(post: FeedReelPost): FeedMedia | null {
 
 /**
   isShortForm decides whether a row belongs on the reels stage: a video, of a
-  short-form content type, at most five minutes long. `content_type` wins
+  short-form content type, at most ten minutes long. `content_type` wins
   over `feed_content_type` because it is the post's own classification.
 */
 export function isShortForm(post: FeedReelPost): boolean {
@@ -229,7 +258,66 @@ export function wireVolume(raw: unknown): number {
 
 const RUNG = /^(\d{3,4})p$/;
 
+/**
+  A members-only short this viewer may not watch. The redacted row has no
+  media (post-service members_read.go), so isShortForm would drop it; it is
+  kept as a locked item instead — the cover, the title, the author and the
+  counts, and nothing to play: the stage draws the lock card.
+*/
+export function toLockedReelItem(post: FeedReelPost): ReelItem | null {
+  const tier = typeof post.tier_required_id === "string" ? post.tier_required_id.trim() : "";
+  if (post.body_redacted !== true || !tier) return null;
+  const type = (post.content_type || post.feed_content_type || "").toLowerCase();
+  if (!SHORT_FORM_TYPES.has(type)) return null;
+  const durationMs = wholeMs(post.duration_ms);
+  if (durationMs > REEL_MAX_DURATION_MS) return null;
+  const author = post.author ?? null;
+  return {
+    id: post.id,
+    authorId: author?.id || post.author_id,
+    authorName: author?.display_name || author?.username || "Someone",
+    authorUsername: author?.username || "",
+    authorAvatarUrl: author?.avatar_url ? mediaHref(author.avatar_url)
+      : author?.avatar_media_id ? mediaHref(`/v1/media/${author.avatar_media_id}/serve`) : null,
+    channelHandle: post.channel?.handle || null,
+    caption: "",
+    title: post.title?.trim() || "",
+    hashtags: [],
+    createdAt: post.created_at || "",
+    likeCount: post.counts?.likes ?? 0,
+    commentCount: post.counts?.comments ?? 0,
+    shareCount: post.counts?.shares ?? 0,
+    saveCount: post.counts?.saves ?? post.counts?.bookmarks,
+    viewCount: post.view_count ?? 0,
+    viewerLiked: post.has_reacted === true || !!post.viewer_reaction,
+    viewerSaved: post.is_bookmarked === true,
+    commentsDisabled: post.no_comments === true,
+    shareHidden: post.hide_share === true,
+    downloadAllowed: false,
+    isProcessing: false,
+    reasonText: post.reason_text || null,
+    sound: null,
+    originalVolume: 1,
+    overlayVolume: 1,
+    soundReuseAllowed: false,
+    locked: { tierRequiredId: tier, ...(typeof post.tier_required_price_paise === "number" && post.tier_required_price_paise > 0 ? { requiredPricePaise: post.tier_required_price_paise } : {}) },
+    media: {
+      mediaId: "",
+      width: 1080,
+      height: 1920,
+      durationMs,
+      hlsUrl: null,
+      fileUrl: "",
+      downloadUrl: "",
+      posterUrl: post.cover_media_id ? mediaHref(`/v1/media/${post.cover_media_id}/serve`) : null,
+      qualities: [],
+    },
+  };
+}
+
 export function toReelItem(post: FeedReelPost): ReelItem | null {
+  const locked = toLockedReelItem(post);
+  if (locked) return locked;
   if (!isShortForm(post)) return null;
   const video = primaryVideo(post)!;
   const author = post.author ?? null;
@@ -240,7 +328,9 @@ export function toReelItem(post: FeedReelPost): ReelItem | null {
   const qualities = Object.keys(video.variants ?? {})
     .filter((k) => RUNG.test(k))
     .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+  const action = decodeAction(post.action);
   return {
+    ...(action ? { action } : {}),
     id: post.id,
     authorId: author?.id || post.author_id,
     authorName: author?.display_name || author?.username || "Someone",
@@ -268,6 +358,7 @@ export function toReelItem(post: FeedReelPost): ReelItem | null {
     originalVolume: wireVolume(post.original_audio_volume),
     overlayVolume: wireVolume(post.overlay_audio_volume),
     soundReuseAllowed: (post.remix_setting || "").toLowerCase() !== "disallow",
+    disclosures: disclosuresFromWire(post),
     media: {
       mediaId: video.media_id,
       width: video.width ?? 1080,
@@ -314,7 +405,16 @@ export function formatClock(ms: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export function reelPermalink(id: string): string {
-  if (typeof window === "undefined") return `/reels/${id}`;
-  return `${window.location.origin}/reels/${id}`;
+/**
+ * The link Share and Copy link hand out for a reel: the public post
+ * permalink, `/post/<id>` (a reel is a post). /post/ is a public prefix in
+ * middleware and post-service's direct read gates visibility, so a
+ * signed-out recipient can open a public reel while a private one reads
+ * "Post not found". `/reels/<id>` stays as the in-app route to the stage,
+ * which needs a session, so it is not what goes out.
+ */
+export function reelPermalink(id: string, origin?: string): string {
+  const path = `/post/${encodeURIComponent(id)}`;
+  const base = origin ?? (typeof window === "undefined" ? "" : window.location?.origin ?? "");
+  return `${base}${path}`;
 }

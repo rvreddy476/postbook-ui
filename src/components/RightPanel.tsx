@@ -7,11 +7,12 @@ import { MessageCircle, Play, TrendingUp, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 import { useTrending } from '@/hooks/useSearch';
-import MessageButton from '@/components/connections/MessageButton';
+import { SuggestionFollowButton } from '@/components/PeopleYouMayKnowStrip';
 import { useSentRequests } from '@/hooks/useSentRequests';
 import { getCategoryFeed } from '@/features/posttube/data/posttubeApi';
 import { useAuthUser } from '@/store/auth';
 import { useFriendSuggestions, useBatchRelationships } from '@/hooks/useConnections';
+import { suggestionMetaLine } from '@/lib/suggestionReason';
 import { useLiveStreams } from '@/hooks/useLiveV2';
 import { currentViewerCount, viewerCountLabel } from '@/features/live/status';
 import Avatar from '@/components/ui/Avatar';
@@ -41,7 +42,7 @@ function formatViews(n: number): string {
  *   ("will show up here", "on its way"). With Trending also empty on a quiet
  *   network, a third of the screen said the app had nothing in it. Those two
  *   are gone, and every remaining card renders only when it has content.
- * - People suggestions lead, with faces and a message action, because
+ * - People suggestions lead, with faces and a Follow button, because
  *   people are what make a social feed feel inhabited. The same suggestions
  *   also appear inline in the feed, but only below this breakpoint, so no one
  *   sees the same faces twice.
@@ -86,7 +87,8 @@ const RightPanel: React.FC<RightPanelProps> = () => {
       if (hasSent(p.user_id)) return false;
       const rel = relMap?.get(p.user_id);
       if (!rel) return true;
-      return rel.connection_status !== 'pending_sent' && !rel.is_connection;
+      // Someone already followed is not a suggestion either.
+      return !rel.following && rel.connection_status !== 'pending_sent' && !rel.is_connection;
     })
     .slice(0, 5);
 
@@ -115,12 +117,6 @@ const RightPanel: React.FC<RightPanelProps> = () => {
               <Users aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-brand-text/50" />
               <h2 className="text-sm font-semibold leading-5 text-brand-text">People you might be interested in</h2>
             </div>
-            <button
-              onClick={() => router.push('/connections')}
-              className="shrink-0 py-1 text-xs font-medium text-primary-ink transition-colors hover:text-primary-hover"
-            >
-              See all
-            </button>
           </div>
           {suggestionsLoading ? (
             <div className="space-y-4 animate-pulse">
@@ -152,17 +148,21 @@ const RightPanel: React.FC<RightPanelProps> = () => {
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-medium text-brand-text">{name}</span>
                         <span className="block truncate text-xs text-muted-foreground">
-                          {p.mutual_friend_count
-                            ? `${p.mutual_friend_count} mutual friend${p.mutual_friend_count === 1 ? '' : 's'}`
-                            : p.username ? `@${p.username}` : 'Suggested for you'}
+                          {suggestionMetaLine(p, p.username ? `@${p.username}` : 'Suggested for you')}
                         </span>
                       </span>
                     </button>
                     {/*
-                      Message only. Connect is gone from the product; a
-                      connection forms when a message request is accepted.
+                      Follow only (founder, 24 Oct 2026): a suggestion is
+                      for following someone's content. Message and Connect
+                      are not offered here; the profile still has Message.
                     */}
-                    <MessageButton targetUserId={p.user_id} />
+                    <SuggestionFollowButton
+                      userId={p.user_id}
+                      name={name}
+                      following={!!relMap?.get(p.user_id)?.following}
+                      variant="row"
+                    />
                   </li>
                 );
               })}

@@ -458,7 +458,7 @@ describe("hide from people I know", () => {
   test("the setting: the switch with its one line, the count while on, the error", () => {
     const on = html(<HideKnownSetting state={{ enabled: true, hiddenCount: 2, refreshedAt: "" }} busy={false} error="" onChange={noop} />)
     expect(on).toContain("Hide me from people I know")
-    expect(on).toContain("Momentum connections won&#x27;t see you on Pulse and you won&#x27;t see them.")
+    expect(on).toContain("VChat connections won&#x27;t see you on Pulse and you won&#x27;t see them.")
     expect(on).toMatch(/id="pulse-hide-known"[^>]*checked=""/)
     expect(on).toContain("Hidden from 2 connections")
     const off = html(<HideKnownSetting state={{ enabled: false, hiddenCount: 0, refreshedAt: "" }} busy={false} error={HIDE_KNOWN_UNAVAILABLE_COPY} onChange={noop} />)

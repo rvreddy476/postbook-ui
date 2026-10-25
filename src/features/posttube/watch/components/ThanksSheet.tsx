@@ -69,10 +69,10 @@ export function ThanksSheet({ open, channelName, support, pending = false, onSen
       }}
     >
       <div role="dialog" aria-modal="true" aria-labelledby="tube-thanks-title" className="reel-confirm-card" onClick={(e) => e.stopPropagation()} data-sheet="thanks">
-        <h2 id="tube-thanks-title" className="text-[15px] font-bold">
+        <h2 id="tube-thanks-title" className="text-base font-bold">
           Thank {channelName}
         </h2>
-        <p className="mt-1.5 text-[13px] leading-relaxed text-brand-text/70">A tip goes straight to the creator from your wallet.</p>
+        <p className="mt-1.5 text-sm leading-relaxed text-brand-text/70">A tip goes straight to the creator from your wallet.</p>
 
         <div className="tube-thanks__pills" role="radiogroup" aria-label="Amount">
           {pills.map((p, i) => (
@@ -121,7 +121,7 @@ export function ThanksSheet({ open, channelName, support, pending = false, onSen
         </p>
 
         <div className="mt-4 flex justify-end gap-2">
-          <button type="button" onClick={onCancel} className="rounded-full px-4 py-2 text-[13px] font-semibold text-brand-text transition hover:bg-brand-secondary">
+          <button type="button" onClick={onCancel} className="rounded-full px-4 py-2 text-sm font-semibold text-brand-text transition hover:bg-brand-secondary">
             Cancel
           </button>
           <button

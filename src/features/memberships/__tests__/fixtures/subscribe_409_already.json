@@ -1,0 +1,9 @@
+{
+  "error": {
+    "code": "ALREADY_SUBSCRIBED",
+    "message": "Already subscribed to this creator"
+  },
+  "meta": {
+    "request_id": "req-6"
+  }
+}

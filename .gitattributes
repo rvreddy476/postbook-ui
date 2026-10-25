@@ -1,0 +1,6 @@
+# Contract fixtures are compared byte for byte with the backend's goldens
+# (modernsmapp testdata/contracts). With core.autocrlf=true a Windows checkout
+# rewrites them to CRLF and every byte-identity test fails locally while CI on
+# Linux passes. Pin them to LF everywhere.
+**/__tests__/**/*.json text eol=lf
+*.sh text eol=lf

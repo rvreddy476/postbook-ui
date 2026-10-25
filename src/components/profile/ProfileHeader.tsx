@@ -2,8 +2,8 @@
 
 import { useRef, useCallback, useState, useEffect } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import type { UserProfile, UserLink, Relationship, ContentCounts, GraphCounts, Channel } from "@/types/profile"
-import { getBadges, BADGE_CREATOR, BADGE_BUSINESS } from "@/types/profile"
+import type { UserProfile, UserLink, Relationship, GraphCounts } from "@/types/profile"
+import { getBadges } from "@/types/profile"
 import {
     BadgeCheck,
     Briefcase,
@@ -14,33 +14,28 @@ import {
     Camera,
     Loader2,
     ImageIcon,
-    FileText,
-    Users,
     Settings,
     MessageSquare,
     CheckCircle2,
     ExternalLink,
     Eye,
     Lock,
-    UserPlus,
-    UserCheck,
-    UserMinus,
-    Film,
-    Clapperboard,
-    Play,
     Crown,
     Sun,
     Moon,
 } from "lucide-react"
 import { motion } from "framer-motion"
-import Link from "next/link"
 import api from "@/lib/api"
 import { uploadMedia } from "@/lib/mediaUpload"
-import TierPicker from "@/components/monetization/TierPicker"
-import { FriendRequestButton } from "@/components/connections/FriendRequestButton"
+import { ProfileJoinButton } from "@/features/memberships/components/JoinButton"
+import { ActionPill } from "@/features/action-button/components/ActionPill"
+import { useProfileAction } from "@/features/action-button/hooks"
 import MessageButton from "@/components/connections/MessageButton"
 import { ImageAdjustEditor } from "@/components/media/ImageAdjustEditor"
 import { ImageAdjustDialog } from "@/components/media/ImageAdjustDialog"
+import { ProfileActions } from "./ProfileActions"
+import { ProfileCounts } from "./ProfileCounts"
+import { followButtonState } from "./profileParity"
 
 interface ProfileHeaderProps {
     profile: UserProfile
@@ -51,11 +46,8 @@ interface ProfileHeaderProps {
     coverUrl?: string
     isMuted?: boolean
     graphCounts: GraphCounts
-    contentCounts: ContentCounts
-    channel: Channel | null
     onFollow: () => void
     onUnfollow: () => void
-    onRemoveFromCircle: () => void
     onEditProfile: () => void
     onMessage?: () => void
     onBlock?: () => void
@@ -63,6 +55,15 @@ interface ProfileHeaderProps {
     onMute?: () => void
     onUnmute?: () => void
     onUploadError?: (message: string) => void
+    /** A signed-in viewer (owner or visitor). Signed-out visitors get Share and Copy link only. */
+    signedIn?: boolean
+    followBusy?: boolean
+    onShare?: () => void
+    onCopyLink?: () => void
+    onReport?: () => void
+    /** Open the follower/following lists; omitted when they are not viewable (private, not followed). */
+    onOpenConnections?: () => void
+    signInHref?: string
 }
 
 const badgeConfig: Record<string, { icon: typeof BadgeCheck; color: string; bg: string }> = {
@@ -84,12 +85,6 @@ function formatJoinDate(dateStr: string): string {
     return `Joined ${d.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`
 }
 
-function formatCount(n: number): string {
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
-    return n.toString()
-}
-
 export function ProfileHeader({
     profile,
     links,
@@ -99,11 +94,8 @@ export function ProfileHeader({
     coverUrl,
     isMuted,
     graphCounts,
-    contentCounts,
-    channel,
     onFollow,
     onUnfollow,
-    onRemoveFromCircle,
     onEditProfile,
     onMessage,
     onBlock,
@@ -111,8 +103,17 @@ export function ProfileHeader({
     onMute,
     onUnmute,
     onUploadError,
+    signedIn = false,
+    followBusy = false,
+    onShare,
+    onCopyLink,
+    onReport,
+    onOpenConnections,
+    signInHref,
 }: ProfileHeaderProps) {
     const qc = useQueryClient()
+    // The profile's Action button, beside Follow and Message (edited on Branding).
+    const profileAction = useProfileAction(profile)
     const avatarInputRef = useRef<HTMLInputElement>(null)
     const coverInputRef = useRef<HTMLInputElement>(null)
 
@@ -167,11 +168,7 @@ export function ProfileHeader({
     const resolvedAvatar = avatarSources[avatarFails] ?? null
     const resolvedCover = coverSources[coverFails] ?? null
     const followsYou = relationship?.followed_by ?? false
-    const isFollowing = relationship?.following ?? false
-    const canDM = relationship?.can_dm ?? false
-    const isCreatorOrBusiness = !!(profile.badge_flags & (BADGE_CREATOR | BADGE_BUSINESS))
-    // Tier 3 monetization modals
-    const [showTierPicker, setShowTierPicker] = useState(false)
+    const followState = followButtonState(profile, relationship)
 
     const uploadMutation = useMutation({
         mutationFn: async ({ file, field }: { file: File; field: ProfileImageField }) => {
@@ -261,7 +258,7 @@ export function ProfileHeader({
             <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={handleFileSelect("cover_media_id")} />
 
             {/* 1. Cover Photo — half-height hero */}
-            <div className="relative h-[200px] sm:h-[280px] lg:h-[320px] w-full overflow-hidden">
+            <div className="relative aspect-[3/1] min-h-[160px] max-h-[320px] w-full overflow-hidden">
                 {pendingImage?.field === "cover_media_id" ? (
                     <ImageAdjustEditor
                         file={pendingImage.file}
@@ -314,9 +311,14 @@ export function ProfileHeader({
                 </div>
             </div>
 
-            {/* 2. Identity row: Profile Pic | Intro | Stats — sits cleanly below the cover */}
-            <div className="max-w-[1200px] mx-auto px-6 sm:px-8">
-                <div className={`grid grid-cols-1 ${channel ? "md:grid-cols-[auto_1fr_auto]" : "md:grid-cols-[auto_1fr]"} gap-6 lg:gap-10 -mt-14 sm:-mt-16 pb-8 items-start`}>
+            {/*
+              2. Identity row: Profile Pic | Intro — sits below the cover.
+              Both tracks may shrink (`minmax(0,1fr)`, `min-w-0`), so a long
+              name never widens the row past the page. No PostTube channel
+              card here: the channel lives in PostTube.
+            */}
+            <div className="max-w-[1200px] mx-auto px-4 sm:px-8">
+                <div className="grid grid-cols-1 md:grid-cols-[auto_minmax(0,1fr)] gap-6 lg:gap-10 -mt-14 sm:-mt-16 pb-8 items-start">
 
                     {/* Left: Profile Picture */}
                     <motion.div
@@ -369,20 +371,35 @@ export function ProfileHeader({
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: 0.05 }}
-                        className="w-full md:pt-18 space-y-3"
+                        className="@container w-full min-w-0 md:pt-18 space-y-3"
                     >
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 w-full">
-                            {/* Left: Name, handle & badges on a single line */}
-                            <div className="flex flex-row items-center gap-3 justify-center md:justify-start flex-wrap md:flex-nowrap min-w-0">
-                                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-brand-text whitespace-nowrap">
+                        {/*
+                          Name and actions side by side only when the intro
+                          column is wide enough for both (container query,
+                          not the viewport: the column's width depends on the
+                          shell and sidebar). Otherwise the actions take
+                          their own row below the name. The name truncates
+                          with an ellipsis rather than running under them.
+                        */}
+                        <div
+                            data-testid="profile-identity-row"
+                            className="flex flex-col @3xl:flex-row @3xl:items-start @3xl:justify-between gap-4 w-full min-w-0"
+                        >
+                            {/* Left: Name, then handle & badges */}
+                            <div className="flex flex-col items-center md:items-start gap-1.5 min-w-0 max-w-full @3xl:flex-1">
+                                <h1
+                                    title={profile.display_name}
+                                    className="max-w-full truncate text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-brand-text"
+                                >
                                     {profile.display_name}
                                 </h1>
+                                <div className="flex items-center gap-x-3 gap-y-1.5 justify-center md:justify-start flex-wrap min-w-0 max-w-full">
                                 {profile.username && (
-                                    <span className="text-brand-text/50 font-semibold tracking-wide text-sm sm:text-base whitespace-nowrap">
+                                    <span className="min-w-0 max-w-full truncate text-muted-foreground font-semibold tracking-wide text-sm sm:text-base">
                                         @{profile.username}
                                     </span>
                                 )}
-                                <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
                                     {badges.map((badge) => {
                                         const cfg = badgeConfig[badge]
                                         if (!cfg) return null
@@ -390,7 +407,7 @@ export function ProfileHeader({
                                         return (
                                             <span
                                                 key={badge}
-                                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold tracking-wider border ${cfg.bg} ${cfg.color} whitespace-nowrap`}
+                                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold tracking-wider border ${cfg.bg} ${cfg.color} whitespace-nowrap`}
                                             >
                                                 <Icon className="h-3 w-3" />
                                                 {badge}
@@ -398,106 +415,91 @@ export function ProfileHeader({
                                         )
                                     })}
                                     {!isOwn && followsYou && (
-                                        <span className="text-[9px] font-bold text-brand-text/60 bg-brand-secondary px-2 py-0.5 rounded-md tracking-wider whitespace-nowrap">
+                                        <span className="text-xs font-semibold text-muted-foreground bg-brand-secondary px-2 py-0.5 rounded-md tracking-wider whitespace-nowrap">
                                             Follows you
                                         </span>
                                     )}
                                 </div>
+                                </div>
                             </div>
 
-                            {/* Right: Action buttons (Add Friend text + icon, Message icon-only) */}
-                            <div className="flex items-center justify-center md:justify-end gap-2 shrink-0">
-                                {isOwn ? (
-                                    <>
-                                        <button
-                                            onClick={onEditProfile}
-                                            className="flex items-center justify-center gap-2 h-10 px-5 rounded-xl bg-brand-text text-brand-card text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-xs"
-                                        >
-                                            <Settings className="w-3.5 h-3.5" />
-                                            Edit Profile
-                                        </button>
-                                        <button
-                                            onClick={toggleTheme}
-                                            type="button"
-                                            className="flex items-center justify-center h-10 w-10 rounded-xl border border-brand-divider bg-brand-card text-brand-text hover:bg-brand-secondary transition-all shadow-xs"
-                                            title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-                                        >
-                                            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                                        </button>
-                                    </>
-                                ) : (
-                                    <>
-                                        {/* Follow — for creator / business accounts */}
-                                        {isCreatorOrBusiness && (
-                                            isFollowing ? (
-                                                <button
-                                                    onClick={onUnfollow}
-                                                    className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-xs font-bold tracking-wider border border-brand-divider text-brand-text hover:bg-brand-secondary transition-all shadow-xs group"
-                                                    title="Unfollow"
-                                                >
-                                                    <UserCheck className="w-4 h-4 group-hover:hidden" />
-                                                    <UserMinus className="w-4 h-4 hidden group-hover:inline" />
-                                                    <span className="group-hover:hidden">Following</span>
-                                                    <span className="hidden group-hover:inline">Unfollow</span>
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    onClick={onFollow}
-                                                    className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl text-xs font-bold tracking-wider bg-primary-ink text-brand-bg hover:opacity-90 transition-all shadow-xs"
-                                                    title="Follow"
-                                                >
-                                                    <UserPlus className="w-4 h-4" />
-                                                    Follow
-                                                </button>
-                                            )
-                                        )}
+                            {/*
+                              Actions (parity 3-W1): owner Edit ·
+                              Share · Settings; visitor Follow · Message ·
+                              Share · ⋮ (Copy link, Mute, Block/Unblock,
+                              Report). Follow is offered on every account,
+                              not only creators; the circle control stays
+                              alongside for its incoming requests.
 
-                                        {/* Add Friend / Circle — for normal user accounts */}
-                                        {!isCreatorOrBusiness && (
-                                            <FriendRequestButton
-                allowSend={false}
-                                                targetUserId={profile.id}
-                                                targetUsername={profile.username}
-                                                relationship={relationship}
-                                                className="flex h-10 items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 text-xs font-bold tracking-wider text-brand-bg shadow-xs transition-all hover:opacity-90 disabled:opacity-60"
-                                                sentClassName="border border-brand-divider bg-transparent text-brand-text/50 hover:bg-brand-secondary hover:opacity-100"
-                                                friendClassName="border border-brand-divider bg-transparent text-brand-text hover:bg-brand-secondary hover:opacity-100"
-                                                acceptClassName="flex h-10 items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 text-xs font-bold tracking-wider text-brand-bg shadow-xs transition-all hover:opacity-90 disabled:opacity-60"
-                                                declineClassName="flex h-10 items-center justify-center gap-2 rounded-xl border border-brand-divider px-4 text-xs font-bold tracking-wider text-brand-text/60 shadow-xs transition-all hover:bg-brand-secondary disabled:opacity-60"
-                                                onFriendsClick={onRemoveFromCircle}
-                                            />
-                                        )}
-
-                                        {/*
-                                          Never locked.
-
-                                          This used to grey itself out with a
-                                          padlock and "Add to Circle to
-                                          message" whenever canDM was false —
-                                          which, with every account on the
-                                          default privacy setting, is every
-                                          stranger. It told people the one
-                                          thing they came to do was unavailable
-                                          when in fact it was available as a
-                                          message REQUEST, which is how a
-                                          connection is now formed at all.
-                                        */}
-                                        {/*
-                                          Labelled here rather than icon-only:
-                                          a profile is where someone decides
-                                          whether to reach out, so it should
-                                          say whether this will be a message or
-                                          a request — and, afterwards, that the
-                                          request has been sent.
-                                        */}
+                              Message follows the server's decision (DM
+                              consent §4): Message, Send request,
+                              Requested, or disabled with the reason; a
+                              tap opens the thread.
+                            */}
+                            <div className="flex flex-wrap items-center justify-center md:justify-start @3xl:justify-end @3xl:shrink-0 gap-2 min-w-0">
+                                <ProfileActions
+                                    isOwn={isOwn}
+                                    signedIn={signedIn}
+                                    username={profile.username || profile.id}
+                                    followState={followState}
+                                    followBusy={followBusy}
+                                    blocked={!!relationship?.blocked}
+                                    isMuted={isMuted}
+                                    onFollow={onFollow}
+                                    onUnfollow={onUnfollow}
+                                    onEditProfile={onEditProfile}
+                                    onShare={() => onShare?.()}
+                                    onCopyLink={() => onCopyLink?.()}
+                                    onBlock={onBlock}
+                                    onUnblock={onUnblock}
+                                    onMute={onMute}
+                                    onUnmute={onUnmute}
+                                    onReport={onReport}
+                                    signInHref={signInHref}
+                                    messageSlot={
                                         <MessageButton
                                             targetUserId={profile.id}
+                                            targetUsername={profile.username}
+                                            targetName={profile.display_name}
                                             variant="full"
                                         />
-                                    </>
+                                    }
+                                />
+                                {/* The profile's Action button: it opens /l/<id> (the leaving page). The owner also sees one that is blocked or under review. */}
+                                <ActionPill action={profileAction} isAuthor={isOwn} variant="profile" />
+                                {/* Join: only a creator with an active membership level, never your own page. */}
+                                {!isOwn && (
+                                    <ProfileJoinButton
+                                        creatorId={profile.id}
+                                        creatorName={profile.display_name || profile.username}
+                                        className="flex h-10 items-center justify-center gap-2 rounded-xl bg-primary-ink px-4 text-xs font-bold tracking-wider text-brand-bg shadow-xs transition-all hover:opacity-90"
+                                    />
+                                )}
+                                {isOwn && (
+                                    <button
+                                        onClick={toggleTheme}
+                                        type="button"
+                                        className="flex items-center justify-center h-10 w-10 rounded-xl border border-brand-divider bg-brand-card text-brand-text hover:bg-brand-secondary transition-all shadow-xs"
+                                        title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                                        aria-label={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                                    >
+                                        {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                                    </button>
                                 )}
                             </div>
                         </div>
+
+                        {/*
+                          Counts (T-20): graph-service /v1/graph/counts via
+                          the profile BFF, so they move after a follow or
+                          unfollow. No likes total: the only likes
+                          aggregate is analytics creator/me (owner only).
+                        */}
+                        <ProfileCounts
+                            followerCount={graphCounts.follower_count}
+                            followingCount={graphCounts.following_count}
+                            onOpen={onOpenConnections}
+                        />
 
                         {/* Meta chips */}
                         <div className="flex items-center gap-x-4 gap-y-1.5 pt-1 text-xs font-medium text-brand-text/60 justify-center md:justify-start flex-wrap">
@@ -518,10 +520,10 @@ export function ProfileHeader({
                                     href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 text-brand-text/75 hover:underline transition-colors"
+                                    className="flex min-w-0 max-w-full items-center gap-1.5 text-brand-text/75 hover:underline transition-colors"
                                 >
-                                    <Globe size={13} />
-                                    {profile.website.replace(/^https?:\/\//, "")}
+                                    <Globe size={13} className="shrink-0" />
+                                    <span className="truncate">{profile.website.replace(/^https?:\/\//, "")}</span>
                                 </a>
                             )}
                             {profile.created_at && (
@@ -532,104 +534,13 @@ export function ProfileHeader({
                             )}
                         </div>
                     </motion.div>
-
-                    {/* Right: Stats cards — unified card system */}
-                    {channel && (
-                        <div className="hidden md:flex flex-col gap-4 w-[330px] lg:w-[360px] md:pt-18">
-                            <motion.div
-                                initial={{ opacity: 0, y: 12 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.3, delay: 0.15 }}
-                                className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs p-5 border-l-[3px] border-l-violet-500"
-                            >
-                                <div className="flex items-center justify-between mb-4">
-                                    <span className="text-[10px] font-bold tracking-[0.2em] text-brand-text/50">
-                                        PostTube Channel
-                                    </span>
-                                    <Link
-                                        href={`/posttube/channel/${channel.handle}`}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-text text-brand-card text-[10px] font-bold tracking-wider hover:opacity-90 transition-all"
-                                    >
-                                        <ExternalLink className="w-3 h-3" />
-                                        View
-                                    </Link>
-                                </div>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {[
-                                        { icon: Play, label: "Subscribers", value: channel.subscriber_count, key: "subs", color: "text-violet-500" },
-                                        { icon: Film, label: "Videos", value: contentCounts.video, key: "videos", color: "text-sky-500" },
-                                        { icon: Clapperboard, label: "Reels", value: contentCounts.reel, key: "flicks", color: "text-rose-500" },
-                                    ].map((stat) => (
-                                        <div key={stat.key} className="flex flex-col items-center text-center gap-1">
-                                            <stat.icon size={16} className={stat.color} />
-                                            <p className="text-lg font-black text-brand-text tracking-tight leading-none">
-                                                {formatCount(stat.value)}
-                                            </p>
-                                            <span className="text-[9px] font-semibold tracking-[0.15em] text-brand-text/50">
-                                                {stat.label}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </motion.div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Mobile: Social Graph (stacked below on small screens) */}
-                <div className="md:hidden space-y-3 mb-6">
-                    {/* Spec §4.1 — Posts + Friends only on user profile. - Commented out per user request
-                    <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs p-4">
-                        <div className="grid grid-cols-2 gap-2">
-                            {[
-                                { icon: FileText, label: "Posts", value: contentCounts.total, color: "text-sky-500" },
-                                { icon: Users, label: "Friends", value: graphCounts.friend_count, color: "text-emerald-500" },
-                            ].map((stat) => (
-                                <div key={stat.label} className="flex flex-col items-center text-center gap-1">
-                                    <stat.icon size={15} className={stat.color} />
-                                    <p className="text-base font-black text-brand-text leading-none">{formatCount(stat.value)}</p>
-                                    <span className="text-[8px] font-semibold tracking-[0.12em] text-brand-text/50">{stat.label}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    */}
-
-                    {/* Mobile: PostTube Channel Stats */}
-                    {channel && (
-                        <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs p-4 border-l-[3px] border-l-violet-500">
-                            <div className="flex items-center justify-between mb-3">
-                                <span className="text-[10px] font-bold tracking-[0.2em] text-brand-text/50">PostTube Channel</span>
-                                <Link
-                                    href={`/posttube/channel/${channel.handle}`}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-text text-brand-card text-[10px] font-bold tracking-wider hover:opacity-90 transition-all"
-                                >
-                                    <ExternalLink className="w-3 h-3" />
-                                    View
-                                </Link>
-                            </div>
-                            <div className="grid grid-cols-3 gap-2">
-                                {[
-                                    { icon: Play, label: "Subscribers", value: channel.subscriber_count, color: "text-violet-500" },
-                                    { icon: Film, label: "Videos", value: contentCounts.video, color: "text-sky-500" },
-                                    { icon: Clapperboard, label: "Reels", value: contentCounts.reel, color: "text-rose-500" },
-                                ].map((stat) => (
-                                    <div key={stat.label} className="flex flex-col items-center text-center gap-1">
-                                        <stat.icon size={15} className={stat.color} />
-                                        <p className="text-base font-black text-brand-text leading-none">{formatCount(stat.value)}</p>
-                                        <span className="text-[8px] font-semibold tracking-[0.12em] text-brand-text/50">{stat.label}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 {/* 3. Bio Row */}
                 {profile.bio && (
                     <div className="pb-6">
                         <div className="rounded-2xl border border-brand-divider bg-brand-card shadow-xs p-5 sm:p-6">
-                            <h3 className="text-[10px] font-bold tracking-[0.25em] text-brand-text/50 mb-2.5">Biography</h3>
+                            <h3 className="text-xs font-bold tracking-[0.25em] text-muted-foreground mb-2.5">Biography</h3>
                             <p className="text-[15px] not-italic font-normal leading-relaxed text-brand-text/80">
                                 {profile.bio}
                             </p>
@@ -675,14 +586,6 @@ export function ProfileHeader({
                     </div>
                 )}
             </div>
-
-            {/* Tier 3c — Member tier picker modal */}
-            <TierPicker
-                creatorId={profile.id}
-                creatorName={profile.display_name || profile.username}
-                open={showTierPicker}
-                onClose={() => setShowTierPicker(false)}
-            />
         </div>
     )
 }

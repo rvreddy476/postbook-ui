@@ -18,9 +18,25 @@ import {
     useDeleteNotification,
     type ActivityNotification,
 } from '@/hooks/useActivityNotifications';
-import { useAcceptFriendRequest, useRejectFriendRequest } from '@/hooks/useConnections';
 import NotificationPostPopup from '@/components/NotificationPostPopup';
-import { useGlobalToast } from '@/contexts/ToastContext';
+import { bellRow, notificationActorId } from '@/lib/notificationPresentation';
+import { creditNotificationHref } from '@/lib/notificationInbox';
+import { NotificationGlyph } from '@/components/notifications/NotificationGlyph';
+
+/** This header's own sentence beside the actor's name; null lets the server's title speak. */
+function describeNotification(type: string): string | null {
+    switch (type) {
+        case 'friend_request': return 'sent you a friend request';
+        case 'friend_accepted': return 'accepted your friend request';
+        case 'follow': return 'started following you';
+        case 'reaction': return 'reacted to your post';
+        case 'comment_reaction': return 'liked your comment';
+        case 'comment': return 'commented on your post';
+        case 'credit_request': return 'credited you in a video';
+        case 'credit_accepted': return 'accepted your credit';
+        default: return null;
+    }
+}
 
 interface MinimalHeaderProps {
     currentUser: User | null;
@@ -55,10 +71,6 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
     const markRead = useMarkNotificationRead();
     const deleteNotification = useDeleteNotification();
 
-    const toast = useGlobalToast();
-    const acceptFriend = useAcceptFriendRequest();
-    const rejectFriend = useRejectFriendRequest();
-    const [handledIds, setHandledIds] = useState<Set<string>>(new Set());
     const [dismissingIds, setDismissingIds] = useState<Set<string>>(new Set());
 
     // Notification popup state
@@ -66,13 +78,8 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
     const [popupFocusCommentId, setPopupFocusCommentId] = useState<string | undefined>();
 
     // Actor profiles
-    const actorIds = activityNotifs.map(n => n.actor_user_id);
+    const actorIds = activityNotifs.map(n => n.actor_user_id).filter(id => !!notificationActorId(id));
     const actorProfiles = useActorProfiles(actorIds);
-
-    const getActorName = (id: string) => {
-        const p = actorProfiles.get(id);
-        return p?.display_name || id.slice(0, 8);
-    };
     const getActorAvatar = (id: string) => {
         const p = actorProfiles.get(id);
         return p?.avatar_media_id
@@ -157,7 +164,16 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
         if (!notif.is_read && notif.bucket != null && notif.ts != null) {
             markRead.mutate({ bucket: notif.bucket, ts: notif.ts });
         }
-        if (notif.type === 'follow' || notif.type === 'friend_accepted') {
+        if (notif.type === 'follow_request_accepted' && notif.deep_link) {
+            // Their profile, by the row's own link (creditNotificationHref keeps it in-app).
+            const href = creditNotificationHref(notif.type, notif.deep_link);
+            if (href) {
+                router.push(href);
+                setIsNotifOpen(false);
+                return;
+            }
+        }
+        if (notif.type === 'follow' || notif.type === 'friend_accepted' || notif.type === 'follow_request_accepted') {
             router.push(`/u/${actorUsername || notif.actor_user_id}`);
             setIsNotifOpen(false);
             return;
@@ -172,6 +188,13 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
             }
         }
         if (notif.type === 'friend_request') {
+            setIsNotifOpen(false);
+            return;
+        }
+        // Credit notifications: the requests page, or the accepted video on /posttube.
+        const creditHref = creditNotificationHref(notif.type, notif.deep_link);
+        if (creditHref) {
+            router.push(creditHref);
             setIsNotifOpen(false);
             return;
         }
@@ -347,11 +370,10 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                         ) : (
                                             <AnimatePresence initial={false}>
                                                 {activityNotifs.filter(n => !dismissingIds.has(n.notification_id)).map(notif => {
-                                                    const isHandled = handledIds.has(notif.notification_id);
-                                                    const isFriendReq = notif.type === 'friend_request' && !isHandled;
-                                                    const actorName = getActorName(notif.actor_user_id);
+                                                    const row = bellRow(notif, describeNotification(notif.type), actorProfiles.get(notif.actor_user_id)?.display_name);
+                                                    const actorName = row.name;
                                                     const actorAvatar = getActorAvatar(notif.actor_user_id);
-                                                    const actorUsername = actorProfiles.get(notif.actor_user_id)?.username;
+                                                    const actorUsername = actorProfiles.get(notif.actor_user_id)?.username || notif.actor?.username;
 
                                                     return (
                                                         <motion.div
@@ -361,6 +383,9 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                             transition={{ duration: 0.3 }}
                                                             className={`group/notif flex items-start gap-3 px-4 py-3 hover:bg-brand-secondary/60 transition-colors ${!notif.is_read ? 'bg-brand-text/30' : ''}`}
                                                         >
+                                                            {row.glyph ? (
+                                                                <NotificationGlyph icon={row.glyph} className="w-10 h-10 mt-0.5" />
+                                                            ) : (
                                                             <button
                                                                 onClick={() => {
                                                                     router.push(`/u/${actorUsername || notif.actor_user_id}`);
@@ -370,6 +395,7 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                             >
                                                                 <img src={actorAvatar} alt={actorName} className="w-full h-full object-cover" />
                                                             </button>
+                                                            )}
 
                                                             <div className="flex-1 min-w-0">
                                                                 <button
@@ -377,58 +403,21 @@ const MinimalHeader: React.FC<MinimalHeaderProps> = ({ currentUser, onLogout }) 
                                                                     className="text-left w-full"
                                                                 >
                                                                     <p className="text-[11px] font-bold text-brand-text/80 leading-snug">
-                                                                        <span className="font-black text-brand-text">{actorName}</span>
-                                                                        {' '}
-                                                                        {notif.type === 'friend_request' && 'sent you a friend request'}
-                                                                        {notif.type === 'friend_accepted' && 'accepted your friend request'}
-                                                                        {notif.type === 'follow' && 'started following you'}
-                                                                        {notif.type === 'reaction' && 'reacted to your post'}
-                                                                        {notif.type === 'comment_reaction' && 'liked your comment'}
-                                                                        {notif.type === 'comment' && 'commented on your post'}
+                                                                        {row.line.kind === 'title' ? (
+                                                                            row.line.title
+                                                                        ) : (
+                                                                            <>
+                                                                                <span className="font-black text-brand-text">{actorName}</span>
+                                                                                {' '}
+                                                                                {row.line.sentence}
+                                                                            </>
+                                                                        )}
                                                                     </p>
                                                                     <p className="text-[9px] text-brand-text/60 font-bold tracking-widest mt-0.5">
                                                                         {formatTimeAgo(notif.created_at)}
                                                                     </p>
                                                                 </button>
 
-                                                                {isFriendReq && (
-                                                                    <div className="flex items-center gap-2 mt-2">
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                // graph-service accept is keyed by the
-                                                                                // requester's user_id — actor_user_id is exactly that.
-                                                                                acceptFriend.mutate(notif.actor_user_id, {
-                                                                                    onSuccess: () => {
-                                                                                        setHandledIds(prev => new Set(prev).add(notif.notification_id));
-                                                                                        toast({ type: 'success', title: 'Friend request accepted' });
-                                                                                    },
-                                                                                });
-                                                                            }}
-                                                                            disabled={acceptFriend.isPending}
-                                                                            className="px-3 py-1.5 rounded-lg text-[9px] font-black tracking-wider bg-violet-600 hover:bg-violet-700 text-white shadow-xs active:scale-95 transition-all"
-                                                                        >
-                                                                            Accept
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                rejectFriend.mutate(notif.actor_user_id, {
-                                                                                    onSuccess: () => {
-                                                                                        setHandledIds(prev => new Set(prev).add(notif.notification_id));
-                                                                                        toast({ type: 'info', title: 'Friend request declined' });
-                                                                                    },
-                                                                                });
-                                                                            }}
-                                                                            disabled={rejectFriend.isPending}
-                                                                            className="px-3 py-1.5 rounded-lg text-[9px] font-black tracking-wider bg-brand-secondary text-brand-highlight hover:bg-brand-secondary/80 active:scale-95 transition-all"
-                                                                        >
-                                                                            Decline
-                                                                        </button>
-                                                                    </div>
-                                                                )}
-
-                                                                {notif.type === 'friend_request' && isHandled && (
-                                                                    <p className="text-[9px] font-black text-emerald-600 tracking-widest mt-1.5">Responded</p>
-                                                                )}
                                                             </div>
 
                                                             <div className="flex flex-col items-center gap-1.5 shrink-0 mt-1">

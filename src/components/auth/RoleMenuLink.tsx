@@ -5,6 +5,8 @@ import { QueryClientContext } from "@tanstack/react-query"
 import { BriefcaseBusiness, ChevronDown, ArrowUpRight } from "lucide-react"
 import { clearPortalSession } from "./clearPortalSession"
 import { PARTNER_MENU, portalRole } from "./portalRoles"
+import { useProductFeatures } from "@/hooks/useProductFeatures"
+import { visiblePartnerItems } from "@/lib/productFeatures"
 import { isPartnerHost } from "./partnerPortal"
 import { beginPortalSwitch } from "./portalSwitch"
 import "./partners.css"
@@ -14,6 +16,7 @@ export function RoleMenuLink({ className = "partner-menu__trigger", onClick, men
   const query = useContext(QueryClientContext)
   const element = useRef<HTMLDetailsElement>(null)
   const submitting = useRef(false)
+  const features = useProductFeatures()
   const [busy, setBusy] = useState(false)
   useEffect(() => {
     const close = (event: Event) => {
@@ -29,7 +32,7 @@ export function RoleMenuLink({ className = "partner-menu__trigger", onClick, men
     <summary className={className} role={menuItem ? "menuitem" : undefined} aria-label="Partner options"><BriefcaseBusiness size={16} aria-hidden="true" /><span>Partner</span><ChevronDown size={14} aria-hidden="true" /></summary>
     <div className="partner-menu__choices" aria-label="Partner options">
       <p>Choose your partner workspace</p>
-      {PARTNER_MENU.map(item => <button type="button" key={item.id} aria-label={item.label} disabled={busy} onClick={() => {
+      {visiblePartnerItems(PARTNER_MENU, features.state).map(item => <button type="button" key={item.id} aria-label={item.label} disabled={busy} onClick={() => {
         if (submitting.current) return
         if (isPartnerHost(window.location.hostname)) { onClick?.(); window.location.assign(portalRole(item.id)!.href); return }
         submitting.current = true

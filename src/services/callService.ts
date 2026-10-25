@@ -9,6 +9,7 @@ import {
 } from './messageService';
 import { getSession } from './authService';
 import api from '@/lib/api';
+import { ensureAccessToken } from '@/lib/accessToken';
 
 /**
  * 1:1 calls: direct WebRTC between the two browsers (or browser and phone),
@@ -501,10 +502,12 @@ export function subscribeToCallState(cb: (info: CallInfo | null) => void): () =>
 async function resolvePeerProfile(userId: string): Promise<{ name: string; avatar: string }> {
   try {
     // Bare fetch, not the axios client: /api/profile is a Next route on
-    // this origin, and the axios base URL points at the API gateway.
-    const res = await fetch(`/api/profile/${encodeURIComponent(userId)}`, {
-      headers: { Accept: 'application/json' },
-    });
+    // this origin, and the axios base URL points at the API gateway. Only
+    // the caller's token goes with it; the gateway derives the viewer.
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    const accessToken = await ensureAccessToken();
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+    const res = await fetch(`/api/profile/${encodeURIComponent(userId)}`, { headers });
     if (!res.ok) throw new Error(`profile ${res.status}`);
     const body = (await res.json()) as {
       data?: { profile?: { display_name?: string; username?: string; name?: string; avatar_url?: string; avatar_media_id?: string } };

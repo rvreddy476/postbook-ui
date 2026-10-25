@@ -68,17 +68,17 @@ describe("overlay chat window", () => {
 });
 
 describe("mute preference", () => {
-  it("a browser that never chose starts muted, like reels", () => {
-    expect(liveMuted(DEFAULT_PREFS)).toBe(true);
-    expect(liveMuted(parsePrefs(null))).toBe(true);
-    expect(liveMuted(parsePrefs("not json"))).toBe(true);
+  it("a browser that never chose starts with sound, like reels (founder, 21 Oct)", () => {
+    expect(liveMuted(DEFAULT_PREFS)).toBe(false);
+    expect(liveMuted(parsePrefs(null))).toBe(false);
+    expect(liveMuted(parsePrefs("not json"))).toBe(false);
   });
 
-  it("once unmuted it stays on through the stored reels preference", () => {
+  it("once muted it stays off through the stored reels preference", () => {
     const next = { ...DEFAULT_PREFS, ...toggleLiveSound(DEFAULT_PREFS) };
-    expect(liveMuted(next)).toBe(false);
+    expect(liveMuted(next)).toBe(true);
     // What the next stream, the next visit and the reels stage read back.
-    expect(liveMuted(parsePrefs(JSON.stringify(next)))).toBe(false);
+    expect(liveMuted(parsePrefs(JSON.stringify(next)))).toBe(true);
   });
 
   it("muting again turns it off and keeps the volume", () => {

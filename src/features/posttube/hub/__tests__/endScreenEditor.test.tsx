@@ -423,7 +423,7 @@ describe("the editor renders", () => {
     const block = hubCss.slice(hubCss.indexOf("end screen + cards editor"));
     const esCss = block.slice(0, block.indexOf("/* ---- conversations"));
     expect(esCss).not.toMatch(/#[0-9a-f]{3,8}\b/i);
-    expect(esCss).toMatch(/\.hub-es-control \{[^}]*height: 36px[^}]*font-size: 13px/);
+    expect(esCss).toMatch(/\.hub-es-control \{[^}]*height: 36px[^}]*font-size: var\(--type-sm\)/);
     expect(esCss).toMatch(/\.hub-es-btn \{[^}]*min-height: 36px/);
     expect(esCss).toMatch(/\.hub-es-icon \{[^}]*width: 36px; height: 36px/);
   });

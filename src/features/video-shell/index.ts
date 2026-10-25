@@ -22,6 +22,7 @@ export {
   REELS_NAV_MORE,
   REELS_SIDEBAR_FOOTER,
   REELS_MORE_PANEL,
+  REELS_MORE_SETTINGS,
 } from "./nav";
 export type { VideoNavItem, VideoNavSection, MorePanelItem, MorePanelSection, MorePanelAction } from "./nav";
 export { sidebarPanelReducer, SIDEBAR_PANEL_INITIAL } from "./sidebarPanel";

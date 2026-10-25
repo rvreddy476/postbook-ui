@@ -251,11 +251,11 @@ describe("LIVE ring on reels avatars", () => {
     }
   });
 
-  it("the Follow badge keeps its place: the LIVE tag yields to it", () => {
+  it("the Follow ring on top and the LIVE picture at the foot both show", () => {
     const html = renderToStaticMarkup(<ReelRail {...rail} following={false} liveHref="/reels/live/s1" />);
     expect(html).toContain("reel-rail-follow");
     expect(html).toContain("is-live");
-    expect(html).not.toContain("reel-live-tag");
+    expect(html).toContain("reel-live-tag");
   });
 
   it("the author card avatar is ringed the same way, and the name stays the profile", () => {

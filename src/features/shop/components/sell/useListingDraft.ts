@@ -19,12 +19,21 @@ import {
   incompleteFrom,
   notPatchableFrom,
   patchVariantsPayload,
+  priceAboveMrpFrom,
   problemsOntoRows,
+  returnPolicyInvalidFrom,
   revalidationFrom,
+  skuLockedFrom,
   variationProblemsFrom,
   type MatrixRow,
   type RowProblems,
 } from "../../model/sellListing"
+
+/** What a typed stock field sends: blank is 0, as singleVariantPayload does on create. */
+function stockQtyOf(text: string): number {
+  const t = text.trim()
+  return t === "" ? 0 : Number(t)
+}
 
 export interface RevalidationPrompt {
   fields: string[]
@@ -43,6 +52,8 @@ export interface SingleSave {
   sku: string
   mrpMinor: number
   priceMinor: number
+  /** Opening stock, sent only when the variant is CREATED; later stock moves through the stock ledger. */
+  stockQty: number
   dirty: boolean
 }
 
@@ -94,19 +105,26 @@ export function useListingDraft(existingProductId: string | null): ListingDraft 
         sku: row.sku.trim(),
         mrp_minor: parseMinor(row.mrp) ?? 0,
         selling_price_minor: parseMinor(row.price) ?? 0,
+        stock_qty: stockQtyOf(row.stock),
       })
       out.push(created?.id ? { ...row, variantId: created.id, dirty: false } : row)
     }
     return out
   }
 
-  async function repriceTouchedRows(rows: MatrixRow[]): Promise<void> {
+  // A price change goes live at once (the MSeller rule: price and stock are
+  // not sent back for review); the server refuses it only when the selling
+  // price would be above the MRP (400 PRICE_ABOVE_MRP). `revalidate` still
+  // travels when the seller has acknowledged this save, because the same
+  // PATCH re-sends the SKU, and an acknowledgement given for the save covers
+  // everything in it.
+  async function repriceTouchedRows(rows: MatrixRow[], revalidate: boolean): Promise<void> {
     for (const row of rows) {
       if (!row.variantId || !row.dirty) continue
       const mrp = parseMinor(row.mrp)
       const price = parseMinor(row.price)
       if (mrp === null || price === null) continue
-      await patchVariant(row.variantId, { sku: row.sku.trim(), mrp_minor: mrp, selling_price_minor: price })
+      await patchVariant(row.variantId, { sku: row.sku.trim(), mrp_minor: mrp, selling_price_minor: price, ...(revalidate ? { revalidate: true } : {}) })
     }
   }
 
@@ -141,12 +159,12 @@ export function useListingDraft(existingProductId: string | null): ListingDraft 
           variants: patchVariantsPayload(extra.matrix.axes, withIds),
           ...(revalidate ? { revalidate: true } : {}),
         })
-        await repriceTouchedRows(withIds)
+        await repriceTouchedRows(withIds, revalidate)
       } else if (extra.single && extra.single.dirty) {
         if (extra.single.variantId) {
-          await patchVariant(extra.single.variantId, { sku: extra.single.sku, mrp_minor: extra.single.mrpMinor, selling_price_minor: extra.single.priceMinor })
+          await patchVariant(extra.single.variantId, { sku: extra.single.sku, mrp_minor: extra.single.mrpMinor, selling_price_minor: extra.single.priceMinor, ...(revalidate ? { revalidate: true } : {}) })
         } else {
-          await addVariant(productId, { sku: extra.single.sku, mrp_minor: extra.single.mrpMinor, selling_price_minor: extra.single.priceMinor })
+          await addVariant(productId, { sku: extra.single.sku, mrp_minor: extra.single.mrpMinor, selling_price_minor: extra.single.priceMinor, stock_qty: extra.single.stockQty })
         }
       }
 
@@ -177,6 +195,21 @@ export function useListingDraft(existingProductId: string | null): ListingDraft 
           },
           cancel: () => setRevalidation(null),
         })
+        return null
+      }
+      const locked = skuLockedFrom(err)
+      if (locked) {
+        setNotice(locked)
+        return null
+      }
+      const aboveMrp = priceAboveMrpFrom(err)
+      if (aboveMrp) {
+        setNotice(`${aboveMrp.charAt(0).toUpperCase()}${aboveMrp.slice(1)}.`)
+        return null
+      }
+      const badReturns = returnPolicyInvalidFrom(err)
+      if (badReturns) {
+        setNotice("Choose one of the return windows offered. Nothing was changed.")
         return null
       }
       const refused = notPatchableFrom(err)

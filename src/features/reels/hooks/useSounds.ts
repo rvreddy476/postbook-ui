@@ -2,7 +2,17 @@
 
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 
-import { fetchSound, fetchSoundReels, SOUND_REELS_PAGE_SIZE, resolveReelSound } from "@/features/reels/data/soundsApi";
+import {
+  fetchSound,
+  fetchSoundList,
+  fetchSoundReels,
+  fetchTrendingSounds,
+  resolveReelSound,
+  soundSearchTerm,
+  SOUND_REELS_PAGE_SIZE,
+  type SoundListKind,
+} from "@/features/reels/data/soundsApi";
+import { TRENDING_PAGE_SIZE, type TrendingFilter } from "@/features/reels/trendingSounds";
 
 export const SOUND_KEY = ["reels", "sound"] as const;
 
@@ -40,4 +50,44 @@ export function useSoundInfo(soundId: string | null | undefined) {
 /** "Use this sound" on a reel: the sound it plays, made from its own audio on first use. */
 export function useUseSound() {
   return useMutation({ mutationFn: (postId: string) => resolveReelSound(postId) });
+}
+
+/**
+ * Trending sounds, or the sounds matching a search term, a page at a time
+ * (the studio's sound picker). A search under two characters asks nothing.
+ */
+export function useSoundList(kind: SoundListKind, query: string | null = null) {
+  const q = kind === "search" ? soundSearchTerm(query) : null;
+  return useInfiniteQuery({
+    queryKey: [...SOUND_KEY, "list", kind, q ?? ""],
+    queryFn: ({ pageParam, signal }) => fetchSoundList(kind, { q, offset: pageParam, signal }),
+    initialPageParam: 0,
+    getNextPageParam: (last) => last.nextOffset,
+    enabled: kind === "trending" || q !== null,
+    refetchOnWindowFocus: false,
+    staleTime: 60_000,
+    retry: false,
+  });
+}
+
+export function trendingSoundsKey(filter: TrendingFilter, limit: number = TRENDING_PAGE_SIZE) {
+  return [...SOUND_KEY, "trending", filter, limit] as const;
+}
+
+/**
+ * The ranked trending list on one tab, a page at a time (cursor paging).
+ * The server recomputes it every 15 minutes, so a few minutes stale is fine.
+ */
+export function useTrendingSounds(filter: TrendingFilter, options: { limit?: number; enabled?: boolean } = {}) {
+  const limit = options.limit ?? TRENDING_PAGE_SIZE;
+  return useInfiniteQuery({
+    queryKey: trendingSoundsKey(filter, limit),
+    queryFn: ({ pageParam, signal }) => fetchTrendingSounds({ filter, cursor: pageParam, limit, signal }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor,
+    enabled: options.enabled ?? true,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
 }

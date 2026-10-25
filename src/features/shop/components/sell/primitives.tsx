@@ -6,9 +6,35 @@
 import { forwardRef, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { BannerTone } from "../../model/sell"
+
+/** The 409 REVALIDATION_REQUIRED prompt: what it costs, and the two answers. Shared by the editor and the gallery. */
+export interface RevalidationPrompt {
+  fields: string[]
+  confirm: () => void
+  cancel: () => void
+}
+
+export function RevalidationPanel({ prompt }: { prompt: RevalidationPrompt }) {
+  return (
+    <Notice tone="warning">
+      <p>
+        This listing is already approved. {prompt.fields.length > 0 ? `Changing ${prompt.fields.join(", ")} sends it back for review` : "Saving this change sends it back for review"}; it stops showing in the shop until a reviewer approves it again.
+      </p>
+      <div className="shop-sell-actions">
+        <Button type="button" size="sm" onClick={prompt.confirm}>
+          Save and send for review
+        </Button>
+        <Button type="button" size="sm" variant="ghost" onClick={prompt.cancel}>
+          Leave it as it is
+        </Button>
+      </div>
+    </Notice>
+  )
+}
 
 export function PageHead({ title, sub, actions }: { title: string; sub?: ReactNode; actions?: ReactNode }) {
   return (

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Volume2, VolumeX } from "lucide-react";
 
+import { DisclosureBadges } from "@/components/DisclosureBadges";
+import { ActionPill } from "@/features/action-button/components/ActionPill";
 import { ReelSoundLabel } from "@/features/reels/components/ReelSoundLabel";
 import type { ReelItem } from "@/features/reels/model";
 
@@ -24,7 +26,8 @@ interface ReelOverlayProps {
   in, 40px square, the slider on hover), and at the bottom-left over a
   soft gradient — always — the author's name (18/700, a plain link), the
   title (if any), the hashtags (14/700) and, under them, the sound line
-  (12/600: a note and the sound's name). Nothing else: the description
+  (12/600: a note and the sound's name), with the Action button's pill
+  above the block when the reel has one. Nothing else: the description
   is read through More → Description, never drawn over the video. TikTok's
   block: 12px from the left, 16px from the bottom, at most 381px wide. No
   Follow here: following is the badge on the rail avatar. The More circle
@@ -57,6 +60,9 @@ export function ReelOverlay({ reel, sound, volume, onVolumeChange, onToggleSound
 
       <div className="reel-overlay-details" onClick={(e) => e.stopPropagation()}>
         <div className="reel-overlay-text">
+          {/* The Action button: "Apply now · domain", above the caption block; opens /l/<id>. */}
+          <ActionPill action={reel.action} isAuthor={isOwn} variant="reel" />
+
           <div className="reel-author-row pointer-events-auto" data-author-row>
             <Link href={profileHref} className="reel-author-row__name" onClick={(e) => e.stopPropagation()}>
               {reel.authorName}
@@ -64,6 +70,8 @@ export function ReelOverlay({ reel, sound, volume, onVolumeChange, onToggleSound
           </div>
 
           {reel.title ? <h2 className="reel-title" title={reel.title}>{reel.title}</h2> : null}
+
+          <DisclosureBadges disclosures={reel.disclosures} onMedia className="mt-1.5" />
 
           {reel.hashtags.length > 0 ? (
             <p className="reel-hashtags pointer-events-auto">

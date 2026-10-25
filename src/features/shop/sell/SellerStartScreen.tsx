@@ -1,7 +1,8 @@
 "use client"
 
-// /shop/sell/start: POST /onboarding/start {store_name, email, seller_type},
-// then the wizard. The SellerShell already sends a caller who has a profile
+// /shop/sell/start: "What will you sell?" first (migration 045: all categories
+// with a GSTIN, or only books with a PAN), then POST /onboarding/start
+// {store_name, email, seller_type, sell_scope} and the wizard. The SellerShell already sends a caller who has a profile
 // away from here.
 
 import { useState } from "react"
@@ -9,6 +10,8 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useStartOnboarding } from "../hooks/sell"
 import { SELLER_TYPES, apiMessage, type SellerType } from "../model/sell"
+import type { SellScope } from "../model/sellScope"
+import { SellScopeChoice } from "../components/sell/SellScope"
 import { Field, Notice, PageHead, Panel, Select, TextField } from "../components/sell/primitives"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -19,6 +22,7 @@ export function SellerStartScreen() {
   const [storeName, setStoreName] = useState("")
   const [email, setEmail] = useState("")
   const [sellerType, setSellerType] = useState<SellerType>("individual")
+  const [scope, setScope] = useState<SellScope>("all_categories")
   const [attempted, setAttempted] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -30,7 +34,7 @@ export function SellerStartScreen() {
     setError(null)
     if (nameError || emailError) return
     try {
-      await start.mutateAsync({ store_name: storeName.trim(), email: email.trim(), seller_type: sellerType })
+      await start.mutateAsync({ store_name: storeName.trim(), email: email.trim(), seller_type: sellerType, sell_scope: scope })
       router.replace("/shop/sell/onboarding")
     } catch (err) {
       setError(apiMessage(err, "The application could not be started."))
@@ -39,7 +43,7 @@ export function SellerStartScreen() {
 
   return (
     <div className="shop-sell-narrow">
-      <PageHead title="Sell on MStore" sub="Open a shop in a few steps. A person reviews your documents before it goes live." />
+      <PageHead title="Sell on MStore" sub="Open a shop in a few steps. A person reviews your documents before it goes live. Selling only books? You need a PAN, not a GSTIN." />
       <Panel>
         <form
           noValidate
@@ -49,6 +53,7 @@ export function SellerStartScreen() {
             void submit()
           }}
         >
+          <SellScopeChoice value={scope} onChange={setScope} />
           <TextField id="start-store" label="Store name" required value={storeName} onChange={setStoreName} error={attempted ? nameError : null} maxLength={120} autoComplete="organization" />
           <TextField id="start-email" label="Contact email" required type="email" inputMode="email" value={email} onChange={setEmail} error={attempted ? emailError : null} autoComplete="email" />
           <Field id="start-type" label="You are selling as">

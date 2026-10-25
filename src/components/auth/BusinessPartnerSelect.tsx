@@ -2,6 +2,8 @@
 import { useEffect, useId, useRef } from "react"
 import { BriefcaseBusiness, ChevronDown } from "lucide-react"
 import { PARTNER_MENU } from "./portalRoles"
+import { useProductFeatures } from "@/hooks/useProductFeatures"
+import { visiblePartnerItems } from "@/lib/productFeatures"
 import type { BusinessPartnerId } from "./partnerPortal"
 import "./partnerPortal.css"
 
@@ -18,7 +20,9 @@ export function BusinessPartnerSelect({ value, onChange, error, disabled = false
     document.addEventListener("keydown", close)
     return () => { document.removeEventListener("pointerdown", close); document.removeEventListener("keydown", close) }
   }, [])
-  const labels = PARTNER_MENU.filter(item => value.includes(item.id)).map(item => item.label)
+  // A business whose product the gateway has closed (GET /v1/features) is not offered.
+  const menu = visiblePartnerItems(PARTNER_MENU, useProductFeatures().state)
+  const labels = menu.filter(item => value.includes(item.id)).map(item => item.label)
   return <div className="auth-field partner-business-field">
     <span id={`${id}-label`} className="auth-label">Business partner types <span aria-hidden="true">*</span></span>
     <details ref={root} className="partner-business-select">
@@ -27,7 +31,7 @@ export function BusinessPartnerSelect({ value, onChange, error, disabled = false
       </summary>
       <fieldset disabled={disabled}>
         <legend className="sr-only">Choose one or more business partner types</legend>
-        {PARTNER_MENU.map(item => <label key={item.id}><input type="checkbox" name="businessPartners" value={item.id} checked={value.includes(item.id)} onChange={event => onChange(event.target.checked ? [...value, item.id] : value.filter(id => id !== item.id))} /><span><strong>{item.label}</strong><small>{item.detail}</small></span></label>)}
+        {menu.map(item => <label key={item.id}><input type="checkbox" name="businessPartners" value={item.id} checked={value.includes(item.id)} onChange={event => onChange(event.target.checked ? [...value, item.id] : value.filter(id => id !== item.id))} /><span><strong>{item.label}</strong><small>{item.detail}</small></span></label>)}
       </fieldset>
     </details>
     {labels.length ? <p className="partner-business-selected" aria-live="polite">{labels.join(" · ")}</p> : null}

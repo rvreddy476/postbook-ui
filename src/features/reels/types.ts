@@ -55,7 +55,8 @@ export interface AudioTrack {
 
 /* ── Reel Draft / Creation ───────────────────────────────── */
 
-export type ReelVisibility = "public" | "followers" | "private" | "unlisted";
+/** "friends" = mutual follows (post-service migration 066). */
+export type ReelVisibility = "public" | "followers" | "friends" | "private" | "unlisted";
 export type ReelStatus = "draft" | "processing" | "publishing_pending" | "published" | "rejected" | "deleted";
 export type ModerationStatus = "pending" | "approved" | "flagged" | "rejected";
 export type LicenseType = "standard" | "creative_commons";
@@ -103,6 +104,8 @@ export interface ReelDraft {
   moderation_status?: ModerationStatus;
   processing_status?: Record<string, string>;
   copyright_status?: CopyrightCheck;
+  /** Members only: the level the draft publishes gated on (post-service store/postgres/drafts.go ReelDraft); absent = open. */
+  tier_required_id?: string | null;
   created_at: string;
   updated_at: string;
 }

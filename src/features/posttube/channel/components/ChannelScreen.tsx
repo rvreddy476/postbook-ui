@@ -6,6 +6,9 @@ import { Tv, UserX } from "lucide-react";
 
 import { useAuthUser } from "@/store/auth";
 import { ShareSheet } from "@/features/reels/components/ShareSheet";
+import { MembersTab } from "@/features/memberships/components/MembersTab";
+import { useCreatorLevels } from "@/features/memberships/hooks";
+import { activeLevels } from "@/features/memberships/model";
 import { VideoCard } from "../../components/VideoCard";
 import { EmptyState, ErrorState, LoadingState } from "../../discovery/components/DiscoveryState";
 import { channelFeedPath, channelPath } from "../../feed/feedUrl";
@@ -28,6 +31,7 @@ import {
   type PanelStatus,
 } from "./ChannelPanels";
 import { ReportChannelDialog } from "./ReportChannelDialog";
+import { useAppearances } from "../../credits/useCredits";
 import { liveWatchHref } from "@/features/live/discovery";
 import { UserFoundingBadge } from "@/features/live/components/FoundingBadge";
 import { ChannelLiveSections, useChannelLiveNow } from "../../live/ChannelLive";
@@ -116,7 +120,13 @@ function ChannelBody({ channel, isOwner, signedIn }: { channel: ChannelView; isO
   const params = useSearchParams();
   // Live right now (status "live"): the LIVE ring on the avatar, and the Live tab even before any recording exists.
   const { live: liveNow } = useChannelLiveNow(channel.thin ? undefined : channel.userId);
-  const tabs = useMemo(() => visibleTabs(channel.counts, isOwner, !!liveNow), [channel.counts, isOwner, liveNow]);
+  // "Appears in": videos that credit this person and that they accepted; the tab shows only when there are some.
+  const appearances = useAppearances(channel.userId);
+  const appearsIn = (appearances.data?.pages[0]?.items.length ?? 0) > 0;
+  // "Members": the creator offers at least one membership level (public route; empty while memberships are off).
+  const levels = useCreatorLevels(channel.thin ? undefined : channel.userId);
+  const members = activeLevels(levels.data ?? []).length > 0;
+  const tabs = useMemo(() => visibleTabs(channel.counts, isOwner, !!liveNow, appearsIn, members), [channel.counts, isOwner, liveNow, appearsIn, members]);
   const active = resolveTab(params?.get("tab"), tabs);
 
   // Follow / unfollow moves the count locally; a fresh count from the server replaces the local step.
@@ -162,7 +172,7 @@ function ChannelBody({ channel, isOwner, signedIn }: { channel: ChannelView; isO
       {active ? (
         <>
           <ChannelTabs pathname={pathname} tabs={tabs} active={active} counts={channel.counts} query={query} onQuery={setQuery} />
-          <TabPanel tab={active} ownerId={channel.userId} isOwner={isOwner} query={query} sort={sort} onSort={setSort} />
+          <TabPanel tab={active} ownerId={channel.userId} ownerName={channel.name} isOwner={isOwner} query={query} sort={sort} onSort={setSort} />
         </>
       ) : (
         <EmptyState icon={<Tv size={20} strokeWidth={1.75} />} title="Nothing here yet" body="This channel has not posted anything public." />
@@ -188,6 +198,7 @@ export function FeaturedVideo({ video }: { video: PostTubeVideo }) {
 interface TabPanelProps {
   tab: ChannelTab;
   ownerId: string;
+  ownerName?: string;
   isOwner: boolean;
   query: string;
   sort: VideoSort;
@@ -203,6 +214,10 @@ function TabPanel(props: TabPanelProps) {
       return <ShortsTab {...props} />;
     case "collections":
       return <CollectionsTab {...props} />;
+    case "appears":
+      return <AppearsInTab {...props} />;
+    case "members":
+      return <MembersTab authorId={props.ownerId} authorName={props.ownerName} isOwner={props.isOwner} />;
     default:
       return <PostsTab {...props} />;
   }
@@ -294,6 +309,29 @@ function CollectionsTab({ ownerId, isOwner, query }: TabPanelProps) {
       what="collections"
     >
       <CollectionGrid collections={rows} isOwner={isOwner} />
+    </PanelFrame>
+  );
+}
+
+/** Appears in: other creators' long videos this person is credited in (accepted), in the Videos grid. */
+function AppearsInTab({ ownerId, query }: TabPanelProps) {
+  const q = useAppearances(ownerId);
+  const all = useMemo(() => q.data?.pages.flatMap((p) => p.items) ?? [], [q.data]);
+  const rows = filterByText(all, query, (v) => v.title);
+  return (
+    <PanelFrame
+      status={statusOf(q)}
+      count={rows.length}
+      total={all.length}
+      query={query}
+      hasMore={!!q.hasNextPage}
+      loadingMore={q.isFetchingNextPage}
+      onLoadMore={() => void q.fetchNextPage()}
+      onRetry={() => void q.refetch()}
+      empty={{ icon: <Tv size={20} strokeWidth={1.75} />, title: "No credited videos yet" }}
+      what="videos"
+    >
+      <VideoGrid videos={rows} />
     </PanelFrame>
   );
 }

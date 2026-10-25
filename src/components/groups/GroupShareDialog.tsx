@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, Copy, Share2, X } from 'lucide-react'
+import { Check, Copy, X } from 'lucide-react'
 import type { Group } from '@/types/groups'
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
 /**
  * Share a group.
@@ -71,7 +72,7 @@ export default function GroupShareDialog({
             <div className="animate-in fade-in zoom-in-95 w-full max-w-md overflow-hidden rounded-2xl bg-brand-card shadow-2xl duration-200">
                 <div className="flex items-center gap-3 border-b border-brand-divider px-5 py-4">
                     <span className="bg-primary-grad flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white">
-                        <Share2 className="h-5 w-5" strokeWidth={2} />
+                        <ShareIcon className="h-5 w-5" strokeWidth={2} />
                     </span>
                     <div className="min-w-0 flex-1">
                         <h2 className="truncate text-[17px] font-semibold -tracking-[0.018em] text-brand-text">
@@ -122,7 +123,7 @@ export default function GroupShareDialog({
                             onClick={share}
                             className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-divider px-4 py-2.5 text-[13px] font-semibold text-brand-text transition-colors hover:bg-brand-secondary"
                         >
-                            <Share2 className="h-4 w-4" strokeWidth={1.9} />
+                            <ShareIcon className="h-4 w-4" strokeWidth={1.9} />
                             Share via…
                         </button>
                     )}

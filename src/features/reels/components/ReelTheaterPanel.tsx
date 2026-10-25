@@ -1,6 +1,7 @@
 "use client";
 
 import CommentSection from "@/components/CommentSection";
+import { commentCreatorTools } from "@/components/comments/creatorTools";
 import { ReelAuthorCard, type ReelAuthorCardProps } from "@/features/reels/components/ReelAuthorCard";
 import { formatCount } from "@/features/reels/model";
 
@@ -25,7 +26,7 @@ export function ReelTheaterPanel({ focusCommentId, ...card }: ReelTheaterPanelPr
         <>
           <h3 className="reel-theater-panel__comments-head">Comments · {formatCount(reel.commentCount)}</h3>
           <div className="min-h-0 flex-1 overflow-hidden" data-comments-drawer="true">
-            <CommentSection key={reel.id} postId={reel.id} postAuthorId={reel.authorId} commentsCount={reel.commentCount} alwaysExpanded focusCommentId={focusCommentId} />
+            <CommentSection key={reel.id} postId={reel.id} postAuthorId={reel.authorId} commentsCount={reel.commentCount} alwaysExpanded focusCommentId={focusCommentId} creatorTools={commentCreatorTools} />
           </div>
         </>
       ) : (

@@ -139,7 +139,7 @@ function CitiesTab() {
           />
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
+            <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Name</th>
                 <th className="px-4 py-3">State</th>
@@ -174,7 +174,7 @@ function CitiesTab() {
                         "rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wide transition-colors",
                         c.is_active
                           ? "bg-success/10 text-success hover:bg-success/10"
-                          : "bg-brand-secondary text-text-muted hover:bg-brand-secondary",
+                          : "bg-brand-secondary text-muted-foreground hover:bg-brand-secondary",
                       )}
                     >
                       {c.is_active ? "Active" : "Inactive"}
@@ -486,7 +486,7 @@ function ZonesTab() {
           />
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
+            <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">City</th>
                 <th className="px-4 py-3">Name</th>
@@ -515,7 +515,7 @@ function ZonesTab() {
                           "rounded-full px-2 py-0.5 text-[11px] font-semibold",
                           z.is_active
                             ? "bg-success/10 text-success"
-                            : "bg-brand-secondary text-text-muted",
+                            : "bg-brand-secondary text-muted-foreground",
                         )}
                       >
                         {z.is_active ? "Active" : "Inactive"}
@@ -747,7 +747,7 @@ function FareRulesTab() {
           />
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
+            <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">City</th>
                 <th className="px-4 py-3">Vehicle</th>
@@ -800,7 +800,7 @@ function FareRulesTab() {
                           "rounded-full px-2 py-0.5 text-[11px] font-semibold",
                           r.is_active
                             ? "bg-success/10 text-success"
-                            : "bg-brand-secondary text-text-muted",
+                            : "bg-brand-secondary text-muted-foreground",
                         )}
                       >
                         {r.is_active ? "Active" : "Inactive"}

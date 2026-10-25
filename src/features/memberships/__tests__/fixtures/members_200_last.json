@@ -1,0 +1,20 @@
+{
+  "data": [
+    {
+      "subscription_id": "5ab0c0de-0000-4000-8000-000000000022",
+      "subscriber": {
+        "id": "b0b00000-0000-4000-8000-000000000003",
+        "display_name": "Meera",
+        "avatar_url": "javascript:alert(1)"
+      },
+      "tier": {
+        "id": "6f1c2a10-1111-4a3b-9c00-000000000001",
+        "name": "Supporter",
+        "price_paise": 4900
+      },
+      "status": "cancelled_at_period_end",
+      "since": "2026-08-15T08:00:00Z",
+      "access_until": null
+    }
+  ]
+}

@@ -385,7 +385,7 @@ function RevenueTable({
     <div className="overflow-hidden rounded-2xl border border-brand-divider bg-brand-card shadow-xs">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
+          <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-muted-foreground">
             <tr>
               <SortHeader
                 label="Group"
@@ -503,7 +503,7 @@ function SortHeader({
         onClick={() => onSort(k)}
         className={classNames(
           "inline-flex items-center gap-1 text-[11px] font-semibold tracking-wider",
-          active ? "text-brand-text" : "text-text-muted hover:text-brand-text",
+          active ? "text-brand-text" : "text-muted-foreground hover:text-brand-text",
         )}
       >
         {label}
@@ -867,7 +867,7 @@ function D2WindowPicker({
   return (
     <div className="flex flex-wrap items-end gap-3 rounded-md border border-brand-divider bg-brand-card p-3 text-sm">
       <label className="flex flex-col">
-        <span className="text-xs text-text-muted">From</span>
+        <span className="text-xs text-muted-foreground">From</span>
         <input
           type="datetime-local"
           value={value.from.slice(0, 16)}
@@ -878,7 +878,7 @@ function D2WindowPicker({
         />
       </label>
       <label className="flex flex-col">
-        <span className="text-xs text-text-muted">To</span>
+        <span className="text-xs text-muted-foreground">To</span>
         <input
           type="datetime-local"
           value={value.to.slice(0, 16)}
@@ -974,7 +974,7 @@ function MatchingHealthTab() {
       >
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="text-left text-xs tracking-wide text-text-muted">
+            <tr className="text-left text-xs tracking-wide text-muted-foreground">
               <th className="px-3 py-2">City</th>
               <th className="px-3 py-2">Vehicle</th>
               <th className="px-3 py-2">Rides</th>
@@ -1020,7 +1020,7 @@ function PartnerQualityTab() {
       >
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="text-left text-xs tracking-wide text-text-muted">
+            <tr className="text-left text-xs tracking-wide text-muted-foreground">
               <th className="px-3 py-2">Partner</th>
               <th className="px-3 py-2">Received</th>
               <th className="px-3 py-2">Accepted</th>
@@ -1070,7 +1070,7 @@ function SupplyDemandTab() {
       >
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="text-left text-xs tracking-wide text-text-muted">
+            <tr className="text-left text-xs tracking-wide text-muted-foreground">
               <th className="px-3 py-2">City</th>
               <th className="px-3 py-2">Hour</th>
               <th className="px-3 py-2">Ride requests</th>
@@ -1110,7 +1110,7 @@ function SafetyTab() {
       >
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="text-left text-xs tracking-wide text-text-muted">
+            <tr className="text-left text-xs tracking-wide text-muted-foreground">
               <th className="px-3 py-2">Kind</th>
               <th className="px-3 py-2">Severity</th>
               <th className="px-3 py-2">Count</th>
@@ -1153,7 +1153,7 @@ function PartnerComplianceTab() {
     <div className="space-y-3">
       <div className="flex flex-wrap items-end gap-3 rounded-md border border-brand-divider bg-brand-card p-3 text-sm">
         <label className="flex flex-col">
-          <span className="text-xs text-text-muted">City filter</span>
+          <span className="text-xs text-muted-foreground">City filter</span>
           <input
             type="text"
             value={city}
@@ -1170,7 +1170,7 @@ function PartnerComplianceTab() {
       >
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="text-left text-xs tracking-wide text-text-muted">
+            <tr className="text-left text-xs tracking-wide text-muted-foreground">
               <th className="px-3 py-2">Partner</th>
               <th className="px-3 py-2">City</th>
               <th className="px-3 py-2">Expired KYC docs</th>
@@ -1209,7 +1209,7 @@ function PartnerComplianceTab() {
                       {r.expired_vehicle_docs}
                     </span>
                   </td>
-                  <td className="px-3 py-2 text-xs text-text-muted">
+                  <td className="px-3 py-2 text-xs text-muted-foreground">
                     {r.oldest_expiry
                       ? new Date(r.oldest_expiry).toLocaleDateString()
                       : totalExpired === 0

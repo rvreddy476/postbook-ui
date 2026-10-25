@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, X } from 'lucide-react';
+import { Check, Clock, UserPlus, Users, X } from 'lucide-react';
 
 import { useAuthUser } from '@/store/auth';
 import {
@@ -10,13 +10,68 @@ import {
   useHideSuggestion,
   useBatchRelationships,
 } from '@/hooks/useConnections';
-import { FriendRequestButton } from '@/components/connections/FriendRequestButton';
+import { useFollowUser, useUnfollowUser } from '@/hooks/useEditProfile';
+import { followLabel, type FollowState } from '@/features/reels/explore/SuggestedCreators';
 import { useSentRequests } from '@/hooks/useSentRequests';
+import { suggestionMetaLine } from '@/lib/suggestionReason';
 
 interface PeopleYouMayKnowStripProps {
   /** Which slice of the suggestion list this strip instance shows —
    *  lets a second strip deeper in the feed show different people. */
   offset?: number;
+}
+
+/**
+ * Follow / Following on a suggestion card. Connect is gone (founder, 24 Oct
+ * 2026): a suggestion offers Follow, the graph-service follow; a private
+ * account turns it into a request.
+ */
+export function SuggestionFollowButton({
+  userId,
+  name,
+  following,
+  variant = 'card',
+}: {
+  userId: string
+  name: string
+  following: boolean
+  /** `card` fills a suggestion card; `row` sits at the end of a list row. */
+  variant?: 'card' | 'row'
+}) {
+  const follow = useFollowUser();
+  const unfollow = useUnfollowUser();
+  const [local, setLocal] = useState<FollowState | null>(null);
+  const state: FollowState = local ?? (following ? 'following' : 'none');
+  const busy = follow.isPending || unfollow.isPending;
+  const toggle = async () => {
+    if (busy) return;
+    const before = local;
+    try {
+      if (state === 'none') {
+        setLocal('following');
+        const result = await follow.mutateAsync(userId);
+        if (result?.status === 'requested') setLocal('requested');
+      } else {
+        setLocal('none');
+        await unfollow.mutateAsync(userId);
+      }
+    } catch {
+      setLocal(before);
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      disabled={busy}
+      aria-pressed={state !== 'none'}
+      aria-label={`${followLabel(state)} ${name}`}
+      className={`${variant === 'card' ? 'mt-2 w-full px-2' : 'shrink-0 px-3'} flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-bold transition-all disabled:opacity-60 ${state === 'none' ? 'bg-primary-ink text-white hover:bg-primary-hover' : 'bg-brand-text/8 text-brand-text/70 hover:bg-brand-text/12'}`}
+    >
+      {state === 'following' ? <Check className="h-3.5 w-3.5" aria-hidden /> : state === 'requested' ? <Clock className="h-3.5 w-3.5" aria-hidden /> : <UserPlus className="h-3.5 w-3.5" aria-hidden />}
+      {followLabel(state)}
+    </button>
+  );
 }
 
 /**
@@ -34,17 +89,12 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
     authUser?.id ?? '',
     pool.map((u) => u.user_id),
   );
-  // Someone already asked is not a suggestion: leaving them here invites
-  // the same request twice and crowds out someone actionable. Nothing is
-  // filtered until the relationships resolve.
+  // Someone already followed or messaged is not a suggestion: it crowds out
+  // someone actionable. Nothing is filtered until the relationships resolve.
   const eligible = pool.filter((u) => {
-    // Already messaged: gone, and the next candidate takes the slot. The
-    // connection_status check stays for requests sent before the product
-    // moved to message requests, which a message request never sets.
+    // Already messaged: gone, and the next candidate takes the slot.
     if (hasSent(u.user_id)) return false;
-    const rel = relMap?.get(u.user_id);
-    if (!rel) return true;
-    return rel.connection_status !== 'pending_sent' && !rel.is_connection;
+    return !relMap?.get(u.user_id)?.following;
   });
   const visible = eligible.slice(offset, offset + 4);
   if (visible.length === 0) return null;
@@ -56,12 +106,6 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
           <Users aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-brand-text/60" />
           <h2 className="text-sm font-semibold leading-5 text-brand-text">People you might be interested in</h2>
         </div>
-        <button
-          onClick={() => router.push('/connections')}
-          className="shrink-0 py-1 text-xs font-medium text-brand-highlight transition-colors hover:text-brand-text"
-        >
-          See all
-        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-3 min-[600px]:grid-cols-4">
@@ -106,22 +150,10 @@ const PeopleYouMayKnowStrip: React.FC<PeopleYouMayKnowStripProps> = ({ offset = 
               {/* Name + mutuals + CTA */}
               <div className="p-2.5">
                 <p className="truncate text-[13px] font-bold text-brand-text">{name}</p>
-                <p className="h-4 truncate text-[11px] text-brand-text/45">
-                  {user.mutual_friend_count
-                    ? `${user.mutual_friend_count} mutual friend${user.mutual_friend_count === 1 ? '' : 's'}`
-                    : `@${user.username ?? ''}`}
+                <p className="h-4 truncate text-xs text-brand-text/45">
+                  {suggestionMetaLine(user, `@${user.username ?? ''}`)}
                 </p>
-                <FriendRequestButton
-                  allowSend={false}
-                  targetUserId={user.user_id}
-                  targetUsername={user.username}
-                  relationship={relMap?.get(user.user_id)}
-                  addLabel="Connect"
-                  showIncomingActions={false}
-                  allowCancel={false}
-                  className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary-ink px-2 py-2 text-[11px] font-bold text-white transition-all hover:bg-primary-hover disabled:opacity-60"
-                  sentClassName="bg-brand-text/8 text-brand-text/50 hover:opacity-100"
-                />
+                <SuggestionFollowButton userId={user.user_id} name={name} following={!!relMap?.get(user.user_id)?.following} />
               </div>
             </div>
           );

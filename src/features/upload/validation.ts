@@ -1,7 +1,14 @@
 import { validateChapterRows } from "@/features/posttube/hub/chaptersModel";
+import { creditsProblems } from "@/features/posttube/credits/creditsModel";
+import { draftProblem } from "@/features/action-button/model";
 
 import type { StudioFormState } from "./types";
-import type { StepId } from "./tokens";
+import { isShortStudio, type StepId } from "./tokens";
+
+/** A topic is required for long video and podcasts; for reels it is optional (founder, 2026-10-21). */
+export function topicRequired(form: Pick<StudioFormState, "contentType">): boolean {
+  return !isShortStudio(form.contentType);
+}
 
 export interface FieldError {
   field: string;
@@ -21,6 +28,8 @@ export function getStepErrors(step: StepId, form: StudioFormState): FieldError[]
       return [];
     case "enrich":
       return getEnrichErrors(form);
+    case "credits":
+      return getCreditsErrors(form);
     case "publish":
       return getPublishErrors(form);
     default:
@@ -32,6 +41,11 @@ export function getStepErrors(step: StepId, form: StudioFormState): FieldError[]
 export function getEnrichErrors(form: StudioFormState): FieldError[] {
   const durationMs = form.videoDurationSec ? form.videoDurationSec * 1000 : null;
   return validateChapterRows(form.chapterRows, durationMs).map((issue, i) => ({ field: `chapters-${i}`, message: issue.message }));
+}
+
+/** Credits: the contract's limits (30 credits, names and roles, 3 genres, year, production house). Field ids are `upload-<field>`. */
+export function getCreditsErrors(form: StudioFormState): FieldError[] {
+  return creditsProblems(form.credits).map((p) => ({ field: p.field, message: p.message }));
 }
 
 /** A series picked as "New series" needs a name; an episode number, when typed, is a whole number ≥ 1. */
@@ -78,7 +92,7 @@ function getPublishErrors(form: StudioFormState): FieldError[] {
   if (!form.videoFile && !form.mediaId) {
     errors.push({ field: "videoFile", message: "Please select a video to publish" });
   }
-  if (!form.category.trim()) {
+  if (topicRequired(form) && !form.category.trim()) {
     errors.push({ field: "category", message: "Choose a topic to help viewers find your video." });
   }
   // NOTE: the video is uploaded and transcoded on Publish (not on selection),
@@ -91,6 +105,9 @@ function getPublishErrors(form: StudioFormState): FieldError[] {
     }
   }
   errors.push(...getSeriesErrors(form));
+  // The Action button: the server's link rules, said before Publish.
+  const action = draftProblem(form.action ?? null);
+  if (action) errors.push({ field: "action", message: action });
   return errors;
 }
 
@@ -117,13 +134,14 @@ export function isStepComplete(
     case "audience":
     case "engage":
     case "enrich":
+    case "credits":
       // Only mark complete if the user has moved past this step
       if (stepIndex != null && currentStepIndex != null) {
         return currentStepIndex > stepIndex;
       }
       return false;
     case "publish":
-      return form.category.length > 0 && (form.videoFile !== null || form.mediaId !== null);
+      return (!topicRequired(form) || form.category.length > 0) && (form.videoFile !== null || form.mediaId !== null);
     default:
       return false;
   }

@@ -123,7 +123,7 @@ function ProductCard({
                         {tag.label}
                     </span>
                 )}
-                <span className="text-[10px] font-medium tracking-wider text-brand-text/70">
+                <span className="text-xs font-medium tracking-wider text-brand-text/70">
                     Affiliate ↗
                 </span>
             </div>

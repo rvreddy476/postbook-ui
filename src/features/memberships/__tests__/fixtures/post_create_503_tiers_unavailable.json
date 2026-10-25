@@ -1,0 +1,9 @@
+{
+  "error": {
+    "code": "MEMBERSHIP_TIERS_UNAVAILABLE",
+    "message": "Membership tiers could not be checked right now; nothing was saved. Try again."
+  },
+  "meta": {
+    "request_id": "req-13"
+  }
+}

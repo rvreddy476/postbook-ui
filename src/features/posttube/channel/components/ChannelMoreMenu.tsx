@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Flag, MoreHorizontal, Rss, Share2 } from "lucide-react";
+import { Flag, MoreHorizontal, Rss } from "lucide-react";
 
 import { ChoiceMenuRow } from "@/features/reels/components/ChoiceMenu";
 import { Popover } from "@/features/reels/components/Popover";
+import { ShareIcon } from "@/components/icons/ShareIcon";
 
 /*
   The masthead's More, ascending alphabetical like every More menu.
@@ -43,7 +44,7 @@ export function ChannelMoreMenu({ signedIn, isOwner = false, hasFeed = true, onS
   };
   const rows = channelMoreRows(signedIn, isOwner, hasFeed);
   if (rows.length === 0) return null;
-  const icon: Record<ChannelMoreKey, ReactNode> = { report: <Flag />, rss: <Rss />, share: <Share2 /> };
+  const icon: Record<ChannelMoreKey, ReactNode> = { report: <Flag />, rss: <Rss />, share: <ShareIcon /> };
   const action: Record<ChannelMoreKey, () => void> = { report: onReport, rss: onFeed, share: onShare };
   return (
     <span className="tube-chan-more">

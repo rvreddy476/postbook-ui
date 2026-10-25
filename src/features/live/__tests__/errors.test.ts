@@ -51,7 +51,7 @@ describe("chat send (POST /chat)", () => {
     expect(chatSendErrorCopy(axiosErr(403, "CHAT_BANNED"))).toBe("You've been removed from this stream.")
     expect(chatSendErrorCopy(axiosErr(403, "LIVE_BANNED"))).toBe("You can't chat on live streams right now.")
     expect(chatSendErrorCopy(axiosErr(403, "CHAT_MUTED"))).toBe("You've been muted in this chat.")
-    expect(chatSendErrorCopy(axiosErr(400, "CHAT_BLOCKED_WORD"))).toBe("That message has a word the host doesn't allow.")
+    expect(chatSendErrorCopy(axiosErr(400, "CHAT_BLOCKED_WORD"))).toBe("Your message wasn't sent. It has a word the host filters out of this chat. Edit it and try again.")
     expect(chatSendErrorCopy(axiosErr(429, "RATE_LIMITED"))).toBe("You're sending too quickly. Wait a moment.")
     expect(chatSendErrorCopy(axiosErr(409, "STREAM_NOT_LIVE"))).toBe("Chat opens when the stream is live.")
     expect(chatSendErrorCopy(axiosErr(403, "NOT_FOLLOWER"))).toBe("Only the creator's followers can chat here.")

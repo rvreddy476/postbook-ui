@@ -40,7 +40,7 @@ export default function DatingPanicQueue() {
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Panic queue</h1>
-          <p className="text-sm text-text-muted">
+          <p className="text-sm text-muted-foreground">
             15-minute SLA. Refreshes every 15 seconds.
           </p>
         </div>
@@ -53,7 +53,7 @@ export default function DatingPanicQueue() {
         </button>
       </header>
 
-      {isLoading && <p className="text-sm text-text-muted">Loading…</p>}
+      {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
 
       {data && data.length === 0 && !isLoading && (
         <div className="rounded-lg border bg-success/10 border-success/20 p-6 text-sm text-success">
@@ -96,12 +96,12 @@ function PanicRow({ row }: { row: PanicRow }) {
       </div>
       <div className="flex-1">
         <div className="font-medium font-mono text-sm">user {row.user_id.slice(0, 12)}…</div>
-        <div className="text-xs text-text-muted">
+        <div className="text-xs text-muted-foreground">
           {occurred.toLocaleString()} · {ageMin} min ago
           {breached && <span className="text-danger font-semibold ml-2">SLA BREACHED</span>}
         </div>
         {row.details && Object.keys(row.details).length > 0 && (
-          <pre className="text-xs text-text-muted mt-1 font-mono">
+          <pre className="text-xs text-muted-foreground mt-1 font-mono">
             {JSON.stringify(row.details)}
           </pre>
         )}
@@ -109,7 +109,7 @@ function PanicRow({ row }: { row: PanicRow }) {
       <button
         type="button"
         disabled
-        className="text-xs px-3 py-1.5 border rounded-sm text-text-muted cursor-not-allowed"
+        className="text-xs px-3 py-1.5 border rounded-sm text-muted-foreground cursor-not-allowed"
         title="Acknowledge action lands in Phase 2"
       >
         Acknowledge

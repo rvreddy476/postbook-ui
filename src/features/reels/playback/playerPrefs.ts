@@ -8,7 +8,8 @@
   React binding.
 */
 
-export const PLAYER_PREFS_KEY = "reels_player_prefs_v1";
+// v2 (21 Oct): sound is on by default (founder); v1 stored the old muted default, so every viewer starts once with sound and their choice is kept from then on.
+export const PLAYER_PREFS_KEY = "reels_player_prefs_v2";
 
 export type QualityPref = "auto" | string; // "auto" | "360p" | "720p" | …
 /*
@@ -51,7 +52,7 @@ export interface PlayerPrefs {
 export type PrefsPatch = Partial<PlayerPrefs> | ((prev: PlayerPrefs) => Partial<PlayerPrefs>);
 
 export const DEFAULT_PREFS: PlayerPrefs = {
-  sound: false,
+  sound: true,
   volume: 1,
   speed: 1,
   quality: "auto",

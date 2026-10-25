@@ -55,14 +55,14 @@ export default function DatingPhotosQueue() {
     <div className="max-w-6xl mx-auto p-6 space-y-4">
       <header>
         <h1 className="text-2xl font-semibold">Photo moderation</h1>
-        <p className="text-sm text-text-muted">
+        <p className="text-sm text-muted-foreground">
           Oldest first. Approving graduates pending profiles to{' '}
           <code>pending_selfie</code>; rejecting pushes a
           <code>photo.moderation_rejected</code> notification to the owner.
         </p>
       </header>
 
-      {isLoading && <p className="text-sm text-text-muted">Loading…</p>}
+      {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
       {error && (
         <p className="text-sm text-danger">Failed to load: {(error as Error).message}</p>
       )}
@@ -107,15 +107,15 @@ function PhotoCard({
       {/* The media URL is rendered server-side by media-service; for
          the scaffold we link to its lookup endpoint. Replace with a
          signed-URL preview once that's exposed in Phase 2. */}
-      <div className="aspect-square bg-brand-secondary flex items-center justify-center text-xs text-text-muted">
+      <div className="aspect-square bg-brand-secondary flex items-center justify-center text-xs text-muted-foreground">
         Media {photo.media_id.slice(0, 8)}…
         {photo.is_primary && <span className="ml-2 px-1.5 py-0.5 rounded-sm bg-warning/10 text-warning">PRIMARY</span>}
       </div>
       <div className="p-3 space-y-2 text-sm">
-        <div className="font-mono text-xs text-text-muted">
+        <div className="font-mono text-xs text-muted-foreground">
           user {photo.user_id.slice(0, 8)}… · sort {photo.sort_order} · {photo.visibility}
         </div>
-        <div className="text-xs text-text-muted">
+        <div className="text-xs text-muted-foreground">
           Submitted {new Date(photo.created_at).toLocaleString()}
         </div>
         <textarea

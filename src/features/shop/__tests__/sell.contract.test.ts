@@ -2,7 +2,15 @@ import { describe, expect, it } from "bun:test"
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { createHash } from "node:crypto"
 import { join, resolve } from "node:path"
-import { mapMissing, normaliseHistoryRow, normaliseShipment, productRow, sellerStatusBanner, stockRows, type ReadinessWire, type SellerOrderCardWire, type SellerProductWire, type SellerWire } from "../model/sell"
+import { apiEnvelope, mapMissing, normaliseHistoryRow, normaliseShipment, productRow, sellerStatusBanner, stockRows, type ReadinessWire, type SellerOrderCardWire, type SellerProductWire, type SellerWire } from "../model/sell"
+import { RETURN_POLICIES, priceAboveMrpFrom, returnPolicyInvalidFrom, skuLockedFrom } from "../model/sellListing"
+import { PAN_HOLDER_WIRE_LABEL, isSellScope, sellScopeFieldError, sellerScopeBooksOnlyFrom, type SellScopeSavedWire, type SellScopeViewWire } from "../model/sellScope"
+
+/** A golden error body as the axios error the editor's decoders read; the status is the one the file name states. */
+function asHttpError(name: string, body: unknown) {
+  const status = Number(/_(\d{3})(?:_|\.json$)/.exec(name)?.[1] ?? 0)
+  return { response: { status, data: body } }
+}
 
 // Golden fixtures land at commerce-service/internal/http/testdata/contracts/
 // seller/<name>.json (lane C1) and are copied byte for byte to
@@ -16,6 +24,8 @@ import { mapMissing, normaliseHistoryRow, normaliseShipment, productRow, sellerS
 //   product_variants_*    → {items: VariantWire[]} → stockRows
 //   fulfillment_*         → {orders: SellerOrderCardWire[]} → normaliseShipment
 //   order_history_*       → {history: []} → normaliseHistoryRow
+//   variant_patch_200_*   → the repriced variant, live at once (no meta.revalidated)
+//   variant_patch_4xx_*, product_patch_4xx_* → skuLockedFrom / priceAboveMrpFrom / returnPolicyInvalidFrom
 
 const LOCAL = resolve(import.meta.dir, "contracts", "seller")
 const BACKEND = resolve(import.meta.dir, "../../../../../modernsmapp/Architecture/services/commerce-service/internal/http/testdata/contracts/seller")
@@ -63,8 +73,44 @@ describe("seller contract fixtures", () => {
         expect(typeof seller.store_name).toBe("string")
         expect(sellerStatusBanner(seller).label.length).toBeGreaterThan(0)
         expect("pan_number" in seller).toBe(false)
+        expect(isSellScope(seller.sell_scope)).toBe(true)
       })
-    } else if (f.name.startsWith("readiness")) {
+    } else if (f.name.startsWith("onboarding_sell_scope_put_200")) {
+      it(`${f.name}: the step's answer carries the PAN masked, never in full`, () => {
+        const saved = unwrap<SellScopeSavedWire>(f.body)
+        expect(isSellScope(saved.sell_scope)).toBe(true)
+        expect(f.raw.toString("utf8")).not.toMatch(/[A-Z]{5}[0-9]{4}[A-Z]/)
+        if (saved.sell_scope === "books_only") {
+          expect(saved.pan_masked).toMatch(/^X{6}[0-9A-Z]{4}$/)
+          expect(PAN_HOLDER_WIRE_LABEL[saved.pan_holder_type ?? ""]).toBeDefined()
+          expect(saved.gstin).toBeUndefined()
+        }
+      })
+    } else if (f.name.startsWith("seller_sell_scope_get_200") || f.name.startsWith("seller_sell_scope_upgrade_post_200")) {
+      it(`${f.name}: the scope view decodes, with the book categories`, () => {
+        const v = unwrap<SellScopeViewWire>(f.body)
+        expect(isSellScope(v.sell_scope)).toBe(true)
+        expect(Array.isArray(v.book_category_ids)).toBe(true)
+        for (const id of v.book_category_ids) expect(typeof id).toBe("string")
+        expect(v.can_upgrade).toBe(v.sell_scope === "books_only")
+      })
+    } else if (f.name.startsWith("onboarding_sell_scope_put_") || f.name.startsWith("seller_sell_scope_upgrade_post_")) {
+      it(`${f.name}: the step decoder claims this refusal`, () => {
+        expect(sellScopeFieldError(asHttpError(f.name, f.body))).not.toBeNull()
+      })
+    } else if (f.name.startsWith("product_post_403_seller_scope_books_only")) {
+      it(`${f.name}: a books-only shop's listing refusal names the field`, () => {
+        const refused = sellerScopeBooksOnlyFrom(asHttpError(f.name, f.body))
+        expect(refused).not.toBeNull()
+        expect(["category_id", "tax_class_id"]).toContain(refused?.field ?? "")
+      })
+    } else if (f.name.startsWith("onboarding_documents_put_400")) {
+      it(`${f.name}: the documents refusal names the field`, () => {
+        const env = apiEnvelope(asHttpError(f.name, f.body))
+        expect(env.code).toBe("DOCUMENT_BACK_NOT_ACCEPTED")
+        expect(env.details.field).toBe("back_media_id")
+      })
+    } else if (f.name.startsWith("onboarding_readiness")) {
       it(`${f.name}: parses as readiness with a mappable missing[]`, () => {
         const r = unwrap<ReadinessWire>(f.body)
         expect(typeof r.ready).toBe("boolean")
@@ -101,6 +147,33 @@ describe("seller contract fixtures", () => {
       it(`${f.name}: every row normalises`, () => {
         const d = unwrap<{ history: unknown[] }>(f.body)
         for (const row of d.history) expect(normaliseHistoryRow(row)).not.toBeNull()
+      })
+    } else if (f.name.startsWith("variant_patch_200")) {
+      it(`${f.name}: a price change is live at once — the repriced variant, no review bounce`, () => {
+        const env = f.body as { data?: { id?: string; selling_price_minor?: number; mrp_minor?: number }; meta?: { revalidated?: boolean } }
+        expect(typeof env.data?.id).toBe("string")
+        expect(typeof env.data?.selling_price_minor).toBe("number")
+        expect((env.data?.selling_price_minor ?? 0) <= (env.data?.mrp_minor ?? 0)).toBe(true)
+        expect(env.meta?.revalidated).toBeUndefined()
+      })
+    } else if (f.name.startsWith("variant_patch_") || f.name.startsWith("product_patch_")) {
+      it(`${f.name}: the editor's decoder claims this refusal`, () => {
+        const err = asHttpError(f.name, f.body)
+        if (f.name.includes("_sku_locked")) {
+          expect(skuLockedFrom(err)).toBeTruthy()
+          expect(apiEnvelope(err).details.field).toBe("sku")
+        } else if (f.name.includes("_price_above_mrp")) {
+          expect(priceAboveMrpFrom(err)).toBeTruthy()
+          expect(apiEnvelope(err).details.field).toBe("selling_price_minor")
+        } else if (f.name.includes("_return_policy_invalid")) {
+          const refused = returnPolicyInvalidFrom(err)
+          expect(refused).not.toBeNull()
+          // Every window the editor offers is one the server accepts, and the one it used to offer is not.
+          for (const r of RETURN_POLICIES) expect(refused?.allowed).toContain(r.value)
+          expect(refused?.allowed).not.toContain("14_days")
+        } else {
+          throw new Error(`no decoder for ${f.name}`)
+        }
       })
     } else {
       it.skip(`${f.name}: no mapper claims this fixture yet`, () => {})

@@ -323,15 +323,72 @@ export function useResendVerification() {
 /*  Account Deletion Hook                                              */
 /* ------------------------------------------------------------------ */
 
+/**
+ * What `DELETE /v1/auth/account` answers on success
+ * (identity auth-service, DeletionSchedule in internal/service/
+ * account_lifecycle.go). Nothing is erased now: the account is
+ * pending_deletion until scheduled_purge_date, and signing in before then
+ * cancels. Every session has already been revoked by the time this arrives.
+ */
+export interface DeletionSchedule {
+    account_status: string
+    scheduled_purge_date: string
+    cancel_by_logging_in: boolean
+}
+
+export const DELETE_ACCOUNT_PATH = "/v1/auth/account"
+
+/**
+ * The ONE account-deletion request (auth-service DeleteAccount in
+ * internal/http/account_control.go): `DELETE /v1/auth/account` with the
+ * password in the JSON body, because a signed-in device alone is not enough
+ * authority to delete an account.
+ *
+ * `_retry: true` opts this call out of the axios 401 refresh-and-retry. A 401
+ * here is normally INVALID_PASSWORD, and refreshing the session to resend the
+ * same wrong password only rotates the refresh token and checks the password
+ * twice. (The request interceptor already refreshes an expiring access token
+ * before sending.)
+ *
+ * The old web path, `DELETE /v1/users/me`, is gone: no service implements it.
+ */
+export function deleteAccountRequest(password: string) {
+    return {
+        url: DELETE_ACCOUNT_PATH,
+        config: { data: { password }, _retry: true } as { data: { password: string }; _retry: true },
+    }
+}
+
+/** User-facing text for a failed delete, from the auth-service error codes. */
+export function deleteAccountErrorMessage(err: unknown): string {
+    const e = err as { response?: { status?: number; data?: { error?: { code?: string; message?: string } } } }
+    const status = e?.response?.status
+    const code = e?.response?.data?.error?.code
+    const message = e?.response?.data?.error?.message
+    if (code === "INVALID_PASSWORD") {
+        return "That password is incorrect. Your account has not been deleted."
+    }
+    if (status === 401) {
+        return "Your session has expired. Sign in again, then retry. Your account has not been deleted."
+    }
+    if (code === "INVALID_REQUEST") {
+        return "Enter your password to confirm."
+    }
+    if (status === 409 && message) {
+        return message
+    }
+    if (!e?.response) {
+        return "Could not reach the server. Your account has not been deleted."
+    }
+    return message || "Could not delete your account. Please try again."
+}
+
 export function useDeleteAccount() {
     return useMutation({
-        mutationFn: async (): Promise<{ message: string }> => {
-            console.info("[Auth]", "Deleting account")
-            const res = await api.delete<{ data: { message: string } }>("/v1/auth/account")
+        mutationFn: async (password: string): Promise<DeletionSchedule> => {
+            const { url, config } = deleteAccountRequest(password)
+            const res = await api.delete<{ data: DeletionSchedule }>(url, config)
             return res.data.data
-        },
-        onError: (error) => {
-            console.error("[Auth]", "Failed to delete account", error)
         },
     })
 }

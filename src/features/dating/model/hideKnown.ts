@@ -4,7 +4,7 @@
     GET /hide-known            → {enabled, hidden_count, refreshed_at?}
     PUT /hide-known {enabled}  → the same
 
-  "People I know" are the viewer's accepted Momentum connections. While it is
+  "People I know" are the viewer's accepted VChat connections. While it is
   on, they and the viewer never see each other on Pulse, either way. The
   server takes the snapshot and refreshes it daily; turning it on fails
   rather than pretend when the connections can't be read (503
@@ -32,7 +32,7 @@ export function hideKnownBody(enabled: boolean): { enabled: boolean } {
 
 export const HIDE_KNOWN_TITLE = "People you know"
 export const HIDE_KNOWN_LABEL = "Hide me from people I know"
-export const HIDE_KNOWN_HELP = "Momentum connections won't see you on Pulse and you won't see them."
+export const HIDE_KNOWN_HELP = "VChat connections won't see you on Pulse and you won't see them."
 export const HIDE_KNOWN_UNAVAILABLE_COPY = "We couldn't read your connections just now — try again."
 
 /** The line under the switch while it is on; "" while off. */

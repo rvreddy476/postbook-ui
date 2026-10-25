@@ -1,0 +1,10 @@
+{
+  "data": {
+    "state": "pending",
+    "matched_title": "Sholay",
+    "created_at": "2026-10-24T05:00:00Z",
+    "review_requested_at": "2026-10-26T04:00:00Z",
+    "appealed_at": "2026-10-26T04:00:00Z",
+    "can_appeal": false
+  }
+}

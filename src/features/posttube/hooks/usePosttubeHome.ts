@@ -1,6 +1,7 @@
 "use client";
 
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { pollWhileEmpty } from "@/lib/pollWhileEmpty";
 import {
   getCategories,
   getContinueWatchingVideos,
@@ -34,6 +35,7 @@ export function useLongVideosFeed(chip: string = CHIP_ALL, limit = 20, enabled =
     getNextPageParam: (lastPage) => lastPage.next_cursor,
     staleTime: 2 * 60 * 1000,
     enabled,
+    refetchInterval: pollWhileEmpty,
   });
 }
 
@@ -46,6 +48,7 @@ export function useFlicksFeed(limit = 20, enabled = true) {
     getNextPageParam: (lastPage) => lastPage.next_cursor,
     staleTime: 2 * 60 * 1000,
     enabled,
+    refetchInterval: pollWhileEmpty, // empty reels shelf: check again every 30 s
   });
 }
 

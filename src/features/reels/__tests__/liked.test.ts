@@ -24,7 +24,7 @@ describe("likedReelsToItems", () => {
     const batch = {
       a: short("a"),
       long: short("long", { content_type: "video" }),
-      over: short("over", { media: [{ media_id: "m", kind: "video", duration_ms: 6 * 60 * 1000 }] }),
+      over: short("over", { media: [{ media_id: "m", kind: "video", duration_ms: 11 * 60 * 1000 }] }),
       photo: short("photo", { content_type: "post", media: [{ media_id: "p", kind: "image" }] }),
     };
     expect(likedReelsToItems(["a", "long", "over", "photo", "gone", "a"], batch).map((r) => r.id)).toEqual(["a"]);

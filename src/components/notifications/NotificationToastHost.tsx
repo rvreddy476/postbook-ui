@@ -161,16 +161,16 @@ export default function NotificationToastHost() {
     if (!view) return null;
 
     const body = (
-        <div className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border border-violet-200 bg-brand-card px-4 py-3 shadow-xl shadow-violet-500/10">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-100">
-                <Bell className="h-4 w-4 text-violet-600" />
+        <div className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border border-primary-outline bg-brand-card px-4 py-3 shadow-xl shadow-primary/10">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-tint">
+                <Bell className="h-4 w-4 text-primary-ink" />
             </div>
             <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-bold text-brand-text">
+                <p className="truncate text-sm font-bold text-brand-text">
                     {view.title}
                 </p>
                 {view.body && (
-                    <p className="mt-0.5 truncate text-[12px] text-brand-text/60">
+                    <p className="mt-0.5 truncate text-xs text-brand-text/60">
                         {view.body}
                     </p>
                 )}

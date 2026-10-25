@@ -13,7 +13,7 @@ interface PostsResponse {
 
 interface CreatePostPayload {
     text: string
-    visibility: "public" | "followers" | "trusted" | "private"
+    visibility: "public" | "followers" | "private"
     content_type: string
     media_ids?: string[]
     feeling?: string | null
@@ -67,23 +67,39 @@ interface CreatePostPayload {
 
 export type FeedMode = "ranked" | "chronological"
 
-export function useHomeFeed(feedMode: FeedMode = "chronological", options?: { excludeSelf?: boolean; circleOnly?: boolean; enabled?: boolean }) {
-    const excludeSelf = options?.excludeSelf ?? false
-    const circleOnly = options?.circleOnly ?? false
+export interface HomeFeedOptions { excludeSelf?: boolean; circleOnly?: boolean; followingOnly?: boolean; enabled?: boolean }
+
+/**
+ * The query key for one home feed. `followingOnly` is appended only when set,
+ * so the For You key stays ["home-feed", mode, excludeSelf, circleOnly] —
+ * the shape every existing setQueryData / invalidate already targets.
+ */
+export function homeFeedKey(feedMode: FeedMode, options?: HomeFeedOptions): unknown[] {
+    const key: unknown[] = ["home-feed", feedMode, options?.excludeSelf ?? false, options?.circleOnly ?? false]
+    if (options?.followingOnly) key.push("following_only")
+    return key
+}
+
+/**
+ * The query string for GET /v1/feed/home. Following is `following_only=true`
+ * (feed-service handler.go; the Android Following tab sends the same),
+ * which narrows to authors the viewer follows and never backfills strangers.
+ */
+export function homeFeedParams(feedMode: FeedMode, options?: HomeFeedOptions, cursor?: string): Record<string, string> {
+    const params: Record<string, string> = { limit: "20", feed_mode: feedMode, platform: "postbook" }
+    if (options?.excludeSelf) params.exclude_self = "true"
+    if (options?.circleOnly) params.circle_only = "true"
+    if (options?.followingOnly) params.following_only = "true"
+    if (cursor) params.cursor = cursor
+    return params
+}
+
+export function useHomeFeed(feedMode: FeedMode = "chronological", options?: HomeFeedOptions) {
     const enabled = options?.enabled ?? true
     return useInfiniteQuery({
-        queryKey: ["home-feed", feedMode, excludeSelf, circleOnly],
+        queryKey: homeFeedKey(feedMode, options),
         queryFn: async ({ pageParam, signal }) => {
-            const params: Record<string, string> = { limit: "20", feed_mode: feedMode, platform: "postbook" }
-            if (excludeSelf) {
-                params.exclude_self = "true"
-            }
-            if (circleOnly) {
-                params.circle_only = "true"
-            }
-            if (pageParam) {
-                params.cursor = pageParam as string
-            }
+            const params = homeFeedParams(feedMode, options, (pageParam as string) || undefined)
             const res = await api.get<PostsResponse>(`/v1/feed/home`, { params, signal })
             return res.data
         },

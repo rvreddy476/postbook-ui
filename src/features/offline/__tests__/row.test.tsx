@@ -36,13 +36,14 @@ describe("storage decides whether the row can exist", () => {
   });
 });
 
-describe("the Save offline row in the shared More model", () => {
-  test("a viewer: only when the creator allows it; the owner: always", () => {
+describe("no Save offline row in the shared More model (saved copies are managed on the Offline page)", () => {
+  test("no row for a viewer or the owner, whether the creator allows copies or not", () => {
     for (const surface of SURFACES) {
-      expect(offlineRow(surface, { downloadAllowed: true }, false)).toEqual({ key: "offline", label: "Save offline", kind: "context" });
-      expect(offlineRow(surface, { downloadAllowed: false }, false)).toBeNull();
-      expect(offlineRow(surface, { downloadAllowed: false }, true)).toEqual({ key: "offline", label: "Save offline", kind: "context" });
-      expect(offlineRow(surface, { downloadAllowed: true }, true)?.label).toBe("Save offline");
+      for (const isOwner of [false, true]) {
+        for (const downloadAllowed of [false, true]) {
+          expect(offlineRow(surface, { downloadAllowed }, isOwner)).toBeNull();
+        }
+      }
     }
   });
 
@@ -57,20 +58,19 @@ describe("the Save offline row in the shared More model", () => {
     }
   });
 
-  test("a stored copy turns the row into Remove offline copy — and it stays removable after the creator turns copies off", () => {
+  test("a stored copy does not bring back a Remove offline copy row, even after the creator turns copies off", () => {
     for (const surface of SURFACES) {
-      expect(offlineRow(surface, { offlineSaved: true }, false)?.label).toBe("Remove offline copy");
-      expect(offlineRow(surface, { offlineSaved: true }, true)?.label).toBe("Remove offline copy");
-      expect(offlineRow(surface, { offlineSaved: true, downloadAllowed: false }, false)?.label).toBe("Remove offline copy");
+      expect(offlineRow(surface, { offlineSaved: true }, false)).toBeNull();
+      expect(offlineRow(surface, { offlineSaved: true }, true)).toBeNull();
+      expect(offlineRow(surface, { offlineSaved: true, downloadAllowed: false }, false)).toBeNull();
     }
   });
 
-  test("the row keeps the menu alphabetical in both of its wordings, and there is no Keep a copy row", () => {
+  test("the menu stays alphabetical, saved or not, with no Save offline, Remove offline copy or Keep a copy row", () => {
     for (const offlineSaved of [false, true]) {
       const labels = moreRows({ surface: "watch", post: { ...POST, offlineSaved, hasDescription: true }, viewer: { isOwner: false }, can: CAN }).map((r) => r.label);
       expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })));
-      expect(labels).not.toContain("Keep a copy");
-      expect(labels).toContain(offlineSaved ? "Remove offline copy" : "Save offline");
+      for (const gone of ["Keep a copy", "Save offline", "Remove offline copy"]) expect(labels).not.toContain(gone);
     }
   });
 });
@@ -112,20 +112,17 @@ describe("what is drawn", () => {
         actions={{ "copy-link": () => undefined, offline: () => undefined }} />,
     );
 
-  test("the menu row: its words, its hint, and the progress ring while saving — never a link", () => {
+  test("the More menu draws no offline row in any copy state, and never a link", () => {
     const idle = menu(offlineRowInfo(null));
-    expect(idle).toContain('data-row="offline"');
-    expect(idle).toContain("Save offline");
-    expect(idle).toContain("Watch without a connection, here in the app");
-    expect(idle).not.toContain('role="progressbar"');
-
     const saving = menu({ saved: false, saving: true, progress: 0.42, hint: "Saving 42% · press to stop" });
-    expect(saving).toContain('role="progressbar"');
-    expect(saving).toContain('aria-valuenow="42"');
-    expect(saving).toContain("Saving 42% · press to stop");
-
     const stored = menu(offlineRowInfo(state([{ type: "start", totalBytes: 1 }, { type: "complete", totalBytes: 1 }])));
-    expect(stored).toContain("Remove offline copy");
+    for (const html of [idle, saving, stored]) {
+      expect(html).not.toContain('data-row="offline"');
+      expect(html).not.toContain("Save offline");
+      expect(html).not.toContain("Remove offline copy");
+      expect(html).not.toContain('role="progressbar"');
+      expect(html).toContain('data-row="copy-link"');
+    }
     for (const html of [idle, saving, stored]) {
       expect(html).not.toContain("<a ");
       expect(html).not.toContain("href=");

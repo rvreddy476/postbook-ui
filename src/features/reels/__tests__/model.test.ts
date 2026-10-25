@@ -49,13 +49,16 @@ describe("isShortForm — only reels reach the stage", () => {
   test("a feed post with a video is not a reel", () => {
     expect(isShortForm(flick({ content_type: "post" }))).toBe(false);
   });
-  test("a flick over the five-minute cap is dropped (client re-check, as on Android)", () => {
+  test("a flick over the ten-minute cap is dropped (client re-check, as on Android)", () => {
     const long = flick();
-    long.media![0].duration_ms = 5 * 60 * 1000 + 1;
+    long.media![0].duration_ms = 10 * 60 * 1000 + 1;
     expect(isShortForm(long)).toBe(false);
     const exact = flick();
-    exact.media![0].duration_ms = 5 * 60 * 1000;
+    exact.media![0].duration_ms = 10 * 60 * 1000;
     expect(isShortForm(exact)).toBe(true);
+    const eightMinutes = flick();
+    eightMinutes.media![0].duration_ms = 8 * 60 * 1000;
+    expect(isShortForm(eightMinutes)).toBe(true);
   });
   test("no video media → not a reel", () => {
     expect(isShortForm(flick({ media: [{ media_id: "i", kind: "image" }] }))).toBe(false);

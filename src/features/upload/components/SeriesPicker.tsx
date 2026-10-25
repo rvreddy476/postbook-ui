@@ -5,7 +5,7 @@ import { AlertCircle, ListVideo, Loader2 } from "lucide-react";
 
 import { useAuthUser } from "@/store/auth";
 
-import { StudioInput, StudioSelect } from "../primitives";
+import { Section, StudioInput, StudioSelect } from "../primitives";
 import { listMySeries, listSeriesEpisodes, nextEpisodeNumber, type SeriesChoice, type StudioSeries } from "../studioApi";
 import type { StudioFormState } from "../types";
 
@@ -70,63 +70,60 @@ export function SeriesPicker({ form, patch, showErrors }: SeriesPickerProps) {
 
   return (
     <div data-field="series">
-      <div className="mb-4 flex items-center gap-2.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-text/10">
-          <ListVideo className="h-4 w-4 text-brand-text" />
-        </div>
-        <div>
-          <h3 className="text-[14px] font-bold text-brand-text">Series</h3>
-          <p className="text-[11px] text-brand-text/50">Viewers get the next episode when this one ends</p>
-        </div>
-        {mySeries.isLoading ? <Loader2 className="ml-auto h-4 w-4 animate-spin text-brand-text/50" aria-label="Loading your series" /> : null}
-      </div>
-      <div className="space-y-3 rounded-xl border border-brand-divider bg-brand-card p-4 shadow-xs">
-        <StudioSelect label="Series (optional)" value={seriesSelectValue(choice)} onChange={(v) => patch({ seriesChoice: seriesChoiceFor(v, series, choice), seriesEpisodeNum: null })} options={options} />
-        {mySeries.isError ? (
-          <p className="flex items-center gap-1.5 text-[12px] text-brand-text/60">
-            <AlertCircle className="h-3.5 w-3.5" />
-            Your series could not be loaded.
-            <button type="button" onClick={() => void mySeries.refetch()} className="font-semibold text-brand-text underline-offset-2 hover:underline">
-              Try again
-            </button>
-          </p>
-        ) : null}
-        {choice.kind === "new" ? (
-          <div>
-            <label htmlFor="upload-seriesTitle" className="mb-1.5 block text-[12px] font-semibold text-brand-text/60">Series name <span className="text-danger">*</span></label>
-            <StudioInput id="upload-seriesTitle" required invalid={!!titleError} describedBy={titleError ? "upload-series-error" : undefined} value={choice.title} onChange={(v) => patch({ seriesChoice: { kind: "new", title: v } })} placeholder="e.g. Weekend builds" maxLength={120} autoFocus />
-            {titleError ? <p id="upload-series-error" className="upload-field-error" role="alert">Add a name for this new series, or choose No series.</p> : null}
-          </div>
-        ) : null}
-        {choice.kind !== "none" ? (
-          <div>
-            <p className="mb-1.5 text-[12px] font-semibold text-brand-text/60">Episode number</p>
-            <input
-              type="number"
-              id="upload-seriesEpisode"
-              min={1}
-              step={1}
-              inputMode="numeric"
-              value={form.seriesEpisodeNum ?? ""}
-              onChange={(e) => {
-                const raw = e.target.value.trim();
-                patch({ seriesEpisodeNum: raw === "" ? null : Number(raw) });
-              }}
-              placeholder={defaultEpisode !== null ? String(defaultEpisode) : "…"}
-              aria-invalid={episodeInvalid}
-              aria-label="Episode number"
-              className="h-11 w-32 rounded-xl border border-brand-text/10 bg-brand-secondary px-4 text-[14px] text-brand-text placeholder:text-brand-text/40 outline-hidden focus:border-brand-text focus:bg-brand-card focus:ring-2 focus:ring-brand-text/10 transition-all"
-            />
-            <p className="mt-1.5 text-[11px] text-brand-text/50">
-              {episodeInvalid
-                ? "Use a whole number, 1 or more."
-                : defaultEpisode !== null
-                  ? `Leave empty for episode ${defaultEpisode}, the next one.`
-                  : "The next number is picked when you publish."}
+      <Section
+        title="Series"
+        subtitle="Viewers get the next episode when this one ends"
+        icon={ListVideo}
+        aside={mySeries.isLoading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-label="Loading your series" /> : null}
+      >
+        <div className="upload-group upload-group-pad">
+          <StudioSelect label="Series (optional)" value={seriesSelectValue(choice)} onChange={(v) => patch({ seriesChoice: seriesChoiceFor(v, series, choice), seriesEpisodeNum: null })} options={options} />
+          {mySeries.isError ? (
+            <p className="upload-input-hint flex items-center gap-1.5">
+              <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />
+              Your series could not be loaded.
+              <button type="button" onClick={() => void mySeries.refetch()} className="upload-link-button">
+                Try again
+              </button>
             </p>
-          </div>
-        ) : null}
-      </div>
+          ) : null}
+          {choice.kind === "new" ? (
+            <div>
+              <label htmlFor="upload-seriesTitle" className="upload-label"><span>Series name<span className="upload-required" aria-label="required">*</span></span></label>
+              <StudioInput id="upload-seriesTitle" required invalid={!!titleError} describedBy={titleError ? "upload-series-error" : undefined} value={choice.title} onChange={(v) => patch({ seriesChoice: { kind: "new", title: v } })} placeholder="e.g. Weekend builds" maxLength={120} autoFocus />
+              {titleError ? <p id="upload-series-error" className="upload-field-error" role="alert">Add a name for this new series, or choose No series.</p> : null}
+            </div>
+          ) : null}
+          {choice.kind !== "none" ? (
+            <div>
+              <label htmlFor="upload-seriesEpisode" className="upload-label"><span>Episode number</span></label>
+              <input
+                type="number"
+                id="upload-seriesEpisode"
+                min={1}
+                step={1}
+                inputMode="numeric"
+                value={form.seriesEpisodeNum ?? ""}
+                onChange={(e) => {
+                  const raw = e.target.value.trim();
+                  patch({ seriesEpisodeNum: raw === "" ? null : Number(raw) });
+                }}
+                placeholder={defaultEpisode !== null ? String(defaultEpisode) : "…"}
+                aria-invalid={episodeInvalid}
+                aria-describedby="upload-seriesEpisode-hint"
+                className="upload-input upload-input-narrow"
+              />
+              <p id="upload-seriesEpisode-hint" className="upload-input-hint">
+                {episodeInvalid
+                  ? "Use a whole number, 1 or more."
+                  : defaultEpisode !== null
+                    ? `Leave empty for episode ${defaultEpisode}, the next one.`
+                    : "The next number is picked when you publish."}
+              </p>
+            </div>
+          ) : null}
+        </div>
+      </Section>
     </div>
   );
 }

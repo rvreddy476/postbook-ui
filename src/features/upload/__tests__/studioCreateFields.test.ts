@@ -18,7 +18,7 @@ describe("studioCreateFields (the direct-create publish path)", () => {
   });
 
   test("empty optional fields are left out rather than sent blank", () => {
-    const f = studioCreateFields(form({ title: "t", category: "", tags: [], recordingDate: "" }));
+    const f = studioCreateFields(form({ title: "t", category: "", tags: [] }));
     expect("category" in f).toBe(false);
     expect("tags" in f).toBe(false);
     expect("recording_date" in f).toBe(false);
@@ -39,5 +39,22 @@ describe("createReel sends the extra fields", () => {
     const [url, body] = post.mock.calls[0] as unknown as [string, Record<string, unknown>];
     expect(url).toBe("/v1/posts");
     expect(body).toMatchObject({ title: "Film", category: "music", text: "caption", media_ids: ["m1"], content_type: "long_video" });
+  });
+});
+
+describe("AI label and location (TikTok Studio parity, 2026-10-21)", () => {
+  test("the AI-generated label and a picked place reach the create route", () => {
+    const f = studioCreateFields(form({ title: "t", aiGenerated: true, locationName: "  Charminar ", locationPlaceId: "ChIJm5Mabo" }));
+    expect(f).toMatchObject({ ai_generated: true, location_name: "Charminar", location_place_id: "ChIJm5Mabo" });
+  });
+
+  test("free-text location goes without a place id; no location, no fields", () => {
+    const typed = studioCreateFields(form({ title: "t", locationName: "Grandma's house", locationPlaceId: null }));
+    expect(typed.location_name).toBe("Grandma's house");
+    expect("location_place_id" in typed).toBe(false);
+    const none = studioCreateFields(form({ title: "t", locationName: "   ", locationPlaceId: "stale" }));
+    expect("location_name" in none).toBe(false);
+    expect("location_place_id" in none).toBe(false);
+    expect("ai_generated" in none).toBe(false);
   });
 });

@@ -128,12 +128,12 @@ export function ReelAudioTracksDialog({ open, mediaId, onClose }: ReelAudioTrack
           >
             <div className="flex items-center gap-2">
               <AudioLines className="h-5 w-5" aria-hidden />
-              <h2 id="reel-audio-title" className="text-[15px] font-bold">Audio tracks</h2>
+              <h2 id="reel-audio-title" className="text-base font-bold">Audio tracks</h2>
               <button type="button" aria-label="Close" onClick={onClose} className="ml-auto rounded-full p-1.5 text-brand-text/60 hover:bg-brand-secondary hover:text-brand-text">
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="mt-1 text-[13px] text-brand-text/70">Viewers pick a language from the reel's menu. Upload your own dub, or let us generate one.</p>
+            <p className="mt-1 text-sm text-brand-text/70">Viewers pick a language from the reel's menu. Upload your own dub, or let us generate one.</p>
 
             <ul className="reel-audio-dialog__list" aria-label="Your audio tracks">
               <li className="reel-audio-dialog__track">

@@ -1,0 +1,12 @@
+{
+  "data": {
+    "subscriber_id": "f00d0000-0000-4000-8000-000000000001",
+    "creator_id": "c0ffee00-0000-4000-8000-000000000001",
+    "allowed": true,
+    "active_tier_id": "6f1c2a10-1111-4a3b-9c00-000000000002",
+    "active_price_paise": 19900,
+    "required_tier_id": "6f1c2a10-1111-4a3b-9c00-000000000001",
+    "required_price_paise": 4900,
+    "access_until": "2026-11-23T09:00:00Z"
+  }
+}

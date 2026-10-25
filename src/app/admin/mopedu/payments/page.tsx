@@ -83,7 +83,7 @@ function PaymentCard({
               </a>
             )
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-[11px] text-text-muted">
+            <div className="flex h-full w-full items-center justify-center text-[11px] text-muted-foreground">
               No proof
             </div>
           )}
@@ -286,7 +286,7 @@ export default function MopeduPaymentsQueuePage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center gap-2 text-sm text-text-muted">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading payments queue…
         </div>
       }

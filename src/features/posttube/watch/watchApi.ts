@@ -1,4 +1,5 @@
 import api from "@/lib/api";
+import { disclosuresFromWire, type Disclosures } from "@/lib/disclosures";
 
 import { fetchCollection, fetchCollectionItems, type Collection, type CollectionItem } from "@/features/posttube/library";
 import { mediaHref } from "@/features/reels/model";
@@ -11,6 +12,8 @@ import { normalizeChapters, type Chapter } from "./chapters";
 import { parseStoryboardVtt, type StoryboardCue } from "./storyboard";
 import { normalizeSupport, type CreatorSupport } from "./thanks";
 import { upNextChipQuery, type UpNextChip } from "./upNext";
+import { decodeCreditsInfo, type VideoCreditsInfo } from "../credits/creditsModel";
+import { decodeAction, type PostAction } from "@/features/action-button/model";
 
 /*
   The watch page's adapter: every request the page makes that is not
@@ -67,6 +70,10 @@ export interface WatchPostRow extends HydratedPostRow {
   source?: string | null;
   like_count?: number | null;
   tier_required_id?: string | null;
+  /** That level's monthly price on a gated row; absent when unknown (post-service members_tiers.go). */
+  tier_required_price_paise?: number | null;
+  /** Members only, this viewer is not a member: the body, media, chapters and credits were cleared (post-service members_read.go). */
+  body_redacted?: boolean | null;
   no_comments?: boolean | null;
   hide_share?: boolean | null;
   /** The topic slug (posts.category after the migration; free text before it). */
@@ -79,6 +86,10 @@ export interface WatchPostRow extends HydratedPostRow {
   /** End screens and cards are off for made-for-kids videos (either key). */
   made_for_kids?: boolean | null;
   is_made_for_kids?: boolean | null;
+  /** Creator disclosures (postgres.Post, never omitted). */
+  ai_generated?: boolean | null;
+  paid_promotion?: boolean | null;
+  altered_content?: boolean | null;
   related_post?: {
     id?: string | null;
     title?: string | null;
@@ -86,6 +97,13 @@ export interface WatchPostRow extends HydratedPostRow {
     duration_seconds?: number | null;
     channel_name?: string | null;
   } | null;
+  /* Video credits (contract 23 Oct 2026); read by decodeCreditsInfo. `status` only for the owner. */
+  credits?: unknown;
+  genres?: unknown;
+  release_year?: unknown;
+  production_house?: unknown;
+  /** The Action button (contract 23 Oct 2026); read by decodeAction. */
+  action?: unknown;
 }
 
 /** The creator's pick shown in the about card; only present when the viewer may see it. */
@@ -124,6 +142,10 @@ export interface WatchDetail {
   likeCount: number;
   /** The membership tier the post is gated behind; null = open. */
   tierRequiredId: string | null;
+  /** tier_required_price_paise: what that level costs a month; null when unknown. */
+  tierRequiredPricePaise: number | null;
+  /** The server redacted the row for this viewer (not a member): locked whatever else says. */
+  bodyRedacted: boolean;
   commentsOff: boolean;
   shareHidden: boolean;
   topicSlug: string | null;
@@ -136,6 +158,12 @@ export interface WatchDetail {
   ageRestricted: boolean;
   /** No end screen or cards are fetched for it. */
   madeForKids: boolean;
+  /** AI-generated / paid promotion / altered content, labels under the title. */
+  disclosures: Disclosures;
+  /** Cast & crew, genres, year, production house; empty when the video has none. */
+  credits: VideoCreditsInfo;
+  /** The Action button under the player; absent when the video has none. */
+  action?: PostAction;
 }
 
 /** A row + its card model → what the page reads. Missing keys fall back to what the card already knew. */
@@ -144,7 +172,9 @@ export function normalizeWatchDetail(row: WatchPostRow, video: PostTubeVideo): W
   const likeCount =
     typeof row.like_count === "number" && Number.isFinite(row.like_count) && row.like_count >= 0 ? row.like_count : video.like_count;
   const slug = typeof row.category === "string" ? row.category.trim() : "";
+  const action = decodeAction(row.action);
   return {
+    ...(action ? { action } : {}),
     video: { ...video, like_count: likeCount, viewer_has_disliked: row.viewer_disliked === true },
     viewerDisliked: row.viewer_disliked === true,
     viewerQueued: row.viewer_queued === true,
@@ -153,6 +183,8 @@ export function normalizeWatchDetail(row: WatchPostRow, video: PostTubeVideo): W
     source: row.source === "live" ? "live" : "upload",
     likeCount,
     tierRequiredId: typeof row.tier_required_id === "string" && row.tier_required_id ? row.tier_required_id : null,
+    tierRequiredPricePaise: typeof row.tier_required_price_paise === "number" && row.tier_required_price_paise > 0 ? Math.trunc(row.tier_required_price_paise) : null,
+    bodyRedacted: row.body_redacted === true,
     commentsOff: row.no_comments === true,
     shareHidden: row.hide_share === true,
     topicSlug: slug && /^[a-z0-9-]{2,40}$/.test(slug) ? slug : null,
@@ -162,6 +194,8 @@ export function normalizeWatchDetail(row: WatchPostRow, video: PostTubeVideo): W
     relatedPost: row.related_post_id === row.id ? null : normalizeRelatedPost(row.related_post),
     ageRestricted: row.age_restricted === true,
     madeForKids: row.made_for_kids === true || row.is_made_for_kids === true,
+    disclosures: disclosuresFromWire(row),
+    credits: decodeCreditsInfo(row),
   };
 }
 
@@ -214,17 +248,7 @@ export async function setPass(postId: string, on: boolean): Promise<void> {
   else await api.delete(`/v1/posts/${postId}/tune`);
 }
 
-/* ── Creator heart / pin on comments ────────────────────── */
-
-export async function setCommentHeart(commentId: string, on: boolean): Promise<void> {
-  if (on) await api.post(`/v1/comments/${commentId}/heart`);
-  else await api.delete(`/v1/comments/${commentId}/heart`);
-}
-
-export async function setCommentPin(commentId: string, on: boolean): Promise<void> {
-  if (on) await api.put(`/v1/comments/${commentId}/pin`);
-  else await api.delete(`/v1/comments/${commentId}/pin`);
-}
+/* Creator heart / pin on comments: components/comments/creatorTools, shared by every comment surface. */
 
 /* ── Up next ────────────────────────────────────────────── */
 

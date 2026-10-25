@@ -1,0 +1,9 @@
+{
+  "error": {
+    "code": "TIER_LIMIT",
+    "message": "A creator can have at most 3 active tiers"
+  },
+  "meta": {
+    "request_id": "req-2"
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "data": [
+    {
+      "id": "7a1d0000-0000-4000-8000-000000000001",
+      "author_id": "a0700000-0000-4000-8000-000000000001",
+      "title": "Full movie in HD",
+      "text": "Watch the whole film",
+      "content_type": "long_video",
+      "visibility": "public",
+      "created_at": "2026-10-24T05:00:00Z",
+      "published_at": "2026-10-24T05:00:00Z",
+      "view_count": 0,
+      "scheduled_at": null,
+      "comment_count": 0,
+      "processing_status": "ready",
+      "flags": ["copyright_hold"],
+      "restrictions": [
+        {
+          "case_id": "c0de0000-0000-4000-8000-000000000001",
+          "source": "title_review",
+          "reason_code": "title_match",
+          "policy_version": "title-review-v1",
+          "placed_at": "2026-10-24T05:00:00Z"
+        }
+      ],
+      "description": "Watch the whole film",
+      "made_for_kids": false,
+      "copyright_review": {
+        "state": "pending",
+        "matched_title": "Sholay",
+        "created_at": "2026-10-24T05:00:00Z"
+      }
+    },
+    {
+      "id": "7a1d0000-0000-4000-8000-000000000003",
+      "author_id": "a0700000-0000-4000-8000-000000000001",
+      "title": "Sholay — my scene-by-scene review",
+      "text": "",
+      "content_type": "long_video",
+      "visibility": "public",
+      "created_at": "2026-10-20T05:00:00Z",
+      "published_at": "2026-10-20T05:00:00Z",
+      "view_count": 120,
+      "scheduled_at": null,
+      "comment_count": 4,
+      "processing_status": "ready",
+      "flags": [],
+      "restrictions": [],
+      "description": "",
+      "made_for_kids": false,
+      "copyright_review": {
+        "state": "cleared",
+        "matched_title": "Sholay",
+        "created_at": "2026-10-20T05:00:00Z",
+        "decided_at": "2026-10-21T10:00:00Z",
+        "review_requested_at": "2026-10-20T08:00:00Z"
+      }
+    },
+    {
+      "id": "7a1d0000-0000-4000-8000-000000000004",
+      "author_id": "a0700000-0000-4000-8000-000000000001",
+      "title": "Dilwale Dulhania Le Jayenge full",
+      "text": "",
+      "content_type": "long_video",
+      "visibility": "public",
+      "created_at": "2026-10-18T05:00:00Z",
+      "published_at": "2026-10-18T05:00:00Z",
+      "view_count": 0,
+      "scheduled_at": null,
+      "comment_count": 0,
+      "processing_status": "ready",
+      "flags": ["copyright_hold"],
+      "restrictions": [
+        {
+          "case_id": "c0de0000-0000-4000-8000-000000000004",
+          "source": "title_review",
+          "reason_code": "title_match",
+          "policy_version": "title-review-v1",
+          "placed_at": "2026-10-18T05:00:00Z"
+        }
+      ],
+      "description": "",
+      "made_for_kids": false,
+      "copyright_review": {
+        "state": "blocked",
+        "matched_title": "Dilwale Dulhania Le Jayenge",
+        "created_at": "2026-10-18T05:00:00Z",
+        "decided_at": "2026-10-19T09:00:00Z"
+      }
+    },
+    {
+      "id": "7a1d0000-0000-4000-8000-000000000005",
+      "author_id": "a0700000-0000-4000-8000-000000000001",
+      "title": "My own travel film",
+      "text": "",
+      "content_type": "long_video",
+      "visibility": "public",
+      "created_at": "2026-10-10T05:00:00Z",
+      "published_at": "2026-10-10T05:00:00Z",
+      "view_count": 9,
+      "scheduled_at": null,
+      "comment_count": 0,
+      "processing_status": "ready",
+      "flags": [],
+      "restrictions": [],
+      "description": "",
+      "made_for_kids": false
+    }
+  ],
+  "meta": { "next_cursor": "MjAyNi0xMC0xMFQwNTowMDowMFp8N2ExZA" }
+}

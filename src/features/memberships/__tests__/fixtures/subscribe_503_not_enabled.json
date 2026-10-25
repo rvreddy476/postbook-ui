@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "MEMBERSHIPS_NOT_ENABLED",
+    "message": "Memberships are not available here yet."
+  }
+}

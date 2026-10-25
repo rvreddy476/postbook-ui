@@ -4,27 +4,27 @@ import { Suspense } from "react";
 import { ChannelScreen } from "@/features/posttube/channel/components/ChannelScreen";
 import { LoadingState } from "@/features/posttube/discovery/components/DiscoveryState";
 import { channelFeedPath, channelPath, channelRefFromSegment, isFeedRef } from "@/features/posttube/feed/feedUrl";
+import { channelPageMetadata } from "@/features/share/routeMetadata";
 
 type Props = { params: Promise<{ handle: string }> };
 
 /*
-  The RSS autodiscovery link: <link rel="alternate" type="application/rss+xml">
+  The link preview (name, handle, about, banner or avatar — from
+  GET /v1/channels/:ref read signed out; features/share) plus the RSS
+  autodiscovery link: <link rel="alternate" type="application/rss+xml">
   pointing at this channel's feed.xml, so a feed reader given the channel
-  page finds the feed. Relative here; the root layout's metadataBase makes
-  it absolute.
+  page finds the feed. The feed link is relative; the root layout's
+  metadataBase makes it absolute.
 */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { handle } = await params;
   const ref = channelRefFromSegment(handle);
-  const base: Metadata = {
-    title: "Channel · PostTube",
-    description: "A PostTube channel: videos, shorts, live recordings, collections and posts.",
-  };
-  if (!isFeedRef(ref)) return base;
+  const card = await channelPageMetadata(ref, channelPath);
+  if (!isFeedRef(ref)) return card;
   return {
-    ...base,
+    ...card,
     alternates: {
-      canonical: channelPath(ref),
+      ...(card.alternates ?? {}),
       types: { "application/rss+xml": [{ url: channelFeedPath(ref), title: "RSS feed" }] },
     },
   };

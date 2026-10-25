@@ -125,7 +125,7 @@ function MopeduDocumentsQueueContent() {
             />
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-text-muted">
+              <thead className="bg-brand-secondary text-left text-[11px] tracking-wider text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3">Partner</th>
                   <th className="px-4 py-3">Doc type</th>
@@ -218,7 +218,7 @@ function MopeduDocumentsQueueContent() {
                     className="max-h-72 w-full object-contain"
                   />
                 ) : (
-                  <div className="flex h-40 items-center justify-center text-xs text-text-muted">
+                  <div className="flex h-40 items-center justify-center text-xs text-muted-foreground">
                     No file
                   </div>
                 )}
@@ -322,7 +322,7 @@ export default function MopeduDocumentsQueuePage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center gap-2 text-sm text-text-muted">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading documents queue…
         </div>
       }

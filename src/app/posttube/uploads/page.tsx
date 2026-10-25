@@ -8,7 +8,7 @@ import { Video, Film, FileText, Trash2, Loader2, Heart, MessageCircle, Play, Upl
 import { useToast } from "@/components/ui/toast";
 import { useMyVideos, useMyFlicks, useMyPosts, useUploadCounts, useDeleteUpload } from "@/hooks/useMyUploads";
 import { ConfirmDialog } from "@/features/posttube/components/ConfirmDialog";
-import { formatCount, formatDuration, timeAgo } from "@/features/posttube/model";
+import { formatCount, formatDuration, timeAgo, uploadCategoryLabel, uploadStatusLabel } from "@/features/posttube/model";
 import type { UploadDetail } from "@/types/profile";
 
 /*
@@ -28,7 +28,7 @@ function UploadCard({ item, onDelete, isDeleting, variant }: { item: UploadDetai
   const thumbnailUrl = item.video_metadata?.thumbnail_url || (item.cover_media_id ? `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/v1/media/${item.cover_media_id}/serve` : "");
   const isVideo = variant === "videos" || variant === "flicks";
   const href = variant === "videos" ? `/posttube/watch/${item.id}` : variant === "flicks" ? `/reels?reelId=${item.id}` : `/post/${item.id}`;
-  const status = item.video_metadata?.upload_status;
+  const statusWord = uploadStatusLabel(item.video_metadata?.upload_status);
 
   return (
     <motion.div
@@ -48,10 +48,10 @@ function UploadCard({ item, onDelete, isDeleting, variant }: { item: UploadDetai
             </div>
           )}
           {item.video_metadata?.duration_seconds ? (
-            <span className="absolute bottom-2 right-2 rounded bg-black/75 px-1.5 py-0.5 text-[10px] font-medium text-white">{formatDuration(item.video_metadata.duration_seconds)}</span>
+            <span className="absolute bottom-2 right-2 rounded bg-black/75 px-1.5 py-0.5 text-xs font-medium text-white">{formatDuration(item.video_metadata.duration_seconds)}</span>
           ) : null}
-          {status && status !== "ready" && status !== "published" ? (
-            <span className="absolute left-2 top-2 rounded bg-warning px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">{status}</span>
+          {statusWord ? (
+            <span className="absolute left-2 top-2 rounded bg-warning px-2 py-0.5 text-xs font-semibold text-primary-foreground">{statusWord}</span>
           ) : null}
         </Link>
       )}
@@ -59,10 +59,10 @@ function UploadCard({ item, onDelete, isDeleting, variant }: { item: UploadDetai
       <div className="p-3.5">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <Link href={href} className="line-clamp-2 text-[13px] font-semibold text-brand-text hover:text-primary-ink">
+            <Link href={href} className="line-clamp-2 text-sm font-semibold text-brand-text hover:text-primary-ink">
               {item.title || item.text || "Untitled"}
             </Link>
-            <p className="mt-1 text-[11px] text-muted-foreground">{timeAgo(item.created_at)}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{timeAgo(item.created_at)}</p>
           </div>
           <button
             type="button"
@@ -74,7 +74,7 @@ function UploadCard({ item, onDelete, isDeleting, variant }: { item: UploadDetai
             {isDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
           </button>
         </div>
-        <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground">
+        <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
           {item.counts ? (
             <>
               <span className="flex items-center gap-1">
@@ -86,7 +86,7 @@ function UploadCard({ item, onDelete, isDeleting, variant }: { item: UploadDetai
             </>
           ) : null}
           {isVideo && item.video_metadata?.final_category ? (
-            <span className="ml-auto rounded bg-brand-secondary px-1.5 py-0.5 text-[10px] font-medium text-brand-text">{item.video_metadata.final_category.replace("_", " ")}</span>
+            <span className="ml-auto rounded bg-brand-secondary px-1.5 py-0.5 text-xs font-medium text-brand-text">{uploadCategoryLabel(item.video_metadata.final_category)}</span>
           ) : null}
         </div>
       </div>
@@ -152,7 +152,7 @@ function UploadsList({ tab, query }: { tab: TabId; query: UploadsQuery }) {
             type="button"
             onClick={() => query.fetchNextPage()}
             disabled={query.isFetchingNextPage}
-            className="rounded-full border border-border bg-brand-card px-5 py-2 text-[12px] font-semibold text-brand-text hover:bg-brand-secondary disabled:opacity-50"
+            className="rounded-full border border-border bg-brand-card px-5 py-2 text-xs font-semibold text-brand-text hover:bg-brand-secondary disabled:opacity-50"
           >
             {query.isFetchingNextPage ? "Loading..." : "Load more"}
           </button>
@@ -197,12 +197,12 @@ function EmptyState({ label, tab }: { label: string; tab: TabId }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
       <Video className="mb-3 h-10 w-10" />
-      <p className="text-[14px] font-semibold text-brand-text">{label}</p>
-      <p className="mt-1 text-[12px]">Your uploaded content will appear here.</p>
+      <p className="text-sm font-semibold text-brand-text">{label}</p>
+      <p className="mt-1 text-xs">Your uploaded content will appear here.</p>
       {tab !== "posts" ? (
         <Link
           href={`/posttube/upload?type=${tab === "videos" ? "long" : "short"}`}
-          className="mt-4 flex items-center gap-2 rounded-full bg-primary-ink px-5 py-2.5 text-[12px] font-semibold text-primary-foreground hover:bg-primary-hover"
+          className="mt-4 flex items-center gap-2 rounded-full bg-primary-ink px-5 py-2.5 text-xs font-semibold text-primary-foreground hover:bg-primary-hover"
         >
           <Upload className="h-3.5 w-3.5" /> Upload now
         </Link>
@@ -226,11 +226,11 @@ export default function MyUploadsPage() {
       <div className="mb-6 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-brand-text">Your videos</h1>
-          <p className="text-[12px] text-muted-foreground">Manage your videos, reels and posts.</p>
+          <p className="text-xs text-muted-foreground">Manage your videos, reels and posts.</p>
         </div>
         <Link
           href="/posttube/upload?type=long"
-          className="flex items-center gap-1.5 rounded-full bg-primary-ink px-4 py-2 text-[13px] font-semibold text-primary-foreground hover:bg-primary-hover"
+          className="flex items-center gap-1.5 rounded-full bg-primary-ink px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
         >
           <Upload className="h-4 w-4" /> Upload
         </Link>
@@ -245,12 +245,12 @@ export default function MyUploadsPage() {
               type="button"
               onClick={() => setActiveTab(tab.id)}
               aria-pressed={isActive}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-[13px] font-semibold transition-all ${isActive ? "bg-brand-card text-brand-text shadow-xs" : "text-muted-foreground hover:text-brand-text"}`}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${isActive ? "bg-brand-card text-brand-text shadow-xs" : "text-muted-foreground hover:text-brand-text"}`}
             >
               <tab.icon className="h-4 w-4" />
               {tab.label}
               {countMap[tab.id] > 0 ? (
-                <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${isActive ? "bg-brand-secondary text-brand-text" : "bg-brand-card text-muted-foreground"}`}>{formatCount(countMap[tab.id])}</span>
+                <span className={`rounded-full px-1.5 py-0.5 text-xs ${isActive ? "bg-brand-secondary text-brand-text" : "bg-brand-card text-muted-foreground"}`}>{formatCount(countMap[tab.id])}</span>
               ) : null}
             </button>
           );

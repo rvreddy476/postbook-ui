@@ -72,7 +72,7 @@ export function SaveToPlaylistDialog({ open, postId, onClose }: SaveToPlaylistDi
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
-          <h3 className="flex items-center gap-2 text-[15px] font-bold text-brand-text">
+          <h3 className="flex items-center gap-2 text-base font-bold text-brand-text">
             <ListPlus className="h-4 w-4" /> Save to playlist
           </h3>
           <button type="button" onClick={onClose} aria-label="Close" className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-brand-secondary">
@@ -82,13 +82,13 @@ export function SaveToPlaylistDialog({ open, postId, onClose }: SaveToPlaylistDi
 
         <div className="max-h-[320px] overflow-y-auto px-2 py-2">
           {!user ? (
-            <p className="px-3 py-6 text-center text-[13px] text-muted-foreground">Sign in to save videos to playlists.</p>
+            <p className="px-3 py-6 text-center text-sm text-muted-foreground">Sign in to save videos to playlists.</p>
           ) : playlistsQuery.isLoading ? (
             <div className="flex justify-center py-6">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           ) : playlists.length === 0 ? (
-            <p className="px-3 py-6 text-center text-[13px] text-muted-foreground">No playlists yet. Create one below.</p>
+            <p className="px-3 py-6 text-center text-sm text-muted-foreground">No playlists yet. Create one below.</p>
           ) : (
             playlists.map((p) => {
               const done = added.has(p.id);
@@ -101,8 +101,8 @@ export function SaveToPlaylistDialog({ open, postId, onClose }: SaveToPlaylistDi
                   className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left hover:bg-brand-secondary disabled:opacity-80"
                 >
                   <span className="min-w-0">
-                    <span className="block truncate text-[13px] font-semibold text-brand-text">{p.title}</span>
-                    <span className="block text-[11px] text-muted-foreground">
+                    <span className="block truncate text-sm font-semibold text-brand-text">{p.title}</span>
+                    <span className="block text-xs text-muted-foreground">
                       {p.item_count ?? 0} video{(p.item_count ?? 0) === 1 ? "" : "s"} · {playlistIsPublic(p) ? "Public" : "Private"}
                     </span>
                   </span>
@@ -122,25 +122,25 @@ export function SaveToPlaylistDialog({ open, postId, onClose }: SaveToPlaylistDi
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Playlist title"
                 maxLength={120}
-                className="w-full rounded-lg border border-border bg-brand-bg px-3 py-2 text-[13px] text-brand-text outline-none focus:border-brand-accent"
+                className="w-full rounded-lg border border-border bg-brand-bg px-3 py-2 text-sm text-brand-text outline-none focus:border-brand-accent"
               />
               <div className="flex items-center justify-between gap-2">
                 <select
                   value={visibility}
                   onChange={(e) => setVisibility(e.target.value as "public" | "private")}
-                  className="rounded-lg border border-border bg-brand-bg px-2 py-1.5 text-[12px] text-brand-text"
+                  className="rounded-lg border border-border bg-brand-bg px-2 py-1.5 text-xs text-brand-text"
                 >
                   <option value="private">Private</option>
                   <option value="public">Public</option>
                 </select>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => setCreating(false)} className="rounded-full px-3 py-1.5 text-[12px] font-semibold text-brand-text hover:bg-brand-secondary">
+                  <button type="button" onClick={() => setCreating(false)} className="rounded-full px-3 py-1.5 text-xs font-semibold text-brand-text hover:bg-brand-secondary">
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={!title.trim() || create.isPending}
-                    className="rounded-full bg-primary-ink px-3 py-1.5 text-[12px] font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+                    className="rounded-full bg-primary-ink px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
                   >
                     {create.isPending ? "Creating..." : "Create & add"}
                   </button>
@@ -152,7 +152,7 @@ export function SaveToPlaylistDialog({ open, postId, onClose }: SaveToPlaylistDi
               type="button"
               onClick={() => setCreating(true)}
               disabled={!user}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-semibold text-brand-text hover:bg-brand-secondary disabled:opacity-50"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-brand-text hover:bg-brand-secondary disabled:opacity-50"
             >
               <Plus className="h-4 w-4" /> New playlist
             </button>

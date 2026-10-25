@@ -1,11 +1,14 @@
 "use client"
 
-import { useRef, useCallback, useMemo } from "react"
+import { useRef, useCallback, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useProfilePosts } from "@/hooks/useProfilePosts"
 import { motion } from "framer-motion"
 import { Film, Play, Sparkles, Plus } from "lucide-react"
 import type { PostDetail } from "@/types/profile"
+import type { ProfilePostSort } from "@/lib/profilePostSort"
+import { ProfileSortControl } from "../ProfileSortControl"
+import { ProfileTabError } from "../states/ProfileTabError"
 
 interface FlicksTabProps {
     userId: string
@@ -92,8 +95,11 @@ function FlicksSkeleton() {
 
 export function FlicksTab({ userId, isOwn }: FlicksTabProps) {
     const router = useRouter()
-    const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
-        useProfilePosts(userId, "reel")
+    // The sort is part of the query key, so changing it restarts paging from
+    // the first page (the cursor is tied to the sort that issued it).
+    const [sort, setSort] = useState<ProfilePostSort>("latest")
+    const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, refetch } =
+        useProfilePosts(userId, "reel", sort)
 
     const flicks = useMemo(
         () => data?.pages.flatMap((page) => page.data) ?? [],
@@ -117,7 +123,38 @@ export function FlicksTab({ userId, isOwn }: FlicksTabProps) {
         [hasNextPage, isFetchingNextPage, fetchNextPage]
     )
 
-    if (isLoading) return <FlicksSkeleton />
+    const sortBar = (
+        <div className="flex justify-end">
+            <ProfileSortControl value={sort} onChange={setSort} subject="reels" />
+        </div>
+    )
+
+    if (isLoading) {
+        return (
+            <div className="space-y-3">
+                {sortBar}
+                <FlicksSkeleton />
+            </div>
+        )
+    }
+
+    if (isError && flicks.length === 0) {
+        return (
+            <div className="space-y-3">
+                {sortBar}
+                <ProfileTabError subject="reels" onRetry={() => void refetch()} />
+            </div>
+        )
+    }
+
+    if (flicks.length === 0 && sort !== "latest") {
+        return (
+            <div className="space-y-3">
+                {sortBar}
+                <p className="py-16 text-center text-sm text-muted-foreground">No reels yet</p>
+            </div>
+        )
+    }
 
     if (flicks.length === 0) {
         return (
@@ -148,6 +185,7 @@ export function FlicksTab({ userId, isOwn }: FlicksTabProps) {
 
     return (
         <div className="space-y-3">
+            {sortBar}
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {flicks.map((post, i) => (
                     <FlickGridItem key={post.id} post={post} index={i} />

@@ -5,7 +5,8 @@ import { APP_BRANDS, resolveAppBrand, resolveAppNavigation } from "@/lib/appBran
 test('app navigation changes with the route and keeps Messenger', () => {
   const reels=resolveAppNavigation('/reels')!;
   const tube=resolveAppNavigation('/posttube/watch/123')!;
-  const groups=resolveAppNavigation('/groups/123')!;
+  // Groups is parked by default; with nothing parked its rail is back.
+  const groups=resolveAppNavigation('/groups/123', new Set())!;
   expect(reels.map(item=>item.label)).toEqual(['Reels','Explore','Create','Saved','Messenger','All apps']);
   expect(tube.some(item=>item.href==='/posttube/upload')).toBe(true);
   expect(groups.some(item=>item.href==='/groups/create')).toBe(true);

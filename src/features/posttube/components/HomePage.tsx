@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Flame, History, Loader2, Tv2, Upload } from "lucide-react";
 
+import { useReselect } from "@/lib/reselect";
 import { useAuthUser } from "@/store/auth";
 import { VideoCard } from "./VideoCard";
 import { TileSkeleton, VideoRow } from "./VideoRow";
@@ -84,6 +85,22 @@ export function HomePage() {
 
   const isEmpty = !videosFeed.isLoading && videos.length === 0;
 
+  // Refresh only when the viewer asks (founder, 21 Oct): clicking Watch /
+  // PostTube while already here; no button (founder removed it). What is on screen
+  // stays until the fresh pages arrive; then the page returns to the top.
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await Promise.all([videosFeed.refetch(), chip === CHIP_ALL ? flicksFeed.refetch() : null, continueWatchingFeed.refetch(), trendingFeed.refetch()]);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+  useReselect("/posttube", () => void refresh());
+
   // Shelves only on "All": a category or the subscriptions feed is its own list.
   const shelves = chip === CHIP_ALL ? { reels: flicks.length > 0, trending: trending.length > 0, continue: continueWatching.length > 0 } : { reels: false, trending: false, continue: false };
   const blocks = interleaveShelves(videos, columns, shelves);
@@ -123,7 +140,7 @@ export function HomePage() {
                 type="button"
                 onClick={() => videosFeed.fetchNextPage()}
                 disabled={videosFeed.isFetchingNextPage}
-                className="flex items-center gap-2 rounded-full border border-border bg-brand-card px-6 py-2.5 text-[13px] font-semibold text-brand-text hover:bg-brand-secondary disabled:opacity-50"
+                className="flex items-center gap-2 rounded-full border border-border bg-brand-card px-6 py-2.5 text-sm font-semibold text-brand-text hover:bg-brand-secondary disabled:opacity-50"
               >
                 {videosFeed.isFetchingNextPage ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 {videosFeed.isFetchingNextPage ? "Loading..." : "Load more"}
@@ -160,11 +177,11 @@ function EmptyState({ chip }: { chip: string }) {
         <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-brand-secondary">
           <Tv2 className="h-9 w-9 text-brand-text" />
         </div>
-        <h3 className="mt-6 text-[18px] font-bold text-brand-text">Nothing from your subscriptions yet</h3>
-        <p className="mt-2 max-w-[340px] text-[13px] leading-relaxed text-muted-foreground">
+        <h3 className="mt-6 text-lg font-bold text-brand-text">Nothing from your subscriptions yet</h3>
+        <p className="mt-2 max-w-[340px] text-sm leading-relaxed text-muted-foreground">
           Subscribe to channels and their new videos will show up here.
         </p>
-        <Link href="/posttube/subscriptions" className="mt-5 rounded-full bg-primary-ink px-5 py-2.5 text-[13px] font-semibold text-primary-foreground hover:bg-primary-hover">
+        <Link href="/posttube/subscriptions" className="mt-5 rounded-full bg-primary-ink px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover">
           Manage subscriptions
         </Link>
       </div>
@@ -175,13 +192,13 @@ function EmptyState({ chip }: { chip: string }) {
       <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-brand-secondary">
         <Tv2 className="h-9 w-9 text-brand-text" />
       </div>
-      <h3 className="mt-6 text-[18px] font-bold text-brand-text">{chip === CHIP_ALL ? "Your stage awaits" : "No videos in this category yet"}</h3>
-      <p className="mt-2 max-w-[340px] text-[13px] leading-relaxed text-muted-foreground">
+      <h3 className="mt-6 text-lg font-bold text-brand-text">{chip === CHIP_ALL ? "Your stage awaits" : "No videos in this category yet"}</h3>
+      <p className="mt-2 max-w-[340px] text-sm leading-relaxed text-muted-foreground">
         Be the first to share something. Upload a video and start building your audience.
       </p>
       <Link
         href="/posttube/upload?type=long"
-        className="mt-5 flex items-center gap-2 rounded-full bg-primary-ink px-5 py-2.5 text-[13px] font-semibold text-primary-foreground hover:bg-primary-hover"
+        className="mt-5 flex items-center gap-2 rounded-full bg-primary-ink px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
       >
         <Upload className="h-4 w-4" /> Upload video
       </Link>

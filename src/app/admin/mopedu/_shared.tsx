@@ -168,7 +168,7 @@ export function ReasonInput({
         placeholder={placeholder}
         className="w-full rounded-lg border border-brand-divider px-3 py-2 text-sm outline-hidden focus:border-brand-text"
       />
-      <p className="mt-1 text-right text-[11px] text-text-muted">
+      <p className="mt-1 text-right text-[11px] text-muted-foreground">
         {value.length}/{maxLength}
       </p>
     </div>
@@ -243,7 +243,7 @@ export function EmptyState({
   return (
     <div className="rounded-2xl border border-dashed border-brand-divider bg-brand-card px-6 py-10 text-center">
       <p className="text-sm font-semibold text-brand-text">{title}</p>
-      {body ? <p className="mt-1 text-xs text-text-muted">{body}</p> : null}
+      {body ? <p className="mt-1 text-xs text-muted-foreground">{body}</p> : null}
     </div>
   )
 }

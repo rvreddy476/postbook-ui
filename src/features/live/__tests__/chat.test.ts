@@ -127,15 +127,15 @@ describe("roles and host-only tools", () => {
     expect(labels("guest", null, "u1")).toEqual([])
   })
 
-  it("host: remove, ban/unban, moderator toggle — alphabetical", () => {
-    expect(labels("host", HOST, "u1")).toEqual(["Ban from stream", "Make moderator", "Remove message"])
-    expect(labels("host", HOST, "u1", ["u1"])).toEqual(["Make moderator", "Remove message", "Unban from stream"])
-    expect(labels("host", HOST, "mod")).toEqual(["Ban from stream", "Remove message", "Remove moderator"])
+  it("host: remove, ban/unban, mute, moderator toggle — alphabetical", () => {
+    expect(labels("host", HOST, "u1")).toEqual(["Ban from stream", "Make moderator", "Mute in chat", "Remove message"])
+    expect(labels("host", HOST, "u1", ["u1"])).toEqual(["Make moderator", "Mute in chat", "Remove message", "Unban from stream"])
+    expect(labels("host", HOST, "mod")).toEqual(["Ban from stream", "Mute in chat", "Remove message", "Remove moderator"])
     expect(labels("host", HOST, HOST)).toEqual(["Remove message"])
   })
 
   it("moderators remove and ban others but never touch the host or set moderators", () => {
-    expect(labels("moderator", "mod", "u1")).toEqual(["Ban from stream", "Remove message"])
+    expect(labels("moderator", "mod", "u1")).toEqual(["Ban from stream", "Mute in chat", "Remove message"])
     expect(labels("moderator", "mod", HOST)).toEqual([])
     expect(labels("moderator", "mod", "mod")).toEqual(["Remove message"])
   })

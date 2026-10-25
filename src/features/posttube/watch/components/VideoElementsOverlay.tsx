@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useSubscribeChannel } from "@/hooks/useChannels";
 
 import { boxOf, boxStyle } from "../../endScreenGeometry";
-import { formatCount, formatDuration } from "../../model";
+import { formatCount, formatDuration, viewsLabel } from "../../model";
 import {
   cardTarget,
   channelHref,
@@ -207,7 +207,7 @@ export function EndScreenElement({ el, onClick, signedIn, isOwner, onRequireUser
           <span className="tube-es__title-text">{v.title}</span>
           {v.channelName || v.viewCount > 0 ? (
             <span className="tube-es__meta">
-              {[v.channelName, v.viewCount > 0 ? `${formatCount(v.viewCount)} views` : ""].filter(Boolean).join(" · ")}
+              {[v.channelName, v.viewCount > 0 ? viewsLabel(v.viewCount) : ""].filter(Boolean).join(" · ")}
             </span>
           ) : null}
         </span>

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSS
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ChevronDown, ChevronUp, Clapperboard, Maximize, MoreHorizontal, RefreshCw, Undo2, UserRoundCheck, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Clapperboard, Maximize, MoreVertical, RefreshCw, Undo2, UserRoundCheck, X } from "lucide-react";
 import Link from "next/link";
 
 import { VideoShell } from "@/features/video-shell";
@@ -14,6 +14,7 @@ import "./reels-screen.css";
 
 import { ShareSheet } from "@/features/reels/components/ShareSheet";
 import { ReelVideo, type ReelVideoHandle } from "@/features/reels/components/ReelVideo";
+import { StageLock } from "@/features/memberships/components/LockCards";
 import { ReelRail } from "@/features/reels/components/ReelRail";
 import { ReelOverlay } from "@/features/reels/components/ReelOverlay";
 import { ReelMoreMenu, reelChannelName } from "@/features/reels/components/ReelMoreMenu";
@@ -32,7 +33,9 @@ import { fetchReel, fetchSubtitles } from "@/features/reels/data/reelFeedApi";
 import { hasPlayableSubtitle } from "@/features/reels/playback/useSubtitleTrack";
 import { OfflineBadge, useOfflineRow, useOfflineSource, type OfflineNotice } from "@/features/offline";
 import { feedFromSearch } from "@/features/reels/feed";
-import { patchReelEverywhere, useReelFeed } from "@/features/reels/hooks/useReelFeed";
+import { patchReelEverywhere, reelFeedKey, useReelFeed } from "@/features/reels/hooks/useReelFeed";
+import { useReselect } from "@/lib/reselect";
+import { FollowingEmpty } from "@/features/reels/explore/FollowingEmpty";
 import {
   useBlockAuthor,
   useDeleteReel,
@@ -49,6 +52,7 @@ import { useReelSubscription } from "@/features/reels/hooks/useReelSubscription"
 import { usePlayerPrefs } from "@/features/reels/hooks/usePlayerPrefs";
 import { CLEAR_SCREEN_HINT_MS, CLEAR_SCREEN_INITIAL, clearScreenReducer } from "@/features/reels/clearScreen";
 import { reelPermalink, type ReelItem } from "@/features/reels/model";
+import { withShareRef } from "@/features/share/shareRef";
 import { readSessionUserId } from "@/features/reels/session";
 import { nextSoundStep, reelStageHref, signInHref, soundDestination, soundRefusalMessage, type SoundIntent } from "@/features/reels/sounds";
 import { COMMENTS_TRACK_WIDTH, STAGE_DEFAULT_ASPECT, stageAspect } from "@/features/reels/stage";
@@ -93,6 +97,9 @@ import { reelLiveHref } from "@/features/reels/live/liveRing";
 const NAV_COOLDOWN_MS = 320;
 const WHEEL_THRESHOLD = 24;
 const SWIPE_THRESHOLD = 48;
+// A flick: at least this far, at least this fast (px per ms), to turn the page before the thumb travels the full threshold.
+const SWIPE_FLICK_MIN = 20;
+const SWIPE_FLICK_VELOCITY = 0.45;
 
 function isTypingTarget(t: EventTarget | null): boolean {
   if (!(t instanceof HTMLElement)) return false;
@@ -139,7 +146,7 @@ export function ReelsScreen() {
   theaterRef.current = theater;
   const navAtRef = useRef(0);
   const wheelAccRef = useRef(0);
-  const touchStartRef = useRef<number | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number; at: number } | null>(null);
 
   useEffect(() => {
     setViewerId(readSessionUserId());
@@ -180,6 +187,24 @@ export function ReelsScreen() {
     setIndex(0);
     setDirection(1);
   }, [feedKind]);
+
+  // Refresh only when the viewer asks (founder, 21 Oct: never under someone
+  // watching): the button, or clicking Reels / For You while already here.
+  // The current reels stay on screen until the fresh list arrives, then the
+  // stage goes back to the first (newest) reel.
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshFeed = useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await feed.refetch();
+      setDirection(1);
+      setIndex(0);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [feed, refreshing]);
+  useReselect("/reels", () => void refreshFeed());
 
   // Load ahead so the last swipe never lands on a spinner.
   useEffect(() => {
@@ -283,7 +308,7 @@ export function ReelsScreen() {
   const onCopyLink = async () => {
     if (!active) return;
     try {
-      await navigator.clipboard.writeText(reelPermalink(active.id));
+      await navigator.clipboard.writeText(withShareRef(reelPermalink(active.id)));
       toast({ type: "success", title: "Link copied" });
     } catch {
       toast({ type: "error", title: "Could not copy the link" });
@@ -411,6 +436,28 @@ export function ReelsScreen() {
     dispatchClear({ type: "enter" });
   };
 
+  /*
+    A phone's full-screen button (founder, 19 Oct: "like the mobile app"):
+    the video alone — clear screen — and the browser's own full screen so
+    its address bar goes too. A tap brings the controls back and leaves
+    full screen; so does the browser's back gesture.
+  */
+  const enterPhoneFullscreen = () => {
+    enterClearScreen();
+    const root = document.documentElement;
+    if (!document.fullscreenElement && typeof root.requestFullscreen === "function") {
+      root.requestFullscreen().catch(() => {
+        /* refused (iOS Safari): clear screen alone */
+      });
+    }
+  };
+  useEffect(() => {
+    if (clear.on || theaterRef.current || !document.fullscreenElement) return;
+    document.exitFullscreen().catch(() => {
+      /* ignore */
+    });
+  }, [clear.on]);
+
   /* ── theater ───────────────────────────────────────────── */
   const enterTheater = useCallback(async () => {
     setTheater(true);
@@ -442,7 +489,10 @@ export function ReelsScreen() {
   // Leaving the browser's fullscreen (its own Escape, the OS) leaves the theater too.
   useEffect(() => {
     const onChange = () => {
-      if (!document.fullscreenElement) setTheater(false);
+      if (document.fullscreenElement) return;
+      setTheater(false);
+      // The phone's full screen is clear screen too: leaving one leaves both.
+      dispatchClear({ type: "exit" });
     };
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
@@ -551,14 +601,23 @@ export function ReelsScreen() {
       touchStartRef.current = null;
       return;
     }
-    touchStartRef.current = e.touches[0]?.clientY ?? null;
+    const touch = e.touches[0];
+    touchStartRef.current = touch ? { x: touch.clientX, y: touch.clientY, at: e.timeStamp } : null;
   };
   const onTouchEnd = (e: React.TouchEvent) => {
     const start = touchStartRef.current;
     touchStartRef.current = null;
     if (start === null) return;
-    const dy = (e.changedTouches[0]?.clientY ?? start) - start;
-    if (Math.abs(dy) >= SWIPE_THRESHOLD) go(dy < 0 ? 1 : -1);
+    const end = e.changedTouches[0];
+    if (!end) return;
+    const dy = end.clientY - start.y;
+    const dx = end.clientX - start.x;
+    // A sideways drag (the rail, a sheet, iOS back-swipe) is not a page turn.
+    if (Math.abs(dx) > Math.abs(dy)) return;
+    // Either a long drag, or a short quick flick: TikTok turns on both.
+    const elapsed = Math.max(1, e.timeStamp - start.at);
+    const flick = Math.abs(dy) >= SWIPE_FLICK_MIN && Math.abs(dy) / elapsed >= SWIPE_FLICK_VELOCITY;
+    if (Math.abs(dy) >= SWIPE_THRESHOLD || flick) go(dy < 0 ? 1 : -1);
   };
 
   const onEnded = useCallback(() => {
@@ -575,7 +634,14 @@ export function ReelsScreen() {
     playerRef.current?.setVolume(volume);
     updatePrefs({ volume, sound: volume > 0 });
   };
+  // The browser held sound back on a cold page: the reel plays muted and the top
+  // speaker shows it (no second control, founder 21 Oct); its tap lets sound in.
+  const [forcedMuted, setForcedMuted] = useState(false);
   const onToggleSound = () => {
+    if (forcedMuted) {
+      playerRef.current?.unmute();
+      return;
+    }
     const sound = !prefs.sound;
     const volume = prefs.volume || 1;
     playerRef.current?.setVolume(sound ? volume : 0);
@@ -649,7 +715,7 @@ export function ReelsScreen() {
         <main className="reels-main" onWheel={onWheel} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
           {loading ? (
             <StateLayout stageRef={stageRef}>
-              <div className="flex h-full items-center justify-center text-[13px] text-[rgb(var(--reel-on-stage)/.7)]">Loading reels…</div>
+              <div className="flex h-full items-center justify-center text-sm text-[rgb(var(--reel-on-stage)/.7)]">Loading reels…</div>
             </StateLayout>
           ) : errored ? (
             <StateLayout stageRef={stageRef}>
@@ -670,6 +736,9 @@ export function ReelsScreen() {
                 }
               />
             </StateLayout>
+          ) : empty && feedKind === "following" && viewerId ? (
+            // Empty Following (T-19): suggested creators with Follow; a follow refetches this feed.
+            <FollowingEmpty viewerId={viewerId} onFollowChange={() => void qc.invalidateQueries({ queryKey: reelFeedKey(true) })} />
           ) : empty ? (
             <StateLayout stageRef={stageRef}>
               {feedKind === "following" ? (
@@ -686,11 +755,13 @@ export function ReelsScreen() {
               ) : (
                 <StateCard
                   title="No reels yet"
-                  hint="Be the first — reels are short videos up to 5 minutes."
+                  hint="Be the first — reels are short videos up to 10 minutes. New ones show up here by themselves."
                   action={
-                    <Link href="/reels/create" className="reel-state-action">
-                      <Clapperboard className="h-4 w-4" /> Create a reel
-                    </Link>
+                    <span className="flex flex-wrap justify-center gap-2">
+                      <Link href="/reels/create" className="reel-state-action">
+                        <Clapperboard className="h-4 w-4" /> Create a reel
+                      </Link>
+                    </span>
                   }
                 />
               )}
@@ -732,6 +803,18 @@ export function ReelsScreen() {
                         transition={{ duration: 0.22, ease: "easeOut" }}
                         className="reel-portrait-content"
                       >
+                        {active.locked ? (
+                          /* Members only, not a member: the blurred cover, a lock and Join; no player, no caption. */
+                          <StageLock
+                            creatorId={active.authorId}
+                            creatorName={active.authorName}
+                            tierRequiredId={active.locked.tierRequiredId}
+                            requiredPricePaise={active.locked.requiredPricePaise ?? null}
+                            coverUrl={active.media.posterUrl}
+                            title={active.title}
+                            durationMs={active.media.durationMs}
+                          />
+                        ) : (
                         <ReelVideo
                           ref={playerRef}
                           reel={active}
@@ -739,6 +822,7 @@ export function ReelsScreen() {
                           position={index}
                           prefs={prefs}
                           onPrefsChange={updatePrefs}
+                          onForcedMutedChange={setForcedMuted}
                           onEnded={onEnded}
                           onDoubleTap={onDoubleTapLike}
                           onQualityLevels={setQualityHeights}
@@ -754,11 +838,12 @@ export function ReelsScreen() {
                           chromeless={theater}
                           sourceOverride={activeAudioTrack?.playback_url ?? offlineSource?.videoUrl ?? null}
                         />
-                        {offlineSource && !activeAudioTrack?.playback_url ? <OfflineBadge /> : null}
-                        {theater ? null : (
+                        )}
+                        {offlineSource && !activeAudioTrack?.playback_url && !active.locked ? <OfflineBadge /> : null}
+                        {theater || active.locked ? null : (
                           <ReelOverlay
                             reel={active}
-                            sound={prefs.sound}
+                            sound={prefs.sound && !forcedMuted}
                             volume={prefs.volume}
                             onVolumeChange={onVolumeChange}
                             onToggleSound={onToggleSound}
@@ -785,19 +870,21 @@ export function ReelsScreen() {
                         )}
                       </motion.div>
                     </AnimatePresence>
-                    {/* frame top-right: the three dots, on hover only (the phone rail has its own More).
+                    {/* frame top-right: full screen, then the vertical dots in the corner, on hover only (the phone rail has its own More).
                         The one menu — playback rows and the mapped rows — hangs from this corner. */}
                     {theater ? null : (
                       <div className="reel-frame-actions" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" aria-label={desktop ? "Theater mode" : "Full screen"} onClick={() => (desktop ? void enterTheater() : enterPhoneFullscreen())} className="reel-frame-action">
+                          <Maximize size={24} aria-hidden />
+                        </button>
+                        {/* Vertical dots in the very corner (founder, 21 Oct). No refresh button here:
+                            clicking Reels again in the menu refreshes (useReselect). */}
                         <div className="reel-frame-action-wrap is-more">
                           <button type="button" aria-label="More" aria-expanded={moreOpen} onClick={() => setMoreOpen((v) => !v)} className="reel-frame-action">
-                            <MoreHorizontal size={24} aria-hidden />
+                            <MoreVertical size={24} aria-hidden />
                           </button>
                           {desktop ? moreMenuFor("below") : null}
                         </div>
-                        <button type="button" aria-label="Theater mode" onClick={() => void enterTheater()} className="reel-frame-action">
-                          <Maximize size={24} aria-hidden />
-                        </button>
                       </div>
                     )}
                     <AnimatePresence>
@@ -815,7 +902,6 @@ export function ReelsScreen() {
                   ) : (
                     <div className="reel-desktop-rail">
                       <ReelRail
-                        playing={!paused}
                         reel={active}
                         {...railFollow}
                         onLike={onLike}
@@ -870,8 +956,8 @@ export function ReelsScreen() {
 
         {active ? (
           <>
-            <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} url={reelPermalink(active.id)} title={active.title || `Reel by ${active.authorName}`} />
-            <ReelReportDialog open={reportOpen} reelId={active.id} onClose={() => setReportOpen(false)} />
+            <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} url={reelPermalink(active.id)} title={active.title || `Reel by ${active.authorName}`} postId={active.id} />
+            <ReelReportDialog open={reportOpen} targetId={active.id} onClose={() => setReportOpen(false)} />
             {active ? <ReelAudioTracksDialog open={audioOpen} mediaId={active.media.mediaId} onClose={() => setAudioOpen(false)} /> : null}
             <ReelConfirmDialog
               open={blockOpen}
@@ -886,7 +972,7 @@ export function ReelsScreen() {
             <ReelConfirmDialog
               open={deleteOpen}
               title="Delete this reel?"
-              description="It goes to Recently deleted. You can undo right away."
+              description={<>It goes to <Link href="/settings/recently-deleted" className="font-semibold text-brand-text underline underline-offset-2">Recently deleted</Link>. You can undo right away.</>}
               confirmLabel="Delete"
               danger
               pending={remove.isPending}
@@ -906,10 +992,10 @@ export function ReelsScreen() {
                     onClick={(e) => e.stopPropagation()}
                     className="reel-confirm-card"
                   >
-                    <h2 className="mb-2 text-[14px] font-bold">Description</h2>
-                    <p className="whitespace-pre-wrap text-[13px] leading-relaxed">{active.caption || "No description."}</p>
+                    <h2 className="mb-2 text-sm font-bold">Description</h2>
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{active.caption || "No description."}</p>
                     {active.hashtags.length ? (
-                      <p className="mt-2 flex flex-wrap gap-x-2 text-[12px] font-semibold text-brand-accent">
+                      <p className="mt-2 flex flex-wrap gap-x-2 text-xs font-semibold text-brand-accent">
                         {active.hashtags.map((t) => (
                           <Link key={t} href={`/hashtag/${encodeURIComponent(t)}`}>
                             #{t}
@@ -981,8 +1067,8 @@ function StateCard({ title, hint, action, icon }: { title: string; hint: string;
   return (
     <div className="reel-state-card">
       {icon ?? <Clapperboard className="h-10 w-10 opacity-60" />}
-      <h2 className="text-[16px] font-bold">{title}</h2>
-      <p className="max-w-xs text-[13px] opacity-70">{hint}</p>
+      <h2 className="text-base font-bold">{title}</h2>
+      <p className="max-w-xs text-sm opacity-70">{hint}</p>
       {action ? <div className="mt-2">{action}</div> : null}
     </div>
   );
@@ -1028,7 +1114,7 @@ function ReelUndoToast({
               onFailed();
             }
           }}
-          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-secondary px-3 py-1.5 text-[12px] font-semibold text-brand-text transition hover:bg-brand-divider disabled:opacity-60"
+          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-secondary px-3 py-1.5 text-xs font-semibold text-brand-text transition hover:bg-brand-divider disabled:opacity-60"
         >
           <Undo2 className="h-3.5 w-3.5" /> {state === "busy" ? busyLabel : "Undo"}
         </button>

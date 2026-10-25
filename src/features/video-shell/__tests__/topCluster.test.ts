@@ -16,8 +16,13 @@ test("the top-right corner holds the search pill alone: a 40px pill, top 12 / ri
   expect(cluster).not.toContain("Bell");
 });
 
-test("the left menu no longer carries a search field", () => {
-  expect(sidebar).not.toContain("<SidebarSearch");
+test("the left menu carries the search field again (audit T-33), and the corner pill steps aside while it shows", () => {
+  // Under SidebarTop in the plain menu (a field when expanded, the Search icon in the rail) and in the rail column beside More.
+  expect(sidebar).toContain("<SidebarSearch expanded={listExpanded} onNavigate={onNavigate} />");
+  expect(sidebar).toContain("<SidebarSearch expanded={false} onNavigate={onNavigate} />");
+  // Never two search fields: the corner pill is drawn only for the rail or the phone drawer.
+  const shell = readFileSync(resolve(import.meta.dir, "../VideoShell.tsx"), "utf8");
+  expect(shell).toContain('{mode !== "expanded" ? <VideoTopCluster compact={compactSearch} /> : null}');
 });
 
 test("colour only through tokens in the corner rules", () => {

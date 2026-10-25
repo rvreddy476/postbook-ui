@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -22,16 +22,20 @@ import {
   updateVideoTrim,
 } from "@/features/posttube/data/posttubeApi";
 
-import { STEP_SCHEMAS, CONTENT_TYPE_META, type ContentType, type StepId } from "./tokens";
+import { FLICK_MAX_DURATION_SECONDS, studioSteps, type ContentType, type StepId } from "./tokens";
 import { getPublishDefaults } from "@/features/posttube/hub";
+import { updatePost } from "@/features/posttube/hub/hubApi";
 import { chapterRowsToWire } from "@/features/posttube/hub/chaptersModel";
 
 import { type FollowUpFailure, type StudioFormState, INITIAL_FORM_STATE } from "./types";
 import { validateSelectedFile, validateMediaDuration } from "./fileRules";
 import { freshStudioForm, mergePublishDefaults, takesPublishDefaults } from "./studioDefaults";
-import { applySeriesChoice, saveUploadChapters, studioCreateFields } from "./studioApi";
-import { soundToAudioTrack, studioDraftSoundFields, studioSoundNotice, studioSoundStatus } from "./studioSound";
+import { applySeriesChoice, isFinalPublishRefusal, postPublishPatch, readPublishedCopyrightReview, saveUploadChapters, scheduleIso, studioCreateFields, studioDraftActionField, studioDraftCreditFields, studioDraftGateField, studioTakesCredits } from "./studioApi";
+import { cachedCover, keepPublishAttempt, newPublishAttempt, type PublishAttempt } from "./publishAttempt";
+import { chosenSoundPatch, soundToAudioTrack, studioDraftSoundFields, studioSoundNotice, studioSoundStatus } from "./studioSound";
 import { useSoundInfo } from "@/features/reels/hooks/useSounds";
+import type { SoundInfo } from "@/features/reels/sounds";
+import { invalidateGate } from "@/features/memberships/hooks";
 
 /* ── Constants ─────────────────────────────────────────── */
 
@@ -67,19 +71,22 @@ function mergeHashtags(chips: string[], caption: string): string[] {
 }
 
 /**
- * Classify video per spec v2.1:
- * - Flick: duration ≤ 180s AND (portrait OR square)
- * - LongVideo: duration > 180s (any orientation) OR landscape (any duration)
+ * Classify video per spec v2.1, mirroring postclassify.Classify on the server:
+ * - Flick: 0 < duration ≤ FLICK_MAX_DURATION_SECONDS (600 s; exactly 600 s is a flick) AND portrait or
+ *   square (height ≥ width)
+ * - LongVideo: duration > 600 s (any orientation), landscape (any duration),
+ *   or an unknown/zero duration or dimension (the server's safe default)
  */
 export function classifyVideo(
   durationSec: number | null,
   width: number | null,
   height: number | null,
 ): "flick" | "long_video" {
-  if (durationSec == null) return "long_video";
-  const isLandscape = (width ?? 0) > (height ?? 0);
-  if (durationSec <= 180 && !isLandscape) return "flick";
-  return "long_video";
+  if (durationSec == null || !(durationSec > 0)) return "long_video";
+  if (width == null || height == null || !(width > 0) || !(height > 0)) return "long_video";
+  if (durationSec > FLICK_MAX_DURATION_SECONDS) return "long_video";
+  if (height < width) return "long_video";
+  return "flick";
 }
 
 /** Extract a single frame from a local video as a JPEG data URL. Client-side only. */
@@ -119,8 +126,15 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
   const [form, setForm] = useState<StudioFormState>({ ...INITIAL_FORM_STATE, contentType, currentStep: "video" });
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const subtitleUploadKeyRef = useRef<string | null>(null);
-  const steps = STEP_SCHEMAS[contentType];
+  // The current publish attempt (Idempotency-Key + the cover it uploaded).
+  // Made on the first Publish press, reused by a retry, cleared on success,
+  // on a definite refusal and whenever the file changes (publishAttempt.ts).
+  const publishAttemptRef = useRef<PublishAttempt | null>(null);
   const isLongStudio = contentType === "long" || contentType === "podcast";
+  // Credits (cast & crew) only for a long video whose topic takes them; the step sits before Publish.
+  const longUpload = classifyVideo(form.videoDurationSec, form.videoWidth, form.videoHeight) === "long_video";
+  const takesCredits = studioTakesCredits(form, longUpload);
+  const steps = useMemo(() => studioSteps(contentType, takesCredits), [contentType, takesCredits]);
 
   const patch = useCallback(
     (updates: Partial<StudioFormState>) => setForm((prev) => ({ ...prev, ...updates })),
@@ -167,6 +181,15 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
     patch({ audioTrack: null, audioStartMs: 0, overlayAudioVolume: INITIAL_FORM_STATE.overlayAudioVolume });
   }, [patch]);
 
+  /* A sound chosen in the Audio section's picker: the same form fields the
+   * ?sound= lookup writes, from the sound's start. A library sound arrives
+   * here already turned into its audio_tracks id. */
+  const chooseSound = useCallback((sound: SoundInfo) => {
+    // A choice made here wins over an address sound still being looked up.
+    appliedSoundRef.current = soundId;
+    patch(chosenSoundPatch(sound));
+  }, [patch, soundId]);
+
   /* ── File selection ──────────────────────────────── */
 
   const [checkingFile, setCheckingFile] = useState(false);
@@ -209,12 +232,12 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
       const duration = video.duration;
       const width = video.videoWidth;
       const height = video.videoHeight;
-      const durationError = validateMediaDuration(duration, contentType);
+      const durationError = validateMediaDuration(duration);
       if (durationError) { fail(durationError); return; }
       const computedCategory = classifyVideo(Math.round(duration), width || null, height || null);
       cleanup(false);
       subtitleUploadKeyRef.current = null;
-      uploadTriggeredRef.current = null;
+      publishAttemptRef.current = null;
       setForm((previous) => {
         if (previous.videoPreviewUrl) URL.revokeObjectURL(previous.videoPreviewUrl);
         if (previous.customCoverPreviewUrl) URL.revokeObjectURL(previous.customCoverPreviewUrl);
@@ -236,7 +259,7 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
     pendingFileCheck.current?.();
     setCheckingFile(false);
     subtitleUploadKeyRef.current = null;
-    uploadTriggeredRef.current = null;
+    publishAttemptRef.current = null;
     setForm((prev) => {
       if (prev.videoPreviewUrl) URL.revokeObjectURL(prev.videoPreviewUrl);
       if (prev.customCoverPreviewUrl) URL.revokeObjectURL(prev.customCoverPreviewUrl);
@@ -244,51 +267,13 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
     });
   }, [contentType]);
 
-  /* ── Upload + draft creation ─────────────────────── */
-
-  const uploadMutation = useMutation({
-    mutationFn: async () => {
-      if (!form.videoFile) throw new Error("No video selected");
-      patch({ uploadPhase: "uploading", uploadProgress: 0, uploadError: null });
-
-      // Large videos take the resumable (chunked) path so a dropped
-      // connection costs one 5 MB part, not the whole upload.
-      const upload =
-        form.videoFile.size >= RESUMABLE_UPLOAD_THRESHOLD
-          ? uploadMediaResumable
-          : uploadMedia;
-      const mediaId = await upload(form.videoFile, (pct) => patch({ uploadProgress: pct }));
-      patch({ uploadPhase: "creating_draft", mediaId });
-
-      let draftId: string | null = null;
-      try {
-        const draft = await createDraft({ media_id: mediaId, visibility: form.visibility });
-        draftId = draft.id;
-      } catch {
-        // Draft endpoint not available
-      }
-
-      patch({
-        uploadPhase: "done",
-        draftId,
-        processingReady: false,
-        processingStatus: "processing",
-        processingError: null,
-      });
-      return { mediaId, draftId };
-    },
-    onError: (err: Error) => {
-      patch({ uploadPhase: "error", uploadError: err.message || "Upload failed." });
-    },
-  });
-
   /* ── Deferred upload ─────────────────────────────────
    * The file is NOT uploaded on selection — we keep only a local reference and
    * a blob preview (no API calls, no orphaned objects in storage). The actual
    * upload + DB record + transcode all happen on Publish (and on explicit Save
-   * Draft). This ref tracks the no-longer-used auto-upload key.
+   * Draft). Large videos take the resumable (chunked) path so a dropped
+   * connection costs one 5 MB part, not the whole upload.
    */
-  const uploadTriggeredRef = useRef<string | null>(null);
 
   /* ── Processing status polling ───────────────────── */
 
@@ -459,7 +444,7 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
       if (!form.videoPreviewUrl) throw new Error("No video available");
       return extractFrameClientSide(form.videoPreviewUrl, timestampMs);
     },
-    onSuccess: (dataUrl) => patch({ coverPreviewUrl: dataUrl, coverResult: null }),
+    onSuccess: (dataUrl) => patch({ coverPreviewUrl: dataUrl }),
   });
 
   /* ── Custom cover image selection (local-only) ──── */
@@ -481,7 +466,6 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         customCoverFile: file,
         customCoverPreviewUrl: previewUrl,
         coverPreviewUrl: null,
-        coverResult: null,
         uploadError: null,
       });
     },
@@ -513,26 +497,28 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         original_audio_volume: form.originalAudioVolume,
         overlay_audio_volume: form.overlayAudioVolume,
         ...studioDraftSoundFields(form),
-        cover_media_id: coverMediaIdOverride ?? form.coverResult?.cover_media_id,
+        cover_media_id: coverMediaIdOverride,
         cross_post_postbook: form.crossPostPostbook,
-        cross_post_posttube: form.crossPostPosttube,
         publish_to_feed: form.publishToFeed,
         is_made_for_kids: form.isMadeForKids,
         paid_promotion: form.paidPromotion,
         altered_content: form.alteredContent,
-        auto_chapters: form.autoChapters,
-        featured_places: form.featuredPlaces,
-        auto_concepts: form.autoConcepts,
-        license: form.license,
-        allow_embedding: form.allowEmbedding,
         remix_setting: form.remixSetting,
         likes_enabled: form.likesEnabled,
         comments_enabled: form.commentsEnabled,
-        comment_moderation: form.commentModeration,
         comment_access: form.commentAccess,
-        recording_date: form.recordingDate || undefined,
-        recording_location: form.recordingLocation || undefined,
-        schedule_at: form.scheduleAt ?? undefined,
+        ai_generated: form.aiGenerated,
+        // "" clears a place saved earlier in this draft.
+        location_name: form.locationName.trim(),
+        location_place_id: form.locationName.trim() ? form.locationPlaceId ?? "" : "",
+        // The picker's local wall clock, as RFC3339 (the same conversion as the create route's publish_at).
+        schedule_at: scheduleIso(form.scheduleAt),
+        // Credits replace what the draft holds; a topic that takes none clears them.
+        ...studioDraftCreditFields(form, classified === "long_video"),
+        // The Action button; null removes one saved earlier in this draft.
+        ...studioDraftActionField(form),
+        // Members only: the level the draft publishes gated on; null keeps it open.
+        ...studioDraftGateField(form),
       });
   }, [form, patch]);
 
@@ -565,6 +551,8 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
   const publishMutation = useMutation({
     mutationFn: async () => {
       if (!form.videoFile && !form.mediaId) throw new Error("No video selected");
+      // One attempt per Publish press; a retry after an unknown outcome reuses it.
+      const attempt = (publishAttemptRef.current ??= newPublishAttempt());
 
       // 1. Upload the video NOW (deferred from selection). This is the only
       //    point at which bytes hit storage — abandoned drafts cost nothing.
@@ -578,12 +566,19 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         patch({ uploadPhase: "done", mediaId, processingStatus: "processing" });
       }
 
-      // 2. Upload the cover (frame or custom image), if chosen.
+      // 2. Upload the cover (frame or custom image), if chosen — once per
+      //    attempt, so a retry sends the same cover_media_id (and body).
       let coverMediaId: string | undefined;
-      if (form.coverSourceType === "custom_image" && form.customCoverFile) {
-        coverMediaId = await uploadMedia(form.customCoverFile);
-      } else if (form.coverSourceType === "video_frame" && form.coverPreviewUrl) {
-        coverMediaId = await uploadCoverDataUrl(form.coverPreviewUrl);
+      const coverSource =
+        form.coverSourceType === "custom_image" ? form.customCoverFile
+        : form.coverSourceType === "video_frame" ? form.coverPreviewUrl
+        : null;
+      if (coverSource) {
+        coverMediaId = cachedCover(attempt, coverSource) ?? undefined;
+        if (!coverMediaId) {
+          coverMediaId = coverSource instanceof File ? await uploadMedia(coverSource) : await uploadCoverDataUrl(coverSource);
+          attempt.cover = { source: coverSource, mediaId: coverMediaId };
+        }
       }
 
       // 3. Upload subtitles, if provided and not already uploaded.
@@ -602,12 +597,14 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
       if (form.draftId) {
         try {
           await saveDraftWithCover(coverMediaId);
-          const reel = await publishDraft(
-            form.draftId,
-            form.scheduleAt ? { schedule_at: form.scheduleAt } : undefined,
-          );
+          const scheduleAt = scheduleIso(form.scheduleAt);
+          const reel = await publishDraft(form.draftId, scheduleAt ? { schedule_at: scheduleAt } : undefined);
           return { reel, coverMediaId };
-        } catch { /* fall through to direct create */ }
+        } catch (err) {
+          // A members-only or copyright refusal (uploads paused) would refuse the direct create too: say it, and post nothing.
+          if (isFinalPublishRefusal(err)) throw err;
+          /* otherwise fall through to direct create */
+        }
       }
 
       const hashtags = mergeHashtags(form.hashtags, form.caption);
@@ -620,15 +617,23 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         cover_media_id: coverMediaId,
         content_type: classified,
         publish_to_feed: form.publishToFeed,
-        fields: studioCreateFields(form),
+        idempotencyKey: attempt.key,
+        fields: studioCreateFields(form, { longVideo: classified === "long_video" }),
       });
       return { reel, coverMediaId };
     },
     onSuccess: async ({ reel, coverMediaId }) => {
+      publishAttemptRef.current = null;
       const postId = reel.reel_id;
       const warnings: string[] = [];
 
-      if (isLongStudio && !form.scheduleAt) {
+      // Members only rode in with the create (or the draft): nothing to set
+      // after it, and no window where the post was open. Its lists refresh.
+      if (postId && form.tierRequiredId) invalidateGate(queryClient, postId);
+
+      // The post row exists at create, scheduled or not, so the follow-ups
+      // run for scheduled videos too (they were skipped before).
+      if (isLongStudio && postId) {
         if (form.trimStartMs > 0 || form.trimEndMs != null) {
           try {
             await updateVideoTrim(postId, form.trimStartMs, form.trimEndMs ?? undefined);
@@ -657,6 +662,17 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         }
       }
 
+      // Settings the create route does not take (age restriction): one owner
+      // PATCH. A failure never fails the publish; it is said on the success screen.
+      const followUpPatch = postId ? postPublishPatch(form) : null;
+      if (postId && followUpPatch) {
+        try {
+          await updatePost(postId, followUpPatch);
+        } catch {
+          warnings.push("The 18+ age restriction could not be saved. Turn it on in Creator Hub.");
+        }
+      }
+
       // Series and chapters: each in its own try/catch, scheduled or not
       // (the post row exists either way). A failure leaves the post
       // published; the studio points at the Creator Hub to finish it.
@@ -679,8 +695,15 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         }
       }
 
+      // Copyright title review: the create response never says whether the
+      // video was held, so a long video published now is read back.
+      // A reel over the shorts cap publishes as a long video too.
+      const publishedLong = isLongVideo || classifyVideo(form.videoDurationSec, form.videoWidth, form.videoHeight) === "long_video";
+      const publishedCopyrightReview = publishedLong && postId && !scheduleIso(form.scheduleAt) ? await readPublishedCopyrightReview(postId) : null;
+
       patch({
         publishedPostId: postId,
+        publishedCopyrightReview,
         publishSuccess: true,
         publishWarning: warnings.length > 0 ? warnings.join(" ") : null,
         followUpFailures,
@@ -693,9 +716,11 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         queryClient.invalidateQueries({ queryKey: ["posttube"] }),
       ]);
     },
-    onError: () => {
+    onError: (err: unknown) => {
       // Reset the upload overlay so the user can retry; the error message is
-      // surfaced via publishMutation.error in the studio UI.
+      // surfaced via publishMutation.error in the studio UI. A definite
+      // refusal ends the attempt; an unknown outcome keeps it for the retry.
+      if (!keepPublishAttempt(err)) publishAttemptRef.current = null;
       patch({ uploadPhase: "idle" });
     },
   });
@@ -703,6 +728,11 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
   /* ── Step navigation ─────────────────────────────── */
 
   const currentStepIndex = steps.indexOf(form.currentStep);
+
+  // A step that went away under the creator (the topic no longer takes credits): land on Publish.
+  useEffect(() => {
+    if (!steps.includes(form.currentStep)) patch({ currentStep: steps.includes("publish") ? "publish" : steps[steps.length - 1] });
+  }, [steps, form.currentStep, patch]);
 
   const goToStep = useCallback(
     (step: StepId) => {
@@ -748,7 +778,7 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
     clearFile,
     sound: { status: soundStatus, notice: studioSoundNotice(soundStatus) },
     removeSound,
-    uploadMutation,
+    chooseSound,
     extractCoverPreview,
     selectCustomCover,
     saveDraftMutation,

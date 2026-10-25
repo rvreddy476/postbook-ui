@@ -80,7 +80,22 @@ async function proxyRequest(req: NextRequest, { params }: { params: Promise<{ pa
         }
     }
 
-    // Read body for non-GET/HEAD requests
+    /*
+      Read body for non-GET/HEAD requests. Buffered whole, which is fine for
+      the largest body that comes through here: one resumable-upload part,
+      at most 64 MiB (media-service's chunk plan; 5 MiB for files up to
+      ~45 GB). Nothing else bounds it, checked against Next 16.3:
+      - Route handlers have no body-size limit (bodySizeLimit is for server
+        actions only).
+      - experimental.proxyClientMaxBodySize (10 MB) truncates bodies only for
+        requests the middleware runs on, and src/middleware.ts excludes v1/
+        and api/ from its matcher (pinned by src/lib/__tests__/resumableUpload.test.ts).
+      - maxDuration is a Vercel setting; the standalone Node server has no
+        route timeout. What does apply is Node's own server.requestTimeout
+        (300 s to receive a request): a 64 MiB part needs ~1.8 Mbit/s up,
+        a 5 MiB part ~0.15 Mbit/s. A part that times out is retried by the
+        client (lib/resumableUpload.ts).
+    */
     let body: BodyInit | null = null
     if (req.method !== "GET" && req.method !== "HEAD") {
         body = await req.arrayBuffer()

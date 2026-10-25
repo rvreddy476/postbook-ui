@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { existsSync } from "node:fs"
-import { resolveAppBrand, APP_LAUNCHER } from "@/lib/appBrand"
+import { resolveAppBrand, ALL_APP_LAUNCHER, APP_LAUNCHER } from "@/lib/appBrand"
 import { ADMIN_LINKS, DATING_ADMIN_LINKS, FOOD_LINKS, MOPEDU_LINKS, workspaceLinkCurrent } from "../workspaceNavigation"
 
 describe("service workspace navigation",() => {
@@ -21,8 +21,8 @@ describe("service workspace navigation",() => {
   })
   test("links only to existing app routes and makes Feast available",() => {
     for (const link of [...FOOD_LINKS,...ADMIN_LINKS,...MOPEDU_LINKS,...DATING_ADMIN_LINKS]) expect(existsSync(`src/app${link.href}/page.tsx`)).toBe(true)
-    expect(APP_LAUNCHER.find(tile => tile.key === "feast")?.soon).toBeUndefined()
+    expect(ALL_APP_LAUNCHER.find(tile => tile.key === "feast")?.soon).toBeUndefined()
     expect(APP_LAUNCHER.find(tile => tile.key === "ride")?.soon).toBe(true)
-    expect(APP_LAUNCHER.some(tile => tile.href.startsWith("/admin"))).toBe(false)
+    expect(ALL_APP_LAUNCHER.some(tile => tile.href.startsWith("/admin"))).toBe(false)
   })
 })

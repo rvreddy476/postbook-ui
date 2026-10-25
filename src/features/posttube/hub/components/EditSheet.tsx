@@ -3,9 +3,13 @@
 import { ChevronDown, Sparkles, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useGlobalToast } from "@/contexts/ToastContext";
 import { useAuthUser } from "@/store/auth";
+import { MembersOnlyChoices } from "@/features/memberships/components/MembersOnlyChoices";
+import { invalidateGate, useGateLevels } from "@/features/memberships/hooks";
+import { gateEditField } from "@/features/memberships/model";
 import {
   HUB_COMMENT_ACCESSES,
   HUB_COMMENT_MODERATIONS,
@@ -32,8 +36,11 @@ import {
   fromLocalInput,
   parseClock,
   readableHubError,
+  readableHubFailure,
   toLocalInput,
 } from "../hubModel";
+import { COPYRIGHT_REVIEW, COPYRIGHT_REVIEW_EDIT_COPY, isCopyrightHeld } from "@/features/copyright/model";
+import { CopyrightReviewNotice } from "@/features/copyright/components/CopyrightReviewNotice";
 import { RECORDING_LOCATION_MAX, detailsPatch, detailsProblems, notYetPublished, toDetailsForm, type DetailsForm } from "../editForm";
 import {
   useCaptionTracks,
@@ -60,8 +67,14 @@ import { ChaptersEditor } from "./ChaptersEditor";
 import { CardsEditor, EndScreenEditor } from "./EndScreenEditor";
 import { cardsBlocked, durationMsOf, endScreenBlock, validateCards, validateEndScreens } from "../endScreenEditor";
 import { SeriesSection } from "./SeriesSection";
+import { CreditsEditor } from "../../credits/components/CreditsEditor";
+import { categoryTakesCredits, creditsEditPatch, creditsErrorProblem, creditsFormFrom, creditsProblems, hasCreditsInfo, type CreditsForm, type CreditsProblem } from "../../credits/creditsModel";
+import { useGenres } from "../../credits/useCredits";
 import { HubError, HubSkeleton } from "./HubEmpty";
 import { SwitchRow, Toggle, VisibilityIcon } from "./Pills";
+import { ActionEditor } from "@/features/action-button/components/ActionEditor";
+import { ActionTaps } from "@/features/action-button/components/ActionPill";
+import { actionPatchFields, actionProblemFromError, draftFromAction, draftProblem, type ActionDraft, type ActionProblem, type ActionStatus } from "@/features/action-button/model";
 
 export type SheetTab = "details" | "elements" | "captions";
 
@@ -157,6 +170,20 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
     return scheduleFirst ? { ...f, visibility: "scheduled" } : f;
   });
   const [form, setForm] = useState<DetailsForm>(base);
+  const [creditsBase, setCreditsBase] = useState<CreditsForm>(() => creditsFormFrom(post.credits));
+  const [creditsForm, setCreditsForm] = useState<CreditsForm>(creditsBase);
+  // Members only: in the same PATCH (`tier_required_id`: a level sets it, null clears it, omitted leaves it).
+  const { levels: gateLevels } = useGateLevels();
+  const qc = useQueryClient();
+  const [gateBase, setGateBase] = useState<string | null>(post.tier_required_id ?? null);
+  const [gate, setGate] = useState<string | null>(gateBase);
+  // The Action button: in the same PATCH (`action`: null removes it, omitted leaves it).
+  const [actionBase, setActionBase] = useState<ActionDraft | null>(() => draftFromAction(post.action));
+  const [actionDraft, setActionDraft] = useState<ActionDraft | null>(actionBase);
+  const [actionStatus, setActionStatus] = useState<ActionStatus | null>(post.action?.status ?? null);
+  const [actionServerProblem, setActionServerProblem] = useState<ActionProblem | null>(null);
+  const genres = useGenres();
+  const me = useAuthUser();
   const [frameClock, setFrameClock] = useState("0:05");
   const scheduleRef = useRef<HTMLDivElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -166,6 +193,16 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
     const next = scheduleFirst ? { ...f, visibility: "scheduled" as const } : f;
     setBase(next);
     setForm(next);
+    const credits = creditsFormFrom(post.credits);
+    setCreditsBase(credits);
+    setCreditsForm(credits);
+    setGateBase(post.tier_required_id ?? null);
+    setGate(post.tier_required_id ?? null);
+    const action = draftFromAction(post.action);
+    setActionBase(action);
+    setActionDraft(action);
+    setActionStatus(post.action?.status ?? null);
+    setActionServerProblem(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [post.id]);
 
@@ -181,13 +218,28 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
   const scheduleIso = form.visibility === "scheduled" ? fromLocalInput(form.scheduled_local) : null;
   const scheduleChanged = form.visibility === "scheduled" ? scheduleIso !== null && (base.visibility !== "scheduled" || toLocalInput(post.scheduled_at) !== form.scheduled_local) : base.visibility === "scheduled";
   const scheduleInvalid = form.visibility === "scheduled" && (!scheduleIso || Date.parse(scheduleIso) <= Date.now());
+  // Credits: long videos whose topic takes them, or that already carry some (a changed topic never hides saved credits).
+  const showCredits = !short && (categoryTakesCredits(form.category) || hasCreditsInfo(post.credits));
+  const creditsPatch = useMemo(() => (showCredits ? creditsEditPatch(creditsBase, creditsForm) : {}), [showCredits, creditsBase, creditsForm]);
+  const creditIssues = showCredits ? creditsProblems(creditsForm) : [];
+  // Credit issues are shown on their rows; they block Save like the others.
   const problems = detailsProblems(form, post.id);
-  const dirty = Object.keys(patch).length > 0 || scheduleChanged;
+  const actionPatch = useMemo(() => actionPatchFields(actionBase, actionDraft), [actionBase, actionDraft]);
+  // Judged only once it moved: a saved button whose url the detail did not send stays as it is.
+  const actionIssue = "action" in actionPatch ? draftProblem(actionDraft) : null;
+  const blocked = problems.length > 0 || creditIssues.length > 0 || actionIssue !== null;
+  const gateChanged = gate !== gateBase;
+  const dirty = Object.keys(patch).length > 0 || Object.keys(creditsPatch).length > 0 || Object.keys(actionPatch).length > 0 || scheduleChanged || gateChanged;
   const busy = update.isPending || reschedule.isPending;
   const [saveError, setSaveError] = useState<string | null>(null);
+  /** The server's last credits refusal (TOO_MANY_CREDITS, INVALID_GENRE, …), until the credits change. */
+  const [creditServerProblem, setCreditServerProblem] = useState<CreditsProblem | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
+  /** The server refused the audience of a video in copyright review (409 COPYRIGHT_REVIEW). */
+  const [gateRefused, setGateRefused] = useState(false);
+  const gateLocked = isCopyrightHeld(post.copyright_review) || gateRefused;
 
-  const set = <K extends keyof DetailsForm>(k: K, v: DetailsForm[K]) => {
+  const set =<K extends keyof DetailsForm>(k: K, v: DetailsForm[K]) => {
     setSaveError(null);
     setForm((f) => ({ ...f, [k]: v }));
   };
@@ -195,23 +247,53 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
   const relatedOptions = useMemo(() => candidates.filter((c) => c.id !== post.id && !isShortType(c.content_type)), [candidates, post.id]);
 
   const save = async () => {
-    if (!dirty || busy || scheduleInvalid || problems.length > 0) return;
+    if (!dirty || busy || scheduleInvalid || blocked) return;
     setSaveError(null);
     try {
-      const body: HubPostPatch = { ...patch };
+      // Credits, the Action button and the members-only level ride in the same PATCH; `credits` replaces the whole list.
+      const body: HubPostPatch = { ...patch, ...creditsPatch, ...actionPatch, ...gateEditField(gateBase, gate) };
       if (base.visibility === "scheduled" && form.visibility !== "scheduled") {
         // Leaving "scheduled": publish now, then apply the chosen state.
         await reschedule.mutateAsync({ postId: post.id });
         body.visibility = form.visibility;
       }
-      if (Object.keys(body).length > 0) await update.mutateAsync({ postId: post.id, patch: body });
+      const saved = Object.keys(body).length > 0 ? await update.mutateAsync({ postId: post.id, patch: body }) : null;
       if (form.visibility === "scheduled" && scheduleIso && scheduleChanged) {
         await reschedule.mutateAsync({ postId: post.id, publishAt: scheduleIso });
       }
+      if (gateChanged) {
+        setGateBase(gate);
+        invalidateGate(qc, post.id);
+      }
       setBase(form);
+      // The saved list comes back with each tag's status (a new link reads Pending).
+      const credits = saved && body.credits !== undefined ? creditsFormFrom(saved.credits) : creditsForm;
+      setCreditsBase(credits);
+      setCreditsForm(credits);
+      if (body.action !== undefined) {
+        // The saved copy says the button's new status (a changed link starts live, or unchecked in dev).
+        const savedAction = saved ? draftFromAction(saved.action) : null;
+        const next = savedAction && savedAction.url ? savedAction : actionDraft;
+        setActionBase(next);
+        setActionDraft(next);
+        setActionStatus(saved?.action?.status ?? null);
+      }
       toast({ type: "success", title: "Saved" });
     } catch (err) {
-      const message = readableHubError(hubErrorCode(err), "Check the fields and try again.");
+      const actionProblem = actionProblemFromError(err);
+      if (actionProblem) {
+        // Said under the Action button; the toast carries it too.
+        setActionServerProblem(actionProblem);
+        toast({ type: "error", title: "Could not save", description: actionProblem.message });
+        return;
+      }
+      const code = hubErrorCode(err);
+      // A credits refusal is said under its field in the Credits editor too.
+      const creditProblem = creditsErrorProblem(code);
+      setCreditServerProblem(creditProblem);
+      // A copyright refusal (COPYRIGHT_REVIEW on a held video's audience, UPLOADS_PAUSED on "publish now") names itself.
+      if (code === COPYRIGHT_REVIEW) setGateRefused(true);
+      const message = creditProblem?.message ?? readableHubFailure(err, "Check the fields and try again.");
       setSaveError(message);
       toast({ type: "error", title: "Could not save", description: message });
     }
@@ -247,6 +329,7 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
   return (
     <>
       <div className="hub-sheet-body">
+        {post.copyright_review ? <CopyrightReviewNotice postId={post.id} review={post.copyright_review} /> : null}
         <div className="hub-field">
           <label className="hub-label" htmlFor="hub-title">
             Title
@@ -329,6 +412,33 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
           </div>
         </div>
 
+        {showCredits ? (
+          <section className="hub-field" aria-labelledby="hub-credits-title" data-section="credits">
+            <span className="hub-label" id="hub-credits-title">
+              Credits
+            </span>
+            <span className="hub-hint">The cast and crew, genres, release year and production house. A linked account is asked to accept.</span>
+            <div className="hub-card hub-card-pad">
+              <CreditsEditor
+                value={creditsForm}
+                onChange={(next) => {
+                  setSaveError(null);
+                  setCreditServerProblem(null);
+                  setCreditsForm(next);
+                }}
+                genres={genres.data ?? []}
+                genresLoading={genres.isPending}
+                variant="hub"
+                showStatus
+                selfId={me?.id ?? null}
+                problems={creditServerProblem ? [...creditIssues, creditServerProblem] : creditIssues}
+                showErrors
+                idPrefix="hub-credits"
+              />
+            </div>
+          </section>
+        ) : null}
+
         <div className="hub-card hub-card-pad" style={{ paddingTop: 2, paddingBottom: 2 }}>
           <SwitchRow label="Conversations" hint="Viewers can comment." checked={!form.no_comments} onChange={(v) => set("no_comments", !v)} />
           <SwitchRow label="Save offline" hint="Viewers can save this video to watch offline inside the app. They never get a file." checked={form.allow_download} onChange={(v) => set("allow_download", v)} />
@@ -352,6 +462,37 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
           ) : null}
         </div>
 
+        {gateLevels.length > 0 || gateBase ? (
+          <div className="hub-field" data-hub-members-only>
+            <span className="hub-label">Members only</span>
+            <MembersOnlyChoices levels={gateLevels} value={gate} onChange={(v) => { setSaveError(null); setGate(v); }} disabled={busy} />
+            {gateLocked ? (
+              <span className="hub-hint" data-copyright-gate>
+                {COPYRIGHT_REVIEW_EDIT_COPY}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div className="hub-field" data-hub-action>
+          <span className="hub-label">Action button</span>
+          <ActionEditor
+            value={actionDraft}
+            onChange={(v) => {
+              setSaveError(null);
+              setActionServerProblem(null);
+              setActionDraft(v);
+            }}
+            savedStatus={actionStatus}
+            serverProblem={actionServerProblem}
+            disabled={busy}
+            idPrefix="hub-action"
+            surface={short ? "reel" : "video"}
+            showErrors={"action" in actionPatch}
+          />
+          {post.action ? <ActionTaps postId={post.id} className="hub-hint" /> : null}
+        </div>
+
         <MoreSettings form={form} set={set} open={moreOpen} onToggle={() => setMoreOpen((o) => !o)} notifyEditable={notifyEditable} relatedOptions={relatedOptions} related={post.related_post} />
 
         {problems.length > 0 || saveError ? (
@@ -367,7 +508,7 @@ function DetailsTab({ post, scheduleFirst, candidates, onClose }: { post: HubPos
         <button type="button" className="hub-btn" onClick={onClose}>
           Close
         </button>
-        <button type="button" className="hub-btn hub-btn-primary" onClick={save} disabled={!dirty || busy || scheduleInvalid || problems.length > 0}>
+        <button type="button" className="hub-btn hub-btn-primary" onClick={save} disabled={!dirty || busy || scheduleInvalid || blocked}>
           {busy ? "Saving…" : "Save"}
         </button>
       </div>

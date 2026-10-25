@@ -179,6 +179,13 @@ describe("tab rules", () => {
     expect(visibleTabs({ videos: 0, shorts: 0, live: 0, collections: 0 }, false)).toEqual(["posts"]);
     expect(visibleTabs({}, false)).toEqual(["videos", "shorts", "live", "collections", "posts"]);
   });
+  test("Appears in is last, for everyone, and only when the person has accepted credits", () => {
+    expect(visibleTabs({}, true, false, true)).toEqual(["videos", "shorts", "live", "collections", "posts", "appears"]);
+    expect(visibleTabs({ videos: 0, shorts: 0, live: 0, collections: 0 }, false, false, true)).toEqual(["posts", "appears"]);
+    expect(visibleTabs({}, true, false, false)).not.toContain("appears");
+    expect(resolveTab("appears", visibleTabs({}, false, false, true))).toBe("appears");
+    expect(resolveTab("appears", visibleTabs({}, false))).toBe("videos");
+  });
   test("?tab= lands on a visible tab, else the first", () => {
     const tabs = visibleTabs({ videos: 4, shorts: 0, live: 0, collections: 2 }, false);
     expect(resolveTab("collections", tabs)).toBe("collections");
@@ -361,10 +368,12 @@ describe("RUTUBE words, our tokens", () => {
     expect(rules).not.toMatch(/rgba?\(\s*\d/); // colour only as rgb(var(--token))
     expect(rules).not.toMatch(/hsla?\(/);
     expect(rules).not.toMatch(/:\s*(white|black|red|blue|gray|grey)\b/i);
-    const sizes = [...rules.matchAll(/font-size:\s*(\d+)px/g)].map((m) => Number(m[1]));
-    expect(sizes.length).toBeGreaterThan(0);
-    expect(Math.max(...sizes)).toBeLessThanOrEqual(22);
-    expect(rules).toContain(".tube-chan-head__name { margin: 0; font-size: 18px; font-weight: 700;");
+    // Sizes come from the scale (src/ui/theme.css): never a px literal, never above 2xl (24px).
+    const steps = [...rules.matchAll(/font-size:\s*var\(--type-(\w+)\)/g)].map((m) => m[1]);
+    expect(steps.length).toBeGreaterThan(0);
+    expect(rules).not.toMatch(/font-size:\s*[0-9.]+px/);
+    expect(steps.every((s) => ["2xs", "xs", "sm", "base", "lg", "xl", "2xl"].includes(s))).toBe(true);
+    expect(rules).toContain(".tube-chan-head__name { margin: 0; font-size: var(--type-lg); font-weight: 700;");
     expect(rules).toContain("aspect-ratio: 3 / 1");
     expect(rules).toContain("aspect-ratio: 9 / 16");
   });

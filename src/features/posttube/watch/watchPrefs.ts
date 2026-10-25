@@ -16,7 +16,8 @@ export interface WatchPrefs {
 }
 
 export const DEFAULT_WATCH_PREFS: WatchPrefs = {
-  ambient: true,
+  // Off until the viewer turns it on in Settings (founder, 2026-10-19).
+  ambient: false,
   stableVolume: false,
   audioLanguage: null,
 };

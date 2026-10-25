@@ -463,7 +463,7 @@ function SettingsBody() {
         )}
       </Panel>
 
-      <Panel title="Delete your Pulse profile" sub="Your profile is hidden straight away and kept for a 30-day grace period, then erased for good. Your Momentum account is not affected.">
+      <Panel title="Delete your Pulse profile" sub="Your profile is hidden straight away and kept for a 30-day grace period, then erased for good. Your VChat account is not affected.">
         <Button variant="danger" icon={Trash2} onClick={() => setDeleting(true)}>
           Delete profile
         </Button>

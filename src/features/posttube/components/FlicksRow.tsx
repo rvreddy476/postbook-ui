@@ -63,10 +63,10 @@ export function FlicksRow({ videos, title = "Reels" }: { videos: PostTubeVideo[]
           <Clapperboard className="h-4 w-4" />
         </div>
         <div>
-          <h2 className="text-[17px] font-bold text-brand-text">{title}</h2>
-          <p className="-mt-0.5 text-[11px] text-muted-foreground">Quick bites, big moments</p>
+          <h2 className="text-lg font-bold text-brand-text">{title}</h2>
+          <p className="-mt-0.5 text-xs text-muted-foreground">Quick bites, big moments</p>
         </div>
-        <Link href="/reels" className="ml-auto text-[12px] font-semibold text-primary-ink hover:underline">
+        <Link href="/reels" className="ml-auto text-xs font-semibold text-primary-ink hover:underline">
           Open Reels
         </Link>
       </div>
@@ -113,7 +113,7 @@ export function FlicksRow({ videos, title = "Reels" }: { videos: PostTubeVideo[]
                 {v.view_count > 0 && (
                   <div className="absolute right-2.5 top-2.5 flex items-center gap-1 rounded-lg bg-black/60 px-2 py-1 backdrop-blur-md">
                     <Eye className="h-2.5 w-2.5 text-white" />
-                    <span className="text-[9px] font-bold text-white/90">{formatCount(v.view_count)}</span>
+                    <span className="text-xs font-bold text-white/90">{formatCount(v.view_count)}</span>
                   </div>
                 )}
 
@@ -126,8 +126,8 @@ export function FlicksRow({ videos, title = "Reels" }: { videos: PostTubeVideo[]
 
                 <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-3">
-                  <p className="line-clamp-2 text-[12px] font-semibold leading-tight text-white drop-shadow-md">{v.title}</p>
-                  {v.channel_name && <p className="mt-1 truncate text-[10px] font-medium text-white/60">{v.channel_name}</p>}
+                  <p className="line-clamp-2 text-xs font-semibold leading-tight text-white drop-shadow-md">{v.title}</p>
+                  {v.channel_name && <p className="mt-1 truncate text-xs font-medium text-white/60">{v.channel_name}</p>}
                 </div>
               </div>
             </Link>

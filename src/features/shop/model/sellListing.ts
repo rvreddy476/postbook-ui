@@ -79,6 +79,57 @@ export function notPatchableFrom(err: unknown): { message: string; patchable: st
   }
 }
 
+/**
+ * 409 SKU_LOCKED → the message for the SKU control. The server locks a
+ * variant's SKU once the listing is approved (editable while a draft); the
+ * old server dropped the change silently, so this is the first time the
+ * editor can say why the code did not take.
+ */
+export function skuLockedFrom(err: unknown): string | null {
+  const { status, code, message } = apiEnvelope(err)
+  if (status !== 409 || code !== "SKU_LOCKED") return null
+  return message || "The SKU cannot be changed once a listing is approved. Archive this variant and add a new one."
+}
+
+/**
+ * The approval states in which the server still lets a variant's SKU change:
+ * postgres.ProductEditability's "editable, no revalidation" arm. Anything
+ * else (approved, in front of a reviewer, hidden, archived, or a state added
+ * later) answers 409 SKU_LOCKED, so the editor shows the SKU read-only there
+ * rather than letting the seller type a change the save will refuse.
+ */
+const SKU_EDITABLE_STATES = new Set(["draft", "pending", "rejected", "changes_requested", "flagged"])
+
+/** True when an EXISTING variant's SKU is locked; a listing not created yet has nothing to lock. */
+export function skuLockedFor(approvalStatus: unknown): boolean {
+  if (approvalStatus === undefined || approvalStatus === null || approvalStatus === "") return false
+  return !(typeof approvalStatus === "string" && SKU_EDITABLE_STATES.has(approvalStatus))
+}
+
+export const SKU_LOCKED_HELP = "Locked once the listing is approved. To sell under a new SKU, archive this variant and add a new one."
+
+/**
+ * 400 PRICE_ABOVE_MRP → the message for the price controls. A price change
+ * goes live at once (it is not sent back for review), so the server checks
+ * what a reviewer would have: the selling price is never above the MRP.
+ */
+export function priceAboveMrpFrom(err: unknown): string | null {
+  const { status, code, message } = apiEnvelope(err)
+  if (status !== 400 || code !== "PRICE_ABOVE_MRP") return null
+  return message || "The selling price cannot be above the MRP."
+}
+
+/** 400 RETURN_POLICY_INVALID → the refusal and the server's list of return windows. */
+export function returnPolicyInvalidFrom(err: unknown): { message: string; allowed: string[] } | null {
+  const { status, code, message, details } = apiEnvelope(err)
+  if (status !== 400 || code !== "RETURN_POLICY_INVALID") return null
+  const raw = details.allowed
+  return {
+    message: message || "That return window is not one the catalogue offers.",
+    allowed: Array.isArray(raw) ? raw.filter((v): v is string => typeof v === "string") : [],
+  }
+}
+
 /** 422 PRODUCT_INCOMPLETE → the gaps, keyed by code with the label the gate set. */
 export function incompleteFrom(err: unknown): { code: string; label: string; reason: string }[] | null {
   const { status, code, details } = apiEnvelope(err)
@@ -186,10 +237,19 @@ export const emptyBasics: ListingBasics = {
   returnPolicy: "7_days",
 }
 
+/**
+ * The choices are the database's own vocabulary: products.return_policy_type
+ * is CHECK (… IN ('no_return','7_days','15_days','30_days','custom')). This
+ * list carried "14_days", which the CHECK refuses, so choosing it made every
+ * save fail with a constraint error the seller could do nothing about. The
+ * server now names that refusal (400 RETURN_POLICY_INVALID, with `allowed`),
+ * and the seller contract test holds this list inside it. "custom" is not
+ * offered: it needs a days figure the editor does not ask for.
+ */
 export const RETURN_POLICIES = [
   { value: "no_return", label: "No returns" },
   { value: "7_days", label: "7 days" },
-  { value: "14_days", label: "14 days" },
+  { value: "15_days", label: "15 days" },
   { value: "30_days", label: "30 days" },
 ] as const
 

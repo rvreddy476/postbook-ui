@@ -139,7 +139,7 @@ export function soundRefusalMessage(code: string | null | undefined): string {
     case "TOO_LONG":
     case "NOT_A_REEL":
     case "NOT_A_VIDEO":
-      return "Only reels up to 5 minutes can be used as a sound.";
+      return "Only reels up to 10 minutes can be used as a sound.";
     case "NO_AUDIO":
       return "This reel has no sound to use.";
     case "NOT_FOUND":
@@ -167,6 +167,54 @@ export function soundFromUseResponse(data: unknown): ReelSound | null {
 export interface SoundInfo extends ReelSound {
   isOriginal: boolean;
   creatorUserId: string | null;
+  /** Where the sound stands this week (GET /v1/audio/:id): null when it is not trending, absent when the answer did not say. */
+  trending?: SoundTrending | null;
+}
+
+/* ── trending: the sound page's badge ──────────────────────── */
+
+/** `"trending": {"rank": 3, "rising": false} | null` on a sound read. */
+export interface SoundTrending {
+  /** 1 is the top; null when the server sent no usable rank. */
+  rank: number | null;
+  rising: boolean;
+}
+
+/**
+  The `trending` field of a sound read. null for null, a non-object, or an
+  object that says nothing usable (no positive whole rank and not rising);
+  each of those draws no badge.
+*/
+export function toSoundTrending(raw: unknown): SoundTrending | null {
+  const o = record(raw);
+  if (!o) return null;
+  const rank = typeof o.rank === "number" && Number.isInteger(o.rank) && o.rank >= 1 ? o.rank : null;
+  const rising = o.rising === true;
+  if (rank === null && !rising) return null;
+  return { rank, rising };
+}
+
+export type TrendingBadge = { kind: "rank" | "rising"; label: string };
+
+/** The badges a sound page shows, in order: "#3 trending", then "Rising"; none when it is not trending. */
+export function trendingBadges(trending: SoundTrending | null | undefined): TrendingBadge[] {
+  if (!trending) return [];
+  const out: TrendingBadge[] = [];
+  if (trending.rank !== null && trending.rank >= 1) out.push({ kind: "rank", label: `#${trending.rank.toLocaleString("en-US")} trending` });
+  if (trending.rising) out.push({ kind: "rising", label: "Rising" });
+  return out;
+}
+
+/**
+  The sound page's standing: the reels answer's when it says (even "not
+  trending"), otherwise the sound read's; null when neither says.
+*/
+export function soundPageTrending(
+  page: Pick<SoundReelsPage, "trending"> | null | undefined,
+  info: Pick<SoundInfo, "trending"> | null | undefined,
+): SoundTrending | null {
+  if (page && page.trending !== undefined) return page.trending;
+  return info?.trending ?? null;
 }
 
 const USABLE_STATUS = new Set(["", "ready", "active"]);
@@ -183,7 +231,9 @@ export function toSoundInfo(raw: unknown): SoundInfo | null {
   const status = typeof o.status === "string" ? o.status.trim().toLowerCase() : "";
   if (!USABLE_STATUS.has(status)) return null;
   const creator = typeof o.creator_user_id === "string" ? o.creator_user_id.trim() : "";
-  return { ...sound, startMs: 0, isOriginal: o.is_original === true, creatorUserId: creator || null };
+  const info: SoundInfo = { ...sound, startMs: 0, isOriginal: o.is_original === true, creatorUserId: creator || null };
+  if ("trending" in o) info.trending = toSoundTrending(o.trending);
+  return info;
 }
 
 export interface SoundReelsPage {
@@ -193,6 +243,12 @@ export interface SoundReelsPage {
   origin: ReelItem | null;
   items: ReelItem[];
   nextCursor: string | undefined;
+  /**
+    The sound's trending standing when this answer carries one (beside the
+    sound, or on it): null when it says "not trending", absent when it does
+    not say (the page then reads GET /v1/audio/:id for it).
+  */
+  trending?: SoundTrending | null;
 }
 
 /** GET /v1/posts/by-sound/:soundId → the page. The origin is never repeated among the items. */
@@ -202,13 +258,17 @@ export function toSoundReelsPage(data: unknown, meta?: unknown): SoundReelsPage 
   const origin = originRow && typeof originRow.id === "string" && originRow.id ? toReelItem(originRow as unknown as FeedReelPost) : null;
   const rows = Array.isArray(o?.items) ? (o.items as unknown[]).filter((r): r is FeedReelPost => Boolean(record(r)) && typeof (r as { id?: unknown }).id === "string") : [];
   const cursor = record(meta)?.next_cursor;
-  return {
+  const soundRow = record(o?.sound);
+  const page: SoundReelsPage = {
     sound: toReelSound(o?.sound),
     origin,
     items: toReelItems(rows).filter((item) => item.id !== origin?.id),
     // Go zero values: an empty cursor is the end, like an absent one.
     nextCursor: typeof cursor === "string" && cursor ? cursor : undefined,
   };
+  if (o && "trending" in o) page.trending = toSoundTrending(o.trending);
+  else if (soundRow && "trending" in soundRow) page.trending = toSoundTrending(soundRow.trending);
+  return page;
 }
 
 /** Every page's tiles in order, the origin first, nothing twice. */
@@ -228,4 +288,31 @@ export function soundReelTiles(pages: readonly SoundReelsPage[] | null | undefin
     }
   }
   return out;
+}
+
+/**
+  GET /v1/audio/trending and GET /v1/audio/search → `{tracks: [...]}` (a
+  bare array still reads). Only the sounds this viewer may hear are listed
+  by the server; a row that is no sound, or not ready to play, is dropped
+  here, and a sound listed twice is shown once.
+*/
+export function toSoundList(data: unknown): SoundInfo[] {
+  const o = record(data);
+  const rows: unknown[] = Array.isArray(data) ? data : Array.isArray(o?.tracks) ? (o.tracks as unknown[]) : [];
+  const seen = new Set<string>();
+  const out: SoundInfo[] = [];
+  for (const row of rows) {
+    const sound = toSoundInfo(row);
+    if (!sound || seen.has(sound.id)) continue;
+    seen.add(sound.id);
+    out.push(sound);
+  }
+  return out;
+}
+
+/** The raw row count of a sound list, before anything was dropped: what paging counts. */
+export function soundListLength(data: unknown): number {
+  if (Array.isArray(data)) return data.length;
+  const tracks = record(data)?.tracks;
+  return Array.isArray(tracks) ? tracks.length : 0;
 }

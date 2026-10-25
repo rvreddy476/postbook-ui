@@ -25,14 +25,14 @@
 .tube-player__spinner { pointer-events: none; position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; color: rgb(var(--reel-on-stage) / .8); }
 .tube-player__failed { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; background: rgb(var(--reel-stage) / .8); color: rgb(var(--reel-on-stage)); }
 .tube-player__end { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgb(var(--reel-stage) / .75); color: rgb(var(--reel-on-stage)); }
-.tube-player__replay { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 18px; border-radius: 999px; font-size: 13px; font-weight: 600; background: rgb(var(--reel-on-stage)); color: rgb(var(--reel-stage)); }
+.tube-player__replay { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 18px; border-radius: 999px; font-size: var(--type-sm); font-weight: 600; background: rgb(var(--reel-on-stage)); color: rgb(var(--reel-stage)); }
 .tube-player__replay:hover { opacity: .92; }
 
 /* The 16:9 overlay layer (end-screen elements, cards) and the compact Up next card that keeps off them. */
 .tube-player__overlay { position: absolute; z-index: 35; pointer-events: none; }
 .tube-player__end-compact { position: absolute; z-index: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 288px; max-width: 100%; padding: 10px 12px; border-radius: 12px; background: rgb(var(--reel-stage) / .85); color: rgb(var(--reel-on-stage)); pointer-events: auto; }
 .tube-player__end-compact > p, .tube-player__end-compact > .tube-end-compact__bar { flex-basis: 100%; margin: 0; }
-.tube-player__replay.is-compact { height: 36px; padding: 0 12px; gap: 6px; font-size: 12px; }
+.tube-player__replay.is-compact { height: 36px; padding: 0 12px; gap: 6px; font-size: var(--type-xs); }
 
 /* Controls: hover only, one gradient band */
 .tube-player__controls { position: absolute; inset: auto 0 0; z-index: 40; padding: 40px 10px 6px; background: linear-gradient(to top, rgb(var(--reel-stage) / .9), rgb(var(--reel-stage) / .4) 55%, transparent); opacity: 0; pointer-events: none; transition: opacity 180ms ease; }
@@ -41,7 +41,7 @@
 .tube-player__button { display: inline-flex; width: 36px; height: 36px; align-items: center; justify-content: center; border-radius: 8px; color: rgb(var(--reel-on-stage)); transition: background-color 120ms ease; }
 .tube-player__button:hover { background: rgb(var(--reel-on-stage) / .15); }
 .tube-player__button.is-active { color: rgb(var(--brand-accent)); }
-.tube-player__time { margin-left: 6px; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: .02em; color: rgb(var(--reel-on-stage) / .9); white-space: nowrap; }
+.tube-player__time { margin-left: 6px; font-size: var(--type-xs); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: .02em; color: rgb(var(--reel-on-stage) / .9); white-space: nowrap; }
 .tube-player__volume { display: inline-flex; align-items: center; }
 .tube-player__volume input { width: 0; height: 4px; margin: 0; opacity: 0; accent-color: rgb(var(--brand-accent)); cursor: pointer; transition: width 140ms ease, opacity 140ms ease; }
 .tube-player__volume:hover input, .tube-player__volume:focus-within input { width: 72px; opacity: 1; margin-right: 6px; }
@@ -52,9 +52,9 @@
 .tube-seek:hover .tube-seek__track { height: 4px; }
 .tube-seek__buffered, .tube-seek__played { position: absolute; inset: 0 auto 0 0; border-radius: 999px; }
 .tube-seek__buffered { background: rgb(var(--reel-on-stage) / .35); }
-.tube-seek__played { background: rgb(var(--brand-accent)); }
+.tube-seek__played { background: rgb(var(--playhead)); }
 .tube-seek__tick { position: absolute; top: -1px; bottom: -1px; width: 2px; margin-left: -1px; background: rgb(var(--reel-stage) / .9); }
-.tube-seek__knob { position: absolute; top: 50%; width: 12px; height: 12px; transform: translate(-50%, -50%) scale(0); border-radius: 50%; background: rgb(var(--brand-accent)); transition: transform 120ms ease; pointer-events: none; }
+.tube-seek__knob { position: absolute; top: 50%; width: 12px; height: 12px; transform: translate(-50%, -50%) scale(0); border-radius: 50%; background: rgb(var(--playhead)); transition: transform 120ms ease; pointer-events: none; }
 .tube-seek:hover .tube-seek__knob { transform: translate(-50%, -50%) scale(1); }
 .tube-seek__input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 
@@ -62,16 +62,61 @@
 .tube-seek__preview { position: absolute; bottom: calc(100% + 6px); z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 4px; transform: translateX(-50%); pointer-events: none; }
 .tube-seek__thumb { border-radius: 6px; background-repeat: no-repeat; box-shadow: 0 0 0 2px rgb(var(--reel-on-stage) / .9); }
 .tube-seek__label { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 3px 8px; border-radius: 6px; background: rgb(var(--reel-stage) / .85); color: rgb(var(--reel-on-stage)); white-space: nowrap; }
-.tube-seek__chapter { max-width: 220px; overflow: hidden; text-overflow: ellipsis; font-size: 11px; font-weight: 600; }
-.tube-seek__time { font-size: 11px; font-variant-numeric: tabular-nums; }
+.tube-seek__chapter { max-width: 220px; overflow: hidden; text-overflow: ellipsis; font-size: var(--type-xs); font-weight: 600; }
+.tube-seek__time { font-size: var(--type-xs); font-variant-numeric: tabular-nums; }
 
-/* The settings card: the reels choice-pane shell, 280px, hung above the gear. */
-.tube-settings-menu.reel-more-menu[role="menu"] { width: 280px; max-height: min(420px, 70vh); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; text-align: left; }
+/*
+  The settings card, after RUTUBE's (2026-10-19): dark, over the video —
+  its right edge 12px in from the frame's, its foot just above the seek bar —
+  never over the control bar and never past the frame (--tube-frame-h, set by
+  the player). Rows are 36px; each pane has RUTUBE's head: back, the title
+  centred, close.
+*/
+.tube-settings-menu.reel-more-menu[role="menu"] {
+  width: 300px; max-height: min(420px, calc(var(--tube-frame-h, 420px) - 76px), 70vh);
+  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; text-align: left;
+  padding: 6px; border-radius: 14px;
+  background: rgb(var(--reel-stage) / .92); color: rgb(var(--reel-on-stage));
+  backdrop-filter: blur(8px); box-shadow: 0 12px 32px rgb(0 0 0 / .4);
+}
+.tube-settings-menu.reel-more-menu[role="menu"]::-webkit-scrollbar { display: none; }
+@media (min-width: 768px) {
+  /* The gear's wrapper is not positioned, so the card hangs from the control bar. */
+  .tube-player__controls .tube-settings-menu.reel-more-menu[role="menu"] { right: 12px; left: auto; bottom: calc(100% - 32px); margin: 0; }
+}
+.tube-settings-menu .reel-more-menu__row { height: 36px; }
+.tube-settings-menu .reel-more-menu__row:hover { background: rgb(var(--reel-on-stage) / .1); }
+.tube-settings-menu .reel-more-menu__icon { color: rgb(var(--reel-on-stage) / .9); }
+.tube-settings-menu .reel-more-menu__value, .tube-settings-menu .reel-more-menu__note { color: rgb(var(--reel-on-stage) / .65); }
+/* Switches on the dark card: a faint track off, the accent on, a white knob. */
+.tube-settings-menu .reel-more-menu__switch { background: rgb(var(--reel-on-stage) / .28); }
+.tube-settings-menu .reel-more-menu__switch[data-on] { background: rgb(var(--brand-accent)); }
+.tube-settings-menu .reel-more-menu__knob { background: rgb(var(--reel-on-stage)); }
+.tube-settings-menu__head { position: relative; display: flex; height: 36px; align-items: center; justify-content: center; font-size: var(--type-base); font-weight: 700; }
+.tube-settings-menu__icon { position: absolute; display: inline-flex; width: 32px; height: 32px; align-items: center; justify-content: center; border: 0; border-radius: 8px; background: transparent; color: inherit; cursor: pointer; }
+.tube-settings-menu__icon.is-back { left: 2px; }
+.tube-settings-menu__icon.is-close { right: 2px; }
+.tube-settings-menu__icon:hover { background: rgb(var(--reel-on-stage) / .1); }
+.tube-settings-menu__icon svg { width: 18px; height: 18px; }
+/*
+  The Speed pane and the option rows on the dark card (2026-10-19): the
+  reels styles draw them in the page's text colour, which on this card was
+  dark on dark — the chips, −/+ and "Normal" could not be seen.
+*/
+.tube-settings-menu .reel-more-menu__hint { color: rgb(var(--reel-on-stage) / .65); }
+.tube-settings-menu .reel-more-menu__chip { background: rgb(var(--reel-on-stage) / .12); color: rgb(var(--reel-on-stage)); }
+.tube-settings-menu .reel-more-menu__chip:hover { background: rgb(var(--reel-on-stage) / .2); }
+.tube-settings-menu .reel-more-menu__chip[aria-checked="true"] { background: rgb(var(--reel-on-stage)); color: rgb(var(--reel-stage)); }
+.tube-settings-menu .reel-speed-panel__slider > button { background: rgb(var(--reel-on-stage) / .12); color: rgb(var(--reel-on-stage)); }
+.tube-settings-menu .reel-speed-panel__slider input[type="range"] { accent-color: rgb(var(--reel-on-stage)); }
+.tube-settings-menu .reel-speed-panel__normal { color: rgb(var(--reel-on-stage) / .65); }
+.tube-settings-menu .tube-keys__row dd { color: rgb(var(--reel-on-stage) / .7); }
+.tube-settings-menu .tube-keys kbd { background: rgb(var(--reel-on-stage) / .12); color: rgb(var(--reel-on-stage)); }
 .tube-keys { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 4px 8px 8px; }
-.tube-keys__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 28px; font-size: 12px; }
+.tube-keys__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 28px; font-size: var(--type-xs); }
 .tube-keys__row dt { display: flex; gap: 4px; margin: 0; }
 .tube-keys__row dd { margin: 0; color: rgb(var(--brand-text) / .7); }
-.tube-keys kbd { display: inline-flex; min-width: 22px; height: 20px; align-items: center; justify-content: center; padding: 0 5px; border-radius: 5px; font-family: inherit; font-size: 11px; font-weight: 600; background: rgb(var(--brand-text) / .08); color: rgb(var(--brand-text)); }
+.tube-keys kbd { display: inline-flex; min-width: 22px; height: 20px; align-items: center; justify-content: center; padding: 0 5px; border-radius: 5px; font-family: inherit; font-size: var(--type-xs); font-weight: 600; background: rgb(var(--brand-text) / .08); color: rgb(var(--brand-text)); }
 
 @media (pointer: coarse) {
   .tube-player__controls { opacity: 1; pointer-events: auto; }

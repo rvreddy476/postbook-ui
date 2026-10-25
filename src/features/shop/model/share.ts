@@ -16,7 +16,11 @@ export function productPath(productId: string): string {
   return `${SHOP_BASE}/products/${encodeURIComponent(productId)}`
 }
 
-/** The absolute link that is shared. Never the current URL: no query, no hash, no tracking. */
+/**
+ * The absolute link that is shared. Never the current URL: no hash, no
+ * variant, nothing personal. The ShareButton adds the share ref
+ * (`?ref=<random id>&utm_source=share`, features/share/shareRef) on top.
+ */
 export function productShareUrl(origin: string, productId: string): string {
   return `${origin.replace(/\/+$/, "")}${productPath(productId)}`
 }

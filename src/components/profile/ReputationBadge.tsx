@@ -24,8 +24,8 @@ export function ReputationBadge({ reputation, size = "md" }: ReputationBadgeProp
     const tier = getReputationTier(reputation)
 
     const sizeConfig = {
-        sm: { outer: "h-8 px-2 gap-1.5", icon: "w-3 h-3", score: "text-xs", label: "text-[9px]" },
-        md: { outer: "h-10 px-3 gap-2", icon: "w-4 h-4", score: "text-sm", label: "text-[10px]" },
+        sm: { outer: "h-8 px-2 gap-1.5", icon: "w-3 h-3", score: "text-xs", label: "text-xs" },
+        md: { outer: "h-10 px-3 gap-2", icon: "w-4 h-4", score: "text-sm", label: "text-xs" },
         lg: { outer: "h-12 px-4 gap-2.5", icon: "w-5 h-5", score: "text-base", label: "text-xs" },
     }
 

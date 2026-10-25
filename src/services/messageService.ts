@@ -2,6 +2,19 @@ import { ensureAccessToken } from '@/lib/accessToken';
 import { CommentChangeGate, PostRoomSubscriptions, groupTypingSignal, type CommentChange } from '@/lib/postThreadLive';
 import { User } from '@/types';
 import { LiveRoomSubscriptions, parseLiveFrame, type LiveFrame } from '@/features/live/realtime';
+import {
+  decodeDisappearingTimerFrame,
+  decodeMessageDeletedFrame,
+  decodeMessageExtras,
+  decodePinUpdateFrame,
+  decodePresenceFrame,
+  type MessageExtras,
+} from '@/lib/chat/contract';
+import { decodeRequestRemovedFrame } from '@/lib/chat/requestsLane';
+import { decodeDeliveryReceiptFrame, decodeReadReceiptFrame, parseTickStatus, type TickStatus } from '@/lib/chat/tickState';
+import { createDeliveredAckBatcher } from '@/lib/chat/deliveredAck';
+import { hiddenChatTokens } from '@/lib/chat/hiddenChats/tokenStore';
+import { conversationIdOfPath, openHeaderFor, OPEN_HEADER } from '@/lib/chat/hiddenChats/requests';
 
 export interface Message {
   id: string;
@@ -9,9 +22,16 @@ export interface Message {
   conversation_id: string;
   bucket: string;
   ts: string;
-  type: 'text' | 'media' | 'image' | 'video' | 'audio' | 'file' | 'system';
+  /** text, media, post, and (chat parity) voice, sticker, gif, profile, sound, live, call, system. */
+  type: 'text' | 'media' | 'image' | 'video' | 'audio' | 'file' | 'system' | 'post' | 'voice' | 'sticker' | 'gif' | 'profile' | 'sound' | 'live' | 'call' | (string & {});
   text?: string;
   media_id?: string;
+  /**
+   * A shared post ("Send in Messages", type "post"). The server stores only
+   * the id; the thread hydrates it through POST /v1/posts/batch as the
+   * viewer, so a post the reader may not see renders as not available.
+   */
+  post_id?: string;
   feeling?: string;
   reactions?: { emoji: string; user_ids: string[] }[];
   reply_to_id?: string;
@@ -28,6 +48,12 @@ export interface Message {
   edited_at?: string;
   is_deleted?: boolean;
   created_at: string;
+  /** RFC 3339; set when the message will disappear (the chat's timer was on when it was sent). */
+  expires_at?: string;
+  /** Chat-parity fields (CONTRACT §2.2), decoded tolerantly; absent fields are neutral. */
+  extras?: MessageExtras;
+  /** Message ticks: on MY messages in history, "sent" | "delivered" | "read". */
+  status?: TickStatus;
 }
 
 export interface ReactionUpdate {
@@ -46,9 +72,25 @@ export interface TypingEvent {
 
 export interface ReadReceiptEvent {
   conversation_id: string;
+  /** The reader; "" on a group aggregate frame. */
   user_id: string;
   message_id: string;
   read_at: string;
+  /** Message ticks: the aggregate read watermark (ms), null when absent. */
+  read_up_to?: number | null;
+  /** A group frame: "every other member read up to read_up_to", no reader named. */
+  aggregate?: boolean;
+}
+
+/** Message ticks: a recipient's device received messages (never privacy-gated). */
+export interface DeliveryReceiptEvent {
+  conversation_id: string;
+  user_id: string;
+  message_id: string;
+  /** ms, null when absent. */
+  delivered_at: number | null;
+  /** The aggregate watermark for me (every other member received up to it), ms. */
+  delivered_up_to: number | null;
 }
 
 export interface MessageEditedEvent {
@@ -61,14 +103,43 @@ export interface MessageEditedEvent {
 export interface MessageDeletedEvent {
   conversation_id: string;
   msg_id: string;
+  /** Why, when the frame says ("expired": a disappearing message the server removed). */
+  reason?: string;
 }
 
+/** A `pin_update` frame (decodePinUpdateFrame): someone pinned or unpinned in a chat. */
 export interface PinUpdateEvent {
   conversation_id: string;
   message_id: string | null;
   pinned_by: string | null;
   action: 'pin' | 'unpin';
+  /** The pin's own id — unpin frames name the pin by it. */
+  pin_id: string | null;
+  at: string | null;
 }
+
+/** A `disappearing_timer_updated` frame: the conversation-wide timer changed. */
+export interface DisappearingTimerEvent {
+  conversation_id: string;
+  /** ms; null when turned off. */
+  disappear_after_ms: number | null;
+  updated_by: string | null;
+  updated_at: string | null;
+}
+
+/** The event a raw `pin_update` frame becomes; null when it is not one. */
+export const pinUpdateEventFromFrame = (frame: unknown): PinUpdateEvent | null => {
+  const f = decodePinUpdateFrame(frame);
+  if (!f) return null;
+  return { conversation_id: f.conversationId, message_id: f.messageId, pinned_by: f.by, action: f.action, pin_id: f.pinId, at: f.at };
+};
+
+/** The event a raw `disappearing_timer_updated` frame becomes; null when it is not one. */
+export const disappearingTimerEventFromFrame = (frame: unknown): DisappearingTimerEvent | null => {
+  const f = decodeDisappearingTimerFrame(frame);
+  if (!f) return null;
+  return { conversation_id: f.conversationId, disappear_after_ms: f.disappearAfterMs, updated_by: f.updatedBy, updated_at: f.updatedAt };
+};
 
 // Backend returns msg_id, normalize to id for frontend use.
 const normalizeMessage = (raw: Record<string, any>): Message => ({
@@ -80,6 +151,7 @@ const normalizeMessage = (raw: Record<string, any>): Message => ({
   type: raw.type || raw.message_type || 'text',
   text: raw.text as string | undefined,
   media_id: raw.media_id as string | undefined,
+  post_id: (raw.post_id as string | undefined) || undefined,
   feeling: raw.feeling as string | undefined,
   reactions: raw.reactions as { emoji: string; user_ids: string[] }[] | undefined,
   reply_to_id: raw.reply_to_id as string | undefined,
@@ -90,7 +162,13 @@ const normalizeMessage = (raw: Record<string, any>): Message => ({
   edited_at: raw.edited_at as string | undefined,
   is_deleted: raw.is_deleted as boolean | undefined,
   created_at: raw.created_at as string,
+  expires_at: typeof raw.expires_at === 'string' && raw.expires_at ? raw.expires_at : undefined,
+  extras: decodeMessageExtras(raw),
+  status: parseTickStatus(raw.status) ?? undefined,
 });
+
+/** Exported for the parity API (paged reads) and tests. */
+export const normalizeChatMessage = normalizeMessage;
 
 const wsUrlForPath = (path: string) => {
   const explicitBase = process.env.NEXT_PUBLIC_WS_BASE_URL;
@@ -128,6 +206,12 @@ const callSignalListeners = new Set<(signal: CallSignal) => void>();
 const feedUpdateListeners = new Set<(f: FeedUpdate) => void>();
 const typingListeners = new Set<(e: TypingEvent) => void>();
 const readReceiptListeners = new Set<(e: ReadReceiptEvent) => void>();
+const deliveryReceiptListeners = new Set<(e: DeliveryReceiptEvent) => void>();
+// Message ticks: received messages are acknowledged per conversation, at most
+// once a second, coalesced to the newest (lib/chat/deliveredAck).
+const deliveredAcks = createDeliveredAckBatcher({
+  send: (conversationId, ack) => markConversationDelivered(conversationId, ack),
+});
 const messageEditedListeners = new Set<(e: MessageEditedEvent) => void>();
 const messageDeletedListeners = new Set<(e: MessageDeletedEvent) => void>();
 const postUpdateListeners = new Set<(u: PostInteractionUpdate) => void>();
@@ -141,7 +225,9 @@ const commentUpdateListeners = new Set<(u: ChannelCommentUpdate) => void>();
 const groupCommentUpdateListeners = new Set<(u: GroupCommentUpdate) => void>();
 const groupTypingListeners = new Set<(e: GroupTypingEvent) => void>();
 const pinUpdateListeners = new Set<(e: PinUpdateEvent) => void>();
-const presenceListeners = new Set<(e: { user_id: string; online: boolean }) => void>();
+const disappearingTimerListeners = new Set<(e: DisappearingTimerEvent) => void>();
+const requestRemovedListeners = new Set<(e: { conversationId: string; reason: string | null }) => void>();
+const presenceListeners = new Set<(e: PresenceUpdateEvent) => void>();
 const liveEventListeners = new Set<(event: LiveFrame) => void>();
 // Live rooms are desired state like post rooms: re-sent on every open so the
 // gateway re-asks live-service-v2 after a reconnect (features/live/realtime).
@@ -302,6 +388,38 @@ const getErrorMessage = (payload: unknown, fallback: string) => {
   return fallback;
 };
 
+/** The server's error code ({error: {code}}), or "" when the body has none. */
+const getErrorCode = (payload: unknown): string => {
+  if (!payload || typeof payload !== 'object') return '';
+  const error = (payload as Record<string, unknown>).error;
+  if (error && typeof error === 'object') {
+    const code = (error as Record<string, unknown>).code;
+    if (typeof code === 'string') return code;
+  }
+  return '';
+};
+
+/**
+ * What a failed chat call throws. Still an Error carrying the server's
+ * message (every existing caller reads `.message`), plus the HTTP status and
+ * the server's code so a caller can tell, say, a refused request
+ * (422 INVALID_REQUEST_MESSAGE) from a network failure without matching text.
+ * `body` is the parsed error body, so a refusal's `reason` (DM consent
+ * contract §4) can be read wherever the server put it.
+ */
+export class ChatApiError extends Error {
+  readonly status: number;
+  readonly code: string;
+  readonly body?: unknown;
+  constructor(message: string, status: number, code: string, body?: unknown) {
+    super(message);
+    this.name = 'ChatApiError';
+    this.status = status;
+    this.code = code;
+    this.body = body;
+  }
+}
+
 const parseResponsePayload = async (res: Response): Promise<unknown> => {
   if (res.status === 204 || res.status === 205) return {};
 
@@ -326,34 +444,69 @@ const parseResponsePayload = async (res: Response): Promise<unknown> => {
  */
 const chatClient = {
   async request<TResponse = any>(path: string, options: RequestInit = {}, background = false) {
-    const user = getSessionUser();
     const accessToken = await getAccessToken();
     const headers = new Headers(options.headers);
-    if (user) {
-      headers.set('X-User-Id', user.id);
-    }
-    if (accessToken) {
+    // The access token is the whole identity: the proxy forwards it to
+    // chat-message-service, which verifies it itself. No X-User-Id — the
+    // proxy would not forward one, and nothing here should name a user.
+    // A caller's own bearer wins: the hidden-chats reset presents the
+    // step-up token for that one call (services/hiddenChatsApi.ts).
+    if (accessToken && !headers.has('Authorization')) {
       headers.set('Authorization', `Bearer ${accessToken}`);
     }
     if (options.body !== undefined && !headers.has('Content-Type')) {
       headers.set('Content-Type', 'application/json');
     }
+    // A hidden chat's calls carry the open token (memory only), and no other call does.
+    const openHeader = headers.has(OPEN_HEADER)
+      ? null
+      : openHeaderFor(path, hiddenChatTokens.isLocked, hiddenChatTokens.open());
+    if (openHeader) headers.set(OPEN_HEADER, openHeader[OPEN_HEADER]);
 
     const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
     const payload = await parseResponsePayload(res);
     if (!res.ok) {
       const message = getErrorMessage(payload, `Chat API request failed (${res.status})`);
-      if (!background && (res.status === 401 || /invalid token/i.test(message))) {
+      const code = getErrorCode(payload);
+      // 401 WRONG_PASSWORD is about a hidden-chats secret, not the session.
+      if (!background && code !== 'WRONG_PASSWORD' && (res.status === 401 || /invalid token/i.test(message))) {
         closeChatSocket(message);
       }
-      throw new Error(message);
+      if (code === 'CHAT_LOCKED') {
+        // The conversation is hidden and its open token is missing or spent.
+        const lockedId = conversationIdOfPath(path);
+        if (lockedId) hiddenChatTokens.markLocked([lockedId]);
+        hiddenChatTokens.drop('server', 'open');
+      }
+      throw new ChatApiError(message, res.status, code, payload);
     }
+    if (openHeader) hiddenChatTokens.slide('open');
     return payload as TResponse;
   }
 };
 
 /**
- * Connect to the WS Gateway via Proxy Token
+ * The chat client for the parity routes (services/chatParityApi.ts): the same
+ * proxy, token and error shape as every call in this file.
+ */
+export const chatRequest = <TResponse = any>(path: string, options: RequestInit = {}, background = false) =>
+  chatClient.request<TResponse>(path, options, background);
+
+/**
+ * Connect to the WS Gateway with the user's own access token.
+ *
+ * The proxy used to mint a 24-hour HS256 chat token here from a secret it
+ * shared with the chat services; the web server holds no such secret any
+ * more (security sweep 2026-10-21 #3). The socket presents the same RS256
+ * access token every REST call carries. The browser WebSocket API has no
+ * Authorization header and the gateway refuses query-string tokens in
+ * production, so the token rides in the `bearer.<token>` subprotocol the
+ * gateway reads (ws-gateway readSubprotocolBearerToken); "bearer" is listed
+ * first so the server can select it and the browser accepts the upgrade.
+ *
+ * Access tokens are short-lived: when one expires the gateway closes the
+ * socket, the retry below asks for the current token again and
+ * ensureAccessToken refreshes it when needed.
  */
 export const connectToHub = async (onMsg: (m: Message) => void) => {
   if (!canUseBrowserApis() || typeof WebSocket === 'undefined') return;
@@ -366,32 +519,15 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
   }
 
   try {
-    // Fetch a signed chat token from the proxy
-    const headers = new Headers({ 'X-User-Id': user.id });
     const accessToken = await getAccessToken();
-    if (accessToken) {
-      headers.set('Authorization', `Bearer ${accessToken}`);
+    if (!accessToken) {
+      closeChatSocket('No access token for the chat socket');
+      return;
     }
-    const tokenRes = await fetch(`${API_BASE}/token`, { headers });
-    const tokenPayload = await parseResponsePayload(tokenRes);
-    if (!tokenRes.ok) {
-      const message = getErrorMessage(tokenPayload, 'Could not acquire chat token');
-      if (tokenRes.status === 401 || /invalid token/i.test(message)) {
-        closeChatSocket(message);
-      }
-      throw new Error(message);
-    }
-    const token =
-      tokenPayload &&
-      typeof tokenPayload === 'object' &&
-      typeof (tokenPayload as { token?: unknown }).token === 'string'
-        ? (tokenPayload as { token: string }).token
-        : null;
-    if (!token) throw new Error("Could not acquire chat token");
 
     if (socket) socket.close();
 
-    socket = new WebSocket(`${wsUrlForPath(WS_PATH)}?access_token=${encodeURIComponent(token)}`);
+    socket = new WebSocket(wsUrlForPath(WS_PATH), ['bearer', `bearer.${accessToken}`]);
 
     socket.onmessage = (e) => {
       const data = JSON.parse(e.data);
@@ -405,15 +541,23 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
           type: data.payload.type || data.payload.message_type || 'text',
           text: data.payload.text,
           media_id: data.payload.media_id,
+          post_id: data.payload.post_id || undefined,
           reply_to_id: data.payload.reply_to_id,
           reply_to_preview: data.payload.reply_to_preview,
           reply_to_sender_id: data.payload.reply_to_sender_id,
           forwarded_from_id: data.payload.forwarded_from_id,
-          created_at: data.payload.created_at
+          created_at: data.payload.created_at,
+          extras: decodeMessageExtras(data.payload),
         };
         onMsg(msg);
         localListeners.forEach(cb => cb(msg));
-        getChannel()?.postMessage(msg);
+        // A hidden chat's message stays in this tab: other tabs would count
+        // it in their badge and persist its id in their unread state.
+        if (!hiddenChatTokens.isLocked(msg.conversation_id)) getChannel()?.postMessage(msg);
+        // Message ticks: this device has it — tell the sender (any chat, open or not).
+        if (msg.id && msg.conversation_id && msg.sender_id && msg.sender_id !== getSessionUser()?.id) {
+          ackDelivered(msg.conversation_id, msg.id, msg.ts);
+        }
       } else if (data.type?.startsWith('call_') || data.type === 'ice_candidate') {
         const signal: CallSignal = data as CallSignal;
         callSignalListeners.forEach(cb => cb(signal));
@@ -437,13 +581,32 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
         };
         typingListeners.forEach(cb => cb(evt));
       } else if (data.type === 'read_receipt') {
-        const evt: ReadReceiptEvent = {
-          conversation_id: data.payload.conversation_id,
-          user_id: data.payload.user_id,
-          message_id: data.payload.message_id,
-          read_at: data.payload.read_at,
-        };
-        readReceiptListeners.forEach(cb => cb(evt));
+        // Direct {user_id, message_id, read_at, read_up_to}; group aggregate {aggregate, read_up_to}.
+        const decoded = decodeReadReceiptFrame(data);
+        if (decoded) {
+          const evt: ReadReceiptEvent = {
+            conversation_id: decoded.conversationId,
+            user_id: decoded.userId ?? '',
+            message_id: decoded.messageId ?? '',
+            read_at: typeof data.payload?.read_at === 'string' ? data.payload.read_at : '',
+            read_up_to: decoded.readUpTo,
+            aggregate: decoded.aggregate,
+          };
+          readReceiptListeners.forEach(cb => cb(evt));
+        }
+      } else if (data.type === 'delivery_receipt') {
+        // {conversation_id, user_id, message_id, delivered_at, delivered_up_to}.
+        const decoded = decodeDeliveryReceiptFrame(data);
+        if (decoded) {
+          const evt: DeliveryReceiptEvent = {
+            conversation_id: decoded.conversationId,
+            user_id: decoded.userId,
+            message_id: decoded.messageId,
+            delivered_at: decoded.deliveredAt,
+            delivered_up_to: decoded.deliveredUpTo,
+          };
+          deliveryReceiptListeners.forEach(cb => cb(evt));
+        }
       } else if (data.type === 'message_edited') {
         const evt: MessageEditedEvent = {
           conversation_id: data.payload.conversation_id,
@@ -453,11 +616,12 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
         };
         messageEditedListeners.forEach(cb => cb(evt));
       } else if (data.type === 'message_deleted') {
-        const evt: MessageDeletedEvent = {
-          conversation_id: data.payload.conversation_id,
-          msg_id: data.payload.msg_id,
-        };
-        messageDeletedListeners.forEach(cb => cb(evt));
+        // Contract frame {conversation_id, message_id}; legacy msg_id.
+        const decoded = decodeMessageDeletedFrame(data);
+        if (decoded) {
+          const evt: MessageDeletedEvent = { conversation_id: decoded.conversationId, msg_id: decoded.messageId, reason: decoded.reason };
+          messageDeletedListeners.forEach(cb => cb(evt));
+        }
       } else if (data.type === 'comment_change') {
         if (commentChangeGate.accept(data.payload)) {
           commentChangeListeners.forEach(cb => cb(data.payload));
@@ -475,16 +639,24 @@ export const connectToHub = async (onMsg: (m: Message) => void) => {
         const evt = groupTypingSignal(data);
         if (evt) groupTypingListeners.forEach(cb => cb(evt));
       } else if (data.type === 'pin_update') {
-        const evt: PinUpdateEvent = {
-          conversation_id: data.payload.conversation_id,
-          message_id: data.payload.message_id || null,
-          pinned_by: data.payload.pinned_by || null,
-          action: data.payload.action || (data.payload.message_id ? 'pin' : 'unpin'),
-        };
-        pinUpdateListeners.forEach(cb => cb(evt));
+        // {conversation_id, action: "pinned"|"unpinned", pin_id, message_id, by, at}
+        const evt = pinUpdateEventFromFrame(data);
+        if (evt) pinUpdateListeners.forEach(cb => cb(evt));
+      } else if (data.type === 'disappearing_timer_updated') {
+        // {conversation_id, disappear_after_ms, updated_by, updated_at} to every member.
+        const evt = disappearingTimerEventFromFrame(data);
+        if (evt) disappearingTimerListeners.forEach(cb => cb(evt));
+      } else if (data.type === 'message_request_removed') {
+        // {conversation_id, reason?} to the recipient: the request expired and leaves Requests.
+        const evt = decodeRequestRemovedFrame(data);
+        if (evt) requestRemovedListeners.forEach(cb => cb(evt));
       } else if (data.type === 'presence_update') {
-        const evt = { user_id: data.user_id as string, online: data.online as boolean };
-        presenceListeners.forEach(cb => cb(evt));
+        // Contract {user_id, is_online, last_active_at} (top level or payload); legacy {user_id, online}.
+        const decoded = decodePresenceFrame(data);
+        if (decoded) {
+          const evt = { user_id: decoded.userId, online: decoded.isOnline === true, last_active_at: decoded.lastActiveAt };
+          presenceListeners.forEach(cb => cb(evt));
+        }
       } else {
         const liveEvent = parseLiveFrame(data);
         if (liveEvent) {
@@ -585,6 +757,8 @@ export interface SendMessageOptions {
   reply_to_sender_id?: string;
   forwarded_from_id?: string;
   feeling?: string;
+  /** Replying to someone's Note (CONTRACT §2.1). */
+  reply_note_id?: string;
 }
 
 export const sendMessage = async (conversationId: string, text: string, feeling?: string, opts?: Partial<SendMessageOptions>) => {
@@ -600,6 +774,26 @@ export const sendMessage = async (conversationId: string, text: string, feeling?
     body: JSON.stringify(body)
   });
   return { ...json, data: normalizeMessage(json.data) };
+};
+
+/** The exact body of a post message: {type:"post", post_id, text?}. No caption → no text field. */
+export function postMessageBody(postId: string, caption?: string): { type: 'post'; post_id: string; text?: string } {
+  const text = caption?.trim();
+  return text ? { type: 'post', post_id: postId, text } : { type: 'post', post_id: postId };
+}
+
+/**
+ * Share a post into a conversation (message-service type "post"). Same gates
+ * as text on the server; a post can never be the first message of a message
+ * request (422 INVALID_REQUEST_MESSAGE), and waits for acceptance after it
+ * (409 AWAITING_REQUEST_ACCEPTANCE). Both arrive as a ChatApiError.
+ */
+export const sendPostMessage = async (conversationId: string, postId: string, caption?: string) => {
+  const json = await chatClient.request(`/conversations/${encodeURIComponent(conversationId)}/messages`, {
+    method: 'POST',
+    body: JSON.stringify(postMessageBody(postId, caption)),
+  });
+  return { ...json, data: json?.data ? normalizeMessage(json.data) : undefined };
 };
 
 export const toggleReaction = async (
@@ -630,6 +824,30 @@ export const markConversationRead = async (conversationId: string, messageId: st
     method: 'POST',
     body: JSON.stringify({ message_id: messageId })
   });
+};
+
+/**
+ * Message ticks: this device received messages in the conversation up to
+ * `messageId` / `ts` (the newest one's server timestamp). Background and
+ * best effort — a failed or rate-limited ack only leaves the sender's tick
+ * at one, it never interrupts the reader.
+ */
+export const markConversationDelivered = async (conversationId: string, ack: { messageId: string; ts?: string }) => {
+  const body: Record<string, string> = { up_to_message_id: ack.messageId };
+  if (ack.ts) body.ts = ack.ts;
+  try {
+    await chatClient.request(`/conversations/${encodeURIComponent(conversationId)}/delivered`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }, true);
+  } catch {
+    /* best effort */
+  }
+};
+
+/** Queue a delivered ack (batched: at most once a second per conversation). */
+export const ackDelivered = (conversationId: string, messageId: string, ts: string) => {
+  deliveredAcks.enqueue(conversationId, { messageId, ts });
 };
 
 export const sendTypingIndicator = async (conversationId: string) => {
@@ -720,6 +938,40 @@ export interface Conversation {
   last_message?: Message | null;
   created_at: string;
   updated_at: string;
+  /** How I came into this group; only when my history starts at that join (see readMyJoin). */
+  my_join?: { joined_at?: string; method?: string; added_by_user_id?: string } | null;
+}
+
+/** The three ways into a group that earn the "you joined" note. */
+export type MyJoinMethod = 'invite_link' | 'added' | 'invitation';
+
+export interface MyJoin {
+  joinedAt: string;
+  method: MyJoinMethod;
+  /** Who added me / whose invitation I accepted; null when unknown (or a link). */
+  addedByUserId: string | null;
+}
+
+const MY_JOIN_METHODS: readonly string[] = ['invite_link', 'added', 'invitation'];
+
+/**
+ * Reads `my_join` off GET /conversations/:id (wrapped in `data` or bare).
+ * A group newcomer sees only what was sent after they joined (22 Oct 2026);
+ * the server sends my_join only then — never for the creator or a member with
+ * full history. Anything else (absent, empty strings, "created", an unknown
+ * method, a joined_at that is not a date) reads as null: no note.
+ */
+export function readMyJoin(body: unknown): MyJoin | null {
+  const o = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
+  const c = o.data && typeof o.data === 'object' ? (o.data as Record<string, unknown>) : o;
+  const raw = c.my_join;
+  if (!raw || typeof raw !== 'object') return null;
+  const j = raw as Record<string, unknown>;
+  const method = typeof j.method === 'string' ? j.method : '';
+  const joinedAt = typeof j.joined_at === 'string' ? j.joined_at : '';
+  if (!MY_JOIN_METHODS.includes(method) || !joinedAt || Number.isNaN(Date.parse(joinedAt))) return null;
+  const by = typeof j.added_by_user_id === 'string' && j.added_by_user_id ? j.added_by_user_id : null;
+  return { joinedAt, method: method as MyJoinMethod, addedByUserId: method === 'invite_link' ? null : by };
 }
 
 /** Lists conversations sitting in the Requests folder (is_request = true). */
@@ -774,6 +1026,11 @@ export const subscribeToReadReceipts = (cb: (e: ReadReceiptEvent) => void) => {
   return () => { readReceiptListeners.delete(cb); };
 };
 
+export const subscribeToDeliveryReceipts = (cb: (e: DeliveryReceiptEvent) => void) => {
+  deliveryReceiptListeners.add(cb);
+  return () => { deliveryReceiptListeners.delete(cb); };
+};
+
 export const subscribeToMessageEdits = (cb: (e: MessageEditedEvent) => void) => {
   messageEditedListeners.add(cb);
   return () => { messageEditedListeners.delete(cb); };
@@ -787,6 +1044,17 @@ export const subscribeToMessageDeletes = (cb: (e: MessageDeletedEvent) => void) 
 export const subscribeToPinUpdates = (cb: (e: PinUpdateEvent) => void) => {
   pinUpdateListeners.add(cb);
   return () => { pinUpdateListeners.delete(cb); };
+};
+
+/** `message_request_removed`: an incoming request left my Requests (it expired). */
+export const subscribeToRequestRemoved = (cb: (e: { conversationId: string; reason: string | null }) => void) => {
+  requestRemovedListeners.add(cb);
+  return () => { requestRemovedListeners.delete(cb); };
+};
+
+export const subscribeToDisappearingTimer = (cb: (e: DisappearingTimerEvent) => void) => {
+  disappearingTimerListeners.add(cb);
+  return () => { disappearingTimerListeners.delete(cb); };
 };
 
 export const sendSignaling = (data: object) => {
@@ -823,7 +1091,9 @@ export const subscribeToHubConnected = (cb: () => void) => {
 };
 export const refreshPostRooms = () => postRooms.refresh();
 
-export const subscribeToPresenceUpdates = (cb: (e: { user_id: string; online: boolean }) => void) => {
+export interface PresenceUpdateEvent { user_id: string; online: boolean; last_active_at?: string | null }
+
+export const subscribeToPresenceUpdates = (cb: (e: PresenceUpdateEvent) => void) => {
   presenceListeners.add(cb);
   return () => { presenceListeners.delete(cb); };
 };
@@ -832,7 +1102,22 @@ export const subscribeToPresenceUpdates = (cb: (e: { user_id: string; online: bo
 // Pin Message API
 // ---------------------------------------------------------------------------
 
+/*
+  message-service (internal/http/handler.go "Pins", messenger_extras_handler.go):
+    POST   /conversations/:id/pins          {message_id}  -> 201 the pin row
+    DELETE /conversations/:id/pins/:pinId                 -> 200
+    GET    /conversations/:id/pins                        -> pin rows, newest first
+  A pin row is {id, conversation_id, message_id, pinned_by, pinned_at}; it has
+  no message body, so the bar finds the text among the loaded messages.
+  Unpin takes the PIN id, not the message id. At most 3 pins per chat.
+*/
+
+/** The server's cap on pins in one conversation (store PinMessage). */
+export const MAX_PINS_PER_CONVERSATION = 3;
+
 export interface PinnedMessage {
+  /** The pin's own id — what unpin needs. */
+  id: string;
   conversation_id: string;
   message_id: string;
   pinned_by: string;
@@ -840,30 +1125,54 @@ export interface PinnedMessage {
   message?: Message;
 }
 
-export const pinMessage = async (conversationId: string, messageId: string) => {
-  return chatClient.request(`/conversations/${conversationId}/pin/${messageId}`, {
-    method: 'POST',
-  });
+const pinsPath = (conversationId: string) => `/conversations/${encodeURIComponent(conversationId)}/pins`;
+
+/** One pin row off the wire; null when it has no pin id or message id. */
+export const decodePin = (raw: unknown, conversationId: string): PinnedMessage | null => {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  const id = typeof r.id === 'string' ? r.id : '';
+  const messageId = typeof r.message_id === 'string' ? r.message_id : '';
+  if (!id || !messageId) return null;
+  return {
+    id,
+    conversation_id: typeof r.conversation_id === 'string' && r.conversation_id ? r.conversation_id : conversationId,
+    message_id: messageId,
+    pinned_by: typeof r.pinned_by === 'string' ? r.pinned_by : '',
+    pinned_at: typeof r.pinned_at === 'string' ? r.pinned_at : '',
+    message: r.message && typeof r.message === 'object' ? normalizeMessage(r.message as Record<string, unknown>) : undefined,
+  };
 };
 
-export const unpinMessage = async (conversationId: string) => {
-  return chatClient.request(`/conversations/${conversationId}/pin`, {
+/** Pin a message; returns the new pin (its id is what unpin takes). */
+export const pinMessage = async (conversationId: string, messageId: string): Promise<PinnedMessage | null> => {
+  const json = await chatClient.request(pinsPath(conversationId), {
+    method: 'POST',
+    body: JSON.stringify({ message_id: messageId }),
+  });
+  return decodePin(json?.data ?? json, conversationId);
+};
+
+/** Unpin by the PIN id (from listPinnedMessages or pinMessage). */
+export const unpinMessage = async (conversationId: string, pinId: string) => {
+  return chatClient.request(`${pinsPath(conversationId)}/${encodeURIComponent(pinId)}`, {
     method: 'DELETE',
   });
 };
 
+/** Every pin in the conversation, newest first (the server's order). */
+export const listPinnedMessages = async (conversationId: string): Promise<PinnedMessage[]> => {
+  const json = await chatClient.request(pinsPath(conversationId));
+  // An empty list comes back as `data: null` (a nil Go slice).
+  const rows: unknown = json?.data ?? json;
+  if (!Array.isArray(rows)) return [];
+  return rows.map((row) => decodePin(row, conversationId)).filter((p): p is PinnedMessage => p !== null);
+};
+
+/** The newest pin, or null when there is none or the list could not be read. */
 export const getPinnedMessage = async (conversationId: string): Promise<PinnedMessage | null> => {
   try {
-    const json = await chatClient.request(`/conversations/${conversationId}/pin`);
-    const raw = json.data || json;
-    if (!raw || !raw.message_id) return null;
-    return {
-      conversation_id: raw.conversation_id || conversationId,
-      message_id: raw.message_id || raw.msg_id,
-      pinned_by: raw.pinned_by,
-      pinned_at: raw.pinned_at,
-      message: raw.message ? normalizeMessage(raw.message) : undefined,
-    };
+    return (await listPinnedMessages(conversationId))[0] ?? null;
   } catch {
     return null;
   }

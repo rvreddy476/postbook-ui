@@ -1,0 +1,9 @@
+{
+  "error": {
+    "code": "INVALID_TIER",
+    "message": "tier_required_id must be one of your active membership tiers"
+  },
+  "meta": {
+    "request_id": "req-12"
+  }
+}

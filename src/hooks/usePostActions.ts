@@ -8,6 +8,7 @@ import {
     snapshotQueries,
     type QuerySnapshot,
 } from "@/components/feed/removePostFromPages"
+import { editedFields, mergePostEdit, type PostEditBody } from "@/components/feed/postEdit"
 
 /** Every list that can show a post and must forget it when it goes. */
 const POST_LIST_KEYS = [["home-feed"], ["profile-posts"]] as const
@@ -96,6 +97,31 @@ export function useDeletePost() {
     })
 }
 
+/**
+ * useEditPost – PATCH /v1/posts/:id with only the changed fields
+ * (components/feed/postEdit.ts builds the body). The saved fields are merged
+ * into every list holding the post, so the feed does not reshuffle; the
+ * post page refetches.
+ */
+export function useEditPost() {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: async ({ postId, body }: { postId: string; body: PostEditBody }) => {
+            const res = await api.patch<{ data?: Record<string, unknown> }>(`/v1/posts/${postId}`, body)
+            return { postId, body, saved: res.data?.data ?? null }
+        },
+        onSuccess: ({ postId, body, saved }) => {
+            const fields = editedFields(body, saved)
+            for (const prefix of POST_LIST_KEYS) {
+                qc.setQueriesData({ queryKey: prefix }, (old: unknown) => mergePostEdit(old, postId, fields))
+            }
+            qc.setQueryData(["post-detail", postId], (old: unknown) =>
+                old && typeof old === "object" ? { ...(old as Record<string, unknown>), ...fields } : old)
+            qc.invalidateQueries({ queryKey: ["post-detail", postId] })
+        },
+    })
+}
+
 export function useTogglePin() {
     const qc = useQueryClient()
     return useMutation({
@@ -128,6 +154,29 @@ export function useToggleBookmark() {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["home-feed"] })
             qc.invalidateQueries({ queryKey: ["profile-posts"] })
+        },
+    })
+}
+
+/**
+ * useSetBookmark – save (POST) or unsave (DELETE) by the state the viewer
+ * wants. useToggleBookmark always POSTs, which since the route became an
+ * idempotent set (post-service handler.go: "PUT-like semantics on POST")
+ * never unsaves. Saved items and collections refresh too.
+ */
+export function useSetBookmark() {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationFn: async ({ postId, saved }: { postId: string; saved: boolean }) => {
+            if (saved) await api.post(`/v1/posts/${postId}/bookmark`)
+            else await api.delete(`/v1/posts/${postId}/bookmark`)
+            return { postId, saved }
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ["home-feed"] })
+            qc.invalidateQueries({ queryKey: ["profile-posts"] })
+            qc.invalidateQueries({ queryKey: ["saved-items"] })
+            qc.invalidateQueries({ queryKey: ["saved-collections"] })
         },
     })
 }

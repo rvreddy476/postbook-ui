@@ -47,7 +47,7 @@ export function BusinessPageCard({ page }: BusinessPageCardProps) {
                     <p className="text-xs text-muted-foreground truncate">{page.category}</p>
                 )}
                 {page.address && (
-                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground/60 mt-0.5">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
                         <MapPin className="w-2.5 h-2.5" />
                         <span className="truncate">{page.address}</span>
                     </div>
@@ -57,12 +57,12 @@ export function BusinessPageCard({ page }: BusinessPageCardProps) {
             {/* Rating */}
             <div className="flex flex-col items-end shrink-0 gap-0.5">
                 <div className="flex items-center gap-1">
-                    <Star className="w-3.5 h-3.5 fill-[#D4A574] text-primary-ink" />
+                    <Star className="w-3.5 h-3.5 fill-warning text-warning" />
                     <span className="text-sm font-bold text-foreground">
                         {page.avg_rating.toFixed(1)}
                     </span>
                 </div>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                     {page.review_count} {page.review_count === 1 ? "review" : "reviews"}
                 </span>
             </div>

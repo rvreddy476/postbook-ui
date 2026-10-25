@@ -75,6 +75,10 @@ const PUBLIC_EXACT = new Set([
     // they have an account, which is the only time it matters.
     "/terms",
     "/privacy",
+    // Search works signed out: search-service and the
+    // sound search answer anonymous callers; the page hides recents, which
+    // need an account. Exact on purpose — nothing under /search/ is opened.
+    "/search",
 ])
 
 const PUBLIC_PREFIXES = [
@@ -90,6 +94,10 @@ const PUBLIC_PREFIXES = [
     "/channel/",
     // Content permalinks people paste into other apps.
     "/post/",
+    // An Action button's redirect (/l/<id>, the "You're leaving VChat"
+    // page): a public post's button must open for a visitor with no
+    // session. GET /v1/links/:id is a public route.
+    "/l/",
     "/posttube/watch",
     // A public channel and its RSS feed
     // (/posttube/channel/<handle>/feed.xml): podcast apps and feed readers
@@ -98,6 +106,16 @@ const PUBLIC_PREFIXES = [
     // ever changes, and lets a signed-out visitor open the channel the feed
     // links back to. The page draws only what the API gives a stranger.
     "/posttube/channel/",
+    // A sound's page (/reels/sound/<id>) is a link people share; it already
+    // renders with no session (a stranger gets what post-service gives the
+    // public, "Use this sound" asks them to sign in first). The reels stage
+    // its tiles open stays gated.
+    "/reels/sound/",
+    // A tag's page (21 Oct 2026): it sits in PublicPageChrome now (the app
+    // shell signed in, the minimal header signed out), so a shared
+    // /hashtag/<tag> opens with no session. Audit T-34 kept it gated only
+    // because AppShell sent a stranger to /login.
+    "/hashtag/",
     // The /tube alias only redirects to /posttube/* (app/tube/[[...path]]);
     // it must be reachable signed out so a push's /tube/watch/{id} reaches
     // the public watch page. The destination is gated on its own path.
@@ -127,8 +145,17 @@ const UNGATED_PREFIXES = ["/v1/", "/api/", "/_next/", "/static/"]
 const normalise = (pathname: string) =>
     pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname
 
+/**
+ * The single-reel permalink, /reels/<uuid> and nothing else under /reels:
+ * it only decides where to send the visitor (the stage when signed in, the
+ * public /post/<id> when not — app/reels/[id]). The stage itself, and
+ * /reels/create, /reels/liked, /reels/live, /reels/search, stay gated.
+ */
+const REEL_PERMALINK_RE = /^\/reels\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i
+
 const isPublicPath = (pathname: string) => {
     if (PUBLIC_EXACT.has(pathname)) return true
+    if (REEL_PERMALINK_RE.test(pathname)) return true
     // Prefixes are written with their trailing slash so "/u/" cannot also
     // match a future "/users". Test the un-normalised path too, so a bare
     // "/u" does not slip past on the normalised one.

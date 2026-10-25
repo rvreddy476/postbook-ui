@@ -22,7 +22,7 @@ import type { LiveStream } from "@/hooks/useLiveV2";
         (kind absent → "all"). Only kind long|all reaches a Tube screen.
     GET /v1/feed/videos?category=<slug>&sort=recent|popular&limit&cursor
     GET /v1/feed/videos?chip=fresh|seen|new_to_you&limit&cursor     (topic strip)
-    GET /v1/search/posts?type=videos&q&sort=relevance|views|date&duration=short|medium|long&date=hour|today|week|month|year&limit
+    GET /v1/search/posts?type=videos&q&sort=relevance|views|date&duration=short|medium|long&date=hour|today|week|month|year&genre=<slug>&year=<yyyy>&limit
     GET /v1/search/channels?q&limit   rows {id, owner_id, name, handle, avatar_media_id, follower_count}
     GET /v1/search/collections?q&limit rows {id, owner_id, title, item_count, cover_media_id}
     Live now: hooks/useLiveV2 (GET /v1/livestream/streams), shared with the live screens.
@@ -247,6 +247,27 @@ export interface SearchFilters {
   length: SearchLength;
   when: SearchWhen;
   sort: SearchSort;
+  /** A genre slug (video credits); absent = any genre. */
+  genre?: string;
+  /** A release year, four digits; absent = any year. */
+  year?: string;
+}
+
+const GENRE_SLUG_RE = /^[a-z0-9][a-z0-9-]{0,31}$/;
+export const SEARCH_YEAR_MIN = 1900;
+
+/** A genre slug from the URL, or undefined. */
+export function searchGenre(raw: string | null | undefined): string | undefined {
+  const v = (raw ?? "").trim().toLowerCase();
+  return GENRE_SLUG_RE.test(v) ? v : undefined;
+}
+
+/** A release year from the URL (1900 to next year), or undefined. */
+export function searchYear(raw: string | null | undefined, now = new Date()): string | undefined {
+  const v = (raw ?? "").trim();
+  if (!/^\d{4}$/.test(v)) return undefined;
+  const y = Number(v);
+  return y >= SEARCH_YEAR_MIN && y <= now.getFullYear() + 1 ? v : undefined;
 }
 
 export const DEFAULT_SEARCH_FILTERS: SearchFilters = { q: "", tab: "videos", length: "any", when: "any", sort: "relevance" };
@@ -281,14 +302,18 @@ function oneOf<T extends string>(raw: string | null | undefined, allowed: readon
   return (allowed.some((a) => a.value === v) ? v : fallback) as T;
 }
 
-/** The page's URL (`?q=&tab=&len=&when=&sort=`) → filters; unknown values fall back. */
+/** The page's URL (`?q=&tab=&len=&when=&sort=&genre=&year=`) → filters; unknown values fall back. */
 export function parseSearchFilters(get: (key: string) => string | null): SearchFilters {
+  const genre = searchGenre(get("genre"));
+  const year = searchYear(get("year"));
   return {
     q: (get("q") ?? "").trim(),
     tab: oneOf(get("tab"), SEARCH_TABS, DEFAULT_SEARCH_FILTERS.tab),
     length: oneOf(get("len"), SEARCH_LENGTHS, DEFAULT_SEARCH_FILTERS.length),
     when: oneOf(get("when"), SEARCH_WHENS, DEFAULT_SEARCH_FILTERS.when),
     sort: oneOf(get("sort"), SEARCH_SORTS, DEFAULT_SEARCH_FILTERS.sort),
+    ...(genre ? { genre } : {}),
+    ...(year ? { year } : {}),
   };
 }
 
@@ -300,6 +325,8 @@ export function searchHref(filters: SearchFilters): string {
   if (filters.length !== "any") p.set("len", filters.length);
   if (filters.when !== "any") p.set("when", filters.when);
   if (filters.sort !== DEFAULT_SEARCH_FILTERS.sort) p.set("sort", filters.sort);
+  if (filters.genre) p.set("genre", filters.genre);
+  if (filters.year) p.set("year", filters.year);
   const qs = p.toString();
   return qs ? `/posttube/search?${qs}` : "/posttube/search";
 }
@@ -309,6 +336,9 @@ export function buildVideoSearchParams(filters: SearchFilters, limit = 30): Reco
   const params: Record<string, string> = { type: "videos", q: filters.q, sort: filters.sort, limit: String(limit) };
   if (filters.length !== "any") params.duration = filters.length;
   if (filters.when !== "any") params.date = filters.when;
+  // Video credits: genre and release year pass straight through (search-service `genre=`, `year=`).
+  if (filters.genre) params.genre = filters.genre;
+  if (filters.year) params.year = filters.year;
   return params;
 }
 

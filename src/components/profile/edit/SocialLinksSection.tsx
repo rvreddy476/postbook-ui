@@ -47,15 +47,15 @@ export function SocialLinksSection() {
         <div className="space-y-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <label className="text-[11px] font-black text-brand-text tracking-[0.2em]">Social Links</label>
-                    <p className="text-[10px] font-bold text-brand-text/60 tracking-wider mt-0.5">Links to your other websites</p>
+                    <label className="text-xs font-black text-brand-text tracking-[0.2em]">Social Links</label>
+                    <p className="text-xs font-bold text-brand-text/60 tracking-wider mt-0.5">Links to your other websites</p>
                 </div>
                 <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowAddForm(true)}
                     disabled={showAddForm}
-                    className="h-10 px-4 rounded-xl border border-brand-divider bg-brand-card hover:bg-brand-secondary text-[10px] font-black tracking-widest text-brand-text shadow-xs"
+                    className="h-10 px-4 rounded-xl border border-brand-divider bg-brand-card hover:bg-brand-secondary text-xs font-black tracking-widest text-brand-text shadow-xs"
                 >
                     <Plus className="w-3.5 h-3.5 mr-2" />
                     Add New Link
@@ -96,10 +96,10 @@ export function SocialLinksSection() {
                                 className={inputBase}
                             />
                             <div className="flex gap-2 justify-end pt-2">
-                                <Button variant="ghost" className="h-10 px-6 rounded-xl text-brand-highlight font-bold tracking-widest text-[10px]" onClick={() => setShowAddForm(false)}>
+                                <Button variant="ghost" className="h-10 px-6 rounded-xl text-brand-highlight font-bold tracking-widest text-xs" onClick={() => setShowAddForm(false)}>
                                     Cancel
                                 </Button>
-                                <Button size="sm" onClick={handleCreate} disabled={createLink.isPending} className="h-10 px-8 rounded-xl bg-brand-text text-brand-card font-black tracking-widest text-[10px] shadow-lg shadow-brand-text/10">
+                                <Button size="sm" onClick={handleCreate} disabled={createLink.isPending} className="h-10 px-8 rounded-xl bg-brand-text text-brand-card font-black tracking-widest text-xs shadow-lg shadow-brand-text/10">
                                     {createLink.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
                                 </Button>
                             </div>
@@ -110,7 +110,7 @@ export function SocialLinksSection() {
                 {(!links || links.length === 0) && !showAddForm && (
                     <div className="p-20 text-center bg-brand-secondary/50 border border-brand-divider border-dashed rounded-[2.5rem]">
                         <LinkIcon className="w-10 h-10 text-brand-secondary mx-auto mb-4" />
-                        <p className="text-[10px] font-black text-brand-text/60 tracking-widest">No links added to your profile yet.</p>
+                        <p className="text-xs font-black text-brand-text/60 tracking-widest">No links added to your profile yet.</p>
                     </div>
                 )}
 
@@ -160,8 +160,8 @@ function LinkRow({
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className={inputBase} />
                 <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." className={inputBase} />
                 <div className="flex gap-2 justify-end pt-2">
-                    <Button variant="ghost" className="h-10 px-6 rounded-xl text-brand-text/60 font-bold tracking-widest text-[10px]" onClick={() => setEditing(false)}>Cancel</Button>
-                    <Button size="sm" className="h-10 px-8 rounded-xl bg-brand-text text-brand-card font-black tracking-widest text-[10px]" onClick={handleSave}>
+                    <Button variant="ghost" className="h-10 px-6 rounded-xl text-brand-text/60 font-bold tracking-widest text-xs" onClick={() => setEditing(false)}>Cancel</Button>
+                    <Button size="sm" className="h-10 px-8 rounded-xl bg-brand-text text-brand-card font-black tracking-widest text-xs" onClick={handleSave}>
                         Update
                     </Button>
                 </div>
@@ -175,7 +175,7 @@ function LinkRow({
             className="flex items-center gap-6 p-5 rounded-3xl bg-brand-card border border-brand-divider group hover:shadow-2xl transition-all duration-500"
         >
             <div className="w-12 h-12 bg-brand-secondary rounded-xl flex items-center justify-center border border-brand-divider shrink-0">
-                <span className="text-[10px] font-black text-brand-text/60 tracking-tighter">
+                <span className="text-xs font-black text-brand-text/60 tracking-tighter">
                     {link.icon?.slice(0, 3) || "HUB"}
                 </span>
             </div>
@@ -186,12 +186,12 @@ function LinkRow({
                     {link.is_pinned && <Pin className="w-3.5 h-3.5 text-blue-500 fill-blue-500" />}
                 </div>
                 <div className="flex items-center gap-3 mt-1.5 font-bold tracking-wider">
-                    <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-brand-text/60 hover:text-brand-text truncate flex items-center gap-1.5 transition-colors">
+                    <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-text/60 hover:text-brand-text truncate flex items-center gap-1.5 transition-colors">
                         <ExternalLink className="w-3 h-3" />
                         {link.url}
                     </a>
                     {link.click_count > 0 && (
-                        <span className="text-[9px] text-brand-text/30 ml-auto">{link.click_count} Clicks</span>
+                        <span className="text-xs text-brand-text/30 ml-auto">{link.click_count} Clicks</span>
                     )}
                 </div>
             </div>

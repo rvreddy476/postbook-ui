@@ -23,9 +23,10 @@ import {
   moveGalleryItem,
   patchGalleryItem,
   removeGalleryItem,
+  revalidationFrom,
   type GalleryItem,
 } from "../../model/sellListing"
-import { Notice } from "./primitives"
+import { Notice, RevalidationPanel, type RevalidationPrompt } from "./primitives"
 
 export function ListingImages({ productId }: { productId: string }) {
   const qc = useQueryClient()
@@ -33,7 +34,37 @@ export function ListingImages({ productId }: { productId: string }) {
   const [items, setItems] = useState<GalleryItem[]>([])
   const [seeded, setSeeded] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
+  // On an approved listing every gallery write is 409 REVALIDATION_REQUIRED
+  // until acknowledged: the write is retried with `revalidate` only when the
+  // seller says yes here, exactly as the editor does for the title.
+  const [revalidation, setRevalidation] = useState<RevalidationPrompt | null>(null)
   const input = useRef<HTMLInputElement | null>(null)
+
+  async function acked(write: (revalidate: boolean) => Promise<void>, fallback: string): Promise<void> {
+    setRevalidation(null)
+    try {
+      await write(false)
+    } catch (err) {
+      const needsReview = revalidationFrom(err)
+      if (needsReview) {
+        setRevalidation({
+          fields: needsReview.fields,
+          confirm: () => {
+            setRevalidation(null)
+            write(true).catch((again) => setNotice(apiMessage(again, fallback)))
+          },
+          cancel: () => {
+            setRevalidation(null)
+            // The screen went ahead of the server; put the gallery back to
+            // what the server holds once the refetch lands.
+            void qc.refetchQueries({ queryKey: sellKeys.gallery(productId) }).then(() => setSeeded(false))
+          },
+        })
+        return
+      }
+      setNotice(apiMessage(err, fallback))
+    }
+  }
   const itemsRef = useRef(items)
   itemsRef.current = items
 
@@ -52,13 +83,11 @@ export function ListingImages({ productId }: { productId: string }) {
 
   async function persist(next: GalleryItem[]) {
     const ids = galleryMediaIds(next)
-    try {
-      await setGallery(productId, ids)
+    await acked(async (revalidate) => {
+      await setGallery(productId, ids, revalidate)
       void qc.invalidateQueries({ queryKey: sellKeys.product(productId) })
       void qc.invalidateQueries({ queryKey: sellKeys.products })
-    } catch (err) {
-      setNotice(apiMessage(err, "The gallery could not be saved."))
-    }
+    }, "The gallery could not be saved.")
   }
 
   async function upload(item: GalleryItem) {
@@ -94,24 +123,21 @@ export function ListingImages({ productId }: { productId: string }) {
     setItems(next)
     const ids = galleryMediaIds(next)
     if (ids.length < 2) return
-    try {
-      await reorderGallery(productId, ids)
+    await acked(async (revalidate) => {
+      await reorderGallery(productId, ids, revalidate)
       void qc.invalidateQueries({ queryKey: sellKeys.products })
-    } catch (err) {
-      setNotice(apiMessage(err, "The order could not be saved."))
-    }
+    }, "The order could not be saved.")
   }
 
   async function remove(item: GalleryItem) {
     setItems((prev) => removeGalleryItem(prev, item.key))
     if (item.previewUrl?.startsWith("blob:")) URL.revokeObjectURL(item.previewUrl)
     if (item.status === "ready" && item.mediaId) {
-      try {
-        await deleteGalleryImage(productId, item.mediaId)
+      const mediaId = item.mediaId
+      await acked(async (revalidate) => {
+        await deleteGalleryImage(productId, mediaId, revalidate)
         void qc.invalidateQueries({ queryKey: sellKeys.products })
-      } catch (err) {
-        setNotice(apiMessage(err, "The image could not be removed."))
-      }
+      }, "The image could not be removed.")
     }
   }
 
@@ -137,6 +163,7 @@ export function ListingImages({ productId }: { productId: string }) {
           {items.length} of {MAX_GALLERY_IMAGES}. The first is the cover.
         </span>
       </div>
+      {revalidation ? <RevalidationPanel prompt={revalidation} /> : null}
       {notice ? <Notice tone="warning">{notice}</Notice> : null}
       {items.length === 0 ? (
         <p className="shop-sell-muted">No images yet. A listing without one renders as a blank tile and cannot be submitted.</p>

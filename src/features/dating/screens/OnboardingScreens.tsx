@@ -139,7 +139,7 @@ export function IntentScreen() {
 /* ── basics ──────────────────────────────────────────────────────── */
 
 function birthDateLine(profile: Profile | null): string {
-  if (!profile?.birthDate) return "Not on your Momentum account yet"
+  if (!profile?.birthDate) return "Not on your VChat account yet"
   return new Date(profile.birthDate).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })
 }
 
@@ -184,7 +184,7 @@ function BasicsForm() {
         <Field id="pulse-first-name" label="First name">
           <input id="pulse-first-name" className="pulse-input" type="text" autoComplete="given-name" maxLength={40} value={firstName} onChange={(e) => setFirstName(e.target.value)} />
         </Field>
-        <Field id="pulse-birth-date" label="Birth date" help="From your Momentum account. Pulse is for adults only (18+), so it can't be typed here.">
+        <Field id="pulse-birth-date" label="Birth date" help="From your VChat account. Pulse is for adults only (18+), so it can't be typed here.">
           <input id="pulse-birth-date" className="pulse-input" type="text" value={birthDateLine(profile)} readOnly aria-readonly="true" />
         </Field>
         <Choices name="gender" legend="I am" options={GENDER_OPTIONS} value={gender} onChange={setGender} />

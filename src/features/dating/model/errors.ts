@@ -15,7 +15,7 @@ export const NETWORK_COPY = "Check your connection and try again."
 export const CLOSED_TITLE = "Pulse isn't available for your account yet"
 export const CLOSED_BODY = "We're opening Pulse to a small group first. When it's ready for you, it will appear here."
 export const AGE_REQUIRED_COPY =
-  "Pulse is for adults only. It needs a confirmed birth date on your Momentum account showing you're 18 or older."
+  "Pulse is for adults only. It needs a confirmed birth date on your VChat account showing you're 18 or older."
 export const PASSES_UNAVAILABLE_COPY = "Passes aren't available yet"
 
 const PREMIUM_UNAVAILABLE_CODES: ReadonlySet<string> = new Set(["PREMIUM_UNAVAILABLE", "PREMIUM_PAYMENTS_UNAVAILABLE"])

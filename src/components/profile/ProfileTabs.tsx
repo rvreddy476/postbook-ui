@@ -12,130 +12,120 @@ import {
     Users,
     Briefcase,
     HelpCircle,
-    ShoppingBag,
-    CalendarCheck,
+    Heart,
+    Clapperboard,
+    Lock,
+    Repeat2,
 } from "lucide-react"
 
+/**
+ * The tabs a profile can show. Orders and Bookings are gone (they were
+ * "Coming soon" placeholders; orders live in the shop); Reposts is new.
+ */
+export type ProfileTabKey = ProfileTab | "reposts"
+
 interface ProfileTabsProps {
-    activeTab: ProfileTab
-    onTabChange: (tab: ProfileTab) => void
+    activeTab: ProfileTabKey
+    onTabChange: (tab: ProfileTabKey) => void
     isOwn: boolean
-    hasVideos: boolean
-    hasFlicks: boolean
+    /** @deprecated Videos and Reels tabs always show; kept for callers. */
+    hasVideos?: boolean
+    /** @deprecated Videos and Reels tabs always show; kept for callers. */
+    hasFlicks?: boolean
     hasMedia: boolean
+    /** Videos that credit this person (accepted); the "Appears in" tab shows only then. */
+    hasAppearances?: boolean
+    /** The person offers a membership level; the "Members" tab shows only then. */
+    hasMembers?: boolean
     isSticky?: boolean
 }
 
 type TabDef = {
-    key: ProfileTab
+    key: ProfileTabKey
     label: string
     icon: typeof Images
-    /** Tailwind classes for the active icon background + text colour. */
-    activeColor: string
-    /** Tailwind class for the inactive icon tint. */
-    inactiveColor: string
     selfOnly?: boolean
     requiresContent?: boolean
 }
 
 const tabDefinitions: TabDef[] = [
-    {
-        key: "posts",
-        label: "Media",
-        icon: Images,
-        activeColor: "bg-violet-100 text-violet-600",
-        inactiveColor: "text-violet-400",
-    },
-    {
-        key: "about",
-        label: "About",
-        icon: User,
-        activeColor: "bg-cyan-100 text-cyan-600",
-        inactiveColor: "text-cyan-400",
-    },
-    {
-        key: "connections",
-        label: "Connections",
-        icon: Users,
-        activeColor: "bg-pink-100 text-pink-600",
-        inactiveColor: "text-pink-400",
-    },
-    {
-        key: "qa",
-        label: "Q&A",
-        icon: HelpCircle,
-        activeColor: "bg-amber-100 text-amber-600",
-        inactiveColor: "text-amber-400",
-    },
-    {
-        key: "videos",
-        label: "Videos",
-        icon: Video,
-        activeColor: "bg-red-100 text-red-600",
-        inactiveColor: "text-red-400",
-        requiresContent: true,
-    },
-    {
-        key: "flicks",
-        label: "Reels",
-        icon: Film,
-        activeColor: "bg-orange-100 text-orange-600",
-        inactiveColor: "text-orange-400",
-        requiresContent: true,
-    },
-    {
-        key: "orders",
-        label: "Orders",
-        icon: ShoppingBag,
-        activeColor: "bg-emerald-100 text-emerald-600",
-        inactiveColor: "text-emerald-400",
-        selfOnly: true,
-    },
-    {
-        key: "bookings",
-        label: "Bookings",
-        icon: CalendarCheck,
-        activeColor: "bg-blue-100 text-blue-600",
-        inactiveColor: "text-blue-400",
-        selfOnly: true,
-    },
-    {
-        key: "stashed",
-        label: "Stash",
-        icon: Bookmark,
-        activeColor: "bg-rose-100 text-rose-600",
-        inactiveColor: "text-rose-400",
-        selfOnly: true,
-    },
-    {
-        key: "portfolio",
-        label: "Portfolio",
-        icon: Briefcase,
-        activeColor: "bg-indigo-100 text-indigo-600",
-        inactiveColor: "text-indigo-400",
-    },
+    { key: "posts", label: "Media", icon: Images },
+    { key: "about", label: "About", icon: User },
+    // Followers / Following (and Blocked on your own); no Connections list: Connect is gone (24 Oct 2026).
+    { key: "connections", label: "People", icon: Users },
+    { key: "qa", label: "Q&A", icon: HelpCircle },
+    { key: "videos", label: "Videos", icon: Video, requiresContent: true },
+    { key: "flicks", label: "Reels", icon: Film, requiresContent: true },
+    // Members-only posts, shorts and videos (paid memberships); locked for non-members.
+    { key: "members", label: "Members", icon: Lock, requiresContent: true },
+    // Others' long videos that credit this person, once accepted (video credits).
+    { key: "appears", label: "Appears in", icon: Clapperboard, requiresContent: true },
+    // Posts this person reposted (post-service GET /v1/creators/:id/reposts).
+    { key: "reposts", label: "Reposts", icon: Repeat2 },
+    { key: "stashed", label: "Saved", icon: Bookmark, selfOnly: true },
+    // The viewer's liked reels; post-service serves likes to their owner only.
+    { key: "liked", label: "Liked", icon: Heart, selfOnly: true },
+    { key: "portfolio", label: "Portfolio", icon: Briefcase },
 ]
+
+// Q&A is parked until after launch: the tab (and ProfileQASection) stay in
+// the code, hidden from every profile until this flips.
+const QA_TAB_ENABLED = false
+
+/*
+  Reposts read GET /v1/creators/:creatorId/reposts (REPOSTS_PATH in
+  tabs/reposts.ts), which post-service serves with the viewer's rules since
+  febe0e20b. The old /v1/users/:userId/reposts never reached post-service
+  through the gateway. Keep this switch to hide the tab again if needed.
+*/
+export const REPOSTS_TAB_ENABLED = true
+
+/**
+ * The tabs a viewer sees. Videos and Reels are always there (an empty grid
+ * says so, with a sort control once there is content) rather than appearing
+ * only when the content count is non-zero; Saved and Liked belong to the
+ * owner only.
+ */
+export function visibleProfileTabKeys({
+    isOwn,
+    hasMedia = false,
+    hasAppearances = false,
+    hasMembers = false,
+    repostsEnabled = REPOSTS_TAB_ENABLED,
+}: {
+    isOwn: boolean
+    hasMedia?: boolean
+    hasAppearances?: boolean
+    hasMembers?: boolean
+    repostsEnabled?: boolean
+}): ProfileTabKey[] {
+    return tabDefinitions
+        .filter((tab) => {
+            if (tab.selfOnly && !isOwn) return false
+            if (tab.key === "media" && !hasMedia) return false
+            if (tab.key === "appears" && !hasAppearances) return false
+            if (tab.key === "members" && !hasMembers) return false
+            if (tab.key === "qa" && !QA_TAB_ENABLED) return false
+            if (tab.key === "reposts" && !repostsEnabled) return false
+            return true
+        })
+        .map((tab) => tab.key)
+}
 
 export function ProfileTabs({
     activeTab,
     onTabChange,
     isOwn,
-    hasVideos,
-    hasFlicks,
     hasMedia,
-    isSticky = false,
+    hasAppearances = false,
+    hasMembers = false,
 }: ProfileTabsProps) {
     const scrollRef = useRef<HTMLDivElement>(null)
     const [canScrollLeft, setCanScrollLeft] = useState(false)
     const [canScrollRight, setCanScrollRight] = useState(false)
 
-    const visibleTabs = tabDefinitions.filter((tab) => {
-        if (tab.selfOnly && !isOwn) return false
-        if (tab.key === "videos" && !hasVideos) return false
-        if (tab.key === "flicks" && !hasFlicks) return false
-        if (tab.key === "media" && !hasMedia) return false
-        return true
-    })
+    const visibleKeys = new Set(visibleProfileTabKeys({ isOwn, hasMedia, hasAppearances, hasMembers }))
+    const visibleTabs = tabDefinitions.filter((tab) => visibleKeys.has(tab.key))
 
     useEffect(() => {
         const el = scrollRef.current
@@ -146,12 +136,18 @@ export function ProfileTabs({
         }
         check()
         el.addEventListener("scroll", check, { passive: true })
-        return () => el.removeEventListener("scroll", check)
+        window.addEventListener("resize", check)
+        return () => {
+            el.removeEventListener("scroll", check)
+            window.removeEventListener("resize", check)
+        }
     }, [visibleTabs.length])
 
+    // The row scrolls sideways inside its own box on a narrow screen;
+    // min-w-0 keeps it from widening the page instead.
     return (
-        <div className={`py-1 border-b border-brand-divider/60 ${isSticky ? "" : ""}`}>
-            <div className="relative">
+        <div className="min-w-0 py-1 border-b border-brand-divider/60">
+            <div className="relative min-w-0">
                 {canScrollLeft && (
                     <div className="absolute left-0 top-0 bottom-0 w-8 bg-linear-to-r from-brand-card to-transparent z-10 pointer-events-none" />
                 )}
@@ -161,7 +157,9 @@ export function ProfileTabs({
 
                 <div
                     ref={scrollRef}
-                    className="flex overflow-x-auto scrollbar-hide gap-1"
+                    role="tablist"
+                    aria-label="Profile sections"
+                    className="flex min-w-0 max-w-full overflow-x-auto overscroll-x-contain scrollbar-hide gap-1"
                 >
                     {visibleTabs.map((tab) => {
                         const isActive = activeTab === tab.key
@@ -169,18 +167,24 @@ export function ProfileTabs({
                         return (
                             <button
                                 key={tab.key}
+                                type="button"
+                                role="tab"
+                                aria-selected={isActive}
+                                data-tab={tab.key}
                                 onClick={() => onTabChange(tab.key)}
-                                className={`relative flex items-center gap-2 px-4 py-3 text-[11px] font-bold tracking-[0.14em] whitespace-nowrap transition-all duration-200 group ${
+                                className={`relative flex items-center gap-2 px-4 py-3 text-xs font-bold tracking-[0.14em] whitespace-nowrap transition-all duration-200 group ${
                                     isActive
                                         ? "text-brand-text"
-                                        : "text-zinc-400 hover:text-zinc-700"
+                                        : "text-muted-foreground hover:text-brand-text"
                                 }`}
                             >
+                                {/* One accent for every tab, from the theme: the
+                                    active icon sits on the brand tint. */}
                                 <span
                                     className={`flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-300 ${
                                         isActive
-                                            ? `${tab.activeColor} shadow-xs scale-110`
-                                            : `bg-transparent ${tab.inactiveColor} group-hover:bg-zinc-100`
+                                            ? "bg-primary-tint text-primary-ink shadow-xs scale-110"
+                                            : "bg-transparent text-muted-foreground group-hover:bg-brand-secondary"
                                     }`}
                                 >
                                     <Icon className="w-4 h-4" strokeWidth={2.25} />

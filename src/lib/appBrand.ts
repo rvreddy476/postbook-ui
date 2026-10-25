@@ -10,12 +10,12 @@ import {
   ShoppingBag,
   Sparkles,
   Tv,
-  UserRoundPlus,
   Users,
   Home, Compass, SquarePlus, Bookmark, History, ListVideo,
   Bell, BookOpen, Flame, Bike, UtensilsCrossed,
   type LucideIcon,
 } from "lucide-react";
+import { PARKED_NAV_IDS, parkedAppKeys } from "@/lib/parkedProducts";
 
 /*
   One product, many apps. The header names the app the viewer is inside —
@@ -71,7 +71,6 @@ export const APP_BRANDS: readonly AppBrand[] = [
   { key: "tube", name: "PostTube", href: "/posttube", icon: Tv, searchPlaceholder: "Search videos and channels...", searchHref: "/posttube/search", prefixes: ["/posttube", "/tube"] },
   { key: "groups", name: "Groups", href: "/groups", icon: Users, searchPlaceholder: "Search groups...", prefixes: ["/groups"] },
   { key: "communities", name: "Communities", href: "/communities", icon: Globe2, searchPlaceholder: "Search communities...", prefixes: ["/communities"] },
-  { key: "connections", name: "Connections", href: "/connections", icon: UserRoundPlus, searchPlaceholder: "Search people...", prefixes: ["/connections"] },
   { key: "messenger", name: "Messenger", href: "/messenger", icon: MessageSquare, searchPlaceholder: "Search conversations...", prefixes: ["/messages", "/messenger", "/chat"] },
   { key: "live", name: "Live", href: "/live", icon: Radio, searchPlaceholder: "Search live streams...", prefixes: ["/live"] },
   { key: "ask", name: "Ask", href: "/qa", icon: HelpCircle, searchPlaceholder: "Search questions...", prefixes: ["/qa"] },
@@ -98,10 +97,22 @@ export function resolveAppBrand(pathname: string | null | undefined): AppBrand {
 }
 
 export interface AppNavigationItem { label: string; href: string; icon: LucideIcon }
-/** Only routes implemented by the web app. Messenger is available in every app. */
-export function resolveAppNavigation(pathname: string | null | undefined): AppNavigationItem[] | null {
+/**
+ * Only routes implemented by the web app. Messenger is available in every app.
+ *
+ * A parked product (lib/parkedProducts.ts) has no rail of its own: its pages
+ * are still served, but the viewer gets the ordinary rail there, so nothing
+ * names it or offers "Create group" / "Ask a question" until it launches.
+ */
+export function resolveAppNavigation(
+  pathname: string | null | undefined,
+  parked: ReadonlySet<string> = PARKED_NAV_IDS,
+  /** App keys to treat as closed instead (hooks/useProductFeatures: parked plus what GET /v1/features closes). */
+  hiddenKeys: ReadonlySet<string> = parkedAppKeys(parked),
+): AppNavigationItem[] | null {
   const brand = resolveAppBrand(pathname);
   if (brand.key === 'home') return null;
+  if (hiddenKeys.has(brand.key)) return null;
   const items: AppNavigationItem[] = [{ label: brand.name, href: brand.href, icon: brand.icon }];
   if (brand.key === 'reels') items.push(
     { label: 'Explore', href: '/search', icon: Compass },
@@ -133,6 +144,10 @@ export function resolveAppNavigation(pathname: string | null | undefined): AppNa
   A `soon` tile has no page behind it. The launcher renders it disabled with
   a chip rather than linking to a 404, and the test guards that every LIVE
   tile does link somewhere.
+
+  ALL_APP_LAUNCHER is the whole registry; APP_LAUNCHER is what the launcher
+  offers: every tile whose product is not parked (lib/parkedProducts.ts).
+  Unparking a product brings its tile back in its old place.
 */
 export interface AppLauncherTile {
   /** Stable key; unique across the registry. */
@@ -146,13 +161,12 @@ export interface AppLauncherTile {
   badge?: "new";
 }
 
-export const APP_LAUNCHER: readonly AppLauncherTile[] = [
+export const ALL_APP_LAUNCHER: readonly AppLauncherTile[] = [
   { key: "home", name: "Home feed", description: "Posts from people and pages you follow", href: "/", icon: Home },
   { key: "reels", name: "Reels", description: "Short vertical video", href: "/reels", icon: Clapperboard },
   { key: "tube", name: "PostTube", description: "Long video, channels and playlists", href: "/posttube", icon: Tv },
   { key: "groups", name: "Groups", description: "Private and public groups", href: "/groups", icon: Users },
   { key: "communities", name: "Communities", description: "Broadcast channels around a topic", href: "/communities", icon: Globe2 },
-  { key: "connections", name: "Connections", description: "People you know and may know", href: "/connections", icon: UserRoundPlus },
   { key: "messenger", name: "Messenger", description: "Chats, calls and channels", href: "/messenger", icon: MessageSquare },
   { key: "live", name: "Live", description: "Watch and go live", href: "/live", icon: Radio },
   { key: "ask", name: "Ask", description: "Questions and answers", href: "/qa", icon: HelpCircle },
@@ -166,6 +180,18 @@ export const APP_LAUNCHER: readonly AppLauncherTile[] = [
   { key: "feast", name: "Feast", description: "Food delivery", href: "/feast", icon: UtensilsCrossed },
   { key: "ride", name: "Ride", description: "Mopedu: rides across town", href: "/ride", icon: Bike, soon: true },
 ];
+
+/** The tiles offered now: every tile whose product is not parked. */
+export function launchedTiles(
+  tiles: readonly AppLauncherTile[],
+  parked: ReadonlySet<string> = PARKED_NAV_IDS,
+  /** App keys to leave out instead (hooks/useProductFeatures: parked plus what GET /v1/features closes). */
+  hiddenKeys: ReadonlySet<string> = parkedAppKeys(parked),
+): AppLauncherTile[] {
+  return tiles.filter((tile) => !hiddenKeys.has(tile.key));
+}
+
+export const APP_LAUNCHER: readonly AppLauncherTile[] = launchedTiles(ALL_APP_LAUNCHER);
 
 /**
  * Tiles whose name or description contains the query, case-insensitively.

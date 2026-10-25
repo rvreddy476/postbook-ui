@@ -3,6 +3,7 @@
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
 import type { PostDetail } from "@/types/profile"
+import { profilePostsInfiniteOptions, type ProfilePostSort } from "@/lib/profilePostSort"
 
 interface PostsResponse {
     data: PostDetail[]
@@ -11,24 +12,18 @@ interface PostsResponse {
 
 const FLICK_TYPES = new Set(["reel", "flick", "short"])
 
-export function useProfilePosts(userId: string | undefined, contentType: string) {
-    return useInfiniteQuery({
-        queryKey: ["profile-posts", userId, contentType],
-        queryFn: async ({ pageParam }) => {
-            const params: Record<string, string> = { limit: "20" }
-            if (contentType && contentType !== "all") {
-                params.type = contentType
-            }
-            if (pageParam) {
-                params.cursor = pageParam as string
-            }
-            const res = await api.get<PostsResponse>(`/v1/posts/by-author/${userId}`, { params })
+/**
+ * One author's posts, paged. `sort` (latest | popular | oldest) is part of
+ * the query key: the cursor is tied to the sort that issued it, so a new
+ * sort is a new query that starts from the first page (lib/profilePostSort).
+ */
+export function useProfilePosts(userId: string | undefined, contentType: string, sort?: ProfilePostSort) {
+    return useInfiniteQuery(
+        profilePostsInfiniteOptions<PostsResponse>(userId, contentType, sort, async (path, params) => {
+            const res = await api.get<PostsResponse>(path, { params })
             return res.data
-        },
-        initialPageParam: "" as string,
-        getNextPageParam: (lastPage) => lastPage.meta?.next_cursor || undefined,
-        enabled: !!userId,
-    })
+        }),
+    )
 }
 
 /**

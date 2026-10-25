@@ -27,7 +27,7 @@ export function WatchComments({ postId, authorId, count, commentsOff = false, so
     <section className="tube-comments" aria-label="Comments" data-comments>
       <div className="tube-comments__head">
         <h2 className="tube-comments__title">
-          Comments <span className="tube-comments__count">{formatCount(count)}</span>
+          Comments{count > 0 ? <> <span className="tube-comments__count">{formatCount(count)}</span></> : null}
         </h2>
         {!commentsOff ? (
           <div className="tube-comments__sort" role="group" aria-label="Sort comments">

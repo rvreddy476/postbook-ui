@@ -173,8 +173,8 @@ function Field({ label, description, children }: { label: string; description?: 
     return (
         <div className="space-y-3">
             <div>
-                <label className="text-[11px] font-black text-brand-text tracking-[0.2em]">{label}</label>
-                {description && <p className="text-[10px] font-bold text-brand-text/60 tracking-wider mt-0.5">{description}</p>}
+                <label className="text-xs font-black text-brand-text tracking-[0.2em]">{label}</label>
+                {description && <p className="text-xs font-bold text-brand-text/60 tracking-wider mt-0.5">{description}</p>}
             </div>
             {children}
         </div>

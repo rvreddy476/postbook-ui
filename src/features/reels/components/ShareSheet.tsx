@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Link2, MessageCircle, Send, Mail, Check, Share2, X } from "lucide-react";
+import { Link2, MessageCircle, MessageSquare, Send, Mail, Check, X } from "lucide-react";
+
+import { SendInMessagesPanel, useCanSendInMessages } from "@/components/messenger/SendInMessagesPanel";
+import { ShareIcon } from "@/components/icons/ShareIcon";
+import { withShareRef } from "@/features/share/shareRef";
 
 interface ShareSheetProps {
   open: boolean;
@@ -11,6 +15,11 @@ interface ShareSheetProps {
   title?: string;
   /** What the sheet is called ("Share" unless the address is something else, like an RSS feed). */
   heading?: string;
+  /**
+   * The post being shared, when it is one: adds "Send in Messages" for a
+   * signed-in viewer (audit T-25). A channel, tag or feed address has none.
+   */
+  postId?: string;
 }
 
 interface ShareTarget {
@@ -21,8 +30,34 @@ interface ShareTarget {
   action?: () => void;
 }
 
-export function ShareSheet({ open, onClose, url, title = "Check this out on VChat", heading = "Share" }: ShareSheetProps) {
+export function ShareSheet({ open, onClose, url: rawUrl, title = "Check this out on VChat", heading = "Share", postId }: ShareSheetProps) {
+  // One share ref per opening (features/share/shareRef): the preview row,
+  // Copy link and every target hand out the same address. `open` is in the
+  // list on purpose, so a reopened sheet mints a fresh one.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const url = useMemo(() => (rawUrl ? withShareRef(rawUrl) : rawUrl), [rawUrl, open]);
   const [copied, setCopied] = useState(false);
+  const canMessage = useCanSendInMessages(postId);
+  const [picking, setPicking] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
+
+  // Closing resets the sheet: it reopens on the share targets.
+  useEffect(() => {
+    if (open) return;
+    setPicking(false);
+    setSentTo(null);
+  }, [open]);
+
+  // After a send, say so for a moment, then close. The latest onClose is read
+  // through a ref: callers pass an inline arrow, and a re-render must not
+  // restart the timer.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+  useEffect(() => {
+    if (!sentTo) return;
+    const t = window.setTimeout(() => onCloseRef.current(), 1500);
+    return () => window.clearTimeout(t);
+  }, [sentTo]);
 
   const enc = encodeURIComponent(url);
   const encTitle = encodeURIComponent(title);
@@ -49,11 +84,14 @@ export function ShareSheet({ open, onClose, url, title = "Check this out on VCha
   };
 
   const targets: ShareTarget[] = [
+    ...(canMessage
+      ? [{ label: "Send in Messages", icon: <MessageSquare className="h-5 w-5" />, bg: "bg-primary-tint text-primary-ink", action: () => setPicking(true) }]
+      : []),
     { label: copied ? "Copied!" : "Copy link", icon: copied ? <Check className="h-5 w-5" /> : <Link2 className="h-5 w-5" />, bg: "bg-brand-secondary text-brand-text", action: copyLink },
-    { label: "WhatsApp", icon: <MessageCircle className="h-5 w-5" />, bg: "bg-emerald-500 text-white", href: `https://wa.me/?text=${encTitle}%20${enc}` },
-    { label: "Telegram", icon: <Send className="h-5 w-5" />, bg: "bg-sky-500 text-white", href: `https://t.me/share/url?url=${enc}&text=${encTitle}` },
-    { label: "X", icon: <span className="text-[17px] font-black leading-none">𝕏</span>, bg: "bg-black text-white", href: `https://twitter.com/intent/tweet?url=${enc}&text=${encTitle}` },
-    { label: "Facebook", icon: <span className="text-[18px] font-black leading-none">f</span>, bg: "bg-[#1877F2] text-white", href: `https://www.facebook.com/sharer/sharer.php?u=${enc}` },
+    { label: "WhatsApp", icon: <MessageCircle className="h-5 w-5" />, bg: "bg-brand-whatsapp text-white", href: `https://wa.me/?text=${encTitle}%20${enc}` },
+    { label: "Telegram", icon: <Send className="h-5 w-5" />, bg: "bg-brand-telegram text-white", href: `https://t.me/share/url?url=${enc}&text=${encTitle}` },
+    { label: "X", icon: <span className="text-lg font-black leading-none">𝕏</span>, bg: "bg-brand-x text-white", href: `https://twitter.com/intent/tweet?url=${enc}&text=${encTitle}` },
+    { label: "Facebook", icon: <span className="text-lg font-black leading-none">f</span>, bg: "bg-brand-facebook text-white", href: `https://www.facebook.com/sharer/sharer.php?u=${enc}` },
     { label: "Email", icon: <Mail className="h-5 w-5" />, bg: "bg-brand-secondary text-brand-text", href: `mailto:?subject=${encTitle}&body=${enc}` },
   ];
 
@@ -83,7 +121,7 @@ export function ShareSheet({ open, onClose, url, title = "Check this out on VCha
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-brand-text/20" />
 
             <div className="flex items-center justify-between px-5 pb-1">
-              <h3 className="text-[15px] font-bold text-brand-text">{heading}</h3>
+              <h3 className="text-base font-bold text-brand-text">{heading}</h3>
               <button
                 type="button"
                 onClick={onClose}
@@ -94,13 +132,22 @@ export function ShareSheet({ open, onClose, url, title = "Check this out on VCha
               </button>
             </div>
 
+            {sentTo ? (
+              <p role="status" className="flex items-center justify-center gap-2 px-5 py-8 text-sm font-semibold text-brand-text">
+                <Check className="h-5 w-5 text-success" aria-hidden /> Sent to {sentTo}
+              </p>
+            ) : picking && postId ? (
+              // The messenger's own recipient picker, sharing this post (audit T-25).
+              <SendInMessagesPanel postId={postId} onBack={() => setPicking(false)} onSent={(u) => setSentTo(u.name)} />
+            ) : (
+            <>
             {/* Link preview row */}
             <div className="mx-5 mb-4 mt-2 flex items-center gap-2 rounded-xl border border-brand-divider bg-brand-secondary/60 px-3 py-2.5">
-              <span className="flex-1 truncate text-[12px] text-brand-text/60">{url}</span>
+              <span className="flex-1 truncate text-xs text-brand-text/60">{url}</span>
               <button
                 type="button"
                 onClick={copyLink}
-                className="shrink-0 rounded-lg bg-primary-ink px-3 py-1.5 text-[12px] font-bold text-white transition hover:bg-primary-hover"
+                className="shrink-0 rounded-lg bg-primary-ink px-3 py-1.5 text-xs font-bold text-white transition hover:bg-primary-hover"
               >
                 {copied ? "Copied" : "Copy"}
               </button>
@@ -112,7 +159,7 @@ export function ShareSheet({ open, onClose, url, title = "Check this out on VCha
                 const inner = (
                   <>
                     <span className={`flex h-12 w-12 items-center justify-center rounded-full ${t.bg}`}>{t.icon}</span>
-                    <span className="text-[11px] font-medium text-brand-text/70">{t.label}</span>
+                    <span className="text-xs font-medium text-muted-foreground">{t.label}</span>
                   </>
                 );
                 return t.href ? (
@@ -145,12 +192,14 @@ export function ShareSheet({ open, onClose, url, title = "Check this out on VCha
                   className="flex flex-col items-center gap-1.5 rounded-xl py-2 transition hover:bg-brand-secondary"
                 >
                   <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-secondary text-brand-text">
-                    <Share2 className="h-5 w-5" />
+                    <ShareIcon className="h-5 w-5" />
                   </span>
-                  <span className="text-[11px] font-medium text-brand-text/70">More</span>
+                  <span className="text-xs font-medium text-muted-foreground">More</span>
                 </button>
               ) : null}
             </div>
+            </>
+            )}
           </motion.div>
         </motion.div>
       ) : null}

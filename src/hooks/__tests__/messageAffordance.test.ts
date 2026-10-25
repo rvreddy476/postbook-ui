@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'bun:test';
-import { messageAffordance } from '../usePermissions';
+import { isUnavailableReason, messageAffordance } from '../usePermissions';
 
 /**
  * "Can I message this person" has THREE answers, and collapsing them to two is
  * the bug this guards. The middle one — a text-only request until they accept —
- * is the common case: every account on dev sits on the default
- * who_can_message = everyone_message_requests, so a stranger resolves to
- * {allowed: false, fallback: "message_request"}. Treating that as a refusal
- * would hide the control people are actually meant to use.
+ * is the common case for a stranger on the default
+ * who_can_message = everyone_message_requests: {allowed: false, fallback:
+ * "message_request"}. Treating that as a refusal would hide the control people
+ * are actually meant to use.
  */
 describe('messageAffordance', () => {
   it('is loading until the server has answered', () => {
@@ -19,17 +19,28 @@ describe('messageAffordance', () => {
   });
 
   it('offers a REQUEST rather than refusing when that is the fallback', () => {
-    const a = messageAffordance({ allowed: false, fallback: 'message_request', reason: 'not_connected' });
-    expect(a.state).toBe('request');
+    const a = messageAffordance({ allowed: false, fallback: 'message_request' });
+    expect(a).toEqual({ state: 'request', label: 'Send request' });
   });
 
-  it('blocks when there is no fallback, and says why', () => {
-    expect(messageAffordance({ allowed: false, reason: 'chat_paused' })).toEqual({
+  it('refuses with the current reason names, and says why', () => {
+    expect(messageAffordance({ allowed: false, reason: 'messages_off' })).toEqual({
       state: 'blocked',
-      label: 'Not accepting messages right now',
+      label: 'Not taking messages right now',
+      reason: 'messages_off',
     });
-    expect(messageAffordance({ allowed: false, reason: 'privacy_no_one' }).state).toBe('blocked');
-    expect(messageAffordance({ allowed: false, reason: 'blocked' }).label).toBe('Unavailable');
+    expect(messageAffordance({ allowed: false, reason: 'no_one' }).state).toBe('blocked');
+    expect(messageAffordance({ allowed: false, reason: 'unavailable' }).label).toBe('Unavailable');
+    expect(messageAffordance({ allowed: false, reason: 'people_i_follow' }).label).toBe('Only accepts messages from people they follow');
+  });
+
+  it('reads the older names as the new ones (a block stays unavailable)', () => {
+    expect(messageAffordance({ allowed: false, reason: 'blocked' })).toMatchObject({ label: 'Unavailable', reason: 'unavailable' });
+    expect(messageAffordance({ allowed: false, reason: 'chat_paused' })).toMatchObject({ reason: 'messages_off' });
+    expect(isUnavailableReason('unavailable')).toBe(true);
+    expect(isUnavailableReason('blocked')).toBe(true);
+    expect(isUnavailableReason('no_one')).toBe(false);
+    expect(isUnavailableReason(undefined)).toBe(false);
   });
 
   it('fails CLOSED on a reason it has never seen', () => {
