@@ -6,9 +6,11 @@ import { BadgeCheck, CheckCircle2, Clock, Crown, Loader2, XCircle } from "lucide
 import { usePremiumPlans, useMyPremium, usePremiumPurchase } from "./hooks"
 import {
   canBuy,
+  checkoutLines,
   isPremiumOff,
   NO_AUTO_RENEW,
   paidWords,
+  planBreakdown,
   planLength,
   planPrice,
   planTitle,
@@ -16,10 +18,13 @@ import {
   PREMIUM_WORDS,
   premiumErrorMessage,
   purchaseBusy,
+  receiptLines,
+  rupees,
   statusWords,
   type PremiumPlan,
   type PremiumStatus,
   type PurchasePhase,
+  type ReceiptLine,
 } from "./model"
 
 /*
@@ -30,6 +35,11 @@ import {
   mid-payment sees the server's answer when they come back. While
   PREMIUM_ENABLED is off every premium route answers 503
   PREMIUM_NOT_ENABLED and the page says "Premium is not available yet".
+
+  Prices exclude GST: each card shows the price "+ GST" and the server's
+  breakdown; Buy opens the server's checkout and shows price, GST and total
+  again before Pay opens Razorpay; the success view shows what was paid.
+  Every number is the server's — nothing here computes tax.
   Styling is Tailwind token classes only (src/ui/theme.css).
 */
 
@@ -64,6 +74,7 @@ export function PremiumScreen() {
         statusError={me.error}
         purchase={purchase.state}
         onBuy={(p) => void purchase.buy(p)}
+        onPay={() => void purchase.pay()}
         onCheckAgain={purchase.checkAgain}
         onRetry={purchase.retryLast}
         onReset={purchase.reset}
@@ -81,6 +92,7 @@ export interface PremiumBodyProps {
   statusError: unknown
   purchase: PurchasePhase
   onBuy: (plan: PremiumPlan) => void
+  onPay: () => void
   onCheckAgain: () => void
   onRetry: () => void
   onReset: () => void
@@ -152,13 +164,26 @@ export function PremiumBody(props: PremiumBodyProps) {
 
 function PlanCard({ plan, busy, pending, onBuy }: { plan: PremiumPlan; busy: boolean; pending: boolean; onBuy: () => void }) {
   const buyable = canBuy(plan)
+  const breakdown = planBreakdown(plan)
   return (
     <article className="flex flex-col rounded-2xl border border-border bg-brand-card p-5" data-premium-plan={plan.code}>
       <p className="text-sm font-medium text-muted-foreground">{planLength(plan)}</p>
       <h3 className="mt-1 text-base font-semibold text-brand-text">{planTitle(plan)}</h3>
-      <p className={buyable ? "mt-3 text-3xl font-bold text-brand-text" : "mt-3 text-base font-medium text-muted-foreground"} data-premium-price>
-        {planPrice(plan)}
-      </p>
+      {buyable ? (
+        <>
+          <p className="mt-3 flex items-baseline gap-2" data-premium-price>
+            <span className="text-3xl font-bold text-brand-text">{planPrice(plan)}</span>
+            <span className="text-sm font-medium text-muted-foreground">+ GST</span>
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground" data-premium-breakdown>
+            {breakdown}
+          </p>
+        </>
+      ) : (
+        <p className="mt-3 text-base font-medium text-muted-foreground" data-premium-price>
+          {planPrice(plan)}
+        </p>
+      )}
       <div className="mt-5 flex-1" />
       <button type="button" className={BTN_PRIMARY} disabled={!buyable || busy} onClick={onBuy}>
         {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
@@ -195,13 +220,50 @@ function StatusCard({ status, error }: { status: PremiumStatus | null; error: un
   )
 }
 
+function MoneyLines({ lines, testId }: { lines: ReceiptLine[]; testId: string }) {
+  return (
+    <dl className="mt-3 space-y-1 text-sm" data-premium-lines={testId}>
+      {lines.map((l, i) => (
+        <div
+          key={l.label}
+          className={i === lines.length - 1 && lines.length > 1 ? "flex justify-between border-t border-border pt-1 font-semibold text-brand-text" : "flex justify-between text-brand-text"}
+        >
+          <dt>{l.label}</dt>
+          <dd>{l.value}</dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
 /** The purchase's own state, above the passes. Nothing shows while idle. */
-export function PurchaseBanner({ purchase, onCheckAgain, onRetry, onReset }: Pick<PremiumBodyProps, "purchase" | "onCheckAgain" | "onRetry" | "onReset">) {
+export function PurchaseBanner({
+  purchase,
+  onPay,
+  onCheckAgain,
+  onRetry,
+  onReset,
+}: Pick<PremiumBodyProps, "purchase" | "onCheckAgain" | "onRetry" | "onReset"> & { onPay?: () => void }) {
   const box = "rounded-2xl border p-5"
   switch (purchase.phase) {
     case "idle":
     case "unavailable":
       return null
+    case "review":
+      return (
+        <div className={`${box} border-border bg-brand-card`} data-premium-purchase="review">
+          <h2 className="text-base font-semibold text-brand-text">Confirm your pass</h2>
+          <MoneyLines lines={checkoutLines(purchase.checkout)} testId="checkout" />
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button type="button" className={BTN_PRIMARY} onClick={onPay}>
+              Pay {rupees(purchase.checkout.amountPaise)}
+            </button>
+            <button type="button" className={BTN_QUIET} onClick={onReset}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )
     case "starting":
     case "dialog":
       return (
@@ -228,6 +290,7 @@ export function PurchaseBanner({ purchase, onCheckAgain, onRetry, onReset }: Pic
             <CheckCircle2 className="h-5 w-5 text-success" aria-hidden />
             {paidWords(purchase.endsAt)}
           </p>
+          {purchase.receipt ? <MoneyLines lines={receiptLines(purchase.receipt)} testId="receipt" /> : null}
           <div className="mt-4 flex flex-wrap gap-2">
             <Link href="/echo" className={BTN_PRIMARY}>
               Post on Echo

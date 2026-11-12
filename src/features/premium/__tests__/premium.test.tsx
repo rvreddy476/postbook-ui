@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, mock, spyOn, test } from "bun:test"
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
 import React from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 
@@ -18,34 +20,35 @@ const { SETTINGS_GROUPS, settingsGroups } = await import("@/app/settings/_lib/se
 const { SettingsHub } = await import("@/app/settings/_components/SettingsHub")
 
 /*
-  No golden fixtures: monetization-service has no testdata/contracts for
-  Premium, so the bodies below are written from premium_handler.go and
-  service/premium.go (the field names and the {"data": …} envelope) and
-  are not server fixtures.
+  Golden fixtures: fixtures/{plans,checkout,pass,me}.json are byte-for-byte
+  copies of monetization-service testdata/contracts/premium (prices exclude
+  GST, 13 Nov 2026). They are parsed here and never edited; the one variant
+  a test needs (a plan the server marks unavailable) is derived in code.
 */
 
-const PASS = "5b0c7f4e-1111-4a3b-9c00-000000000001"
-const plansBody = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const fixture = (name: string): any => JSON.parse(readFileSync(join(import.meta.dir, "fixtures", `${name}.json`), "utf8"))
+const plansBody = fixture("plans")
+const checkoutBody = fixture("checkout")
+const passBody = fixture("pass")
+const meBody = fixture("me")
+const PASS: string = checkoutBody.data.pass_id
+
+const TAX_30 = { taxablePaise: 14900, gstPaise: 2682, totalPaise: 17582, rateBp: 1800, provisional: true }
+const TAX_365 = { taxablePaise: 149900, gstPaise: 26982, totalPaise: 176882, rateBp: 1800, provisional: true }
+
+/** The 365-day plan as the server sends it while its price or GST is unknown. */
+const unavailable365 = {
   data: {
     plans: [
-      { code: "premium_30d", name: "Premium, 30 days", duration_days: 30, price_paise: 9900, currency: "INR", available: true },
-      { code: "premium_365d", name: "Premium, 365 days", duration_days: 365, price_paise: null, currency: "INR", available: false },
+      plansBody.data.plans[0],
+      { ...plansBody.data.plans[1], price_paise: null, taxable_paise: null, gst_paise: null, total_paise: null, gst_rate_bp: null, available: false },
     ],
   },
 }
-const checkoutBody = {
-  data: {
-    pass_id: PASS,
-    plan: "premium_30d",
-    duration_days: 30,
-    status: "pending_payment",
-    amount_paise: 9900,
-    currency: "INR",
-    intent_id: "9a9a9a9a-0000-4000-8000-000000000001",
-    client_session: { provider: "razorpay", order_id: "order_abc", key_id: "rzp_test_key", merchant_display_name: "Momentum" },
-  },
-}
+
 const httpError = (status: number, code = "") => ({ response: { status, data: code ? { error: { code, message: "x" } } : {} } })
+const noop = () => {}
 
 const spies: { mockRestore(): void }[] = []
 afterEach(() => {
@@ -54,27 +57,36 @@ afterEach(() => {
 
 /* ── plans and prices ───────────────────────────────────────────── */
 
-describe("plans and prices", () => {
+describe("plans and prices (GST on top)", () => {
   const [p30, p365] = M.toPlans(plansBody)
+  const [, gone365] = M.toPlans(unavailable365)
 
-  test("plans are read from the {data:{plans}} envelope, in order", () => {
+  test("plans are read from the {data:{plans}} envelope, in order, with the server's GST split", () => {
     expect([p30.code, p365.code]).toEqual(["premium_30d", "premium_365d"])
-    expect(p30).toEqual({ code: "premium_30d", name: "Premium, 30 days", durationDays: 30, pricePaise: 9900, currency: "INR", available: true })
-    expect(p365.pricePaise).toBeNull()
+    expect(p30).toEqual({ code: "premium_30d", name: "Momentum Premium, 30 days", durationDays: 30, pricePaise: 14900, tax: TAX_30, currency: "INR", available: true })
+    expect(p365.tax).toEqual(TAX_365)
   })
 
-  test("prices are formatted from paise in rupees (en-IN)", () => {
-    expect(M.planPrice(p30)).toBe("₹99")
-    expect(M.planPrice({ ...p30, pricePaise: 3_650_000 })).toBe("₹36,500")
-    expect(M.planPrice({ ...p30, pricePaise: 9950 })).toBe("₹99.50")
+  test("the breakdown is the server's numbers, en-IN: 14900 → 2682 → 17582 and 149900 → 26982 → 176882", () => {
+    expect(M.planPrice(p30)).toBe("₹149")
+    expect(M.planBreakdown(p30)).toBe("₹149 + ₹26.82 GST (18%) = ₹175.82")
+    expect(M.planPrice(p365)).toBe("₹1,499")
+    expect(M.planBreakdown(p365)).toBe("₹1,499 + ₹269.82 GST (18%) = ₹1,768.82")
   })
 
-  test("no price, or available=false, is Not available and cannot be bought", () => {
-    expect(M.planPrice(p365)).toBe("Not available")
-    expect(M.canBuy(p365)).toBe(false)
+  test("nothing is computed here: odd server numbers are shown as sent", () => {
+    expect(M.breakdownLine({ taxablePaise: 10000, gstPaise: 1, totalPaise: 99999, rateBp: 1250, provisional: false })).toBe("₹100 + ₹0.01 GST (12.5%) = ₹999.99")
+  })
+
+  test("no price, no GST, or available=false is Not available and cannot be bought", () => {
+    expect(M.planPrice(gone365)).toBe("Not available")
+    expect(M.planBreakdown(gone365)).toBe("")
+    expect(M.canBuy(gone365)).toBe(false)
     const priced = { ...p30, available: false }
     expect(M.planPrice(priced)).toBe("Not available")
     expect(M.canBuy(priced)).toBe(false)
+    // A price without its GST is never offered at the pre-tax price alone.
+    expect(M.canBuy({ ...p30, tax: null })).toBe(false)
     expect(M.canBuy(p30)).toBe(true)
   })
 
@@ -88,6 +100,12 @@ describe("plans and prices", () => {
     spies.push(spyOn(api, "get").mockImplementation((async (url: string) => (urls.push(url), { data: plansBody })) as never))
     expect((await fetchPremiumPlans()).length).toBe(2)
     expect(urls).toEqual(["/v1/monetization/premium/plans"])
+  })
+
+  test("/me renewal plans carry the same breakdown", () => {
+    const me = M.toStatus(meBody)
+    expect(me.active).toBe(true)
+    expect(me.renewalPlans.map(M.planBreakdown)).toEqual(["₹149 + ₹26.82 GST (18%) = ₹175.82", "₹1,499 + ₹269.82 GST (18%) = ₹1,768.82"])
   })
 })
 
@@ -106,9 +124,11 @@ describe("checkout", () => {
     expect(calls).toHaveLength(1)
     expect(calls[0].url).toBe("/v1/monetization/premium/checkout")
     expect(JSON.stringify(calls[0].body)).toBe('{"plan":"premium_30d"}')
-    expect(JSON.stringify(calls[0].body)).not.toMatch(/amount|price|paise|currency/)
+    expect(JSON.stringify(calls[0].body)).not.toMatch(/amount|price|paise|currency|gst|tax|total/)
     expect(calls[0].config).toBeUndefined()
     expect(out.passId).toBe(PASS)
+    expect(out.amountPaise).toBe(17582)
+    expect(out.tax).toEqual(TAX_30)
   })
 
   test("checkoutRequest builds only the plan", () => {
@@ -116,23 +136,29 @@ describe("checkout", () => {
     expect(Object.keys(M.checkoutRequest("premium_30d").body)).toEqual(["plan"])
   })
 
-  test("the Razorpay dialog opens from the server's client_session and amount only", () => {
+  test("Razorpay gets the server's amount_paise, the GST total, from its client_session", () => {
     const c = M.toCheckout(checkoutBody)
-    expect(M.razorpayOptions(c, "d")).toEqual({ key: "rzp_test_key", order_id: "order_abc", amount: 9900, currency: "INR", name: "Momentum", description: "d" })
+    const opts = M.razorpayOptions(c, "d")
+    // The fixture's client_session has no merchant_display_name: the fallback name is used.
+    expect(opts).toEqual({ key: "rzp_test_key", order_id: "order_b2222222", amount: 17582, currency: "INR", name: "Momentum", description: "d" })
+    expect(opts!.amount).toBe(c.tax!.totalPaise)
+    expect(opts!.amount).not.toBe(c.tax!.taxablePaise)
     expect(M.razorpayOptions({ ...c, session: null }, "d")).toBeNull()
     expect(M.razorpayOptions({ ...c, session: { ...c.session!, provider: "stub" } }, "d")).toBeNull()
     expect(M.razorpayOptions({ ...c, amountPaise: 0 }, "d")).toBeNull()
   })
 
-  test("the pass is read from GET /passes/:id", async () => {
+  test("amount_paise and total_paise disagreeing never opens the dialog", () => {
+    const c = M.toCheckout(checkoutBody)
+    expect(M.checkoutAmountsDisagree(c)).toBe(false)
+    expect(M.checkoutAmountsDisagree({ ...c, amountPaise: 14900 })).toBe(true)
+    expect(M.razorpayOptions({ ...c, amountPaise: 14900 }, "d")).toBeNull()
+  })
+
+  test("the pass is read from GET /passes/:id, with what it cost", async () => {
     const urls: string[] = []
-    spies.push(
-      spyOn(api, "get").mockImplementation((async (url: string) => {
-        urls.push(url)
-        return { data: { data: { pass_id: PASS, plan: "premium_30d", status: "paid", amount_paise: 9900, currency: "INR", starts_at: "2026-11-13T00:00:00Z", ends_at: "2026-12-13T00:00:00Z" } } }
-      }) as never),
-    )
-    expect(await readPremiumPass(PASS)).toEqual({ passId: PASS, status: "paid", endsAt: "2026-12-13T00:00:00Z" })
+    spies.push(spyOn(api, "get").mockImplementation((async (url: string) => (urls.push(url), { data: passBody })) as never))
+    expect(await readPremiumPass(PASS)).toEqual({ passId: PASS, status: "paid", endsAt: "2026-12-13T10:00:00Z", receipt: { amountPaise: 17582, tax: TAX_30 } })
     expect(urls).toEqual([`/v1/monetization/premium/passes/${PASS}`])
   })
 })
@@ -160,8 +186,13 @@ describe("the pass poll", () => {
     const { p, state, waits } = run([reading("confirming"), reading("confirming"), reading("paid", "2026-12-13T00:00:00Z"), reading("paid")])
     expect(waits).toEqual([1000, 2000, 3000])
     expect(p.phase).toBe("paid")
-    expect(state).toEqual({ phase: "paid", endsAt: "2026-12-13T00:00:00Z" })
+    expect(state).toEqual({ phase: "paid", endsAt: "2026-12-13T00:00:00Z", receipt: null })
     expect(M.paidWords("2026-12-13T00:00:00Z")).toBe("Premium is active until 13 Dec 2026")
+  })
+
+  test("the paid read (the golden pass) carries its receipt into the paid state", () => {
+    const { state } = run([reading("confirming"), M.toPass(passBody)])
+    expect(state).toEqual({ phase: "paid", endsAt: "2026-12-13T10:00:00Z", receipt: { amountPaise: 17582, tax: TAX_30 } })
   })
 
   test("confirming → failed, and refunded, are failures with their own words", () => {
@@ -199,10 +230,16 @@ describe("the pass poll", () => {
 
 describe("purchase states and errors", () => {
   const started = M.purchaseReducer(M.idlePurchase, { type: "start", plan: "premium_30d" })
+  const checkout = M.toCheckout(checkoutBody)
 
-  test("start → dialog → confirming; a dismissed dialog offers Try again", () => {
+  test("start → review → Pay → dialog → confirming; a dismissed dialog offers Try again", () => {
     expect(started).toEqual({ phase: "starting", plan: "premium_30d" })
-    const dialog = M.purchaseReducer(started, { type: "started", canOpen: true })
+    const review = M.purchaseReducer(started, { type: "started", canOpen: true, checkout })
+    expect(review).toEqual({ phase: "review", plan: "premium_30d", checkout })
+    expect(M.purchaseBusy(review)).toBe(true)
+    expect(M.purchaseReducer(review, { type: "reset" })).toEqual(M.idlePurchase)
+    expect(M.purchaseReducer(started, { type: "pay" })).toBe(started)
+    const dialog = M.purchaseReducer(review, { type: "pay" })
     expect(dialog).toEqual({ phase: "dialog", plan: "premium_30d" })
     expect(M.purchaseBusy(dialog)).toBe(true)
     expect(M.purchaseReducer(dialog, { type: "dialog_completed" })).toEqual({ phase: "confirming", plan: "premium_30d" })
@@ -210,7 +247,14 @@ describe("purchase states and errors", () => {
   })
 
   test("no session the web can open is a failure, not a payment", () => {
-    expect(M.purchaseReducer(started, { type: "started", canOpen: false })).toEqual({ phase: "failed", message: M.PREMIUM_WORDS.noOnlinePayment })
+    expect(M.purchaseReducer(started, { type: "started", canOpen: false, checkout })).toEqual({ phase: "failed", message: M.PREMIUM_WORDS.noOnlinePayment })
+  })
+
+  test("a checkout whose amount is not its GST total is refused before any dialog", () => {
+    expect(M.purchaseReducer(started, { type: "started", canOpen: true, checkout: { ...checkout, amountPaise: 14900 } })).toEqual({
+      phase: "failed",
+      message: M.PREMIUM_WORDS.amountMismatch,
+    })
   })
 
   test("503 PREMIUM_NOT_ENABLED makes the page say Premium is not available yet", () => {
@@ -218,15 +262,17 @@ describe("purchase states and errors", () => {
     expect(M.isPremiumOff(err)).toBe(true)
     expect(M.purchaseReducer(started, { type: "start_failed", error: err })).toEqual({ phase: "unavailable" })
     const html = renderToStaticMarkup(
-      <PremiumBody off loading={false} plans={null} plansError={err} status={null} statusError={null} purchase={M.idlePurchase} onBuy={() => {}} onCheckAgain={() => {}} onRetry={() => {}} onReset={() => {}} />,
+      <PremiumBody off loading={false} plans={null} plansError={err} status={null} statusError={null} purchase={M.idlePurchase} onBuy={noop} onPay={noop} onCheckAgain={noop} onRetry={noop} onReset={noop} />,
     )
     expect(html).toContain("Premium is not available yet")
     expect(html).not.toContain("Choose a pass")
   })
 
-  test("every writePremiumError code has its own message", () => {
+  test("every writePremiumError code has its own message, including the GST ones", () => {
     const cases: Array<[number, string, string]> = [
       [503, "PREMIUM_PRICE_NOT_SET", M.PREMIUM_WORDS.priceNotSet],
+      [503, "PREMIUM_TAX_UNAVAILABLE", M.PREMIUM_WORDS.taxUnavailable],
+      [503, "PREMIUM_AMOUNT_MISMATCH", M.PREMIUM_WORDS.amountMismatch],
       [400, "UNKNOWN_PLAN", M.PREMIUM_WORDS.unknownPlan],
       [503, "PREMIUM_PAYMENTS_UNAVAILABLE", M.PREMIUM_WORDS.paymentsUnavailable],
       [502, "PAYMENT_SESSION_UNAVAILABLE", M.PREMIUM_WORDS.sessionUnavailable],
@@ -239,6 +285,9 @@ describe("purchase states and errors", () => {
       expect(M.premiumErrorMessage(httpError(status, code))).toBe(words)
       expect(M.purchaseReducer(started, { type: "start_failed", error: httpError(status, code) })).toEqual({ phase: "error", plan: "premium_30d", message: words })
     }
+    expect(new Set(cases.map(([, , w]) => w)).size).toBe(cases.length)
+    expect(M.PREMIUM_WORDS.taxUnavailable).toContain("GST")
+    expect(M.PREMIUM_WORDS.amountMismatch).toContain("haven't been charged")
     expect(M.premiumErrorMessage({})).toBe(M.PREMIUM_WORDS.network)
   })
 })
@@ -255,24 +304,35 @@ const body = (over: Partial<React.ComponentProps<typeof PremiumBody>> = {}) =>
       status={M.toStatus({ data: { active: false, in_grace: false, ends_at: null, grace_ends_at: null, renewal_plans: [] } })}
       statusError={null}
       purchase={M.idlePurchase}
-      onBuy={() => {}}
-      onCheckAgain={() => {}}
-      onRetry={() => {}}
-      onReset={() => {}}
+      onBuy={noop}
+      onPay={noop}
+      onCheckAgain={noop}
+      onRetry={noop}
+      onReset={noop}
       {...over}
     />,
   )
 
 describe("the /premium page", () => {
-  test("shows both passes, the price or Not available, the honest perk and the no-auto-renew line", () => {
+  test("each pass card shows ₹149 + GST and the server's breakdown line", () => {
     const html = body()
     expect(html).toContain('data-premium-plan="premium_30d"')
     expect(html).toContain('data-premium-plan="premium_365d"')
-    expect(html).toContain("₹99")
-    expect(html).toContain("Not available")
+    expect(html).toMatch(/<span[^>]*>₹149<\/span><span[^>]*>\+ GST<\/span>/)
+    expect(html).toMatch(/<span[^>]*>₹1,499<\/span><span[^>]*>\+ GST<\/span>/)
+    expect(html).toContain("₹149 + ₹26.82 GST (18%) = ₹175.82")
+    expect(html).toContain("₹1,499 + ₹269.82 GST (18%) = ₹1,768.82")
+    expect(html).not.toContain("Not available")
     expect(html).toContain("Post on Echo: notes, threads and quotes.")
     expect(html).toContain("No auto-renew: we&#x27;ll remind you 3 days before it ends.")
     expect(html).toContain("You don&#x27;t have Premium")
+  })
+
+  test("a plan the server marks unavailable stays Not available, with no price or GST", () => {
+    const html = body({ plans: M.toPlans(unavailable365) })
+    expect(html).toContain("Not available")
+    expect(html).not.toContain("₹1,499")
+    expect(html).toContain("₹149 + ₹26.82 GST (18%) = ₹175.82")
   })
 
   test("status from /me: active until, and the grace wording", () => {
@@ -283,15 +343,37 @@ describe("the /premium page", () => {
     expect(body({ status: grace })).toContain('data-premium-status="grace"')
   })
 
-  test("success says when Premium ends and links Post on Echo → /echo", () => {
-    const html = renderToStaticMarkup(<PurchaseBanner purchase={{ phase: "paid", endsAt: "2026-12-13T00:00:00Z" }} onCheckAgain={() => {}} onRetry={() => {}} onReset={() => {}} />)
+  test("the confirm step shows price, GST and total again; Pay names the server's amount", () => {
+    const checkout = M.toCheckout(checkoutBody)
+    expect(M.checkoutLines(checkout)).toEqual([
+      { label: "Price", value: "₹149" },
+      { label: "GST (18%)", value: "₹26.82" },
+      { label: "Total to pay", value: "₹175.82" },
+    ])
+    const html = renderToStaticMarkup(<PurchaseBanner purchase={{ phase: "review", plan: "premium_30d", checkout }} onPay={noop} onCheckAgain={noop} onRetry={noop} onReset={noop} />)
+    for (const t of ["Confirm your pass", "Price", "GST (18%)", "₹26.82", "Total to pay", "Pay ₹175.82", "Cancel"]) expect(html).toContain(t)
+  })
+
+  test("success says when Premium ends, shows price, GST and total paid, and links Post on Echo → /echo", () => {
+    const receipt = M.toPass(passBody).receipt!
+    expect(M.receiptLines(receipt)).toEqual([
+      { label: "Price", value: "₹149" },
+      { label: "GST (18%)", value: "₹26.82" },
+      { label: "Total paid", value: "₹175.82" },
+    ])
+    const html = renderToStaticMarkup(<PurchaseBanner purchase={{ phase: "paid", endsAt: "2026-12-13T10:00:00Z", receipt }} onCheckAgain={noop} onRetry={noop} onReset={noop} />)
     expect(html).toContain("Premium is active until 13 Dec 2026")
+    for (const t of ["Price", "₹149", "GST (18%)", "₹26.82", "Total paid", "₹175.82"]) expect(html).toContain(t)
     expect(html).toMatch(/<a[^>]*href="\/echo"[^>]*>Post on Echo<\/a>/)
   })
 
+  test("a pass opened before GST shows only the total it was charged", () => {
+    expect(M.receiptLines({ amountPaise: 9900, tax: null })).toEqual([{ label: "Total paid", value: "₹99" }])
+  })
+
   test("failure offers Try again; still confirming offers Check again", () => {
-    expect(renderToStaticMarkup(<PurchaseBanner purchase={{ phase: "failed", message: M.PREMIUM_WORDS.failed }} onCheckAgain={() => {}} onRetry={() => {}} onReset={() => {}} />)).toContain("Try again")
-    expect(renderToStaticMarkup(<PurchaseBanner purchase={{ phase: "still_confirming" }} onCheckAgain={() => {}} onRetry={() => {}} onReset={() => {}} />)).toContain("Check again")
+    expect(renderToStaticMarkup(<PurchaseBanner purchase={{ phase: "failed", message: M.PREMIUM_WORDS.failed }} onCheckAgain={noop} onRetry={noop} onReset={noop} />)).toContain("Try again")
+    expect(renderToStaticMarkup(<PurchaseBanner purchase={{ phase: "still_confirming" }} onCheckAgain={noop} onRetry={noop} onReset={noop} />)).toContain("Check again")
   })
 })
 
@@ -316,7 +398,7 @@ describe("the Settings entry", () => {
   })
 
   test("the hub draws the row only when told Premium is available", () => {
-    expect(renderToStaticMarkup(<SettingsHub onLogout={() => {}} />)).not.toContain('href="/premium"')
-    expect(renderToStaticMarkup(<SettingsHub onLogout={() => {}} premium />)).toContain('href="/premium"')
+    expect(renderToStaticMarkup(<SettingsHub onLogout={noop} />)).not.toContain('href="/premium"')
+    expect(renderToStaticMarkup(<SettingsHub onLogout={noop} premium />)).toContain('href="/premium"')
   })
 })

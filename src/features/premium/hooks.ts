@@ -3,8 +3,9 @@
 /*
   The network and timers behind /premium. Every decision is in model.ts.
 
-  The purchase: POST /checkout {"plan"} → the Razorpay dialog opened from
-  the server's client_session (lib/razorpay, the same helper memberships,
+  The purchase: POST /checkout {"plan"} → a review of the server's price,
+  GST and total (nothing is paid yet) → Pay opens the Razorpay dialog from
+  the server's client_session and amount_paise (the GST total) (lib/razorpay, the same helper memberships,
   the shop and Doorstep use) → poll GET /passes/:id until paid | failed |
   refunded, or about two minutes pass. The dialog's success handler only
   starts the poll; nothing on this side marks a pass paid.
@@ -30,6 +31,7 @@ import {
   type PassPoll,
   type PremiumPlan,
   type PurchaseEvent,
+  type RazorpayOpen,
 } from "./model"
 
 export const PREMIUM_KEYS = {
@@ -75,6 +77,8 @@ export function usePremiumPurchase() {
   const [poll, setPoll] = useState<{ passId: string; generation: number } | null>(null)
   const busy = useRef(false)
   const lastPlan = useRef<PremiumPlan | null>(null)
+  /** The open checkout waiting on Pay: its pass and the dialog's options. */
+  const pending = useRef<{ passId: string; options: RazorpayOpen } | null>(null)
 
   const send = useCallback((event: PurchaseEvent) => dispatch(event), [])
 
@@ -83,6 +87,7 @@ export function usePremiumPurchase() {
       if (busy.current) return
       busy.current = true
       lastPlan.current = plan
+      pending.current = null
       setPoll(null)
       send({ type: "start", plan: plan.code })
       try {
@@ -91,28 +96,44 @@ export function usePremiumPurchase() {
           checkout = await startPremiumCheckout(plan.code)
         } catch (error) {
           send({ type: "start_failed", error })
+          // GST could not be worked out, or the price moved: the cards'
+          // numbers may be stale, so read the plans again.
+          void qc.invalidateQueries({ queryKey: PREMIUM_KEYS.plans })
           return
         }
         const options = razorpayOptions(checkout, `Momentum Premium, ${plan.durationDays} days`)
-        send({ type: "started", canOpen: !!options })
-        if (!options) return
-        try {
-          await openRazorpayCheckout(options)
-        } catch {
-          // Closed without paying (or the SDK failed). Money may still have
-          // moved: read the pass quietly in the background via /me later.
-          send({ type: "dialog_dismissed" })
-          void qc.invalidateQueries({ queryKey: PREMIUM_KEYS.me })
-          return
-        }
-        send({ type: "dialog_completed" })
-        setPoll((p) => ({ passId: checkout.passId, generation: (p?.generation ?? 0) + 1 }))
+        send({ type: "started", canOpen: !!options, checkout })
+        if (options) pending.current = { passId: checkout.passId, options }
       } finally {
         busy.current = false
       }
     },
     [qc, send],
   )
+
+  /** Pay on the review: opens Razorpay for the server's amount_paise (the GST total). */
+  const pay = useCallback(async () => {
+    const open = pending.current
+    if (busy.current || !open) return
+    busy.current = true
+    pending.current = null
+    send({ type: "pay" })
+    try {
+      try {
+        await openRazorpayCheckout(open.options)
+      } catch {
+        // Closed without paying (or the SDK failed). Money may still have
+        // moved: read the pass quietly in the background via /me later.
+        send({ type: "dialog_dismissed" })
+        void qc.invalidateQueries({ queryKey: PREMIUM_KEYS.me })
+        return
+      }
+      send({ type: "dialog_completed" })
+      setPoll((p) => ({ passId: open.passId, generation: (p?.generation ?? 0) + 1 }))
+    } finally {
+      busy.current = false
+    }
+  }, [qc, send])
 
   useEffect(() => {
     if (!poll) return
@@ -162,10 +183,11 @@ export function usePremiumPurchase() {
   }, [buy])
 
   const reset = useCallback(() => {
+    pending.current = null
     setPoll(null)
     send({ type: "reset" })
     void qc.invalidateQueries({ queryKey: PREMIUM_KEYS.me })
   }, [qc, send])
 
-  return { state, buy, checkAgain, retryLast, reset }
+  return { state, buy, pay, checkAgain, retryLast, reset }
 }

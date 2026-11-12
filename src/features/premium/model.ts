@@ -1,17 +1,27 @@
 /*
   Momentum Premium on the wire, and every decision the /premium page makes,
-  as pure functions (the tests live in __tests__/model.test.ts).
+  as pure functions (the tests live in __tests__/premium.test.tsx).
 
   Server: monetization-service internal/http/premium_handler.go, behind the
   gateway at /v1/monetization/premium. Every response is wrapped in
   {"data": …}; errors are {"error": {"code", "message"}}.
 
-    GET  /premium/plans            {plans:[{code,name,duration_days,price_paise|null,currency,available}]}
+    GET  /premium/plans            {plans:[{code,name,duration_days,price_paise|null,taxable_paise|null,
+                                            gst_paise|null,total_paise|null,gst_rate_bp|null,
+                                            prices_exclude_gst,tax_provisional,currency,available}]}
     POST /premium/checkout         {"plan":"premium_30d"} and NOTHING else (DisallowUnknownFields)
                                    → 201 {pass_id,plan,duration_days,status:"pending_payment",
-                                          amount_paise,currency,intent_id,client_session|null}
+                                          amount_paise,currency,intent_id,client_session|null,
+                                          taxable_paise,gst_paise,total_paise,gst_rate_bp,…}
     GET  /premium/me               {active,in_grace,ends_at|null,grace_ends_at|null,renewal_plans}
-    GET  /premium/passes/:passId   {pass_id,plan,status:"confirming|paid|failed|refunded",…}
+    GET  /premium/passes/:passId   {pass_id,plan,status:"confirming|paid|failed|refunded",amount_paise,
+                                    taxable_paise,gst_paise,total_paise,gst_rate_bp,…}
+
+  Prices EXCLUDE GST (founder, 13 Nov 2026). price_paise is the taxable
+  value; GST is added on top and total_paise (= checkout amount_paise) is
+  what the buyer pays. The page shows the server's numbers only: no tax is
+  ever computed here. Golden bodies: monetization-service
+  testdata/contracts/premium, copied into __tests__/fixtures.
 
   The money rule (founder): payments-service takes the money and a pass is
   granted only by its signed payment event. Nothing here confirms anything.
@@ -39,14 +49,58 @@ export function unwrap(body: unknown): unknown {
   return "data" in o ? o.data : body
 }
 
+/* ── GST (prices exclude it) ────────────────────────────────────── */
+
+const paiseOrNull = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? Math.trunc(v) : null)
+
+/** The server's GST split of one price. Read, never computed. */
+export interface PremiumTax {
+  taxablePaise: number
+  gstPaise: number
+  totalPaise: number
+  /** 1800 = 18%. */
+  rateBp: number
+  provisional: boolean
+}
+
+/**
+  The breakdown from a plan, checkout or pass body, or null when the server
+  sent none (a pass opened before 13 Nov 2026, a plan with no price). All
+  four numbers must be there: a half breakdown is not shown.
+*/
+export function toTax(v: unknown): PremiumTax | null {
+  const o = obj(v)
+  const taxable = paiseOrNull(o.taxable_paise)
+  const gst = paiseOrNull(o.gst_paise)
+  const total = paiseOrNull(o.total_paise)
+  const rate = paiseOrNull(o.gst_rate_bp)
+  if (taxable === null || gst === null || total === null || rate === null || total <= 0) return null
+  return { taxablePaise: taxable, gstPaise: gst, totalPaise: total, rateBp: rate, provisional: o.tax_provisional === true }
+}
+
+/** Rupees from paise, en-IN: "₹149", "₹26.82", "₹1,768.82". */
+export const rupees = (paise: number): string => formatPrice(paise, "en-IN")
+
+/** "18%" from 1800 basis points; "12.5%" from 1250. */
+export function gstRate(rateBp: number): string {
+  return `${Number((rateBp / 100).toFixed(2))}%`
+}
+
+/** "₹149 + ₹26.82 GST (18%) = ₹175.82", the server's numbers as they are. */
+export function breakdownLine(t: PremiumTax): string {
+  return `${rupees(t.taxablePaise)} + ${rupees(t.gstPaise)} GST (${gstRate(t.rateBp)}) = ${rupees(t.totalPaise)}`
+}
+
 /* ── plans ──────────────────────────────────────────────────────── */
 
 export interface PremiumPlan {
   code: string
   name: string
   durationDays: number
-  /** null while the founder has not set a price. */
+  /** The price before GST; null while the founder has not set a price. */
   pricePaise: number | null
+  /** The server's GST on top of it; null when it could not be worked out. */
+  tax: PremiumTax | null
   currency: string
   available: boolean
 }
@@ -55,12 +109,12 @@ export function toPlan(v: unknown): PremiumPlan | null {
   const o = obj(v)
   const code = str(o.code)
   if (!code) return null
-  const price = typeof o.price_paise === "number" && Number.isFinite(o.price_paise) ? Math.trunc(o.price_paise) : null
   return {
     code,
     name: str(o.name),
     durationDays: int(o.duration_days),
-    pricePaise: price,
+    pricePaise: paiseOrNull(o.price_paise),
+    tax: toTax(o),
     currency: str(o.currency) || "INR",
     available: o.available === true,
   }
@@ -74,17 +128,25 @@ export function toPlans(body: unknown): PremiumPlan[] {
   return toPlanList(obj(unwrap(body)).plans)
 }
 
-/** A plan can be bought only with a price the server set AND its own yes. */
+/**
+  A plan can be bought only with a price the server set, its GST and total
+  (never shown at the pre-tax price alone), AND its own yes.
+*/
 export function canBuy(plan: PremiumPlan): boolean {
-  return plan.available && plan.pricePaise !== null && plan.pricePaise > 0
+  return plan.available && plan.pricePaise !== null && plan.pricePaise > 0 && plan.tax !== null
 }
 
 export const NOT_AVAILABLE = "Not available"
 
-/** "₹99" (en-IN), or "Not available" when there is no price to show. */
+/** "₹149" (en-IN, before GST), or "Not available" when it can't be bought. */
 export function planPrice(plan: PremiumPlan): string {
   if (!canBuy(plan) || plan.pricePaise === null) return NOT_AVAILABLE
-  return formatPrice(plan.pricePaise, "en-IN")
+  return rupees(plan.pricePaise)
+}
+
+/** The card's breakdown line, or "" when the plan can't be bought. */
+export function planBreakdown(plan: PremiumPlan): string {
+  return canBuy(plan) && plan.tax ? breakdownLine(plan.tax) : ""
 }
 
 /** The pass's length in words: "30 days", "365 days", "1 day". */
@@ -179,6 +241,8 @@ export interface PremiumCheckout {
   currency: string
   intentId: string
   session: ClientSession | null
+  /** The GST split of amountPaise; null on a pass opened before 13 Nov 2026. */
+  tax: PremiumTax | null
 }
 
 export function toCheckout(body: unknown): PremiumCheckout {
@@ -192,6 +256,7 @@ export function toCheckout(body: unknown): PremiumCheckout {
     amountPaise: int(o.amount_paise),
     currency: str(o.currency) || "INR",
     intentId: str(o.intent_id),
+    tax: toTax(o),
     session: s
       ? { provider: str(s.provider), orderId: str(s.order_id), keyId: str(s.key_id), merchantName: str(s.merchant_display_name) }
       : null,
@@ -215,24 +280,69 @@ export interface RazorpayOpen {
 export function razorpayOptions(c: PremiumCheckout, description: string): RazorpayOpen | null {
   const s = c.session
   if (!c.passId || !s || s.provider !== "razorpay" || !s.keyId || !s.orderId || c.amountPaise <= 0) return null
+  if (checkoutAmountsDisagree(c)) return null
   return { key: s.keyId, order_id: s.orderId, amount: c.amountPaise, currency: c.currency, name: s.merchantName || MERCHANT_FALLBACK_NAME, description }
+}
+
+/**
+  The server says the charge (amount_paise) is the GST total; if the two
+  ever disagree the dialog is not opened (the server answers
+  PREMIUM_AMOUNT_MISMATCH for the same thing on its side).
+*/
+export function checkoutAmountsDisagree(c: Pick<PremiumCheckout, "amountPaise" | "tax">): boolean {
+  return c.tax !== null && c.tax.totalPaise !== c.amountPaise
 }
 
 /* ── the pass poll ──────────────────────────────────────────────── */
 
 export type PassStatus = "confirming" | "paid" | "failed" | "refunded"
 
+/** What a paid pass cost: the total charged and, when sent, its GST split. */
+export interface PremiumReceipt {
+  amountPaise: number
+  tax: PremiumTax | null
+}
+
 export interface PassReading {
   passId: string
   status: PassStatus
   endsAt: string | null
+  receipt: PremiumReceipt | null
 }
 
 export function toPass(body: unknown): PassReading {
   const o = obj(unwrap(body))
   const raw = str(o.status)
   const status: PassStatus = raw === "paid" || raw === "failed" || raw === "refunded" ? raw : "confirming"
-  return { passId: str(o.pass_id), status, endsAt: str(o.ends_at) || null }
+  const amount = int(o.amount_paise)
+  const tax = toTax(o)
+  const receipt = amount > 0 || tax ? { amountPaise: amount > 0 ? amount : (tax?.totalPaise ?? 0), tax } : null
+  return { passId: str(o.pass_id), status, endsAt: str(o.ends_at) || null, receipt }
+}
+
+export interface ReceiptLine {
+  label: string
+  value: string
+}
+
+/** The success view's lines: Price, GST (18%), Total paid. */
+export function receiptLines(r: PremiumReceipt): ReceiptLine[] {
+  if (!r.tax) return [{ label: "Total paid", value: rupees(r.amountPaise) }]
+  return [
+    { label: "Price", value: rupees(r.tax.taxablePaise) },
+    { label: `GST (${gstRate(r.tax.rateBp)})`, value: rupees(r.tax.gstPaise) },
+    { label: "Total paid", value: rupees(r.amountPaise) },
+  ]
+}
+
+/** The confirm step's lines: Price, GST (18%), Total to pay — the checkout's numbers. */
+export function checkoutLines(c: Pick<PremiumCheckout, "amountPaise" | "tax">): ReceiptLine[] {
+  if (!c.tax) return [{ label: "Total to pay", value: rupees(c.amountPaise) }]
+  return [
+    { label: "Price", value: rupees(c.tax.taxablePaise) },
+    { label: `GST (${gstRate(c.tax.rateBp)})`, value: rupees(c.tax.gstPaise) },
+    { label: "Total to pay", value: rupees(c.amountPaise) },
+  ]
 }
 
 /** About two minutes, then "still confirming" (the payment may yet land). */
@@ -243,11 +353,13 @@ export interface PassPoll {
   reads: number
   elapsedMs: number
   endsAt: string | null
+  /** What the pass cost, from the read that ended the poll. */
+  receipt: PremiumReceipt | null
   /** The HTTP status that ended a `stopped` poll. */
   stoppedByStatus: number
 }
 
-export const initialPassPoll: PassPoll = { phase: "confirming", reads: 0, elapsedMs: 0, endsAt: null, stoppedByStatus: 0 }
+export const initialPassPoll: PassPoll = { phase: "confirming", reads: 0, elapsedMs: 0, endsAt: null, receipt: null, stoppedByStatus: 0 }
 
 export const passPollDone = (p: Pick<PassPoll, "phase">) => p.phase !== "confirming"
 
@@ -268,7 +380,7 @@ function dueOut(p: PassPoll): PassPoll {
 /** A read that answered, after a wait of `waitedMs`. */
 export function passPollRead(p: PassPoll, waitedMs: number, reading: PassReading): PassPoll {
   const next: PassPoll = { ...p, reads: p.reads + 1, elapsedMs: p.elapsedMs + waitedMs }
-  if (reading.status !== "confirming") return { ...next, phase: reading.status, endsAt: reading.endsAt }
+  if (reading.status !== "confirming") return { ...next, phase: reading.status, endsAt: reading.endsAt, receipt: reading.receipt }
   return dueOut(next)
 }
 
@@ -301,6 +413,8 @@ export const PREMIUM_WORDS = {
   notEnabled: "Premium is not available yet",
   notEnabledDetail: "We'll let you know when you can get it.",
   priceNotSet: "This pass can't be bought yet.",
+  taxUnavailable: "This pass can't be bought right now: we couldn't work out its GST. You haven't been charged. Try again later.",
+  amountMismatch: "The price changed while checkout was opening. You haven't been charged. Reload the page and try again.",
   unknownPlan: "That pass isn't on sale any more. Pick another one.",
   paymentsUnavailable: "Payments are unavailable right now. Try again in a few minutes.",
   sessionUnavailable: "Checkout could not be opened. Try again.",
@@ -319,6 +433,8 @@ export const PREMIUM_WORDS = {
 const ERROR_WORDS: Record<string, string> = {
   PREMIUM_NOT_ENABLED: PREMIUM_WORDS.notEnabled,
   PREMIUM_PRICE_NOT_SET: PREMIUM_WORDS.priceNotSet,
+  PREMIUM_TAX_UNAVAILABLE: PREMIUM_WORDS.taxUnavailable,
+  PREMIUM_AMOUNT_MISMATCH: PREMIUM_WORDS.amountMismatch,
   UNKNOWN_PLAN: PREMIUM_WORDS.unknownPlan,
   PREMIUM_PAYMENTS_UNAVAILABLE: PREMIUM_WORDS.paymentsUnavailable,
   PAYMENT_SESSION_UNAVAILABLE: PREMIUM_WORDS.sessionUnavailable,
@@ -340,9 +456,11 @@ export function premiumErrorMessage(err: unknown): string {
 export type PurchasePhase =
   | { phase: "idle" }
   | { phase: "starting"; plan: string }
+  /** The server's checkout is open: the breakdown is shown, nothing paid yet. */
+  | { phase: "review"; plan: string; checkout: PremiumCheckout }
   | { phase: "dialog"; plan: string }
   | { phase: "confirming"; plan: string }
-  | { phase: "paid"; endsAt: string | null }
+  | { phase: "paid"; endsAt: string | null; receipt: PremiumReceipt | null }
   | { phase: "failed"; message: string }
   | { phase: "still_confirming" }
   | { phase: "dismissed"; plan: string }
@@ -352,8 +470,10 @@ export type PurchasePhase =
 
 export type PurchaseEvent =
   | { type: "start"; plan: string }
-  | { type: "started"; canOpen: boolean }
+  | { type: "started"; canOpen: boolean; checkout: PremiumCheckout }
   | { type: "start_failed"; error: unknown }
+  /** Pay pressed on the review: the Razorpay dialog opens. */
+  | { type: "pay" }
   | { type: "dialog_completed" }
   | { type: "dialog_dismissed" }
   | { type: "poll"; poll: PassPoll }
@@ -369,7 +489,10 @@ export function purchaseReducer(state: PurchasePhase, event: PurchaseEvent): Pur
     case "start":
       return { phase: "starting", plan: event.plan }
     case "started":
-      return event.canOpen ? { phase: "dialog", plan: planOf(state) } : { phase: "failed", message: PREMIUM_WORDS.noOnlinePayment }
+      if (checkoutAmountsDisagree(event.checkout)) return { phase: "failed", message: PREMIUM_WORDS.amountMismatch }
+      return event.canOpen ? { phase: "review", plan: planOf(state), checkout: event.checkout } : { phase: "failed", message: PREMIUM_WORDS.noOnlinePayment }
+    case "pay":
+      return state.phase === "review" ? { phase: "dialog", plan: state.plan } : state
     case "start_failed":
       if (isPremiumOff(event.error)) return { phase: "unavailable" }
       return { phase: "error", plan: planOf(state), message: premiumErrorMessage(event.error) }
@@ -380,7 +503,7 @@ export function purchaseReducer(state: PurchasePhase, event: PurchaseEvent): Pur
     case "poll": {
       const p = event.poll
       if (!passPollDone(p)) return state.phase === "confirming" ? state : { phase: "confirming", plan: planOf(state) }
-      if (p.phase === "paid") return { phase: "paid", endsAt: p.endsAt }
+      if (p.phase === "paid") return { phase: "paid", endsAt: p.endsAt, receipt: p.receipt }
       if (p.phase === "failed") return { phase: "failed", message: PREMIUM_WORDS.failed }
       if (p.phase === "refunded") return { phase: "failed", message: PREMIUM_WORDS.refunded }
       if (p.phase === "timed_out") return { phase: "still_confirming" }
@@ -395,7 +518,7 @@ export function purchaseReducer(state: PurchasePhase, event: PurchaseEvent): Pur
 
 /** Busy: the page must not take another Buy press. */
 export function purchaseBusy(s: PurchasePhase): boolean {
-  return s.phase === "starting" || s.phase === "dialog" || s.phase === "confirming"
+  return s.phase === "starting" || s.phase === "review" || s.phase === "dialog" || s.phase === "confirming"
 }
 
 export function paidWords(endsAt: string | null): string {
