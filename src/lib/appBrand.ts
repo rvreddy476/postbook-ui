@@ -12,10 +12,11 @@ import {
   Tv,
   Users,
   Home, Compass, SquarePlus, Bookmark, History, ListVideo,
-  Bell, BookOpen, Flame, Bike, UtensilsCrossed,
+  Bell, BookOpen, Flame, Bike, UtensilsCrossed, AtSign,
   type LucideIcon,
 } from "lucide-react";
 import { PARKED_NAV_IDS, parkedAppKeys } from "@/lib/parkedProducts";
+import { hiddenAppKeys } from "@/lib/productFeatures";
 
 /*
   One product, many apps. The header names the app the viewer is inside —
@@ -175,6 +176,8 @@ export const ALL_APP_LAUNCHER: readonly AppLauncherTile[] = [
   { key: "match", name: "Pulse", description: "Meet people near you", href: "/dating", icon: Heart },
   { key: "trending", name: "Trending", description: "What is popular right now", href: "/trending", icon: Flame },
   { key: "memories", name: "Memories", description: "On this day, years ago", href: "/memories", icon: BookOpen },
+  // Echo: only while GET /v1/features says echo is open (it fails closed without an answer).
+  { key: "echo", name: "Echo", description: "Short notes and conversations", href: "/echo", icon: AtSign },
   { key: "saved", name: "Saved", description: "Everything you bookmarked", href: "/saved", icon: Bookmark },
   { key: "notifications", name: "Notifications", description: "Activity on your posts and profile", href: "/notifications", icon: Bell },
   { key: "feast", name: "Feast", description: "Food delivery", href: "/feast", icon: UtensilsCrossed },
@@ -191,7 +194,8 @@ export function launchedTiles(
   return tiles.filter((tile) => !hiddenKeys.has(tile.key));
 }
 
-export const APP_LAUNCHER: readonly AppLauncherTile[] = launchedTiles(ALL_APP_LAUNCHER);
+/** With no features answer: the parked list plus every product that fails closed (Echo). */
+export const APP_LAUNCHER: readonly AppLauncherTile[] = launchedTiles(ALL_APP_LAUNCHER, PARKED_NAV_IDS, hiddenAppKeys(null));
 
 /**
  * Tiles whose name or description contains the query, case-insensitively.

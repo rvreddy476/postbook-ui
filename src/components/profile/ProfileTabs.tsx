@@ -16,13 +16,14 @@ import {
     Clapperboard,
     Lock,
     Repeat2,
+    AtSign,
 } from "lucide-react"
 
 /**
  * The tabs a profile can show. Orders and Bookings are gone (they were
  * "Coming soon" placeholders; orders live in the shop); Reposts is new.
  */
-export type ProfileTabKey = ProfileTab | "reposts"
+export type ProfileTabKey = ProfileTab | "reposts" | "echo"
 
 interface ProfileTabsProps {
     activeTab: ProfileTabKey
@@ -37,6 +38,8 @@ interface ProfileTabsProps {
     hasAppearances?: boolean
     /** The person offers a membership level; the "Members" tab shows only then. */
     hasMembers?: boolean
+    /** Echo is open (GET /v1/features "echo"); the "Echo" tab shows only then. */
+    echoOpen?: boolean
     isSticky?: boolean
 }
 
@@ -62,6 +65,8 @@ const tabDefinitions: TabDef[] = [
     { key: "appears", label: "Appears in", icon: Clapperboard, requiresContent: true },
     // Posts this person reposted (post-service GET /v1/creators/:id/reposts).
     { key: "reposts", label: "Reposts", icon: Repeat2 },
+    // Echo notes, replies and reposts (GET /v1/notes/users/:id), only while Echo is open.
+    { key: "echo", label: "Echo", icon: AtSign, requiresContent: true },
     { key: "stashed", label: "Saved", icon: Bookmark, selfOnly: true },
     // The viewer's liked reels; post-service serves likes to their owner only.
     { key: "liked", label: "Liked", icon: Heart, selfOnly: true },
@@ -92,12 +97,15 @@ export function visibleProfileTabKeys({
     hasAppearances = false,
     hasMembers = false,
     repostsEnabled = REPOSTS_TAB_ENABLED,
+    echoOpen = false,
 }: {
     isOwn: boolean
     hasMedia?: boolean
     hasAppearances?: boolean
     hasMembers?: boolean
     repostsEnabled?: boolean
+    /** Closed (or unknown) by default: a closed product leaves no way in. */
+    echoOpen?: boolean
 }): ProfileTabKey[] {
     return tabDefinitions
         .filter((tab) => {
@@ -107,6 +115,7 @@ export function visibleProfileTabKeys({
             if (tab.key === "members" && !hasMembers) return false
             if (tab.key === "qa" && !QA_TAB_ENABLED) return false
             if (tab.key === "reposts" && !repostsEnabled) return false
+            if (tab.key === "echo" && !echoOpen) return false
             return true
         })
         .map((tab) => tab.key)
@@ -119,12 +128,13 @@ export function ProfileTabs({
     hasMedia,
     hasAppearances = false,
     hasMembers = false,
+    echoOpen = false,
 }: ProfileTabsProps) {
     const scrollRef = useRef<HTMLDivElement>(null)
     const [canScrollLeft, setCanScrollLeft] = useState(false)
     const [canScrollRight, setCanScrollRight] = useState(false)
 
-    const visibleKeys = new Set(visibleProfileTabKeys({ isOwn, hasMedia, hasAppearances, hasMembers }))
+    const visibleKeys = new Set(visibleProfileTabKeys({ isOwn, hasMedia, hasAppearances, hasMembers, echoOpen }))
     const visibleTabs = tabDefinitions.filter((tab) => visibleKeys.has(tab.key))
 
     useEffect(() => {

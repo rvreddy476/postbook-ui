@@ -24,7 +24,8 @@ describe('launch navigation', () => {
   })
 
   test('unparking brings an entry back in its old place, pages untouched', () => {
-    const parked = new Set(PARKED_NAV_IDS)
+    // Echo is not parked; it rides on GET /v1/features alone (features/echo gating test), so leave it out here.
+    const parked = new Set([...PARKED_NAV_IDS, 'Echo'])
     parked.delete('Feast')
     const more = launchedItems(ALL_MORE_ITEMS, parked)
     expect(ids(more)).toEqual(['Trending', 'Messenger', 'Notifications', 'PostTube', 'GoLive', 'Shop', 'Feast', 'Saved'])

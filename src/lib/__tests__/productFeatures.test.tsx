@@ -116,7 +116,7 @@ describe('the ways in follow the answer', () => {
   test('rail: the parked list, plus every rail id of a closed product', () => {
     expect([...hiddenNavIds(allOpen)].sort()).toEqual([...PARKED_NAV_IDS].sort())
     const none = new Set<string>()
-    expect(hiddenNavIds(allClosed, none)).toEqual(new Set(['Groups', 'Ask', 'Pages', 'Memories', 'Feast', 'PostMatch', 'Doorstep']))
+    expect(hiddenNavIds(allClosed, none)).toEqual(new Set(['Groups', 'Ask', 'Pages', 'Memories', 'Feast', 'PostMatch', 'Doorstep', 'Echo']))
     expect(hiddenNavIds(only('groups', 'qa'), none).has('Groups')).toBe(false)
     const rail = launchedItems([...ALL_PRIMARY_ITEMS, ...ALL_MORE_ITEMS], hiddenNavIds(allClosed, none)).map((i) => i.id)
     expect(rail).not.toContain('Feast')

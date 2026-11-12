@@ -2,6 +2,7 @@ import { notificationActor, notificationActorId, notificationIcon, notificationT
 import { tubePathnameToPosttube } from '@/features/posttube/tubeRedirect'
 import { membershipNotificationCopy } from '@/features/memberships/model'
 import { copyrightNotificationCopy } from '@/features/copyright/model'
+import { echoNotificationCopy, echoNotificationHref } from '@/features/echo/notifications'
 
 export interface InboxNotification {
   id: string
@@ -176,6 +177,9 @@ export function creditNotificationHref(type: string, rowLink: string | undefined
   // Copyright title review: a hold or a block opens Creator Hub, a clear opens the video on /posttube.
   const copyright = copyrightNotificationCopy(type, undefined, rowLink ? notificationWebLink(rowLink) : undefined)
   if (copyright) return copyright.link
+  // Echo: a reply or a quote opens the note (/echo/note/{id}).
+  const echo = echoNotificationHref(type, rowLink ? notificationWebLink(rowLink) : undefined)
+  if (echo) return echo
   return undefined
 }
 
@@ -209,7 +213,8 @@ export function decodeNotificationPage(value: unknown): { notifications: InboxNo
       creditNotificationCopy(n.type, actorName, serverTitle, link) ??
       followRequestNotificationCopy(n.type, actorName, serverTitle, link, actor) ??
       membershipNotificationCopy(n.type, actorName, serverTitle, link) ??
-      copyrightNotificationCopy(n.type, serverTitle, link)
+      copyrightNotificationCopy(n.type, serverTitle, link) ??
+      echoNotificationCopy(n.type, actorName, serverTitle, link)
     // The web's own wording wins for the types it knows; the server's
     // sentence only replaces the generic fallback line.
     return {

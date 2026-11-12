@@ -15,6 +15,8 @@ import { withShareRef } from "@/features/share/shareRef"
 import { ProfileTabs, type ProfileTabKey } from "./ProfileTabs"
 import { PinnedPosts } from "./PinnedPosts"
 import { RepostsTab } from "./tabs/RepostsTab"
+import { ProfileEchoTab } from "@/features/echo/screens"
+import { useProductOpen } from "@/hooks/useProductFeatures"
 import ProfileQASection from "./ProfileQASection"
 import { CreationsTab } from "./tabs/CreationsTab"
 import { AboutTab } from "./tabs/AboutTab"
@@ -284,6 +286,12 @@ export function ProfilePage({ username }: ProfilePageProps) {
     const localUser = useAuthUser()
     const router = useRouter()
     const [activeTab, setActiveTab] = useState<ProfileTabKey>("posts")
+    // Echo's tab exists only while the product is open (GET /v1/features "echo"; closed without an answer).
+    const echoOpen = useProductOpen("echo")
+    // Echo's "Your notes" link lands here with ?tab=echo.
+    useEffect(() => {
+        if (echoOpen && typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tab") === "echo") setActiveTab("echo")
+    }, [echoOpen])
     const [blockDialogOpen, setBlockDialogOpen] = useState(false)
     const [unblockDialogOpen, setUnblockDialogOpen] = useState(false)
     const [isMuted, setIsMuted] = useState(false)
@@ -616,6 +624,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
                         hasMedia={false}
                         hasAppearances={hasAppearances}
                         hasMembers={hasMembers}
+                        echoOpen={echoOpen}
                         isSticky={isTabsSticky}
                     />
                 </div>
@@ -670,6 +679,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
                                 {activeTab === "reposts" && (
                                     <RepostsTab userId={profile.id} isOwn={isOwn} />
                                 )}
+                                {activeTab === "echo" && echoOpen && <ProfileEchoTab userId={profile.id} />}
                                 {activeTab === "stashed" && isOwn && <StashedTab userId={profile.id} />}
                                 {activeTab === "liked" && isOwn && <LikedTab />}
                                 {activeTab === "portfolio" && (

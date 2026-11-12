@@ -13,7 +13,8 @@
 
   push               shows the notification (title/body from the payload).
   notificationclick  focuses or opens the deep link — same-origin paths only.
-                     Anything else (another site, momentum:// app links,
+                     Anything else (another site, momentum:// app links
+                     other than an Echo note, see echoNotePath,
                      javascript:, protocol-relative //host) is ignored and
                      the app's home is focused or opened instead.
 */
@@ -42,6 +43,17 @@ function sameOriginPath(link, origin) {
   return url.pathname + url.search + url.hash;
 }
 
+/*
+  The one app link the web also has a page for: an Echo note
+  (momentum://echo/note/{id}, notification types note_reply / note_quote)
+  opens /echo/note/{id}. Only that exact shape; every other momentum:// link
+  is still dropped.
+*/
+function echoNotePath(link) {
+  var m = /^momentum:\/\/echo\/note\/([0-9A-Za-z-]{1,64})$/.exec(text(link));
+  return m ? "/echo/note/" + m[1] : "";
+}
+
 function readPayload(data) {
   if (!data) return {};
   try {
@@ -64,7 +76,7 @@ function notificationFor(payload, origin) {
   var options = {
     body: text(n.body) || text(d.body),
     icon: ICON,
-    data: { path: sameOriginPath(d.deep_link || d.link || fcm.link || n.click_action, origin) },
+    data: { path: sameOriginPath(echoNotePath(d.deep_link) || d.deep_link || d.link || fcm.link || n.click_action, origin) },
   };
   var tag = text(d.collapse_key) || text(payload.collapse_key);
   if (tag) options.tag = tag;

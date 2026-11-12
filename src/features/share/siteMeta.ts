@@ -444,3 +444,29 @@ export function hashtagCard(tag: string, total: number | null | undefined, first
     image: cover ? { url: cover, alt: `#${clean}` } : null,
   };
 }
+
+/**
+ * An Echo note at /echo/note/<id> (GET /v1/notes/:id read signed out). The
+ * author and the note's own words; the first picture, when it has one.
+ * null for anything that is not a public note, so the route sends the
+ * neutral card and names nothing.
+ */
+export function noteCard(note: WirePost | null | undefined, bases: ShareBases): ShareCard | null {
+  if (!postIsPublic(note) || note.content_type !== "note") return null;
+  const who = byline(note);
+  const handle = (note.author?.username ?? "").trim();
+  const name = (note.author?.display_name ?? "").trim();
+  const title = name && handle ? `${name} (@${handle}) on Echo` : who ? `${who} on Echo` : `A note on Echo`;
+  const description = clip(note.text) || (who ? `A note by ${who} on ${SHARE_SITE_NAME}` : `On ${SHARE_SITE_NAME}`);
+  const photo = (note.media ?? [])
+    .filter((m) => m && (m.kind === "image" || m.kind === "photo" || m.kind === "gif") && isShareId(m.media_id))
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))[0];
+  const url = mediaImageUrl(bases, photo?.media_id);
+  return {
+    title,
+    description,
+    path: `/echo/note/${encodeURIComponent(note.id as string)}`,
+    type: "article",
+    image: url ? { url, width: photo?.width ?? undefined, height: photo?.height ?? undefined, alt: title } : null,
+  };
+}

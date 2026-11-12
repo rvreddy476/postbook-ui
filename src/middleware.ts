@@ -94,6 +94,10 @@ const PUBLIC_PREFIXES = [
     "/channel/",
     // Content permalinks people paste into other apps.
     "/post/",
+    // A single Echo note (founder default 11: single notes are readable
+    // signed out, for shared links). GET /v1/notes/:id answers a stranger
+    // for a public note. The timelines (/echo) need a session and stay gated.
+    "/echo/note/",
     // An Action button's redirect (/l/<id>, the "You're leaving VChat"
     // page): a public post's button must open for a visitor with no
     // session. GET /v1/links/:id is a public route.

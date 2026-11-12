@@ -15,6 +15,7 @@ import {
   isShareId,
   isShareRef,
   neutralMetadata,
+  noteCard,
   postCard,
   profileCard,
   shareBasesFromProcess,
@@ -95,4 +96,13 @@ export async function hashtagPageMetadata(segment: string): Promise<Metadata> {
   const first = Array.isArray(data?.data) ? data.data[0] ?? null : null;
   const card = hashtagCard(tag, data?.meta?.total ?? null, first, bases);
   return card ? cardMetadata(card, bases) : neutralMetadata(bases, path);
+}
+
+/** /echo/note/<id>: GET /v1/notes/:id. A closed Echo (503) or a hidden note gets the neutral card. */
+export async function notePageMetadata(noteId: string): Promise<Metadata> {
+  const bases = shareBasesFromProcess();
+  if (!isShareId(noteId)) return neutralMetadata(bases);
+  const { data } = await publicFetch<WirePost>(`/v1/notes/${encodeURIComponent(noteId)}`);
+  const card = noteCard(data, bases);
+  return card ? cardMetadata(card, bases) : neutralMetadata(bases, `/echo/note/${encodeURIComponent(noteId)}`);
 }

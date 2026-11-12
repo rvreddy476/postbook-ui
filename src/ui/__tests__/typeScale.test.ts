@@ -41,6 +41,9 @@ const SOCIAL_DIRS = [
   "src/app/hashtag",
   "src/features/hashtag",
   "src/app/settings/followed-hashtags",
+  // Echo, premium short notes (12 Nov 2026).
+  "src/features/echo",
+  "src/app/echo",
 ];
 const SOCIAL_FILES = "src/components/{PostCard,CommentSection,CommentPreview,Feed*}.tsx";
 

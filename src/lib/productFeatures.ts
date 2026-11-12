@@ -39,6 +39,8 @@ export const PRODUCT_KEYS = [
   'rider',
   'dating',
   'doorstep',
+  // Echo, premium short notes (modernsmapp docs/designs/echo-contract.md).
+  'echo',
 ] as const
 
 export type ProductKey = (typeof PRODUCT_KEYS)[number]
@@ -49,8 +51,12 @@ export type ProductFlags = Readonly<Record<ProductKey, boolean>>
 /** What the client knows: the route's flags, or null when the route failed or has not answered. */
 export type FeatureState = ProductFlags | null
 
-/** Hidden when the route cannot be read, whatever the parked list says. */
-const HIDDEN_WITHOUT_ROUTE: ReadonlySet<ProductKey> = new Set(['broadcast_channels', 'communities'])
+/**
+ * Hidden when the route cannot be read, whatever the parked list says. Echo
+ * fails closed as well: it stays switched off on the server until it
+ * launches, so no answer must never open a way in, or its pages.
+ */
+const HIDDEN_WITHOUT_ROUTE: ReadonlySet<ProductKey> = new Set(['broadcast_channels', 'communities', 'echo'])
 
 /** The app keys (lib/appBrand.ts brands and launcher tiles) each product stands for. */
 export const APP_KEYS_BY_PRODUCT: Readonly<Record<ProductKey, readonly string[]>> = {
@@ -64,6 +70,7 @@ export const APP_KEYS_BY_PRODUCT: Readonly<Record<ProductKey, readonly string[]>
   rider: ['ride'],
   dating: ['match'],
   doorstep: ['doorstep'],
+  echo: ['echo'],
 }
 
 /** The rail ids (components/sidebarNav.ts) each product owns. */
@@ -78,6 +85,7 @@ export const NAV_IDS_BY_PRODUCT: Readonly<Record<ProductKey, readonly string[]>>
   rider: [],
   dating: ['PostMatch'],
   doorstep: ['Doorstep'],
+  echo: ['Echo'],
 }
 
 /**
@@ -150,6 +158,7 @@ export const PRODUCT_ROUTES: Readonly<Record<ProductKey, readonly string[]>> = {
   rider: ['/mopedu'],
   dating: ['/dating', '/postmatch'],
   doorstep: ['/doorstep', '/doorstep-pro'],
+  echo: ['/echo'],
 }
 
 /** The product a pathname belongs to, or null for everything else. */

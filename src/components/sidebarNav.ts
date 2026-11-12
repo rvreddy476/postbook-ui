@@ -1,6 +1,7 @@
 import {
   Bell,
   BookOpen,
+  AtSign,
   Bookmark,
   Briefcase,
   Film,
@@ -18,6 +19,7 @@ import {
   Video,
 } from 'lucide-react';
 import { PARKED_NAV_IDS } from '@/lib/parkedProducts';
+import { hiddenNavIds } from '@/lib/productFeatures';
 
 /*
   The web rail and its More menu (components/Sidebar.tsx).
@@ -74,6 +76,8 @@ export const ALL_MORE_ITEMS: readonly SidebarItem[] = [
   { id: 'Feast', label: 'Feast', icon: UtensilsCrossed, href: '/feast', color: 'text-current' },
   { id: 'Doorstep', label: 'Doorstep', icon: House, href: '/doorstep', color: 'text-current' },
   { id: 'PostMatch', label: 'Pulse', icon: Heart, href: '/dating', color: 'text-current' },
+  // Echo (premium short notes): shown only while GET /v1/features says echo is open.
+  { id: 'Echo', label: 'Echo', icon: AtSign, href: '/echo', color: 'text-current' },
   { id: 'Saved', label: 'Saved', icon: Bookmark, href: '/saved', color: 'text-current' },
   { id: 'Memories', label: 'Memories', icon: BookOpen, href: '/memories', color: 'text-current' },
 ];
@@ -83,5 +87,7 @@ export function launchedItems(items: readonly SidebarItem[], parked: ReadonlySet
   return items.filter((item) => !parked.has(item.id));
 }
 
-export const primaryItems: readonly SidebarItem[] = launchedItems(ALL_PRIMARY_ITEMS);
-export const moreItems: readonly SidebarItem[] = launchedItems(ALL_MORE_ITEMS);
+// The static lists assume no features answer yet: the parked list plus every
+// product that fails closed (Echo), so nothing reading them can leak a way in.
+export const primaryItems: readonly SidebarItem[] = launchedItems(ALL_PRIMARY_ITEMS, hiddenNavIds(null));
+export const moreItems: readonly SidebarItem[] = launchedItems(ALL_MORE_ITEMS, hiddenNavIds(null));
