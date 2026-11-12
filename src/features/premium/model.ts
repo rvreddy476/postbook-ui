@@ -1,0 +1,404 @@
+/*
+  Momentum Premium on the wire, and every decision the /premium page makes,
+  as pure functions (the tests live in __tests__/model.test.ts).
+
+  Server: monetization-service internal/http/premium_handler.go, behind the
+  gateway at /v1/monetization/premium. Every response is wrapped in
+  {"data": …}; errors are {"error": {"code", "message"}}.
+
+    GET  /premium/plans            {plans:[{code,name,duration_days,price_paise|null,currency,available}]}
+    POST /premium/checkout         {"plan":"premium_30d"} and NOTHING else (DisallowUnknownFields)
+                                   → 201 {pass_id,plan,duration_days,status:"pending_payment",
+                                          amount_paise,currency,intent_id,client_session|null}
+    GET  /premium/me               {active,in_grace,ends_at|null,grace_ends_at|null,renewal_plans}
+    GET  /premium/passes/:passId   {pass_id,plan,status:"confirming|paid|failed|refunded",…}
+
+  The money rule (founder): payments-service takes the money and a pass is
+  granted only by its signed payment event. Nothing here confirms anything.
+  The client never sends an amount: the checkout body is built by
+  `checkoutRequest` alone and carries the plan code only. The amount in the
+  Razorpay options is the server's `amount_paise`, handed back to Razorpay
+  for its dialog, never sent to our server. After the dialog, the pass's
+  status — read by polling — is the only verdict.
+*/
+
+import { delayForRead, isPermanentStatus } from "@/features/shop/orders/paymentPoll"
+import { formatDate, formatPrice, MERCHANT_FALLBACK_NAME } from "@/features/memberships/model"
+
+export const PREMIUM_BASE = "/v1/monetization/premium"
+
+/* ── small readers ──────────────────────────────────────────────── */
+
+const obj = (v: unknown): Record<string, unknown> => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {})
+const str = (v: unknown): string => (typeof v === "string" ? v : "")
+const int = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? Math.trunc(v) : 0)
+
+/** The service's envelope: {"data": …}. A bare body is read as is. */
+export function unwrap(body: unknown): unknown {
+  const o = obj(body)
+  return "data" in o ? o.data : body
+}
+
+/* ── plans ──────────────────────────────────────────────────────── */
+
+export interface PremiumPlan {
+  code: string
+  name: string
+  durationDays: number
+  /** null while the founder has not set a price. */
+  pricePaise: number | null
+  currency: string
+  available: boolean
+}
+
+export function toPlan(v: unknown): PremiumPlan | null {
+  const o = obj(v)
+  const code = str(o.code)
+  if (!code) return null
+  const price = typeof o.price_paise === "number" && Number.isFinite(o.price_paise) ? Math.trunc(o.price_paise) : null
+  return {
+    code,
+    name: str(o.name),
+    durationDays: int(o.duration_days),
+    pricePaise: price,
+    currency: str(o.currency) || "INR",
+    available: o.available === true,
+  }
+}
+
+function toPlanList(v: unknown): PremiumPlan[] {
+  return (Array.isArray(v) ? v : []).map(toPlan).filter((p): p is PremiumPlan => p !== null)
+}
+
+export function toPlans(body: unknown): PremiumPlan[] {
+  return toPlanList(obj(unwrap(body)).plans)
+}
+
+/** A plan can be bought only with a price the server set AND its own yes. */
+export function canBuy(plan: PremiumPlan): boolean {
+  return plan.available && plan.pricePaise !== null && plan.pricePaise > 0
+}
+
+export const NOT_AVAILABLE = "Not available"
+
+/** "₹99" (en-IN), or "Not available" when there is no price to show. */
+export function planPrice(plan: PremiumPlan): string {
+  if (!canBuy(plan) || plan.pricePaise === null) return NOT_AVAILABLE
+  return formatPrice(plan.pricePaise, "en-IN")
+}
+
+/** The pass's length in words: "30 days", "365 days", "1 day". */
+export function planLength(plan: Pick<PremiumPlan, "durationDays">): string {
+  return `${plan.durationDays} ${plan.durationDays === 1 ? "day" : "days"}`
+}
+
+/** The card's heading: the server's name, else the length. */
+export function planTitle(plan: PremiumPlan): string {
+  return plan.name || `Premium for ${planLength(plan)}`
+}
+
+/* ── my status ──────────────────────────────────────────────────── */
+
+export interface PremiumStatus {
+  active: boolean
+  inGrace: boolean
+  endsAt: string | null
+  graceEndsAt: string | null
+  renewalPlans: PremiumPlan[]
+}
+
+export function toStatus(body: unknown): PremiumStatus {
+  const o = obj(unwrap(body))
+  return {
+    active: o.active === true,
+    inGrace: o.in_grace === true,
+    endsAt: str(o.ends_at) || null,
+    graceEndsAt: str(o.grace_ends_at) || null,
+    renewalPlans: toPlanList(o.renewal_plans),
+  }
+}
+
+export interface StatusWords {
+  tone: "active" | "grace" | "none"
+  title: string
+  detail: string
+}
+
+/** What the page says about the viewer's Premium, from GET /premium/me. */
+export function statusWords(s: PremiumStatus): StatusWords {
+  if (s.active && s.inGrace) {
+    const end = formatDate(s.graceEndsAt ?? s.endsAt ?? "")
+    return {
+      tone: "grace",
+      title: end ? `Premium ends on ${end}` : "Premium is ending",
+      detail: "Renew to keep posting on Echo.",
+    }
+  }
+  if (s.active) {
+    const end = formatDate(s.endsAt ?? "")
+    return { tone: "active", title: end ? `Premium is active until ${end}` : "Premium is active", detail: "Buying another pass adds its days on top." }
+  }
+  return { tone: "none", title: "You don't have Premium", detail: "Buy a pass below to start posting on Echo." }
+}
+
+/** What Premium gives today. Honest: Echo posting is the only perk that exists. */
+export const PREMIUM_PERKS: readonly string[] = [
+  "Post on Echo: notes, threads and quotes.",
+]
+
+export const NO_AUTO_RENEW = "No auto-renew: we'll remind you 3 days before it ends."
+
+/* ── checkout ───────────────────────────────────────────────────── */
+
+/**
+  The one checkout request. Its body is exactly {"plan": code}: the server
+  refuses any other field with 400, and an amount from the client would
+  break the money rule.
+*/
+export function checkoutRequest(planCode: string): { url: string; body: { plan: string } } {
+  return { url: `${PREMIUM_BASE}/checkout`, body: { plan: planCode } }
+}
+
+export function passUrl(passId: string): string {
+  return `${PREMIUM_BASE}/passes/${encodeURIComponent(passId)}`
+}
+
+export interface ClientSession {
+  provider: string
+  orderId: string
+  keyId: string
+  merchantName: string
+}
+
+export interface PremiumCheckout {
+  passId: string
+  plan: string
+  durationDays: number
+  status: string
+  amountPaise: number
+  currency: string
+  intentId: string
+  session: ClientSession | null
+}
+
+export function toCheckout(body: unknown): PremiumCheckout {
+  const o = obj(unwrap(body))
+  const s = o.client_session ? obj(o.client_session) : null
+  return {
+    passId: str(o.pass_id),
+    plan: str(o.plan),
+    durationDays: int(o.duration_days),
+    status: str(o.status),
+    amountPaise: int(o.amount_paise),
+    currency: str(o.currency) || "INR",
+    intentId: str(o.intent_id),
+    session: s
+      ? { provider: str(s.provider), orderId: str(s.order_id), keyId: str(s.key_id), merchantName: str(s.merchant_display_name) }
+      : null,
+  }
+}
+
+export interface RazorpayOpen {
+  key: string
+  order_id: string
+  amount: number
+  currency: string
+  name: string
+  description: string
+}
+
+/**
+  The Razorpay dialog's options, from the server's client_session only (the
+  same rule as memberships and the shop: no key from the build). null when
+  there is nothing the web can open.
+*/
+export function razorpayOptions(c: PremiumCheckout, description: string): RazorpayOpen | null {
+  const s = c.session
+  if (!c.passId || !s || s.provider !== "razorpay" || !s.keyId || !s.orderId || c.amountPaise <= 0) return null
+  return { key: s.keyId, order_id: s.orderId, amount: c.amountPaise, currency: c.currency, name: s.merchantName || MERCHANT_FALLBACK_NAME, description }
+}
+
+/* ── the pass poll ──────────────────────────────────────────────── */
+
+export type PassStatus = "confirming" | "paid" | "failed" | "refunded"
+
+export interface PassReading {
+  passId: string
+  status: PassStatus
+  endsAt: string | null
+}
+
+export function toPass(body: unknown): PassReading {
+  const o = obj(unwrap(body))
+  const raw = str(o.status)
+  const status: PassStatus = raw === "paid" || raw === "failed" || raw === "refunded" ? raw : "confirming"
+  return { passId: str(o.pass_id), status, endsAt: str(o.ends_at) || null }
+}
+
+/** About two minutes, then "still confirming" (the payment may yet land). */
+export const PASS_POLL_TIMEOUT_MS = 120_000
+
+export interface PassPoll {
+  phase: "confirming" | "paid" | "failed" | "refunded" | "timed_out" | "stopped"
+  reads: number
+  elapsedMs: number
+  endsAt: string | null
+  /** The HTTP status that ended a `stopped` poll. */
+  stoppedByStatus: number
+}
+
+export const initialPassPoll: PassPoll = { phase: "confirming", reads: 0, elapsedMs: 0, endsAt: null, stoppedByStatus: 0 }
+
+export const passPollDone = (p: Pick<PassPoll, "phase">) => p.phase !== "confirming"
+
+/**
+  The wait before the next read, or null when the poll is over. The waits
+  are the shop's (1, 2, 3, 4 s, then every 5 s); the ceiling is ours and is
+  never overshot: a wait that would pass it is cut short to land on it.
+*/
+export function nextPassWait(p: PassPoll): number | null {
+  if (passPollDone(p) || p.elapsedMs >= PASS_POLL_TIMEOUT_MS) return null
+  return Math.min(delayForRead(p.reads), PASS_POLL_TIMEOUT_MS - p.elapsedMs)
+}
+
+function dueOut(p: PassPoll): PassPoll {
+  return p.phase === "confirming" && p.elapsedMs >= PASS_POLL_TIMEOUT_MS ? { ...p, phase: "timed_out" } : p
+}
+
+/** A read that answered, after a wait of `waitedMs`. */
+export function passPollRead(p: PassPoll, waitedMs: number, reading: PassReading): PassPoll {
+  const next: PassPoll = { ...p, reads: p.reads + 1, elapsedMs: p.elapsedMs + waitedMs }
+  if (reading.status !== "confirming") return { ...next, phase: reading.status, endsAt: reading.endsAt }
+  return dueOut(next)
+}
+
+/** A read that failed: a permanent 4xx ends it; anything else keeps asking. */
+export function passPollError(p: PassPoll, waitedMs: number, httpStatus: number): PassPoll {
+  const next: PassPoll = { ...p, reads: p.reads + 1, elapsedMs: p.elapsedMs + waitedMs }
+  if (isPermanentStatus(httpStatus)) return { ...next, phase: "stopped", stoppedByStatus: httpStatus }
+  return dueOut(next)
+}
+
+/* ── errors ─────────────────────────────────────────────────────── */
+
+export interface PremiumError {
+  status: number
+  code: string
+}
+
+export function toPremiumError(err: unknown): PremiumError {
+  const response = obj(obj(err).response)
+  const e = obj(obj(response.data).error)
+  return { status: int(response.status), code: str(e.code) }
+}
+
+/** PREMIUM_NOT_ENABLED: the whole feature is switched off on the server. */
+export function isPremiumOff(err: unknown): boolean {
+  return toPremiumError(err).code === "PREMIUM_NOT_ENABLED"
+}
+
+export const PREMIUM_WORDS = {
+  notEnabled: "Premium is not available yet",
+  notEnabledDetail: "We'll let you know when you can get it.",
+  priceNotSet: "This pass can't be bought yet.",
+  unknownPlan: "That pass isn't on sale any more. Pick another one.",
+  paymentsUnavailable: "Payments are unavailable right now. Try again in a few minutes.",
+  sessionUnavailable: "Checkout could not be opened. Try again.",
+  notFound: "We couldn't find this payment.",
+  maintenance: "Premium is paused for maintenance. Try again later.",
+  badRequest: "Something went wrong starting checkout. Try again.",
+  network: "No connection. Check your network and try again.",
+  generic: "Something went wrong. Try again.",
+  noOnlinePayment: "Online payment isn't available right now. Try again later.",
+  failed: "The payment didn't go through. You haven't been charged for Premium.",
+  refunded: "This payment was refunded, so Premium wasn't added.",
+  stillConfirming: "We're still confirming your payment. If money left your account, Premium will be added or the money refunded. You can check again or come back later.",
+  dismissed: "Payment wasn't completed.",
+} as const
+
+const ERROR_WORDS: Record<string, string> = {
+  PREMIUM_NOT_ENABLED: PREMIUM_WORDS.notEnabled,
+  PREMIUM_PRICE_NOT_SET: PREMIUM_WORDS.priceNotSet,
+  UNKNOWN_PLAN: PREMIUM_WORDS.unknownPlan,
+  PREMIUM_PAYMENTS_UNAVAILABLE: PREMIUM_WORDS.paymentsUnavailable,
+  PAYMENT_SESSION_UNAVAILABLE: PREMIUM_WORDS.sessionUnavailable,
+  NOT_FOUND: PREMIUM_WORDS.notFound,
+  MAINTENANCE: PREMIUM_WORDS.maintenance,
+  BAD_REQUEST: PREMIUM_WORDS.badRequest,
+  INTERNAL_ERROR: PREMIUM_WORDS.generic,
+}
+
+export function premiumErrorMessage(err: unknown): string {
+  const e = toPremiumError(err)
+  if (e.code && ERROR_WORDS[e.code]) return ERROR_WORDS[e.code]
+  if (e.status === 0) return PREMIUM_WORDS.network
+  return PREMIUM_WORDS.generic
+}
+
+/* ── the purchase, as a state machine ───────────────────────────── */
+
+export type PurchasePhase =
+  | { phase: "idle" }
+  | { phase: "starting"; plan: string }
+  | { phase: "dialog"; plan: string }
+  | { phase: "confirming"; plan: string }
+  | { phase: "paid"; endsAt: string | null }
+  | { phase: "failed"; message: string }
+  | { phase: "still_confirming" }
+  | { phase: "dismissed"; plan: string }
+  /** PREMIUM_NOT_ENABLED at checkout: the switch went off under us. */
+  | { phase: "unavailable" }
+  | { phase: "error"; plan: string; message: string }
+
+export type PurchaseEvent =
+  | { type: "start"; plan: string }
+  | { type: "started"; canOpen: boolean }
+  | { type: "start_failed"; error: unknown }
+  | { type: "dialog_completed" }
+  | { type: "dialog_dismissed" }
+  | { type: "poll"; poll: PassPoll }
+  | { type: "check_again" }
+  | { type: "reset" }
+
+export const idlePurchase: PurchasePhase = { phase: "idle" }
+
+const planOf = (s: PurchasePhase): string => ("plan" in s ? s.plan : "")
+
+export function purchaseReducer(state: PurchasePhase, event: PurchaseEvent): PurchasePhase {
+  switch (event.type) {
+    case "start":
+      return { phase: "starting", plan: event.plan }
+    case "started":
+      return event.canOpen ? { phase: "dialog", plan: planOf(state) } : { phase: "failed", message: PREMIUM_WORDS.noOnlinePayment }
+    case "start_failed":
+      if (isPremiumOff(event.error)) return { phase: "unavailable" }
+      return { phase: "error", plan: planOf(state), message: premiumErrorMessage(event.error) }
+    case "dialog_completed":
+      return { phase: "confirming", plan: planOf(state) }
+    case "dialog_dismissed":
+      return state.phase === "dialog" ? { phase: "dismissed", plan: state.plan } : state
+    case "poll": {
+      const p = event.poll
+      if (!passPollDone(p)) return state.phase === "confirming" ? state : { phase: "confirming", plan: planOf(state) }
+      if (p.phase === "paid") return { phase: "paid", endsAt: p.endsAt }
+      if (p.phase === "failed") return { phase: "failed", message: PREMIUM_WORDS.failed }
+      if (p.phase === "refunded") return { phase: "failed", message: PREMIUM_WORDS.refunded }
+      if (p.phase === "timed_out") return { phase: "still_confirming" }
+      return { phase: "failed", message: p.stoppedByStatus === 404 ? PREMIUM_WORDS.notFound : PREMIUM_WORDS.generic }
+    }
+    case "check_again":
+      return state.phase === "still_confirming" ? { phase: "confirming", plan: "" } : state
+    case "reset":
+      return idlePurchase
+  }
+}
+
+/** Busy: the page must not take another Buy press. */
+export function purchaseBusy(s: PurchasePhase): boolean {
+  return s.phase === "starting" || s.phase === "dialog" || s.phase === "confirming"
+}
+
+export function paidWords(endsAt: string | null): string {
+  const end = endsAt ? formatDate(endsAt) : ""
+  return end ? `Premium is active until ${end}` : "Premium is active"
+}

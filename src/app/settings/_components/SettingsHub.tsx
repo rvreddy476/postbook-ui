@@ -7,8 +7,8 @@ import { ChevronRight, Monitor, Moon, Sun, type LucideIcon } from "lucide-react"
 import { THEME_CHOICES, chooseTheme, readThemeChoice, type ThemeChoice } from "@/features/video-shell/themeChoice"
 import {
     APPEARANCE_WORDS,
-    SETTINGS_GROUPS,
     nextLogoutStep,
+    settingsGroups,
     type LogoutEvent,
     type LogoutStep,
     type SettingsRow,
@@ -27,12 +27,14 @@ import {
 
 interface SettingsHubProps {
     onLogout: () => void
+    /** Show the Momentum Premium row (the page reads it from the plans call; fails closed). */
+    premium?: boolean
 }
 
-export function SettingsHub({ onLogout }: SettingsHubProps) {
+export function SettingsHub({ onLogout, premium = false }: SettingsHubProps) {
     return (
         <div className="settings-hub__groups">
-            {SETTINGS_GROUPS.map((group) => (
+            {settingsGroups({ premium }).map((group) => (
                 <section key={group.key} className="settings-hub__group" aria-label={group.title ?? "Log out"}>
                     {group.title ? <h2 className="settings-hub__heading">{group.title}</h2> : null}
                     <ul className="settings-hub__card">

@@ -19,6 +19,7 @@ import {
   MessageCircle,
   Receipt,
   ShieldCheck,
+  Sparkles,
   SunMoon,
   Trash2,
   Tv,
@@ -139,6 +140,25 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
     ],
   },
 ];
+
+/**
+ * Momentum Premium's row. Not in SETTINGS_GROUPS: it shows only while the
+ * server sells Premium (GET /v1/monetization/premium/plans answered 200;
+ * a 503 PREMIUM_NOT_ENABLED, any error, or no answer yet hides it).
+ */
+export const PREMIUM_ROW: SettingsRow = { key: "premium", label: "Momentum Premium", icon: Sparkles, href: "/premium" };
+
+/** The groups to draw: the Premium row sits after Memberships only when Premium is on sale. */
+export function settingsGroups(opts: { premium: boolean }): readonly SettingsGroup[] {
+  if (!opts.premium) return SETTINGS_GROUPS;
+  return SETTINGS_GROUPS.map((group) => {
+    if (group.key !== "account") return group;
+    const at = group.rows.findIndex((r) => r.key === "memberships");
+    const rows = [...group.rows];
+    rows.splice(at < 0 ? rows.length : at + 1, 0, PREMIUM_ROW);
+    return { ...group, rows };
+  });
+}
 
 /** The words on the appearance switch, in THEME_CHOICES order. */
 export const APPEARANCE_WORDS = { auto: "System", dark: "Dark", light: "Light" } as const;

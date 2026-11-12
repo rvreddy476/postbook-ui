@@ -100,10 +100,18 @@ describe("the composer", () => {
 })
 
 describe("the eligibility dialog", () => {
-  test("says Premium is needed and offers no purchase (the web has no Premium page yet)", () => {
-    const html = renderToStaticMarkup(<EligibilityDialog notice={{ title: ECHO_WORDS.premiumRequired, detail: ECHO_WORDS.premiumRequiredDetail }} onClose={() => {}} />)
+  test("a Premium refusal says Premium is needed, keeps OK, and offers Get Premium → /premium", () => {
+    const html = renderToStaticMarkup(<EligibilityDialog notice={{ title: ECHO_WORDS.premiumRequired, detail: ECHO_WORDS.premiumRequiredDetail, premium: true }} onClose={() => {}} />)
     expect(html).toContain("Posting on Echo needs Momentum Premium")
-    expect(html).not.toMatch(/buy|purchase|subscribe|upgrade/i)
+    expect(html).toMatch(/<a[^>]*data-echo-get-premium[^>]*href="\/premium"[^>]*>Get Premium<\/a>/)
+    expect(html).toContain(">OK</button>")
     expect(renderToStaticMarkup(<EligibilityDialog notice={null} onClose={() => {}} />)).toBe("")
+  })
+
+  test("any other refusal offers OK only, no purchase", () => {
+    const html = renderToStaticMarkup(<EligibilityDialog notice={{ title: ECHO_WORDS.accountTooNew, detail: ECHO_WORDS.accountTooNewDetail }} onClose={() => {}} />)
+    expect(html).toContain(">OK</button>")
+    expect(html).not.toContain("Get Premium")
+    expect(html).not.toContain("/premium")
   })
 })

@@ -111,7 +111,9 @@ describe("settings hub: rendering", () => {
     test("the page draws the hub inside AppShell and runs the panel's logout flow", () => {
         const src = readFileSync(resolve(appDir, "settings/page.tsx"), "utf8")
         expect(src).toContain("<AppShell>")
-        expect(src).toContain("<SettingsHub onLogout={logout} />")
+        expect(src).toContain("<SettingsHub onLogout={logout} premium={premium} />")
+        // The Premium row's switch is the plans call, read by the fail-closed hook.
+        expect(src).toContain("const premium = usePremiumAvailable()")
         expect(src).toMatch(/logoutUser\(\)\s+window\.location\.assign\("\/api\/auth\/logout"\)/)
     })
 

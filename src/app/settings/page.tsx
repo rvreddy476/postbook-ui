@@ -1,6 +1,7 @@
 "use client"
 
 import AppShell from '@/components/AppShell'
+import { usePremiumAvailable } from "@/features/premium/hooks"
 import { logoutUser } from "@/services/authService"
 import { SettingsHub } from "./_components/SettingsHub"
 import "./_components/settings-hub.css"
@@ -23,12 +24,14 @@ function logout() {
 }
 
 export default function SettingsPage() {
+    // Momentum Premium's row shows only once the plans call answers 200 (fails closed).
+    const premium = usePremiumAvailable()
     return (
         <AppShell>
             <div className="settings-hub">
                 <div className="settings-hub__inner">
                     <h1 className="settings-hub__title">Settings &amp; privacy</h1>
-                    <SettingsHub onLogout={logout} />
+                    <SettingsHub onLogout={logout} premium={premium} />
                 </div>
             </div>
         </AppShell>

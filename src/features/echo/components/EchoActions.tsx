@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react"
+import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 
@@ -63,18 +64,34 @@ export function useEchoActions(): EchoActionsValue {
 interface Notice {
   title: string
   detail: string
+  /** The refusal is "needs Premium": offer the way to buy it. */
+  premium?: boolean
 }
 
-/** The eligibility refusal. No purchase button: the web has no Momentum Premium page yet. */
+/** Where "Get Premium" goes: the Momentum Premium purchase page. */
+export const PREMIUM_PAGE = "/premium"
+
+/** The eligibility refusal. A Premium refusal also offers "Get Premium" (/premium); OK still closes. */
 export function EligibilityDialog({ notice, onClose }: { notice: Notice | null; onClose: () => void }) {
   return (
     <Dialog open={!!notice} onClose={onClose} title={notice?.title}>
       <div className="space-y-5" data-echo-eligibility>
         <p className="text-sm text-brand-text/80">{notice?.detail}</p>
-        <div className="flex justify-end">
-          <button type="button" onClick={onClose} className="rounded-full bg-primary-ink px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover">
-            OK
-          </button>
+        <div className="flex justify-end gap-2">
+          {notice?.premium ? (
+            <>
+              <button type="button" onClick={onClose} className="rounded-full px-4 py-2 text-sm font-medium text-brand-text hover:bg-brand-secondary">
+                OK
+              </button>
+              <Link href={PREMIUM_PAGE} onClick={onClose} data-echo-get-premium className="rounded-full bg-primary-ink px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover">
+                Get Premium
+              </Link>
+            </>
+          ) : (
+            <button type="button" onClick={onClose} className="rounded-full bg-primary-ink px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover">
+              OK
+            </button>
+          )}
         </div>
       </div>
     </Dialog>
@@ -176,7 +193,7 @@ export function EchoActionsProvider({ children, onDeleted }: { children: React.R
     router.push(`/login?redirect=${encodeURIComponent(pathname || "/echo")}`)
   }, [router, pathname])
 
-  const showPremiumRequired = useCallback(() => setNotice({ title: ECHO_WORDS.premiumRequired, detail: ECHO_WORDS.premiumRequiredDetail }), [])
+  const showPremiumRequired = useCallback(() => setNotice({ title: ECHO_WORDS.premiumRequired, detail: ECHO_WORDS.premiumRequiredDetail, premium: true }), [])
 
   const ensureCanCompose = useCallback(
     async (purpose: "note" | "reply") => {
@@ -187,7 +204,7 @@ export function EchoActionsProvider({ children, onDeleted }: { children: React.R
       try {
         const gate = composerGate(await readEligibility(), purpose)
         if (gate.open) return true
-        setNotice({ title: gate.title, detail: gate.detail })
+        setNotice({ title: gate.title, detail: gate.detail, premium: gate.premium })
         return false
       } catch (err) {
         toast({ type: "error", title: echoErrorMessage(err) })
