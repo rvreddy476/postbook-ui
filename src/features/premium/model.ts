@@ -15,7 +15,12 @@
                                           taxable_paise,gst_paise,total_paise,gst_rate_bp,…}
     GET  /premium/me               {active,in_grace,ends_at|null,grace_ends_at|null,renewal_plans}
     GET  /premium/passes/:passId   {pass_id,plan,status:"confirming|paid|failed|refunded",amount_paise,
-                                    taxable_paise,gst_paise,total_paise,gst_rate_bp,…}
+                                    invoice_id|null,taxable_paise,gst_paise,total_paise,gst_rate_bp,…}
+    GET  /premium/invoices         {invoices:[{id,number,kind:"invoice|credit_note",date,total_paise,
+                                               currency,pass_id}]}  newest first; a credit note's total < 0
+    GET  /premium/invoices/:id     one document (JSON), original_invoice {id,number,date}|null
+    GET  /premium/invoices/:id/document   printable HTML attachment (bearer token; Cache-Control no-store)
+                                   Another buyer's id is 404 NOT_FOUND, never 403.
 
   Prices EXCLUDE GST (founder, 13 Nov 2026). price_paise is the taxable
   value; GST is added on top and total_paise (= checkout amount_paise) is
@@ -308,6 +313,8 @@ export interface PassReading {
   status: PassStatus
   endsAt: string | null
   receipt: PremiumReceipt | null
+  /** The pass's tax invoice once the server has issued it (on the signed event). */
+  invoiceId: string | null
 }
 
 export function toPass(body: unknown): PassReading {
@@ -317,7 +324,7 @@ export function toPass(body: unknown): PassReading {
   const amount = int(o.amount_paise)
   const tax = toTax(o)
   const receipt = amount > 0 || tax ? { amountPaise: amount > 0 ? amount : (tax?.totalPaise ?? 0), tax } : null
-  return { passId: str(o.pass_id), status, endsAt: str(o.ends_at) || null, receipt }
+  return { passId: str(o.pass_id), status, endsAt: str(o.ends_at) || null, receipt, invoiceId: str(o.invoice_id) || null }
 }
 
 export interface ReceiptLine {
@@ -357,9 +364,11 @@ export interface PassPoll {
   receipt: PremiumReceipt | null
   /** The HTTP status that ended a `stopped` poll. */
   stoppedByStatus: number
+  /** The tax invoice, when the read that ended the poll already named it. */
+  invoiceId: string | null
 }
 
-export const initialPassPoll: PassPoll = { phase: "confirming", reads: 0, elapsedMs: 0, endsAt: null, receipt: null, stoppedByStatus: 0 }
+export const initialPassPoll: PassPoll = { phase: "confirming", reads: 0, elapsedMs: 0, endsAt: null, receipt: null, stoppedByStatus: 0, invoiceId: null }
 
 export const passPollDone = (p: Pick<PassPoll, "phase">) => p.phase !== "confirming"
 
@@ -380,7 +389,7 @@ function dueOut(p: PassPoll): PassPoll {
 /** A read that answered, after a wait of `waitedMs`. */
 export function passPollRead(p: PassPoll, waitedMs: number, reading: PassReading): PassPoll {
   const next: PassPoll = { ...p, reads: p.reads + 1, elapsedMs: p.elapsedMs + waitedMs }
-  if (reading.status !== "confirming") return { ...next, phase: reading.status, endsAt: reading.endsAt, receipt: reading.receipt }
+  if (reading.status !== "confirming") return { ...next, phase: reading.status, endsAt: reading.endsAt, receipt: reading.receipt, invoiceId: reading.invoiceId }
   return dueOut(next)
 }
 
@@ -460,7 +469,7 @@ export type PurchasePhase =
   | { phase: "review"; plan: string; checkout: PremiumCheckout }
   | { phase: "dialog"; plan: string }
   | { phase: "confirming"; plan: string }
-  | { phase: "paid"; endsAt: string | null; receipt: PremiumReceipt | null }
+  | { phase: "paid"; endsAt: string | null; receipt: PremiumReceipt | null; invoiceId: string | null }
   | { phase: "failed"; message: string }
   | { phase: "still_confirming" }
   | { phase: "dismissed"; plan: string }
@@ -503,7 +512,7 @@ export function purchaseReducer(state: PurchasePhase, event: PurchaseEvent): Pur
     case "poll": {
       const p = event.poll
       if (!passPollDone(p)) return state.phase === "confirming" ? state : { phase: "confirming", plan: planOf(state) }
-      if (p.phase === "paid") return { phase: "paid", endsAt: p.endsAt, receipt: p.receipt }
+      if (p.phase === "paid") return { phase: "paid", endsAt: p.endsAt, receipt: p.receipt, invoiceId: p.invoiceId }
       if (p.phase === "failed") return { phase: "failed", message: PREMIUM_WORDS.failed }
       if (p.phase === "refunded") return { phase: "failed", message: PREMIUM_WORDS.refunded }
       if (p.phase === "timed_out") return { phase: "still_confirming" }
@@ -524,4 +533,146 @@ export function purchaseBusy(s: PurchasePhase): boolean {
 export function paidWords(endsAt: string | null): string {
   const end = endsAt ? formatDate(endsAt) : ""
   return end ? `Premium is active until ${end}` : "Premium is active"
+}
+
+/* ── tax invoices and credit notes ──────────────────────────────── */
+
+export const INVOICES_URL = `${PREMIUM_BASE}/invoices`
+
+export function invoiceUrl(id: string): string {
+  return `${INVOICES_URL}/${encodeURIComponent(id)}`
+}
+
+/** The printable HTML. Fetched with the bearer token by the API client; never a bare link. */
+export function invoiceDocumentUrl(id: string): string {
+  return `${invoiceUrl(id)}/document`
+}
+
+export type InvoiceKind = "invoice" | "credit_note"
+
+/** One row of GET /premium/invoices. totalPaise is signed: a credit note's is negative. */
+export interface PremiumInvoice {
+  id: string
+  number: string
+  kind: InvoiceKind
+  /** The document's date, an IST calendar date: "2026-11-13". */
+  date: string
+  totalPaise: number
+  currency: string
+  passId: string
+}
+
+export function toInvoice(v: unknown): PremiumInvoice | null {
+  const o = obj(v)
+  const id = str(o.id)
+  const number = str(o.number)
+  if (!id || !number) return null
+  return {
+    id,
+    number,
+    kind: o.kind === "credit_note" ? "credit_note" : "invoice",
+    date: str(o.date),
+    totalPaise: int(o.total_paise),
+    currency: str(o.currency) || "INR",
+    passId: str(o.pass_id),
+  }
+}
+
+/**
+  The buyer's documents, newest first. The server already orders them; this
+  is a stable backstop on the date (same-day documents keep the server's
+  order).
+*/
+export function toInvoices(body: unknown): PremiumInvoice[] {
+  const rows = obj(unwrap(body)).invoices
+  return (Array.isArray(rows) ? rows : [])
+    .map(toInvoice)
+    .filter((r): r is PremiumInvoice => r !== null)
+    .map((r, i) => ({ r, i }))
+    .sort((a, b) => (a.r.date === b.r.date ? a.i - b.i : a.r.date < b.r.date ? 1 : -1))
+    .map(({ r }) => r)
+}
+
+/** One document's detail, as far as the page needs it. */
+export interface PremiumInvoiceDetail extends PremiumInvoice {
+  originalInvoice: { id: string; number: string; date: string } | null
+}
+
+export function toInvoiceDetail(body: unknown): PremiumInvoiceDetail | null {
+  const o = obj(unwrap(body))
+  const base = toInvoice(o)
+  if (!base) return null
+  const orig = o.original_invoice ? obj(o.original_invoice) : null
+  const originalInvoice = orig && str(orig.number) ? { id: str(orig.id), number: str(orig.number), date: str(orig.date) } : null
+  return { ...base, originalInvoice }
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+/**
+  "13 Nov 2026" from "2026-11-13". The server's date is already the IST
+  calendar day, so it is reformatted, never moved through a time zone. A
+  full timestamp is read in IST (UTC+05:30).
+*/
+export function invoiceDate(date: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date)
+  if (m) {
+    const month = MONTHS[Number(m[2]) - 1]
+    return month ? `${m[3]} ${month} ${m[1]}` : ""
+  }
+  const t = Date.parse(date)
+  if (Number.isNaN(t)) return ""
+  const ist = new Date(t + 330 * 60_000)
+  return `${String(ist.getUTCDate()).padStart(2, "0")} ${MONTHS[ist.getUTCMonth()]} ${ist.getUTCFullYear()}`
+}
+
+export function invoiceKindLabel(kind: InvoiceKind): string {
+  return kind === "credit_note" ? "Credit note" : "Tax invoice"
+}
+
+/** "₹175.82"; a credit note is a refund: "−₹175.82" (U+2212). */
+export function invoiceAmount(inv: Pick<PremiumInvoice, "kind" | "totalPaise">): string {
+  const abs = rupees(Math.abs(inv.totalPaise))
+  return inv.kind === "credit_note" || inv.totalPaise < 0 ? `−${abs}` : abs
+}
+
+/**
+  The invoice a credit note reverses. The list carries no reference, but a
+  pass has one invoice and at most one credit note against it (the server's
+  rule, internal/premium/invoice.go), so it is the invoice row with the
+  same pass. null when that row is not in the list.
+*/
+export function reversedInvoice(note: PremiumInvoice, all: PremiumInvoice[]): PremiumInvoice | null {
+  if (note.kind !== "credit_note" || !note.passId) return null
+  return all.find((r) => r.kind === "invoice" && r.passId === note.passId) ?? null
+}
+
+/** "MP/26-27/000001" → "MP-26-27-000001.html". */
+export function invoiceFileName(number: string): string {
+  const safe = number.trim().replace(/\//g, "-").replace(/[^A-Za-z0-9._-]/g, "_")
+  return `${safe || "invoice"}.html`
+}
+
+export const INVOICE_WORDS = {
+  heading: "Invoices",
+  download: "Download invoice",
+  downloadRow: "Download",
+  preparing: "Your invoice will be ready in a moment",
+  later: "Your invoice will appear under Invoices shortly.",
+  notFound: "Invoice not found",
+  retry: "Couldn't download this invoice. Try again.",
+} as const
+
+/** 404 (no such document, or someone else's) → "Invoice not found"; anything else → try again. */
+export function invoiceErrorMessage(err: unknown): string {
+  return toPremiumError(err).status === 404 ? INVOICE_WORDS.notFound : INVOICE_WORDS.retry
+}
+
+/** After a paid pass with no invoice yet: read the pass again every 2 s, eight times. */
+export const INVOICE_WAIT_MS = 2_000
+export const INVOICE_WAIT_READS = 8
+
+/** The wait before the next pass read while the invoice is not issued, or null to stop. */
+export function nextInvoiceWait(reads: number, invoiceId: string | null): number | null {
+  return invoiceId || reads >= INVOICE_WAIT_READS ? null : INVOICE_WAIT_MS
 }

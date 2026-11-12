@@ -1,12 +1,18 @@
 "use client"
 
 import Link from "next/link"
-import { BadgeCheck, CheckCircle2, Clock, Crown, Loader2, XCircle } from "lucide-react"
+import { BadgeCheck, CheckCircle2, Clock, Crown, Download, Loader2, XCircle } from "lucide-react"
 
-import { usePremiumPlans, useMyPremium, usePremiumPurchase } from "./hooks"
+import { useDownloadPremiumInvoice, usePaidInvoice, usePremiumInvoices, usePremiumPlans, useMyPremium, usePremiumPurchase, type InvoiceTarget } from "./hooks"
 import {
   canBuy,
   checkoutLines,
+  INVOICE_WORDS,
+  invoiceAmount,
+  invoiceDate,
+  invoiceErrorMessage,
+  invoiceKindLabel,
+  reversedInvoice,
   isPremiumOff,
   NO_AUTO_RENEW,
   paidWords,
@@ -21,6 +27,7 @@ import {
   receiptLines,
   rupees,
   statusWords,
+  type PremiumInvoice,
   type PremiumPlan,
   type PremiumStatus,
   type PurchasePhase,
@@ -38,8 +45,13 @@ import {
 
   Prices exclude GST: each card shows the price "+ GST" and the server's
   breakdown; Buy opens the server's checkout and shows price, GST and total
-  again before Pay opens Razorpay; the success view shows what was paid.
+  again before Pay opens Razorpay; the success view shows what was paid
+  and, once the server has issued it, a Download invoice button.
   Every number is the server's — nothing here computes tax.
+
+  Invoices: the buyer's tax invoices and credit notes (GET /premium/invoices),
+  newest first, each downloadable. Documents are fetched through the API
+  client with the bearer token and saved from a blob; no bare links.
   Styling is Tailwind token classes only (src/ui/theme.css).
 */
 
@@ -51,8 +63,16 @@ export function PremiumScreen() {
   const plans = usePremiumPlans()
   const me = useMyPremium()
   const purchase = usePremiumPurchase()
-
   const off = isPremiumOff(plans.error) || isPremiumOff(me.error) || purchase.state.phase === "unavailable"
+  const invoices = usePremiumInvoices(!off)
+  const paidState = purchase.state.phase === "paid" ? purchase.state : null
+  const paidInvoice = usePaidInvoice(paidState ? purchase.passId : null, paidState?.invoiceId ?? null)
+  const download = useDownloadPremiumInvoice()
+  const downloadState: InvoiceDownloadState = {
+    pendingId: download.isPending ? (download.variables?.id ?? null) : null,
+    failedId: download.isError ? (download.variables?.id ?? null) : null,
+    message: download.isError ? invoiceErrorMessage(download.error) : null,
+  }
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:py-10" data-premium-page>
@@ -78,9 +98,28 @@ export function PremiumScreen() {
         onCheckAgain={purchase.checkAgain}
         onRetry={purchase.retryLast}
         onReset={purchase.reset}
+        invoices={invoices.data ?? null}
+        paidInvoice={paidState ? paidInvoice : undefined}
+        download={downloadState}
+        onDownload={(target) => download.mutate(target)}
       />
     </div>
   )
+}
+
+/** Which document is downloading, which one failed and why. */
+export interface InvoiceDownloadState {
+  pendingId: string | null
+  failedId: string | null
+  message: string | null
+}
+
+export const idleDownload: InvoiceDownloadState = { pendingId: null, failedId: null, message: null }
+
+/** The success view's invoice: its id once issued, and whether the short wait for it is over. */
+export interface PaidInvoice {
+  invoiceId: string | null
+  gaveUp: boolean
 }
 
 export interface PremiumBodyProps {
@@ -96,6 +135,11 @@ export interface PremiumBodyProps {
   onCheckAgain: () => void
   onRetry: () => void
   onReset: () => void
+  /** The buyer's documents, newest first; null while loading or on error (the section hides). */
+  invoices?: PremiumInvoice[] | null
+  paidInvoice?: PaidInvoice
+  download?: InvoiceDownloadState
+  onDownload?: (target: InvoiceTarget) => void
 }
 
 /** The page below the header; props only, so tests render every state. */
@@ -140,6 +184,7 @@ export function PremiumBody(props: PremiumBodyProps) {
             {NO_AUTO_RENEW}
           </p>
         </section>
+        <InvoicesSection invoices={props.invoices ?? null} download={props.download ?? idleDownload} onDownload={props.onDownload} />
       </div>
       <aside className="space-y-6">
         <StatusCard status={status} error={statusError} />
@@ -236,6 +281,123 @@ function MoneyLines({ lines, testId }: { lines: ReceiptLine[]; testId: string })
   )
 }
 
+const BTN_DOWNLOAD =
+  "inline-flex items-center justify-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-brand-text hover:bg-brand-secondary disabled:opacity-50"
+
+/**
+  The success view's invoice: a Download button once the pass names its
+  invoice; until then "ready in a moment" (the hook reads the pass again
+  briefly), then a pointer to the Invoices list.
+*/
+function PaidInvoiceLine({
+  invoiceId,
+  gaveUp,
+  invoices,
+  download,
+  onDownload,
+}: {
+  invoiceId: string | null
+  gaveUp: boolean
+  invoices: PremiumInvoice[] | null
+  download: InvoiceDownloadState
+  onDownload?: (target: InvoiceTarget) => void
+}) {
+  if (!invoiceId) {
+    return (
+      <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground" data-premium-invoice="waiting">
+        {gaveUp ? null : <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+        {gaveUp ? INVOICE_WORDS.later : INVOICE_WORDS.preparing}
+      </p>
+    )
+  }
+  const number = invoices?.find((r) => r.id === invoiceId)?.number
+  const pending = download.pendingId === invoiceId
+  return (
+    <div className="mt-3" data-premium-invoice="ready">
+      <button type="button" className={BTN_DOWNLOAD} disabled={pending || !onDownload} onClick={() => onDownload?.({ id: invoiceId, number })} data-premium-invoice-download>
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Download className="h-4 w-4" aria-hidden />}
+        {INVOICE_WORDS.download}
+      </button>
+      {download.failedId === invoiceId && download.message ? (
+        <p role="alert" className="mt-2 text-sm text-danger">
+          {download.message}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+/**
+  The buyer's tax invoices and credit notes, newest first. Hidden when there
+  are none (and while loading or on error). A credit note is a refund: its
+  amount carries a minus and it names the invoice it reverses when that
+  invoice is in the list.
+*/
+export function InvoicesSection({
+  invoices,
+  download = idleDownload,
+  onDownload,
+}: {
+  invoices: PremiumInvoice[] | null
+  download?: InvoiceDownloadState
+  onDownload?: (target: InvoiceTarget) => void
+}) {
+  if (!invoices || invoices.length === 0) return null
+  const cols = "sm:grid sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-center sm:gap-4"
+  return (
+    <section className="rounded-2xl border border-border bg-brand-card" aria-labelledby="premium-invoices" data-premium-invoices>
+      <h2 id="premium-invoices" className="px-5 pt-5 text-lg font-semibold text-brand-text">
+        {INVOICE_WORDS.heading}
+      </h2>
+      <div className={`mt-3 hidden px-5 pb-2 text-xs font-medium text-muted-foreground ${cols}`} aria-hidden>
+        <span>Number</span>
+        <span>Date</span>
+        <span>Type</span>
+        <span className="text-right">Amount</span>
+        <span className="sr-only">Download</span>
+      </div>
+      <ul className="divide-y divide-border border-t border-border">
+        {invoices.map((inv) => {
+          const reverses = reversedInvoice(inv, invoices)
+          const pending = download.pendingId === inv.id
+          const credit = inv.kind === "credit_note"
+          return (
+            <li key={inv.id} className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-5 py-3 ${cols}`} data-premium-invoice-row={inv.kind}>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-brand-text">{inv.number}</p>
+                {reverses ? <p className="text-xs text-muted-foreground">Reverses {reverses.number}</p> : null}
+              </div>
+              <p className="text-sm text-muted-foreground">{invoiceDate(inv.date)}</p>
+              <p className="text-sm text-muted-foreground">{invoiceKindLabel(inv.kind)}</p>
+              <p className={`text-sm font-semibold tabular-nums sm:text-right ${credit ? "text-success" : "text-brand-text"}`} data-premium-invoice-amount>
+                {invoiceAmount(inv)}
+              </p>
+              <div className="flex flex-col items-end">
+                <button
+                  type="button"
+                  className={BTN_QUIET}
+                  disabled={pending || !onDownload}
+                  onClick={() => onDownload?.({ id: inv.id, number: inv.number })}
+                  aria-label={`Download ${invoiceKindLabel(inv.kind).toLowerCase()} ${inv.number}`}
+                  data-premium-invoice-download={inv.id}
+                >
+                  {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : <Download className="mr-2 h-4 w-4" aria-hidden />}
+                  {INVOICE_WORDS.downloadRow}
+                </button>
+              </div>
+              {download.failedId === inv.id && download.message ? (
+                <p role="alert" className="w-full text-sm text-danger sm:col-span-5">
+                  {download.message}
+                </p>
+              ) : null}
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}
+
 /** The purchase's own state, above the passes. Nothing shows while idle. */
 export function PurchaseBanner({
   purchase,
@@ -243,7 +405,11 @@ export function PurchaseBanner({
   onCheckAgain,
   onRetry,
   onReset,
-}: Pick<PremiumBodyProps, "purchase" | "onCheckAgain" | "onRetry" | "onReset"> & { onPay?: () => void }) {
+  invoices,
+  paidInvoice,
+  download = idleDownload,
+  onDownload,
+}: Pick<PremiumBodyProps, "purchase" | "onCheckAgain" | "onRetry" | "onReset" | "invoices" | "paidInvoice" | "download" | "onDownload"> & { onPay?: () => void }) {
   const box = "rounded-2xl border p-5"
   switch (purchase.phase) {
     case "idle":
@@ -291,6 +457,13 @@ export function PurchaseBanner({
             {paidWords(purchase.endsAt)}
           </p>
           {purchase.receipt ? <MoneyLines lines={receiptLines(purchase.receipt)} testId="receipt" /> : null}
+          <PaidInvoiceLine
+            invoiceId={purchase.invoiceId ?? paidInvoice?.invoiceId ?? null}
+            gaveUp={paidInvoice?.gaveUp ?? false}
+            invoices={invoices ?? null}
+            download={download}
+            onDownload={onDownload}
+          />
           <div className="mt-4 flex flex-wrap gap-2">
             <Link href="/echo" className={BTN_PRIMARY}>
               Post on Echo

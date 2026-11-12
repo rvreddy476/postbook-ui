@@ -50,7 +50,8 @@ const VIDEO_SURFACES = ["features/offline/", "features/video-shell/", "features/
   made or asked for (an admin's CSV report, your own data export). They are
   not video, and each is named so a new one cannot slip in unnoticed.
 */
-const NOT_VIDEO_EXPORTS = new Set(["app/admin/mopedu/reports/page.tsx", "app/settings/data/page.tsx", "features/dating/hooks/safety.ts"]);
+// features/premium/hooks.ts: the buyer's own GST tax invoice / credit note (HTML), never media.
+const NOT_VIDEO_EXPORTS = new Set(["app/admin/mopedu/reports/page.tsx", "app/settings/data/page.tsx", "features/dating/hooks/safety.ts", "features/premium/hooks.ts"]);
 
 describe("never a download link for viewers", () => {
   test("the scan sees the source tree", () => {

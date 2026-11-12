@@ -12,15 +12,15 @@ mock.module("next/navigation", () => ({
 }))
 
 const { default: api } = await import("@/lib/api")
-const { startPremiumCheckout, fetchPremiumPlans, readPremiumPass } = await import("../api")
+const { startPremiumCheckout, fetchPremiumPlans, readPremiumPass, fetchPremiumInvoices, fetchPremiumInvoice } = await import("../api")
 const M = await import("../model")
-const { PremiumBody, PurchaseBanner } = await import("../screens")
-const { premiumEntryVisible } = await import("../hooks")
+const { PremiumBody, PurchaseBanner, InvoicesSection } = await import("../screens")
+const { premiumEntryVisible, downloadPremiumInvoice } = await import("../hooks")
 const { SETTINGS_GROUPS, settingsGroups } = await import("@/app/settings/_lib/settingsHub")
 const { SettingsHub } = await import("@/app/settings/_components/SettingsHub")
 
 /*
-  Golden fixtures: fixtures/{plans,checkout,pass,me}.json are byte-for-byte
+  Golden fixtures: fixtures/{plans,checkout,pass,me,invoices,invoice,credit_note}.json are byte-for-byte
   copies of monetization-service testdata/contracts/premium (prices exclude
   GST, 13 Nov 2026). They are parsed here and never edited; the one variant
   a test needs (a plan the server marks unavailable) is derived in code.
@@ -33,6 +33,10 @@ const checkoutBody = fixture("checkout")
 const passBody = fixture("pass")
 const meBody = fixture("me")
 const PASS: string = checkoutBody.data.pass_id
+const invoicesBody = fixture("invoices")
+const invoiceBody = fixture("invoice")
+const creditNoteBody = fixture("credit_note")
+const INVOICE_ID: string = passBody.data.invoice_id
 
 const TAX_30 = { taxablePaise: 14900, gstPaise: 2682, totalPaise: 17582, rateBp: 1800, provisional: true }
 const TAX_365 = { taxablePaise: 149900, gstPaise: 26982, totalPaise: 176882, rateBp: 1800, provisional: true }
@@ -158,7 +162,7 @@ describe("checkout", () => {
   test("the pass is read from GET /passes/:id, with what it cost", async () => {
     const urls: string[] = []
     spies.push(spyOn(api, "get").mockImplementation((async (url: string) => (urls.push(url), { data: passBody })) as never))
-    expect(await readPremiumPass(PASS)).toEqual({ passId: PASS, status: "paid", endsAt: "2026-12-13T10:00:00Z", receipt: { amountPaise: 17582, tax: TAX_30 } })
+    expect(await readPremiumPass(PASS)).toEqual({ passId: PASS, status: "paid", endsAt: "2026-12-13T10:00:00Z", receipt: { amountPaise: 17582, tax: TAX_30 }, invoiceId: INVOICE_ID })
     expect(urls).toEqual([`/v1/monetization/premium/passes/${PASS}`])
   })
 })
@@ -186,13 +190,13 @@ describe("the pass poll", () => {
     const { p, state, waits } = run([reading("confirming"), reading("confirming"), reading("paid", "2026-12-13T00:00:00Z"), reading("paid")])
     expect(waits).toEqual([1000, 2000, 3000])
     expect(p.phase).toBe("paid")
-    expect(state).toEqual({ phase: "paid", endsAt: "2026-12-13T00:00:00Z", receipt: null })
+    expect(state).toEqual({ phase: "paid", endsAt: "2026-12-13T00:00:00Z", receipt: null, invoiceId: null })
     expect(M.paidWords("2026-12-13T00:00:00Z")).toBe("Premium is active until 13 Dec 2026")
   })
 
-  test("the paid read (the golden pass) carries its receipt into the paid state", () => {
+  test("the paid read (the golden pass) carries its receipt and invoice_id into the paid state", () => {
     const { state } = run([reading("confirming"), M.toPass(passBody)])
-    expect(state).toEqual({ phase: "paid", endsAt: "2026-12-13T10:00:00Z", receipt: { amountPaise: 17582, tax: TAX_30 } })
+    expect(state).toEqual({ phase: "paid", endsAt: "2026-12-13T10:00:00Z", receipt: { amountPaise: 17582, tax: TAX_30 }, invoiceId: INVOICE_ID })
   })
 
   test("confirming → failed, and refunded, are failures with their own words", () => {
@@ -361,7 +365,7 @@ describe("the /premium page", () => {
       { label: "GST (18%)", value: "₹26.82" },
       { label: "Total paid", value: "₹175.82" },
     ])
-    const html = renderToStaticMarkup(<PurchaseBanner purchase={{ phase: "paid", endsAt: "2026-12-13T10:00:00Z", receipt }} onCheckAgain={noop} onRetry={noop} onReset={noop} />)
+    const html = renderToStaticMarkup(<PurchaseBanner purchase={{ phase: "paid", endsAt: "2026-12-13T10:00:00Z", receipt, invoiceId: null }} onCheckAgain={noop} onRetry={noop} onReset={noop} />)
     expect(html).toContain("Premium is active until 13 Dec 2026")
     for (const t of ["Price", "₹149", "GST (18%)", "₹26.82", "Total paid", "₹175.82"]) expect(html).toContain(t)
     expect(html).toMatch(/<a[^>]*href="\/echo"[^>]*>Post on Echo<\/a>/)
@@ -374,6 +378,134 @@ describe("the /premium page", () => {
   test("failure offers Try again; still confirming offers Check again", () => {
     expect(renderToStaticMarkup(<PurchaseBanner purchase={{ phase: "failed", message: M.PREMIUM_WORDS.failed }} onCheckAgain={noop} onRetry={noop} onReset={noop} />)).toContain("Try again")
     expect(renderToStaticMarkup(<PurchaseBanner purchase={{ phase: "still_confirming" }} onCheckAgain={noop} onRetry={noop} onReset={noop} />)).toContain("Check again")
+  })
+})
+
+/* ── tax invoices and credit notes ──────────────────────────────── */
+
+describe("tax invoices and credit notes", () => {
+  const cn = creditNoteBody.data
+  const orig = cn.original_invoice
+  /** The credit note's row as GET /invoices lists it, and the invoice it reverses (same pass), derived from the fixtures. */
+  const creditRow = { id: cn.id, number: cn.number, kind: cn.kind, date: cn.date, total_paise: cn.total_paise, currency: cn.currency, pass_id: cn.pass_id }
+  const reversedRow = { ...invoicesBody.data.invoices[0], id: orig.id, number: orig.number, date: orig.date, pass_id: cn.pass_id }
+  /** Deliberately out of order: oldest first. */
+  const mixedBody = { data: { invoices: [invoicesBody.data.invoices[0], reversedRow, creditRow] } }
+
+  test("the fixtures parse: list, invoice detail, credit note detail, and the pass's invoice_id", () => {
+    expect(M.toInvoices(invoicesBody)).toEqual([
+      { id: INVOICE_ID, number: "MP/26-27/000001", kind: "invoice", date: "2026-11-13", totalPaise: 17582, currency: "INR", passId: PASS },
+    ])
+    const inv = M.toInvoiceDetail(invoiceBody)!
+    expect(inv.id).toBe(INVOICE_ID)
+    expect(inv.originalInvoice).toBeNull()
+    const note = M.toInvoiceDetail(creditNoteBody)!
+    expect(note.kind).toBe("credit_note")
+    expect(note.totalPaise).toBe(-17582)
+    expect(note.originalInvoice).toEqual({ id: orig.id, number: "MP/26-27/000002", date: "2026-11-13" })
+    expect(M.toPass(passBody).invoiceId).toBe(INVOICE_ID)
+    expect(M.toPass({ data: { ...passBody.data, invoice_id: null } }).invoiceId).toBeNull()
+  })
+
+  test("the list is newest first; same-day documents keep the server's order", () => {
+    expect(M.toInvoices(mixedBody).map((r) => r.number)).toEqual(["MPC/26-27/000001", "MP/26-27/000001", "MP/26-27/000002"])
+  })
+
+  test("a credit note is shown as a refund (−₹175.82) and names the invoice it reverses", () => {
+    const rows = M.toInvoices(mixedBody)
+    const [note, first] = rows
+    expect(M.invoiceAmount(note)).toBe("−₹175.82")
+    expect(M.invoiceAmount(first)).toBe("₹175.82")
+    expect(M.invoiceKindLabel(note.kind)).toBe("Credit note")
+    expect(M.invoiceKindLabel(first.kind)).toBe("Tax invoice")
+    expect(M.reversedInvoice(note, rows)?.number).toBe("MP/26-27/000002")
+    expect(M.reversedInvoice(first, rows)).toBeNull()
+    expect(M.reversedInvoice(note, [note])).toBeNull()
+  })
+
+  test("dates read dd MMM yyyy in IST", () => {
+    expect(M.invoiceDate("2026-11-13")).toBe("13 Nov 2026")
+    expect(M.invoiceDate("2026-09-01")).toBe("01 Sep 2026")
+    expect(M.invoiceDate("2026-11-13T20:00:00Z")).toBe("14 Nov 2026") // 01:30 IST next day
+    expect(M.invoiceDate("")).toBe("")
+  })
+
+  test("the section lists number, date, type, amount and a Download per row; empty is hidden", () => {
+    const html = renderToStaticMarkup(<InvoicesSection invoices={M.toInvoices(mixedBody)} onDownload={noop} />)
+    for (const t of ["Invoices", "MPC/26-27/000001", "14 Nov 2026", "Credit note", "−₹175.82", "Reverses MP/26-27/000002", "Tax invoice", "₹175.82"]) expect(html).toContain(t)
+    expect(html.match(/data-premium-invoice-download=/g)?.length).toBe(3)
+    expect(html).not.toContain("<a ")
+    expect(renderToStaticMarkup(<InvoicesSection invoices={[]} />)).toBe("")
+    expect(renderToStaticMarkup(<InvoicesSection invoices={null} />)).toBe("")
+  })
+
+  test("the list is read from GET /premium/invoices", async () => {
+    const urls: string[] = []
+    spies.push(spyOn(api, "get").mockImplementation((async (url: string) => (urls.push(url), { data: invoicesBody })) as never))
+    expect((await fetchPremiumInvoices()).map((r) => r.id)).toEqual([INVOICE_ID])
+    expect(urls).toEqual(["/v1/monetization/premium/invoices"])
+  })
+
+  test("download fetches the document through the authenticated client as a blob, no token in the URL, saved as MP-26-27-000001.html", async () => {
+    const calls: Array<{ url: string; config: unknown }> = []
+    const blob = new Blob(["<html></html>"], { type: "text/html" })
+    spies.push(spyOn(api, "get").mockImplementation((async (url: string, config?: unknown) => (calls.push({ url, config }), { data: blob })) as never))
+    const saved: Array<[Blob, string]> = []
+    const name = await downloadPremiumInvoice({ id: INVOICE_ID, number: "MP/26-27/000001" }, (b, f) => saved.push([b, f]))
+    expect(name).toBe("MP-26-27-000001.html")
+    expect(calls).toEqual([{ url: `/v1/monetization/premium/invoices/${INVOICE_ID}/document`, config: { responseType: "blob" } }])
+    expect(calls[0].url).not.toMatch(/token|access|bearer|\?/i)
+    expect(saved).toEqual([[blob, "MP-26-27-000001.html"]])
+    expect(M.invoiceFileName("MPC/26-27/000001")).toBe("MPC-26-27-000001.html")
+  })
+
+  test("download without a known number reads it from the detail first", async () => {
+    const urls: string[] = []
+    const blob = new Blob(["x"])
+    spies.push(spyOn(api, "get").mockImplementation((async (url: string) => (urls.push(url), { data: url.endsWith("/document") ? blob : invoiceBody })) as never))
+    const saved: string[] = []
+    await downloadPremiumInvoice({ id: INVOICE_ID }, (_b, f) => saved.push(f))
+    expect(urls).toEqual([`/v1/monetization/premium/invoices/${INVOICE_ID}`, `/v1/monetization/premium/invoices/${INVOICE_ID}/document`])
+    expect(saved).toEqual(["MP-26-27-000001.html"])
+    expect((await fetchPremiumInvoice(INVOICE_ID))?.number).toBe("MP/26-27/000001")
+  })
+
+  test("404 (missing, or someone else's) → Invoice not found; anything else → try again; nothing saved", async () => {
+    spies.push(spyOn(api, "get").mockImplementation((async () => Promise.reject(httpError(404))) as never))
+    const saved: string[] = []
+    const err = await downloadPremiumInvoice({ id: INVOICE_ID, number: "MP/26-27/000001" }, (_b, f) => saved.push(f)).catch((e) => e)
+    expect(M.invoiceErrorMessage(err)).toBe("Invoice not found")
+    expect(saved).toEqual([])
+    expect(M.invoiceErrorMessage(httpError(500, "INTERNAL_ERROR"))).toBe(M.INVOICE_WORDS.retry)
+    expect(M.invoiceErrorMessage(httpError(0))).toBe(M.INVOICE_WORDS.retry)
+    const html = renderToStaticMarkup(
+      <InvoicesSection invoices={M.toInvoices(invoicesBody)} download={{ pendingId: null, failedId: INVOICE_ID, message: "Invoice not found" }} onDownload={noop} />,
+    )
+    expect(html).toContain("Invoice not found")
+  })
+
+  test("success view: Download invoice hidden until the pass has invoice_id, with 'ready in a moment' meanwhile", () => {
+    const receipt = M.toPass(passBody).receipt!
+    const paid = (invoiceId: string | null) => ({ phase: "paid" as const, endsAt: "2026-12-13T10:00:00Z", receipt, invoiceId })
+    const waiting = renderToStaticMarkup(<PurchaseBanner purchase={paid(null)} paidInvoice={{ invoiceId: null, gaveUp: false }} onDownload={noop} onCheckAgain={noop} onRetry={noop} onReset={noop} />)
+    expect(waiting).not.toContain("Download invoice")
+    expect(waiting).toContain("Your invoice will be ready in a moment")
+    const later = renderToStaticMarkup(<PurchaseBanner purchase={paid(null)} paidInvoice={{ invoiceId: null, gaveUp: true }} onDownload={noop} onCheckAgain={noop} onRetry={noop} onReset={noop} />)
+    expect(later).not.toContain("Download invoice")
+    expect(later).toContain(M.INVOICE_WORDS.later)
+    const ready = renderToStaticMarkup(<PurchaseBanner purchase={paid(INVOICE_ID)} onDownload={noop} onCheckAgain={noop} onRetry={noop} onReset={noop} />)
+    expect(ready).toContain("Download invoice")
+    expect(ready).not.toContain("ready in a moment")
+    // the refetch found it after the poll ended
+    const found = renderToStaticMarkup(<PurchaseBanner purchase={paid(null)} paidInvoice={{ invoiceId: INVOICE_ID, gaveUp: false }} onDownload={noop} onCheckAgain={noop} onRetry={noop} onReset={noop} />)
+    expect(found).toContain("Download invoice")
+  })
+
+  test("the invoice wait: every 2 s, eight reads, stops once the invoice appears", () => {
+    expect(M.nextInvoiceWait(0, null)).toBe(2000)
+    expect(M.nextInvoiceWait(7, null)).toBe(2000)
+    expect(M.nextInvoiceWait(8, null)).toBeNull()
+    expect(M.nextInvoiceWait(1, INVOICE_ID)).toBeNull()
   })
 })
 

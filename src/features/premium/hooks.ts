@@ -11,16 +11,18 @@
   starts the poll; nothing on this side marks a pass paid.
 */
 
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useCallback, useEffect, useReducer, useRef, useState } from "react"
 
 import { forceRefresh } from "@/lib/accessToken"
 import { openRazorpayCheckout } from "@/lib/razorpay"
 
-import { fetchMyPremium, fetchPremiumPlans, readPremiumPass, startPremiumCheckout } from "./api"
+import { fetchMyPremium, fetchPremiumInvoice, fetchPremiumInvoiceDocument, fetchPremiumInvoices, fetchPremiumPlans, readPremiumPass, startPremiumCheckout } from "./api"
 import {
   idlePurchase,
   initialPassPoll,
+  invoiceFileName,
+  nextInvoiceWait,
   nextPassWait,
   passPollDone,
   passPollError,
@@ -38,6 +40,8 @@ export const PREMIUM_KEYS = {
   all: ["premium"] as const,
   plans: ["premium", "plans"] as const,
   me: ["premium", "me"] as const,
+  invoices: ["premium", "invoices"] as const,
+  passInvoice: (passId: string) => ["premium", "pass-invoice", passId] as const,
 }
 
 /** A 4xx or a 503 (the switch off, maintenance) will not change by asking again. */
@@ -189,5 +193,71 @@ export function usePremiumPurchase() {
     void qc.invalidateQueries({ queryKey: PREMIUM_KEYS.me })
   }, [qc, send])
 
-  return { state, buy, pay, checkAgain, retryLast, reset }
+  /** passId: the pass the poll read, so the success view can ask it for its invoice. */
+  return { state, buy, pay, checkAgain, retryLast, reset, passId: poll?.passId ?? null }
+}
+
+/* ── tax invoices and credit notes ──────────────────────────────── */
+
+export function usePremiumInvoices(enabled = true) {
+  return useQuery({ queryKey: PREMIUM_KEYS.invoices, queryFn: fetchPremiumInvoices, enabled, retry, staleTime: 30_000 })
+}
+
+/**
+  The success view's invoice. The pass read that ended the poll can win the
+  race with the invoice (issued on the same signed event), so while the pass
+  names none it is read again briefly (model.nextInvoiceWait). Once it
+  appears, the Invoices list is refreshed too.
+*/
+export function usePaidInvoice(passId: string | null, knownInvoiceId: string | null) {
+  const qc = useQueryClient()
+  const waiting = !!passId && !knownInvoiceId
+  const q = useQuery({
+    queryKey: PREMIUM_KEYS.passInvoice(passId ?? ""),
+    queryFn: () => readPremiumPass(passId ?? ""),
+    enabled: waiting,
+    retry: false,
+    refetchInterval: (query) => nextInvoiceWait(query.state.dataUpdateCount + query.state.errorUpdateCount, query.state.data?.invoiceId ?? null) ?? false,
+  })
+  const invoiceId = knownInvoiceId ?? q.data?.invoiceId ?? null
+  useEffect(() => {
+    if (invoiceId) void qc.invalidateQueries({ queryKey: PREMIUM_KEYS.invoices })
+  }, [invoiceId, qc])
+  const reads = (qc.getQueryState(PREMIUM_KEYS.passInvoice(passId ?? ""))?.dataUpdateCount ?? 0) + q.errorUpdateCount
+  return { invoiceId, gaveUp: !invoiceId && nextInvoiceWait(reads, null) === null }
+}
+
+export interface InvoiceTarget {
+  id: string
+  /** The document number, for the file name; read from the detail when unknown. */
+  number?: string
+}
+
+/** Hands the browser a file to save (an object URL, revoked shortly after). */
+export function saveBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 10_000)
+}
+
+/**
+  Fetches the document with the user's token through the API client, then
+  saves it as "<number with / as ->.html". Throws the client's error, so a
+  404 reads as "Invoice not found" (model.invoiceErrorMessage).
+*/
+export async function downloadPremiumInvoice(target: InvoiceTarget, save: (blob: Blob, filename: string) => void = saveBlob): Promise<string> {
+  const number = target.number || (await fetchPremiumInvoice(target.id))?.number || ""
+  const blob = await fetchPremiumInvoiceDocument(target.id)
+  const filename = invoiceFileName(number)
+  save(blob, filename)
+  return filename
+}
+
+export function useDownloadPremiumInvoice() {
+  return useMutation<string, unknown, InvoiceTarget>({ mutationFn: (target) => downloadPremiumInvoice(target) })
 }
