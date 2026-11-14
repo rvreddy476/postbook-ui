@@ -32,9 +32,10 @@ const note = parseNote(readFixture("note"))!
 describe("the note card", () => {
   const html = render(<NoteCard note={note} />)
 
-  test("author name, handle and the Verified mark", () => {
+  test("author name, how long ago, and the Verified mark on top; the name links to the profile", () => {
     expect(html).toContain("Alice Rao")
-    expect(html).toContain("@alice")
+    expect(html).toContain('href="/echo/alice"')
+    expect(html.indexOf("Alice Rao")).toBeLessThan(html.indexOf(">2d<"))
     expect(html).toContain('data-mark="person"')
     expect(html).toContain('aria-label="Verified"')
   })

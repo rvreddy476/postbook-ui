@@ -126,7 +126,46 @@ export function TopicLineView({ note, topic }: { note: Pick<Note, "id" | "author
   )
 }
 
-/** Below the words: a small avatar and the name, then @handle and the mark in secondary text. */
+/**
+ * The top of a timeline card: avatar, name and mark, then how long ago it
+ * was posted ("· 2h", "· Edited"); the topic (#tag, Thread, Quote, Reply
+ * to @x) sits at the right end in the accent. No @handle here.
+ */
+export function CardHeader({ note, topic }: { note: Pick<Note, "id" | "author" | "authorId" | "createdAt" | "editedAt">; topic: TopicLine }) {
+  const a = note.author
+  const name = authorName(note)
+  return (
+    <div className="flex min-w-0 items-center gap-2 text-sm" data-echo-card-header>
+      <Link href={profilePath(a, note.authorId)} onClick={(e) => e.stopPropagation()} aria-label={name} className="shrink-0">
+        <Avatar src={a?.avatarUrl} name={name} className="h-6 w-6" />
+      </Link>
+      <Link href={profilePath(a, note.authorId)} onClick={(e) => e.stopPropagation()} className="truncate font-semibold text-brand-text hover:underline" data-echo-author>
+        {name}
+      </Link>
+      <VerifiedMark mark={a?.mark ?? "none"} small />
+      <Link href={statusPath(note)} onClick={(e) => e.stopPropagation()} className="shrink-0 text-muted-foreground hover:underline" data-echo-age>
+        <span aria-hidden>· </span>
+        <time dateTime={note.createdAt} title={fullDate(note.createdAt)}>
+          {topic.age}
+        </time>
+      </Link>
+      {note.editedAt && <span className="shrink-0 text-xs text-muted-foreground">· Edited</span>}
+      {topic.lead && (
+        <span className="ml-auto min-w-0 shrink truncate text-xs font-semibold text-echo-accent" data-echo-topic={topic.kind}>
+          {topic.kind === "hashtag" && topic.tag ? (
+            <Link href={hashtagPath(topic.tag)} onClick={(e) => e.stopPropagation()} className="hover:underline">
+              {topic.lead}
+            </Link>
+          ) : (
+            topic.lead
+          )}
+        </span>
+      )}
+    </div>
+  )
+}
+
+/** A small avatar and the name, then @handle and the mark in secondary text. */
 export function Signature({ note, right, className = "mt-3" }: { note: Pick<Note, "author" | "authorId">; right?: React.ReactNode; className?: string }) {
   const a = note.author
   const name = authorName(note)
@@ -241,15 +280,14 @@ export function QuotedNote({ note, quoteOfId }: { note: Note | null; quoteOfId: 
       className="mt-3 cursor-pointer rounded-echo-inner border border-border bg-brand-secondary/60 p-3 hover:border-echo-accent"
       data-quoted-note={note.id}
     >
-      <NoteText text={note.text} size="quote" />
-      <NoteMediaGrid note={note} />
-      <div className="mt-2 flex min-w-0 items-center gap-1.5 text-xs">
+      <div className="mb-1.5 flex min-w-0 items-center gap-1.5 text-xs">
         <Avatar src={note.author?.avatarUrl} name={authorName(note)} className="h-4 w-4" />
         <span className="truncate font-semibold text-brand-text">{authorName(note)}</span>
-        {note.author?.username && <span className="truncate text-muted-foreground">@{note.author.username}</span>}
         <VerifiedMark mark={note.author?.mark ?? "none"} small />
         <span className="shrink-0 text-muted-foreground">· {shortAge(note.createdAt)}</span>
       </div>
+      <NoteText text={note.text} size="quote" />
+      <NoteMediaGrid note={note} />
     </div>
   )
 }
@@ -519,12 +557,11 @@ export function NoteCard({
         onClick={() => router.push(statusPath(note))}
         className="cursor-pointer rounded-echo-card border border-border bg-brand-card p-3.5 transition-colors hover:border-echo-accent/40"
       >
-        <TopicLineView note={note} topic={topic} />
-        <NoteText text={note.text} size={isLongNote(note.text) ? "long" : "timeline"} className="mt-1.5" />
+        <CardHeader note={note} topic={topic} />
+        <NoteText text={note.text} size={isLongNote(note.text) ? "long" : "timeline"} className="mt-2" />
         <NoteMediaGrid note={note} />
         <PollView note={note} />
         <QuotedNote note={note.quoted} quoteOfId={note.quoteOfId} />
-        <Signature note={note} />
         {thread && (
           <Link href={statusPath(note)} onClick={(e) => e.stopPropagation()} data-echo-read-thread className="mt-2 inline-block text-xs font-semibold text-echo-accent hover:underline">
             Read the thread
@@ -571,7 +608,8 @@ export function BigNote({ note }: { note: Note }) {
   const meta = metaLine(note)
   return (
     <article ref={ref} data-note-id={note.id} data-big-note className="rounded-echo-card border-2 border-echo-accent bg-brand-card p-4">
-      <p className="flex flex-wrap items-center gap-x-1 text-xs font-semibold text-echo-accent" data-echo-full-date>
+      <Signature note={note} right={<FollowPill note={note} />} className="" />
+      <p className="mt-1.5 flex flex-wrap items-center gap-x-1 text-xs font-semibold text-echo-accent" data-echo-full-date>
         {meta.tag && (
           <>
             <Link href={hashtagPath(meta.tag)} className="hover:underline">
@@ -591,7 +629,6 @@ export function BigNote({ note }: { note: Note }) {
       <NoteMediaGrid note={note} />
       <PollView note={note} />
       <QuotedNote note={note.quoted} quoteOfId={note.quoteOfId} />
-      <Signature note={note} right={<FollowPill note={note} />} className="mt-4" />
       {note.quoteCount > 0 && (
         <Link href={quotesPath(note)} className="mt-3 inline-block text-xs font-semibold text-muted-foreground hover:underline">
           {fullCount(note.quoteCount)} {note.quoteCount === 1 ? "quote" : "quotes"}

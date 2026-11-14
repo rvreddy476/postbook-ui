@@ -100,10 +100,15 @@ describe("the topic line", () => {
     expect(plain).not.toContain("text-echo-accent")
   })
 
-  test("the card draws the topic line on top, the serif words, and the signature below (no avatar column)", () => {
+  test("the card puts the name, then how long ago, on top, then the serif words (no avatar column)", () => {
     const html = render(<NoteCard note={note({ text: "Rain in #Bengaluru" })} />)
+    const author = html.indexOf("data-echo-author")
+    const age = html.indexOf("data-echo-age")
+    expect(author).toBeGreaterThan(-1)
+    expect(author).toBeLessThan(age)
+    expect(age).toBeLessThan(html.indexOf("data-echo-text"))
     expect(html.indexOf("data-echo-topic")).toBeLessThan(html.indexOf("data-echo-text"))
-    expect(html.indexOf("data-echo-text")).toBeLessThan(html.indexOf("data-echo-signature"))
+    expect(html).not.toContain("data-echo-signature")
     expect(html).toContain('data-echo-text="timeline"')
     expect(html).toContain("font-echo-serif")
     expect(html).toContain("rounded-echo-card")
