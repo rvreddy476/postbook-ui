@@ -59,7 +59,7 @@ export const echoPaths = {
   timeline: (t: Timeline, cursor?: string | null) => `/v1/feed/notes/${t}?${pageQuery(cursor)}`,
   note: (noteId: string) => `/v1/notes/${id(noteId)}`,
   conversation: (noteId: string) => `/v1/notes/${id(noteId)}/conversation`,
-  replies: (noteId: string, cursor?: string | null) => `/v1/notes/${id(noteId)}/replies?${pageQuery(cursor)}`,
+  replies: (noteId: string, cursor?: string | null, limit = PAGE_SIZE) => `/v1/notes/${id(noteId)}/replies?${pageQuery(cursor, limit)}`,
   userNotes: (userId: string, tab: ProfileNotesTab, cursor?: string | null) => `/v1/notes/users/${id(userId)}?${pageQuery(cursor, PAGE_SIZE, { tab })}`,
   eligibility: "/v1/notes/me/eligibility",
   create: "/v1/notes",
@@ -86,9 +86,12 @@ export async function fetchConversation(noteId: string): Promise<Note[]> {
   return parseNotePage((await api.get(echoPaths.conversation(noteId))).data).items
 }
 
-export async function fetchReplies(noteId: string, cursor?: string | null): Promise<NotePage> {
-  return parseNotePage((await api.get(echoPaths.replies(noteId, cursor))).data)
+export async function fetchReplies(noteId: string, cursor?: string | null, limit = PAGE_SIZE): Promise<NotePage> {
+  return parseNotePage((await api.get(echoPaths.replies(noteId, cursor, limit))).data)
 }
+
+/** A timeline card's reply bubbles (look v3): the first replies, the same route with a small limit. */
+export const TOP_REPLIES_LIMIT = 2
 
 export async function fetchUserNotes(userId: string, tab: ProfileNotesTab, cursor?: string | null): Promise<NotePage> {
   return parseNotePage((await api.get(echoPaths.userNotes(userId, tab, cursor))).data)

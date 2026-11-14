@@ -19,6 +19,8 @@
 @theme inline {
   --font-sans: var(--font-outfit), Outfit, system-ui, sans-serif;
   --font-mono: var(--font-mono-face), 'Space Mono', monospace;
+  /* Momentum's serif (Bodoni Moda), Echo's note text only: font-echo-serif. */
+  --font-echo-serif: var(--font-bodoni), 'Bodoni Moda', Georgia, serif;
 
   /*
     Type scale: text-2xs … text-4xl read the --type-* variables declared
@@ -45,6 +47,11 @@
   --text-3xl--line-height: var(--type-3xl-lh);
   --text-4xl: var(--type-4xl);
   --text-4xl--line-height: var(--type-4xl-lh);
+
+  /* Echo look v3: the note page's 22px serif lead, and the ~1.4 note leading. */
+  --text-echo-lead: var(--type-echo-lead);
+  --text-echo-lead--line-height: var(--echo-note-leading);
+  --leading-echo: var(--echo-note-leading);
 }
 
 @theme {
@@ -149,6 +156,16 @@
   --color-send: rgb(var(--send));
   --color-send-hover: rgb(var(--send-hover));
   --color-receipt-seen: rgb(var(--receipt-seen));
+
+  /* Echo's ember (look v3); values in src/ui/theme.css. */
+  --color-echo-accent: rgb(var(--echo-accent));
+  --color-echo-accent-hover: rgb(var(--echo-accent-hover));
+  --color-echo-accent-tint: rgb(var(--echo-accent-tint));
+  --color-echo-on-accent: rgb(var(--echo-on-accent));
+
+  /* Echo cards: 16 for a card, 12 for what sits inside one (bubbles, media, quotes). */
+  --radius-echo-card: 1rem;
+  --radius-echo-inner: 0.75rem;
 
   /* Share-target brand marks; values in src/ui/theme.css. */
   --color-brand-whatsapp: rgb(var(--brand-whatsapp));
@@ -287,6 +304,10 @@
     --brand-telegram: var(--theme-brand-telegram);
     --brand-x: var(--theme-brand-x);
     --brand-facebook: var(--theme-brand-facebook);
+    --echo-accent: var(--theme-echo-accent);
+    --echo-accent-hover: var(--theme-echo-accent-hover);
+    --echo-accent-tint: var(--theme-echo-accent-tint);
+    --echo-on-accent: var(--theme-echo-on-accent);
   }
 
   .dark {
@@ -336,6 +357,10 @@
     --brand-telegram: var(--theme-brand-telegram);
     --brand-x: var(--theme-brand-x);
     --brand-facebook: var(--theme-brand-facebook);
+    --echo-accent: var(--theme-echo-accent);
+    --echo-accent-hover: var(--theme-echo-accent-hover);
+    --echo-accent-tint: var(--theme-echo-accent-tint);
+    --echo-on-accent: var(--theme-echo-on-accent);
   }
 
   html,

@@ -39,11 +39,12 @@ import {
   useUserNotes,
 } from "./hooks"
 import { ECHO_WORDS, echoErrorMessage, fullCount, hashtagPath, readFailure, replyPolicyLabel, statusPath, type Note } from "./model"
+import { conversationRows, isLongNote, replyBoxPlaceholder } from "./look"
 import { notificationsFilterFromParam, notificationsTabHref, scheduleLabel, withMentionsFilter } from "./v2"
 import { Composer, ComposerGateView, PremiumGateCard, ScheduleDialog } from "./components/Composer"
 import { EchoActionsProvider, useEchoActions } from "./components/EchoActions"
-import { PageHeader, SearchBox, Tabs, TrendRows, useEchoShell } from "./components/EchoShell"
-import { BigNote, NoteCard } from "./components/NoteCard"
+import { PageHeader, SearchBox, Tabs, TrendRows, WriteNoteButton, useEchoShell } from "./components/EchoShell"
+import { BigNote, NoteCard, ReplyBubble, VerifiedMark } from "./components/NoteCard"
 import { NoteText } from "./components/NoteText"
 import { ListMessage, NoteList, Spinner } from "./components/NoteList"
 
@@ -56,32 +57,39 @@ import { ListMessage, NoteList, Spinner } from "./components/NoteList"
 
 // ── Home ────────────────────────────────────────────────────────────────
 
+/** "Echo" in the serif, then For you / Following as two pill tabs. */
 function HomeHeader({ timeline, onTimeline }: { timeline: Timeline; onTimeline: (t: Timeline) => void }) {
   const user = useAuthUser()
   const shell = useEchoShell()
   return (
-    <div className="sticky top-0 z-20 border-b border-border bg-brand-bg/85 backdrop-blur-md" data-echo-page-header>
-      <div className="flex h-[53px] items-center px-4 sm:hidden">
+    <div className="sticky top-0 z-20 bg-canvas/90 backdrop-blur-md" data-echo-page-header>
+      <div className="flex h-[53px] items-center gap-3 px-4">
         {user && (
-          <button type="button" aria-label="Open menu" onClick={shell.openDrawer}>
+          <button type="button" aria-label="Open menu" onClick={shell.openDrawer} className="sm:hidden">
             <Avatar src={user.avatar || null} name={user.name || user.username || "?"} className="h-8 w-8" />
           </button>
         )}
-        <span className="mx-auto pr-8 text-lg font-extrabold">Echo</span>
+        <h1 className="font-echo-serif text-2xl font-semibold text-brand-text">Echo</h1>
       </div>
       <Tabs label="Timeline" tabs={TIMELINES.map((t) => ({ key: t.value, label: t.label }))} active={timeline} onSelect={onTimeline} />
     </div>
   )
 }
 
+/**
+ * The centred Write a note pill at the top of the column (look v3 §1), in
+ * place of X's inline composer: it opens the compose modal. A free member
+ * sees the Premium card instead, as before.
+ */
 function HomeComposer() {
   const user = useAuthUser()
   const eligibility = useEligibility(!!user)
-  const actions = useEchoActions()
-  // A failed eligibility read still shows the composer; the server refuses at submit if it must.
+  // A failed eligibility read still offers the pill; the server refuses at submit if it must.
   return (
     <ComposerGateView eligibility={eligibility.data} loading={eligibility.isLoading}>
-      <Composer purpose={{ kind: "note" }} inline onPremiumRequired={actions.showPremiumRequired} />
+      <div className="flex justify-center px-3 pt-3" data-echo-write-note>
+        <WriteNoteButton />
+      </div>
     </ComposerGateView>
   )
 }
@@ -120,8 +128,8 @@ export function EchoHomeScreen() {
       <HomeHeader timeline={timeline} onTimeline={choose} />
       <HomeComposer />
       {fresh > 0 && (
-        <div className="sticky top-[110px] z-10 flex justify-center sm:top-[60px]">
-          <button type="button" onClick={showNew} data-echo-show-new className="mt-2 flex items-center gap-1.5 rounded-full bg-primary-ink px-4 py-2 text-sm font-bold text-primary-foreground shadow-md hover:bg-primary-hover">
+        <div className="sticky top-[110px] z-10 flex justify-center">
+          <button type="button" onClick={showNew} data-echo-show-new className="mt-2 flex items-center gap-1.5 rounded-full bg-echo-accent px-4 py-2 text-sm font-semibold text-echo-on-accent shadow-md hover:bg-echo-accent-hover">
             <ArrowUp className="h-4 w-4" aria-hidden /> Show {fresh} {fresh === 1 ? "post" : "posts"}
           </button>
         </div>
@@ -155,20 +163,28 @@ export function ComposeModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-brand-text/40 sm:pt-[5vh]" role="dialog" aria-modal="true" aria-label="Compose post" data-echo-compose-modal>
       <button type="button" aria-label="Close" className="absolute inset-0 cursor-default" onClick={onClose} />
-      <div className="relative h-full w-full overflow-y-auto bg-brand-bg sm:h-auto sm:max-h-[90vh] sm:max-w-[600px] sm:rounded-2xl">
-        <div className="flex h-[53px] items-center px-2">
-          <button type="button" onClick={onClose} className="rounded-full px-3 py-1.5 text-base font-semibold text-brand-text hover:bg-brand-secondary">
-            Cancel
-          </button>
-          <Link href="/echo/scheduled" onClick={onClose} className="ml-auto rounded-full px-3 py-1.5 text-sm font-bold text-primary-ink hover:bg-primary-tint">
-            Drafts &amp; scheduled
-          </Link>
-        </div>
-        <div className="px-2 pb-2">
-          <ComposerGateView eligibility={eligibility.data} loading={eligibility.isLoading}>
-            <Composer purpose={{ kind: "note" }} autoFocus onPosted={onClose} onPremiumRequired={actions.showPremiumRequired} />
-          </ComposerGateView>
-        </div>
+      <div className="relative h-full w-full overflow-y-auto bg-canvas p-3 sm:h-auto sm:max-h-[90vh] sm:max-w-[600px] sm:rounded-echo-card sm:border sm:border-border">
+        <ComposerGateView eligibility={eligibility.data} loading={eligibility.isLoading}>
+          <Composer
+            purpose={{ kind: "note" }}
+            autoFocus
+            onPosted={onClose}
+            onCancel={onClose}
+            onPremiumRequired={actions.showPremiumRequired}
+            headerExtra={
+              <Link href="/echo/scheduled" onClick={onClose} className="rounded-full px-3 py-1.5 text-xs font-semibold text-echo-accent hover:bg-echo-accent-tint">
+                Drafts &amp; scheduled
+              </Link>
+            }
+          />
+        </ComposerGateView>
+        {eligibility.data && !eligibility.data.canPost && (
+          <div className="flex justify-center pt-3">
+            <button type="button" onClick={onClose} className="rounded-full px-3 py-1.5 text-sm font-semibold text-brand-text hover:bg-brand-secondary">
+              Cancel
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -199,10 +215,11 @@ function ReplyBox({ note }: { note: Note }) {
   const user = useAuthUser()
   const eligibility = useEligibility(!!user)
   const actions = useEchoActions()
+  const line = "mx-3 my-3 rounded-echo-card border border-border bg-brand-card px-4 py-3 text-sm text-muted-foreground"
   if (!user) {
     return (
-      <p className="border-b border-border px-4 py-3 text-base text-muted-foreground">
-        <Link href={`/login?redirect=${encodeURIComponent(statusPath(note))}`} className="font-bold text-primary-ink hover:underline">
+      <p className={line}>
+        <Link href={`/login?redirect=${encodeURIComponent(statusPath(note))}`} className="font-semibold text-echo-accent hover:underline">
           Sign in
         </Link>{" "}
         to reply.
@@ -211,16 +228,21 @@ function ReplyBox({ note }: { note: Note }) {
   }
   if (!note.viewerCanReply) {
     return (
-      <p className="border-b border-border px-4 py-3 text-base text-muted-foreground" data-reply-closed>
+      <p className={line} data-reply-closed>
         {ECHO_WORDS.replyNotAllowed}
       </p>
     )
   }
   if (eligibility.data && !eligibility.data.canReply) {
     const words = eligibility.data.reason === "account_too_new" ? ECHO_WORDS.accountTooNewDetail : ECHO_WORDS.suspendedDetail
-    return <p className="border-b border-border px-4 py-3 text-base text-muted-foreground">{words}</p>
+    return <p className={line}>{words}</p>
   }
-  return <Composer purpose={{ kind: "reply", to: note }} inline onPremiumRequired={actions.showPremiumRequired} />
+  // The rounded reply box, held at the bottom of the screen while the conversation scrolls.
+  return (
+    <div className="sticky bottom-14 z-10 bg-canvas/95 backdrop-blur-md sm:bottom-0" data-echo-reply-box>
+      <Composer purpose={{ kind: "reply", to: note }} inline placeholder={replyBoxPlaceholder(note)} onPremiumRequired={actions.showPremiumRequired} />
+    </div>
+  )
 }
 
 /** /echo/:handle/status/:id — the conversation above, the big post, sort and View quotes, the reply box, the replies. */
@@ -258,35 +280,70 @@ export function StatusScreen({ handle, id }: { handle: string; id: string }) {
   } else {
     const n = note.data
     const above = (conversation.data ?? []).filter((c) => c.id !== n.id)
+    // The author's own thread carrying on under the note: serif cards joined by an ember line, above the conversation.
+    const isPart = (r: Note) => r.authorId === n.authorId && r.replyToId === n.id
+    const parts = flattenPages(replies.data)
+      .filter(isPart)
+      .sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt))
+    const rows = new Map<string, { depth: number; replyingTo: string | null }>()
+    const arrange = (ns: Note[]) => {
+      const out = conversationRows(n.id, ns)
+      rows.clear()
+      for (const r of out) rows.set(r.note.id, { depth: r.depth, replyingTo: r.replyingTo })
+      return out.map((r) => r.note)
+    }
     body = (
-      <>
+      <div className="px-3 py-3">
         {above.length > 0 && (
           <ol aria-label="Earlier in the conversation">
-            {above.map((c) => (
+            {above.map((c, i) => (
               <li key={c.id}>
-                <NoteCard note={c} threadLine />
+                <NoteCard note={c} threadLine bubbles={false} threadPart={i > 0 && c.authorId === above[i - 1].authorId} replyToHandle={i > 0 ? above[i - 1].author?.username ?? null : undefined} />
               </li>
             ))}
           </ol>
         )}
         <BigNote note={n} />
-        {n.replyPolicy !== "everyone" && <p className="px-4 pt-2 text-sm text-muted-foreground">Who can reply: {replyPolicyLabel(n.replyPolicy)}</p>}
-        <div className="flex items-center justify-between border-b border-border px-4 py-2">
-          <label className="flex items-center gap-2 text-base font-bold text-brand-text">
+        {parts.length > 0 && (
+          <ol aria-label="The rest of the thread" data-echo-thread-parts>
+            {parts.map((p) => (
+              <li key={p.id}>
+                <span className="mx-auto block h-3 w-0.5 bg-echo-accent" aria-hidden />
+                <NoteCard note={p} bubbles={false} threadPart />
+              </li>
+            ))}
+          </ol>
+        )}
+        {n.replyPolicy !== "everyone" && <p className="px-1 pt-3 text-xs text-muted-foreground">Who can reply: {replyPolicyLabel(n.replyPolicy)}</p>}
+        <div className="mt-4 flex items-center gap-2 px-1" data-echo-conversation-label>
+          <h2 className="text-sm font-bold text-brand-text">Conversation · {fullCount(n.replyCount)}</h2>
+          <label className="ml-auto flex items-center text-xs font-semibold text-muted-foreground">
             <span className="sr-only">Sort replies</span>
-            <select value={sort} onChange={(e) => setSort(e.target.value as ReplySort)} className="rounded-full bg-transparent py-1 font-bold text-brand-text" data-echo-reply-sort>
+            <select value={sort} onChange={(e) => setSort(e.target.value as ReplySort)} className="rounded-full border border-border bg-brand-card px-2 py-1 text-xs font-semibold text-brand-text" data-echo-reply-sort>
               <option value="relevant">Relevant</option>
               <option value="recent">Recent</option>
               <option value="likes">Likes</option>
             </select>
           </label>
-          <Link href={`${statusPath(n)}/quotes`} className="rounded-full px-3 py-1 text-base font-bold text-primary-ink hover:bg-primary-tint" data-echo-view-quotes>
+          <Link href={`${statusPath(n)}/quotes`} className="rounded-full border border-border bg-brand-card px-3 py-1 text-xs font-semibold text-echo-accent hover:bg-echo-accent-tint" data-echo-view-quotes>
             View quotes
           </Link>
         </div>
-        <ReplyBox note={n} />
-        <NoteList query={replies} empty="No replies yet" emptyDetail="Be the first to reply." order={REPLY_ORDER[sort]} />
-      </>
+        <div className="-mx-3">
+          <NoteList
+            query={replies}
+            empty="No replies yet"
+            emptyDetail="Be the first to reply."
+            order={REPLY_ORDER[sort]}
+            filter={(r) => !isPart(r)}
+            arrange={arrange}
+            render={(r) => <ReplyBubble note={r} depth={rows.get(r.id)?.depth ?? 0} replyingTo={rows.get(r.id)?.replyingTo ?? null} />}
+          />
+        </div>
+        <div className="-mx-3">
+          <ReplyBox note={n} />
+        </div>
+      </div>
     )
   }
 
@@ -338,12 +395,12 @@ function ProfileFollowButton({ userId, following }: { userId: string; following:
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       onClick={() => unfollow.mutate(userId)}
-      className="rounded-full border border-border px-4 py-1.5 text-base font-bold text-brand-text hover:border-danger hover:bg-danger/10 hover:text-danger disabled:opacity-60"
+      className="rounded-full border border-border px-4 py-1.5 text-sm font-semibold text-brand-text hover:border-danger hover:bg-danger/10 hover:text-danger disabled:opacity-60"
     >
       {hover ? "Unfollow" : "Following"}
     </button>
   ) : (
-    <button type="button" disabled={busy} onClick={() => follow.mutate(userId)} className="rounded-full bg-brand-text px-4 py-1.5 text-base font-bold text-brand-bg hover:opacity-90 disabled:opacity-60">
+    <button type="button" disabled={busy} onClick={() => follow.mutate(userId)} className="rounded-full bg-echo-accent px-4 py-1.5 text-sm font-semibold text-echo-on-accent hover:bg-echo-accent-hover disabled:opacity-60">
       Follow
     </button>
   )
@@ -373,7 +430,6 @@ export function ProfileScreen({ handle }: { handle: string }) {
     return (
       <>
         <PageHeader title="Profile" back />
-        <div className="h-48 bg-brand-secondary" />
         <ListMessage title={status === 404 ? "This account doesn't exist" : "Something went wrong"} detail={status === 404 ? "Try searching for another." : "Try reloading."} />
       </>
     )
@@ -392,18 +448,26 @@ export function ProfileScreen({ handle }: { handle: string }) {
     <>
       <PageHeader title={name} back />
       <div data-echo-profile={p.username}>
-        <div className="aspect-[3/1] w-full bg-brand-secondary">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          {cover && <img src={cover} alt="" className="h-full w-full object-cover" />}
-        </div>
-        <div className="px-4">
-          <div className="flex items-start justify-between">
-            <div className="-mt-[12%] rounded-full border-4 border-brand-bg">
-              <Avatar src={avatar} name={name || "?"} className="h-[clamp(4.5rem,24vw,8.5rem)] w-[clamp(4.5rem,24vw,8.5rem)]" />
+        {/* The profile is a card like the notes under it: the cover sits inside it as its own rounded strip, never under the avatar. */}
+        <section className="mx-3 mt-3 rounded-echo-card border border-border bg-brand-card p-4" data-echo-profile-card>
+          {cover && (
+            <div className="mb-4 aspect-[4/1] w-full overflow-hidden rounded-echo-inner bg-brand-secondary">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={cover} alt="" className="h-full w-full object-cover" />
             </div>
-            <div className="pt-3">
+          )}
+          <div className="flex items-center gap-3">
+            <Avatar src={avatar} name={name || "?"} className="h-16 w-16 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <h2 className="flex min-w-0 items-center gap-1 text-xl font-bold text-brand-text">
+                <span className="truncate">{name}</span>
+                <VerifiedMark mark={mark} />
+              </h2>
+              <p className="truncate text-sm text-muted-foreground">@{p.username}</p>
+            </div>
+            <div className="shrink-0">
               {own ? (
-                <Link href="/settings/profile" className="rounded-full border border-border px-4 py-1.5 text-base font-bold text-brand-text hover:bg-brand-secondary">
+                <Link href="/settings/profile" className="rounded-full border border-border px-4 py-1.5 text-sm font-semibold text-brand-text hover:bg-brand-secondary">
                   Edit profile
                 </Link>
               ) : user ? (
@@ -411,29 +475,22 @@ export function ProfileScreen({ handle }: { handle: string }) {
               ) : null}
             </div>
           </div>
-          <div className="mt-2">
-            <h2 className="flex items-center gap-1 text-xl font-extrabold text-brand-text">
-              {name}
-              {mark !== "none" && <span className="text-primary" aria-label="Verified">✓</span>}
-            </h2>
-            <p className="text-base text-muted-foreground">@{p.username}</p>
-          </div>
           {p.bio && <NoteText text={p.bio} className="mt-3" />}
           {joinedLabel(p.created_at) && (
-            <p className="mt-3 flex items-center gap-1 text-base text-muted-foreground">
-              <CalendarDays className="h-[18px] w-[18px]" aria-hidden /> {joinedLabel(p.created_at)}
+            <p className="mt-3 flex items-center gap-1 text-sm text-muted-foreground">
+              <CalendarDays className="h-4 w-4" aria-hidden /> {joinedLabel(p.created_at)}
             </p>
           )}
-          <p className="mt-3 flex gap-5 text-base text-muted-foreground">
-            <Link href={`/u/${encodeURIComponent(p.username)}?tab=connections`} className="hover:underline">
+          <p className="mt-3 flex flex-wrap gap-2 text-sm text-muted-foreground">
+            <Link href={`/u/${encodeURIComponent(p.username)}?tab=connections`} className="rounded-full border border-border px-3 py-1 hover:bg-brand-secondary">
               <b className="text-brand-text">{fullCount(stats?.following_count ?? 0)}</b> Following
             </Link>
-            <Link href={`/u/${encodeURIComponent(p.username)}?tab=connections`} className="hover:underline">
+            <Link href={`/u/${encodeURIComponent(p.username)}?tab=connections`} className="rounded-full border border-border px-3 py-1 hover:bg-brand-secondary">
               <b className="text-brand-text">{fullCount(stats?.follower_count ?? 0)}</b> {stats?.follower_count === 1 ? "Follower" : "Followers"}
             </Link>
           </p>
-        </div>
-        <div className="mt-3 border-b border-border">
+        </section>
+        <div className="mt-1">
           <Tabs label="Profile" tabs={PROFILE_TABS.map((t) => ({ key: t.key, label: t.label, href: t.key === "notes" ? base : `${base}?tab=${t.key}` }))} active={tab} />
         </div>
         <NoteList
@@ -468,10 +525,10 @@ function LatestEverywhere() {
     <div data-echo-latest>
       <ListMessage title="Search for something" detail="Type a word or a #hashtag above to see the latest posts, or pick a trend." />
       {tags.length > 0 && (
-        <ul className="border-t border-border">
+        <ul className="mx-3 overflow-hidden rounded-echo-card border border-border bg-brand-card">
           {tags.map((t) => (
             <li key={t.tag}>
-              <Link href={`${hashtagPath(t.tag)}?f=live`} className="block px-4 py-3 text-base font-bold text-brand-text hover:bg-brand-secondary/60">
+              <Link href={`${hashtagPath(t.tag)}?f=live`} className="block px-4 py-3 text-sm font-semibold text-brand-text hover:bg-brand-secondary">
                 Latest in #{t.tag}
               </Link>
             </li>
@@ -492,11 +549,11 @@ export function ExploreScreen() {
   const header = (
     <div className="flex items-center gap-2 px-4 py-1.5">
       {q && (
-        <button type="button" aria-label="Back" onClick={() => router.push("/echo/explore")} className="-ml-2 rounded-full p-2 text-brand-text hover:bg-brand-secondary">
+        <button type="button" aria-label="Back" onClick={() => router.push("/echo/explore")} className="-ml-2 rounded-full border border-border bg-brand-card p-2 text-brand-text hover:bg-brand-secondary">
           <ArrowUp className="h-5 w-5 -rotate-90" aria-hidden />
         </button>
       )}
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <SearchBox initial={q} />
       </div>
       <Link href="/settings" aria-label="Settings" className="rounded-full p-2 text-brand-text hover:bg-brand-secondary">
@@ -533,7 +590,14 @@ export function ExploreScreen() {
           active={tab}
         />
       </PageHeader>
-      {tab === "trending" ? <TrendRows limit={30} /> : <LatestEverywhere />}
+      {tab === "trending" ? (
+        <section aria-label="Talked about now" className="mx-3 mt-3 overflow-hidden rounded-echo-card border border-border bg-brand-card">
+          <h2 className="px-4 pb-1 pt-3.5 text-lg font-bold text-brand-text">Talked about now</h2>
+          <TrendRows limit={30} />
+        </section>
+      ) : (
+        <LatestEverywhere />
+      )}
     </>
   )
 }
@@ -590,7 +654,7 @@ export function NotificationsScreen() {
           active={filter}
         />
       </PageHeader>
-      <div className="px-4 py-3" data-echo-notifications={filter}>
+      <div className="mx-3 my-3 rounded-echo-card border border-border bg-brand-card px-3 py-2" data-echo-notifications={filter}>
         {inbox.isLoading ? (
           <Spinner />
         ) : inbox.isError ? (
@@ -606,7 +670,7 @@ export function NotificationsScreen() {
             <ActivityList notifications={rows} onOpen={(n) => !n.is_read && markRead.mutate([n])} />
             {inbox.hasNextPage && (
               <div className="flex justify-center py-4">
-                <button type="button" onClick={() => void inbox.fetchNextPage()} disabled={inbox.isFetchingNextPage} className="rounded-full px-4 py-1.5 text-base font-bold text-primary-ink hover:bg-primary-tint disabled:opacity-50">
+                <button type="button" onClick={() => void inbox.fetchNextPage()} disabled={inbox.isFetchingNextPage} className="rounded-full border border-border px-4 py-1.5 text-sm font-semibold text-echo-accent hover:bg-echo-accent-tint disabled:opacity-50">
                   {inbox.isFetchingNextPage ? "Loading…" : "Show more"}
                 </button>
               </div>
@@ -625,8 +689,8 @@ export function BookmarksScreen() {
   const bookmarks = useBookmarks(!!user)
   return (
     <>
-      <PageHeader title="Bookmarks" subtitle={user?.username ? `@${user.username}` : undefined} back />
-      <NoteList query={bookmarks} empty="Save posts for later" emptyDetail="Bookmark posts to easily find them again in the future." />
+      <PageHeader title="Saved" subtitle={user?.username ? `@${user.username}` : undefined} back />
+      <NoteList query={bookmarks} empty="Save notes for later" emptyDetail="Tap More, then Save, on any note to find it here again." />
     </>
   )
 }
@@ -668,8 +732,8 @@ function ScheduledRow({ note }: { note: Note }) {
   }
 
   return (
-    <div className="px-4 py-3" data-echo-scheduled-row={note.id}>
-      <p className="flex items-center gap-2 text-sm text-muted-foreground">
+    <div className="rounded-echo-card border border-border bg-brand-card p-3.5" data-echo-scheduled-row={note.id}>
+      <p className="flex items-center gap-2 text-xs font-semibold text-echo-accent">
         <CalendarClock className="h-4 w-4" aria-hidden /> {note.status === "failed" ? "Not sent" : at ? scheduleLabel(at) : "Scheduled"}
       </p>
       {(note.status === "failed" || note.publishError) && (
@@ -678,14 +742,14 @@ function ScheduledRow({ note }: { note: Note }) {
           {note.publishError ? ` ${note.publishError}` : ""}
         </p>
       )}
-      <NoteText text={note.text} className="mt-1" />
+      <NoteText text={note.text} size={isLongNote(note.text) ? "long" : "timeline"} className="mt-1.5" />
       {note.poll && <p className="mt-1 text-sm text-muted-foreground">Poll · {note.poll.options.map((o) => o.label).join(" / ")}</p>}
       {note.media.length > 0 && <p className="mt-1 text-sm text-muted-foreground">{note.media.length === 1 ? "1 photo" : `${note.media.length} photos`}</p>}
-      <div className="mt-2 flex gap-2">
-        <button type="button" onClick={() => setEditing(true)} disabled={busy} className="rounded-full border border-border px-3 py-1 text-sm font-bold text-brand-text hover:bg-brand-secondary">
+      <div className="mt-3 flex gap-2">
+        <button type="button" onClick={() => setEditing(true)} disabled={busy} className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-brand-text hover:bg-brand-secondary">
           Edit time
         </button>
-        <button type="button" onClick={() => setDeleting(true)} disabled={busy} className="rounded-full border border-border px-3 py-1 text-sm font-bold text-danger hover:bg-danger/10">
+        <button type="button" onClick={() => setDeleting(true)} disabled={busy} className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-danger hover:bg-danger/10">
           Delete
         </button>
       </div>
@@ -716,7 +780,7 @@ export function ProfileEchoTab({ userId }: { userId: string }) {
   const handle = notes[0]?.author?.username
   return (
     <EchoActionsProvider>
-      <div className="overflow-hidden rounded-2xl border border-border bg-brand-card" data-profile-echo>
+      <div className="overflow-hidden rounded-echo-card border border-border bg-canvas" data-profile-echo>
         <div className="flex items-center gap-3 border-b border-border px-4 py-3">
           <div className="flex-1">
             <SegmentedControl
@@ -730,7 +794,7 @@ export function ProfileEchoTab({ userId }: { userId: string }) {
             />
           </div>
           {handle && (
-            <Link href={`/echo/${encodeURIComponent(handle)}`} className="text-sm font-bold text-primary-ink hover:underline">
+            <Link href={`/echo/${encodeURIComponent(handle)}`} className="text-sm font-semibold text-echo-accent hover:underline">
               Open in Echo
             </Link>
           )}

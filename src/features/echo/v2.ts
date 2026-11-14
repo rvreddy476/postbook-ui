@@ -245,7 +245,7 @@ export function withBookmark(note: Note, id: string, bookmarked: boolean, count?
 
 // ── Navigation ──────────────────────────────────────────────────────────
 
-export type EchoNavKey = "home" | "explore" | "notifications" | "chat" | "bookmarks" | "premium" | "profile"
+export type EchoNavKey = "home" | "explore" | "notifications" | "chat" | "bookmarks" | "scheduled" | "premium" | "profile"
 
 export interface EchoNavItem {
   key: EchoNavKey
@@ -253,24 +253,28 @@ export interface EchoNavItem {
   href: string
 }
 
-/** The left column, top to bottom (contract §5). Chat opens VChat's chat; Premium the purchase page. */
+/**
+ * The left column, top to bottom (contract §5, look v3 §4: Home, Explore,
+ * Notifications, Saved, Scheduled, then Chat and Premium, Profile). Chat
+ * opens VChat's chat; Premium the purchase page. Saved is the bookmarks list.
+ */
 export function echoNavItems(username: string | null | undefined): EchoNavItem[] {
   const items: EchoNavItem[] = [
     { key: "home", label: "Home", href: "/echo" },
     { key: "explore", label: "Explore", href: "/echo/explore" },
     { key: "notifications", label: "Notifications", href: "/echo/notifications" },
+    { key: "bookmarks", label: "Saved", href: "/echo/bookmarks" },
+    { key: "scheduled", label: "Scheduled", href: "/echo/scheduled" },
     { key: "chat", label: "Chat", href: "/messenger" },
-    { key: "bookmarks", label: "Bookmarks", href: "/echo/bookmarks" },
     { key: "premium", label: "Premium", href: "/premium" },
   ]
   if (username) items.push({ key: "profile", label: "Profile", href: `/echo/${encodeURIComponent(username)}` })
   return items
 }
 
-/** More: Settings, Scheduled, back to VChat. */
+/** More: Settings and back to VChat (Scheduled moved up into the menu, look v3 §4). */
 export const ECHO_MORE_ITEMS: readonly { key: string; label: string; href: string }[] = [
   { key: "settings", label: "Settings", href: "/settings" },
-  { key: "scheduled", label: "Scheduled", href: "/echo/scheduled" },
   { key: "vchat", label: "Back to VChat", href: "/" },
 ]
 
@@ -284,6 +288,7 @@ export function activeNavKey(pathname: string, username: string | null | undefin
   if (p.startsWith("/echo/explore") || p.startsWith("/echo/hashtag/")) return "explore"
   if (p.startsWith("/echo/notifications")) return "notifications"
   if (p.startsWith("/echo/bookmarks")) return "bookmarks"
+  if (p.startsWith("/echo/scheduled")) return "scheduled"
   if (username && (p === `/echo/${encodeURIComponent(username)}` || p === `/echo/${username}`)) return "profile"
   return null
 }

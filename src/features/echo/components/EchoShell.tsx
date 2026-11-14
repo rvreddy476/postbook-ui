@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation"
 import { createContext, useContext, useEffect, useState } from "react"
 import {
   ArrowLeft,
-  AtSign,
   Bell,
   Bookmark,
   CalendarClock,
@@ -36,16 +35,17 @@ import { hashtagPath } from "../model"
 import { EchoActionsProvider } from "./EchoActions"
 import { MenuButton } from "./Menu"
 import { ViewTrackingProvider } from "./ViewTracking"
+import { selfDisplayName } from "../look"
 
 /*
-  Echo is its own app on the web (echo-v2-contract.md §5, walked from x.com):
-  no VChat header, no VChat rail, no second Echo menu. X's three columns —
-  the left nav (logo, Home … Profile, More, the big Post button, the
-  account chip), the 600px centre column, the right column (search,
-  Subscribe to Premium, Trends, Who to follow). Below 1280px the left nav
+  Echo is its own app on the web (echo-v2-contract.md §5), in the look v3
+  "serif conversation cards" (echo-look-v3.md §4): no VChat header, no
+  VChat rail. Three columns — the left menu (the Echo wordmark in the
+  serif, Home … Profile, More, Write a note, the account chip), the centre
+  column of cards on the page ground, and the right column (search,
+  Premium, Talked about now, Who to follow). Below 1280px the left menu
   folds to icons; below 1024px the right column goes; at phone width the
-  page is one column with a bottom tab bar, a floating Post button and a
-  drawer behind the avatar, like X's mobile web.
+  page is one column with a bottom tab bar and a drawer behind the avatar.
 */
 
 const NAV_ICON: Record<EchoNavKey, typeof Home> = {
@@ -54,11 +54,12 @@ const NAV_ICON: Record<EchoNavKey, typeof Home> = {
   notifications: Bell,
   chat: MessageCircle,
   bookmarks: Bookmark,
+  scheduled: CalendarClock,
   premium: Crown,
   profile: UserRound,
 }
 
-const MORE_ICON: Record<string, typeof Home> = { settings: Settings, scheduled: CalendarClock, vchat: Undo2 }
+const MORE_ICON: Record<string, typeof Home> = { settings: Settings, vchat: Undo2 }
 
 interface ShellValue {
   openDrawer: () => void
@@ -76,10 +77,11 @@ function signOut() {
   window.location.assign("/api/auth/logout")
 }
 
+/** The wordmark: "Echo" in Momentum's serif. */
 function EchoLogo({ className = "" }: { className?: string }) {
   return (
-    <Link href="/echo" aria-label="Echo" className={`inline-flex items-center justify-center rounded-full p-3 text-brand-text hover:bg-brand-secondary ${className}`}>
-      <AtSign className="h-7 w-7" aria-hidden />
+    <Link href="/echo" aria-label="Echo" className={`inline-flex items-center rounded-full px-3 py-2 font-echo-serif text-2xl font-semibold text-brand-text hover:text-echo-accent ${className}`}>
+      Echo
     </Link>
   )
 }
@@ -90,26 +92,43 @@ function useNavItems() {
   return echoNavItems(user?.username).filter((i) => i.key !== "premium" || premiumOpen)
 }
 
+const NAV_ROW = "flex items-center gap-4 rounded-full p-3 text-lg transition-colors xl:px-4 xl:py-2.5"
+
+/** The Write a note pill: feather icon, ember fill. Opens the compose modal (/echo/compose). */
+export function WriteNoteButton({ className = "", folded = false }: { className?: string; folded?: boolean }) {
+  return (
+    <Link
+      href="/echo/compose"
+      data-echo-post-button
+      aria-label="Write a note"
+      className={`inline-flex items-center justify-center gap-2 rounded-full bg-echo-accent ${folded ? "h-12 w-12 xl:w-[90%]" : "px-5 py-2.5"} text-base font-semibold text-echo-on-accent shadow-sm transition-colors hover:bg-echo-accent-hover ${className}`}
+    >
+      <Feather className="h-5 w-5" aria-hidden />
+      <span className={folded ? "hidden xl:inline" : ""}>Write a note</span>
+    </Link>
+  )
+}
+
 export function LeftNav() {
   const user = useAuthUser()
   const pathname = usePathname() || "/echo"
   const items = useNavItems()
   const active = activeNavKey(pathname, user?.username)
-  const name = user?.name || user?.username || ""
+  const name = selfDisplayName(user)
   const router = useRouter()
 
   if (!user) {
     return (
-      <nav aria-label="Echo" className="flex h-full flex-col items-center gap-2 py-1 xl:items-start">
+      <nav aria-label="Echo" className="flex h-full flex-col items-center gap-2 py-2 xl:items-start">
         <EchoLogo />
       </nav>
     )
   }
 
   return (
-    <nav aria-label="Echo" data-echo-left-nav className="flex h-full flex-col items-center py-1 xl:items-start">
+    <nav aria-label="Echo" data-echo-left-nav className="flex h-full flex-col items-center py-2 xl:items-start">
       <EchoLogo />
-      <ul className="mt-0.5 flex flex-col items-center gap-0.5 xl:items-start">
+      <ul className="mt-2 flex flex-col items-center gap-1 xl:w-full xl:items-stretch">
         {items.map((item) => {
           const Icon = NAV_ICON[item.key]
           const on = item.key === active
@@ -119,10 +138,10 @@ export function LeftNav() {
                 href={item.href}
                 aria-current={on ? "page" : undefined}
                 data-nav={item.key}
-                className="flex items-center gap-5 rounded-full p-3 text-xl text-brand-text transition-colors hover:bg-brand-secondary xl:pr-6"
+                className={`${NAV_ROW} ${on ? "bg-echo-accent-tint font-semibold text-echo-accent" : "text-brand-text hover:bg-brand-secondary"}`}
               >
-                <Icon className="h-[26px] w-[26px]" strokeWidth={on ? 2.6 : 1.9} aria-hidden />
-                <span className={`hidden xl:inline ${on ? "font-bold" : ""}`}>{item.label}</span>
+                <Icon className="h-6 w-6" strokeWidth={on ? 2.4 : 1.9} aria-hidden />
+                <span className="hidden xl:inline">{item.label}</span>
               </Link>
             </li>
           )
@@ -135,35 +154,27 @@ export function LeftNav() {
               const Icon = MORE_ICON[m.key] ?? Settings
               return { key: m.key, label: m.label, icon: <Icon className="h-5 w-5" />, onSelect: () => router.push(m.href) }
             })}
-            className="flex items-center gap-5 rounded-full p-3 text-xl text-brand-text transition-colors hover:bg-brand-secondary xl:pr-6"
+            className={`${NAV_ROW} w-full text-brand-text hover:bg-brand-secondary`}
             panelClassName="bottom-full mb-2"
           >
-            <CircleEllipsis className="h-[26px] w-[26px]" strokeWidth={1.9} aria-hidden />
+            <CircleEllipsis className="h-6 w-6" strokeWidth={1.9} aria-hidden />
             <span className="hidden xl:inline">More</span>
           </MenuButton>
         </li>
       </ul>
-      <Link
-        href="/echo/compose"
-        data-echo-post-button
-        aria-label="Post"
-        className="mt-4 flex h-[52px] w-[52px] items-center justify-center rounded-full bg-brand-text text-lg font-bold text-brand-bg shadow-sm hover:opacity-90 xl:w-[90%]"
-      >
-        <Feather className="h-6 w-6 xl:hidden" aria-hidden />
-        <span className="hidden xl:inline">Post</span>
-      </Link>
+      <WriteNoteButton folded className="mt-4" />
       <div className="mt-auto w-full pb-3">
         <MenuButton
           label="Account menu"
           align="left"
           items={[{ key: "logout", label: `Log out${user.username ? ` @${user.username}` : ""}`, icon: <LogOut className="h-5 w-5" />, onSelect: signOut }]}
-          className="flex w-full items-center gap-3 rounded-full p-3 text-left hover:bg-brand-secondary"
+          className="flex w-full items-center gap-3 rounded-full p-2 text-left hover:bg-brand-secondary"
           panelClassName="bottom-full mb-2"
         >
           <Avatar src={user.avatar || null} name={name || "?"} className="h-10 w-10" />
           <span className="hidden min-w-0 flex-1 leading-tight xl:block" data-echo-account-chip>
-            <span className="block truncate text-base font-bold text-brand-text">{name}</span>
-            {user.username && <span className="block truncate text-base text-muted-foreground">@{user.username}</span>}
+            <span className="block truncate text-sm font-semibold text-brand-text">{name}</span>
+            {user.username && <span className="block truncate text-sm text-muted-foreground">@{user.username}</span>}
           </span>
           <Ellipsis className="hidden h-5 w-5 text-brand-text xl:block" aria-hidden />
         </MenuButton>
@@ -184,7 +195,7 @@ export function SearchBox({ initial = "", autoFocus = false }: { initial?: strin
         const term = q.trim()
         if (term) router.push(`/echo/explore?q=${encodeURIComponent(term)}`)
       }}
-      className="flex items-center gap-3 rounded-full border border-transparent bg-brand-secondary px-4 py-2.5 focus-within:border-primary focus-within:bg-brand-bg"
+      className="flex items-center gap-3 rounded-full border border-border bg-brand-card px-4 py-2.5 focus-within:border-echo-accent"
     >
       <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
       <input
@@ -192,9 +203,9 @@ export function SearchBox({ initial = "", autoFocus = false }: { initial?: strin
         value={q}
         autoFocus={autoFocus}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search"
+        placeholder="Search Echo"
         aria-label="Search Echo"
-        className="w-full bg-transparent text-base text-brand-text placeholder:text-muted-foreground focus:outline-none"
+        className="w-full min-w-0 bg-transparent text-base text-brand-text placeholder:text-muted-foreground focus:outline-none"
       />
     </form>
   )
@@ -202,8 +213,8 @@ export function SearchBox({ initial = "", autoFocus = false }: { initial?: strin
 
 function Box({ title, children, label }: { title: string; children: React.ReactNode; label: string }) {
   return (
-    <section aria-label={label} className="overflow-hidden rounded-2xl border border-border">
-      <h2 className="px-4 pb-1 pt-3 text-xl font-extrabold text-brand-text">{title}</h2>
+    <section aria-label={label} className="overflow-hidden rounded-echo-card border border-border bg-brand-card">
+      <h2 className="px-4 pb-1 pt-3.5 text-lg font-bold text-brand-text">{title}</h2>
       {children}
     </section>
   )
@@ -216,10 +227,10 @@ function SubscribeCard() {
   // Hidden for members, while unknown, and when Premium is closed.
   if (!user || !available || !me.isSuccess || me.data.active || me.data.inGrace) return null
   return (
-    <section aria-label="Subscribe to Premium" className="rounded-2xl border border-border p-4" data-echo-subscribe>
-      <h2 className="text-xl font-extrabold text-brand-text">Subscribe to Premium</h2>
-      <p className="mt-1 text-base text-brand-text">Subscribe to unlock posting on Echo, threads and quotes.</p>
-      <Link href="/premium" className="mt-3 inline-flex rounded-full bg-primary-ink px-4 py-2 text-base font-bold text-primary-foreground hover:bg-primary-hover">
+    <section aria-label="Subscribe to Premium" className="rounded-echo-card border border-border bg-brand-card p-4" data-echo-subscribe>
+      <h2 className="text-lg font-bold text-brand-text">Subscribe to Premium</h2>
+      <p className="mt-1 text-sm text-muted-foreground">Subscribe to unlock posting on Echo, threads and quotes.</p>
+      <Link href="/premium" className="mt-3 inline-flex rounded-full bg-echo-accent px-4 py-2 text-sm font-semibold text-echo-on-accent hover:bg-echo-accent-hover">
         Subscribe
       </Link>
     </section>
@@ -229,15 +240,15 @@ function SubscribeCard() {
 export function TrendRows({ limit }: { limit: number }) {
   const trends = useTrends(Math.max(limit, 10))
   if (trends.isLoading) return <p className="px-4 py-3 text-sm text-muted-foreground">Loading…</p>
-  if (trends.isError || !trends.data || trends.data.length === 0) return <p className="px-4 py-3 text-sm text-muted-foreground">No trends right now.</p>
+  if (trends.isError || !trends.data || trends.data.length === 0) return <p className="px-4 py-3 text-sm text-muted-foreground">Nothing is being talked about right now.</p>
   return (
     <ol>
       {trends.data.slice(0, limit).map((t) => (
         <li key={t.tag}>
-          <Link href={hashtagPath(t.tag)} className="block px-4 py-3 hover:bg-brand-secondary/60" data-trend={t.tag}>
-            <span className="block text-sm text-muted-foreground">{t.rank} · Trending</span>
-            <span className="block text-base font-bold text-brand-text">#{t.tag}</span>
-            {t.noteCount > 0 && <span className="block text-sm text-muted-foreground">{trendCountLabel(t.noteCount)}</span>}
+          <Link href={hashtagPath(t.tag)} className="block px-4 py-2.5 hover:bg-brand-secondary" data-trend={t.tag}>
+            <span className="block text-xs text-muted-foreground">{t.rank} · Talked about</span>
+            <span className="block text-base font-semibold text-echo-accent">#{t.tag}</span>
+            {t.noteCount > 0 && <span className="block text-xs text-muted-foreground">{trendCountLabel(t.noteCount)}</span>}
           </Link>
         </li>
       ))}
@@ -249,9 +260,9 @@ function Trends() {
   const trends = useTrends(10)
   if (trends.isError || (trends.isSuccess && trends.data.length === 0)) return null
   return (
-    <Box title="What's happening" label="Trends">
+    <Box title="Talked about now" label="Trends">
       <TrendRows limit={5} />
-      <Link href="/echo/explore" className="block px-4 py-3 text-base text-primary-ink hover:bg-brand-secondary/60">
+      <Link href="/echo/explore" className="block px-4 py-3 text-sm font-semibold text-echo-accent hover:bg-brand-secondary">
         Show more
       </Link>
     </Box>
@@ -269,12 +280,12 @@ function WhoToFollow() {
         {people.map((p) => {
           const name = p.display_name || p.username || "Someone"
           return (
-            <li key={p.user_id} className="flex items-center gap-3 px-4 py-3 hover:bg-brand-secondary/60">
+            <li key={p.user_id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-brand-secondary">
               <Link href={p.username ? `/echo/${encodeURIComponent(p.username)}` : `/u/${encodeURIComponent(p.user_id)}`} className="flex min-w-0 flex-1 items-center gap-3">
-                <Avatar src={p.avatar_media_id ? `/v1/media/${p.avatar_media_id}/serve/avatar` : null} name={name} className="h-10 w-10" />
+                <Avatar src={p.avatar_media_id ? `/v1/media/${p.avatar_media_id}/serve/avatar` : null} name={name} className="h-9 w-9" />
                 <span className="min-w-0 leading-tight">
-                  <span className="block truncate text-base font-bold text-brand-text">{name}</span>
-                  {p.username && <span className="block truncate text-base text-muted-foreground">@{p.username}</span>}
+                  <span className="block truncate text-sm font-semibold text-brand-text">{name}</span>
+                  {p.username && <span className="block truncate text-sm text-muted-foreground">@{p.username}</span>}
                 </span>
               </Link>
               <SuggestionFollowButton userId={p.user_id} name={name} following={false} variant="row" />
@@ -289,13 +300,13 @@ function WhoToFollow() {
 function SignedOutCard() {
   const pathname = usePathname() || "/echo"
   return (
-    <section aria-label="New to Echo?" className="rounded-2xl border border-border p-4">
-      <h2 className="text-xl font-extrabold text-brand-text">New to Echo?</h2>
+    <section aria-label="New to Echo?" className="rounded-echo-card border border-border bg-brand-card p-4">
+      <h2 className="font-echo-serif text-xl text-brand-text">New to Echo?</h2>
       <p className="mt-1 text-sm text-muted-foreground">Sign in to follow people, reply and see your timeline.</p>
-      <Link href={`/login?redirect=${encodeURIComponent(pathname)}`} className="mt-3 flex justify-center rounded-full bg-brand-text px-4 py-2 text-base font-bold text-brand-bg hover:opacity-90">
+      <Link href={`/login?redirect=${encodeURIComponent(pathname)}`} className="mt-3 flex justify-center rounded-full bg-echo-accent px-4 py-2 text-sm font-semibold text-echo-on-accent hover:bg-echo-accent-hover">
         Sign in
       </Link>
-      <Link href="/register" className="mt-2 flex justify-center rounded-full border border-border px-4 py-2 text-base font-bold text-brand-text hover:bg-brand-secondary">
+      <Link href="/register" className="mt-2 flex justify-center rounded-full border border-border px-4 py-2 text-sm font-semibold text-brand-text hover:bg-brand-secondary">
         Create account
       </Link>
     </section>
@@ -307,16 +318,16 @@ export function RightColumn() {
   const pathname = usePathname() || ""
   const onExplore = pathname.startsWith("/echo/explore")
   return (
-    <div className="flex flex-col gap-4 pb-16" data-echo-right-column>
+    <div className="flex flex-col gap-3 pb-16" data-echo-right-column>
       {!onExplore && (
-        <div className="sticky top-0 z-10 bg-brand-bg py-1.5">
+        <div className="sticky top-0 z-10 bg-canvas py-2">
           <SearchBox />
         </div>
       )}
       {user ? <SubscribeCard /> : <SignedOutCard />}
       {!onExplore && <Trends />}
       <WhoToFollow />
-      <p className="px-4 text-sm text-muted-foreground">
+      <p className="px-4 text-xs text-muted-foreground">
         <Link href="/terms" className="hover:underline">
           Terms
         </Link>{" "}
@@ -336,13 +347,13 @@ function BottomTabBar() {
   const active = activeNavKey(pathname, user?.username)
   if (!user) return null
   return (
-    <nav aria-label="Echo tabs" data-echo-tab-bar className="fixed inset-x-0 bottom-0 z-30 flex h-14 items-center justify-around border-t border-border bg-brand-bg sm:hidden">
+    <nav aria-label="Echo tabs" data-echo-tab-bar className="fixed inset-x-0 bottom-0 z-30 flex h-14 items-center justify-around border-t border-border bg-brand-card sm:hidden">
       {items.map((item) => {
         const Icon = NAV_ICON[item.key]
         const on = item.key === active
         return (
-          <Link key={item.key} href={item.href} aria-label={item.label} aria-current={on ? "page" : undefined} className="flex flex-1 justify-center p-3 text-brand-text">
-            <Icon className="h-[26px] w-[26px]" strokeWidth={on ? 2.6 : 1.9} aria-hidden />
+          <Link key={item.key} href={item.href} aria-label={item.label} aria-current={on ? "page" : undefined} className={`flex flex-1 justify-center p-3 ${on ? "text-echo-accent" : "text-brand-text"}`}>
+            <Icon className="h-6 w-6" strokeWidth={on ? 2.4 : 1.9} aria-hidden />
           </Link>
         )
       })}
@@ -360,21 +371,24 @@ function Drawer({ open, onClose }: { open: boolean; onClose: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname])
   if (!open || !user) return null
-  const name = user.name || user.username || ""
-  const row = "flex items-center gap-4 px-4 py-3 text-xl font-bold text-brand-text hover:bg-brand-secondary"
+  const name = selfDisplayName(user)
+  const row = "flex items-center gap-4 px-4 py-3 text-lg font-semibold text-brand-text hover:bg-brand-secondary"
   return (
     <div className="fixed inset-0 z-50 sm:hidden" role="dialog" aria-label="Account menu">
       <button type="button" aria-label="Close menu" onClick={onClose} className="absolute inset-0 bg-brand-text/40" />
-      <div className="absolute inset-y-0 left-0 flex w-[280px] max-w-[85vw] flex-col overflow-y-auto bg-brand-bg shadow-xl">
+      <div className="absolute inset-y-0 left-0 flex w-[280px] max-w-[85vw] flex-col overflow-y-auto bg-brand-card shadow-xl">
         <div className="flex items-start justify-between p-4">
           <div className="min-w-0">
             <Avatar src={user.avatar || null} name={name || "?"} className="h-10 w-10" />
-            <p className="mt-2 truncate text-lg font-bold text-brand-text">{name}</p>
-            {user.username && <p className="truncate text-base text-muted-foreground">@{user.username}</p>}
+            <p className="mt-2 truncate text-lg font-semibold text-brand-text">{name}</p>
+            {user.username && <p className="truncate text-sm text-muted-foreground">@{user.username}</p>}
           </div>
           <button type="button" aria-label="Close" onClick={onClose} className="rounded-full p-2 hover:bg-brand-secondary">
             <X className="h-5 w-5 text-brand-text" />
           </button>
+        </div>
+        <div className="px-4 pb-2">
+          <WriteNoteButton className="w-full" />
         </div>
         {items.map((item) => {
           const Icon = NAV_ICON[item.key]
@@ -407,27 +421,27 @@ export function PageHeader({ title, subtitle, back = false, children, right }: {
   const user = useAuthUser()
   const shell = useEchoShell()
   return (
-    <div className="sticky top-0 z-20 border-b border-border bg-brand-bg/85 backdrop-blur-md" data-echo-page-header>
+    <div className="sticky top-0 z-20 bg-canvas/90 backdrop-blur-md" data-echo-page-header>
       {(title || back) && (
-        <div className="flex min-h-[53px] items-center gap-6 px-4">
+        <div className="flex min-h-[53px] items-center gap-4 px-4">
           {back ? (
             <button
               type="button"
               aria-label="Back"
               onClick={() => (window.history.length > 1 ? router.back() : router.push("/echo"))}
-              className="-ml-2 rounded-full p-2 hover:bg-brand-secondary"
+              className="-ml-2 rounded-full border border-border bg-brand-card p-2 hover:bg-brand-secondary"
             >
               <ArrowLeft className="h-5 w-5 text-brand-text" />
             </button>
           ) : (
             user && (
               <button type="button" aria-label="Open menu" onClick={shell.openDrawer} className="sm:hidden">
-                <Avatar src={user.avatar || null} name={user.name || user.username || "?"} className="h-8 w-8" />
+                <Avatar src={user.avatar || null} name={selfDisplayName(user) || "?"} className="h-8 w-8" />
               </button>
             )
           )}
           <div className="min-w-0 flex-1 leading-tight">
-            {title && <h1 className="truncate text-xl font-extrabold text-brand-text">{title}</h1>}
+            {title && <h1 className="truncate text-xl font-bold text-brand-text">{title}</h1>}
             {subtitle && <p className="truncate text-sm text-muted-foreground">{subtitle}</p>}
           </div>
           {right}
@@ -438,26 +452,22 @@ export function PageHeader({ title, subtitle, back = false, children, right }: {
   )
 }
 
-/** X's underline tabs. Links when `href` is given, buttons otherwise. */
+/** Pill tabs; the selected one takes the ember tint. Links when `href` is given, buttons otherwise. */
 export function Tabs<K extends string>({ tabs, active, onSelect, label }: { tabs: readonly { key: K; label: string; href?: string }[]; active: K; onSelect?: (k: K) => void; label: string }) {
   return (
-    <div role="tablist" aria-label={label} className="flex">
+    <div role="tablist" aria-label={label} className="flex gap-2 overflow-x-auto px-3 py-2" data-echo-tabs>
       {tabs.map((t) => {
         const on = t.key === active
-        const inner = (
-          <span className={`relative inline-flex h-[53px] items-center text-base ${on ? "font-bold text-brand-text" : "font-medium text-muted-foreground"}`}>
-            {t.label}
-            {on && <span className="absolute inset-x-0 bottom-0 h-1 rounded-full bg-primary" aria-hidden />}
-          </span>
-        )
-        const cls = "flex flex-1 justify-center px-4 hover:bg-brand-secondary/60"
+        const cls = `inline-flex shrink-0 items-center rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors ${
+          on ? "border-echo-accent/50 bg-echo-accent-tint text-echo-accent" : "border-border bg-brand-card text-muted-foreground hover:text-brand-text"
+        }`
         return t.href ? (
           <Link key={t.key} href={t.href} role="tab" aria-selected={on} data-tab={t.key} className={cls} replace>
-            {inner}
+            {t.label}
           </Link>
         ) : (
           <button key={t.key} type="button" role="tab" aria-selected={on} data-tab={t.key} onClick={() => onSelect?.(t.key)} className={cls}>
-            {inner}
+            {t.label}
           </button>
         )
       })}
@@ -473,25 +483,16 @@ export function EchoShell({ children, modal }: { children: React.ReactNode; moda
     <ShellContext.Provider value={{ openDrawer: () => setDrawer(true) }}>
       <ViewTrackingProvider enabled={!!user}>
         <EchoActionsProvider>
-          <div data-echo-shell className="min-h-screen bg-brand-bg font-sans text-brand-text">
+          <div data-echo-shell className="min-h-screen overflow-x-hidden bg-canvas font-sans text-brand-text">
             <div className="mx-auto flex w-full max-w-[1265px] justify-center">
-              <header className="sticky top-0 hidden h-screen w-[88px] shrink-0 px-2 sm:block xl:w-[275px]">
+              <header className="sticky top-0 hidden h-screen w-[88px] shrink-0 px-2 sm:block xl:w-[260px]">
                 <LeftNav />
               </header>
-              <main className="min-h-screen w-full min-w-0 max-w-[600px] border-border pb-20 sm:border-x sm:pb-0">{children}</main>
-              <aside className="hidden w-[350px] shrink-0 pl-7 pr-2 lg:block">
+              <main className="min-h-screen w-full min-w-0 max-w-[620px] pb-20 sm:pb-0">{children}</main>
+              <aside className="hidden w-[340px] shrink-0 pl-6 pr-2 lg:block">
                 <RightColumn />
               </aside>
             </div>
-            {user && (
-              <Link
-                href="/echo/compose"
-                aria-label="Post"
-                className="fixed bottom-20 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary-ink text-primary-foreground shadow-lg hover:bg-primary-hover sm:hidden"
-              >
-                <Feather className="h-6 w-6" aria-hidden />
-              </Link>
-            )}
             <BottomTabBar />
             <Drawer open={drawer} onClose={() => setDrawer(false)} />
             {modal}

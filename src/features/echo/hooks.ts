@@ -7,6 +7,7 @@ import {
   fetchEligibility,
   fetchNote,
   fetchReplies,
+  TOP_REPLIES_LIMIT,
   fetchTimeline,
   fetchUserNotes,
   fetchBookmarks,
@@ -33,6 +34,8 @@ export const echoKeys = {
   note: (id: string) => ["echo", "note", id] as const,
   conversation: (id: string) => ["echo", "conversation", id] as const,
   replies: (id: string) => ["echo", "replies", id] as const,
+  /** A timeline card's first replies (a plain NotePage, not an infinite list). */
+  topReplies: (id: string) => ["echo", "top-replies", id] as const,
   user: (userId: string, tab: ProfileNotesTab) => ["echo", "user", userId, tab] as const,
   eligibility: ["echo", "eligibility"] as const,
 }
@@ -64,6 +67,21 @@ export function useReplies(id: string, enabled = true) {
     initialPageParam: null as string | null,
     getNextPageParam: nextCursor,
     enabled: enabled && !!id,
+  })
+}
+
+/**
+ * The first replies under a timeline card, for its bubbles. Asked for only
+ * once the card is on screen and has replies, cached per note, and never
+ * holds the timeline up: the card draws without them until they arrive.
+ */
+export function useTopReplies(id: string, enabled: boolean) {
+  return useQuery({
+    queryKey: echoKeys.topReplies(id),
+    queryFn: () => fetchReplies(id, null, TOP_REPLIES_LIMIT),
+    enabled: enabled && !!id,
+    staleTime: 60_000,
+    retry: false,
   })
 }
 
@@ -112,6 +130,7 @@ export function updateNoteEverywhere(qc: QueryClient, fn: (n: Note) => Note | nu
   qc.setQueriesData<InfiniteData<NotePage>>({ queryKey: ["echo", "replies"] }, (d) => mapPages(d, fn))
   qc.setQueriesData<InfiniteData<NotePage>>({ queryKey: ["echo", "user"] }, (d) => mapPages(d, fn))
   qc.setQueriesData<InfiniteData<NotePage>>({ queryKey: ["echo", "list"] }, (d) => mapPages(d, fn))
+  qc.setQueriesData<NotePage>({ queryKey: ["echo", "top-replies"] }, (d) => (d ? { ...d, items: d.items.map(fn).filter((n): n is Note => n !== null) } : d))
   qc.setQueriesData<Note[]>({ queryKey: ["echo", "conversation"] }, (d) => (d ? d.map(fn).filter((n): n is Note => n !== null) : d))
   qc.setQueriesData<Note>({ queryKey: ["echo", "note"] }, (d) => (d ? fn(d) ?? d : d))
 }
@@ -135,6 +154,7 @@ export function showCreatedNotes(qc: QueryClient, notes: readonly Note[]) {
     }
     if (note.replyToId) {
       const parent = note.replyToId
+      void qc.invalidateQueries({ queryKey: echoKeys.topReplies(parent) })
       updateNoteEverywhere(qc, (n) => (n.id === parent ? { ...n, replyCount: n.replyCount + 1 } : n))
     }
     if (note.quoteOfId) {

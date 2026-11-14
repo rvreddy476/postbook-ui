@@ -3,7 +3,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useQueryClient } from "@tanstack/react-query"
-import { AtSign, CalendarClock, Globe, ImagePlus, ListChecks, Plus, Smile, UserCheck, X } from "lucide-react"
+import { AtSign, CalendarClock, Clapperboard, Globe, ImagePlus, ListChecks, Plus, Smile, UserCheck, X } from "lucide-react"
 
 import EmojiPickerPopover from "@/components/comments/EmojiPickerPopover"
 import Avatar from "@/components/ui/Avatar"
@@ -44,15 +44,19 @@ import {
   toLocalInputValue,
   type PollDraft,
 } from "../v2"
-import { QuotedNote } from "./NoteCard"
+import { composerWords, selfDisplayName } from "../look"
+import { QuotedNote, Signature } from "./NoteCard"
 
 const GiphyGrid = lazy(() => import("@/components/messenger/thread/GiphyGrid"))
 
 /*
-  The Echo composer, X's shape: avatar, a growing text box, the staged
-  pictures or GIF or poll, "Everyone can reply", and the toolbar — photos
-  (images only in v1), GIF, poll, emoji, schedule — with the character
-  ring, the thread "+" and Post on the right.
+  The Echo composer, look v3 (echo-look-v3.md §3): the text area IS a serif
+  card, with the author's signature on top and "Everyone can reply" (the
+  reply-policy control) beside it; "What's worth saying today?"; the staged
+  pictures or GIF or poll inside the card; then labelled pills — Photo,
+  GIF, Poll, Emoji, Later (schedule), Add to thread — "N left", and a
+  filled ember Post note. Thread parts stack as cards joined by an ember
+  line. A reply shows the note it answers above as a small card.
 
   Rules (echo-contract.md + echo-v2-contract.md): 500 characters; up to 4
   images or exactly 1 GIF; a poll note has no media; a thread (2–25) has
@@ -80,14 +84,17 @@ let seq = 0
 const nextKey = (p: string) => `${p}${Date.now().toString(36)}-${(seq += 1)}`
 const newEntry = (): Entry => ({ key: nextKey("e"), text: "", media: [] })
 
-const iconButton = "rounded-full p-2 text-primary hover:bg-primary-tint disabled:opacity-40 disabled:hover:bg-transparent"
+const iconButton = "rounded-full p-2 text-echo-accent hover:bg-echo-accent-tint disabled:opacity-40 disabled:hover:bg-transparent"
+const toolPill =
+  "inline-flex items-center gap-1.5 rounded-full border border-border bg-brand-card px-3 py-1 text-xs font-semibold text-brand-text hover:border-echo-accent hover:text-echo-accent disabled:opacity-40 disabled:hover:border-border disabled:hover:text-brand-text"
+const submitPill = "shrink-0 rounded-full bg-echo-accent px-4 py-1.5 text-sm font-semibold text-echo-on-accent hover:bg-echo-accent-hover disabled:opacity-50"
 
 export function Counter({ text }: { text: string }) {
   const left = remaining(text)
   const tone = left < 0 ? "text-danger" : left <= ECHO_RULES.warnAtRemaining ? "text-warning" : "text-muted-foreground"
   return (
     <span className={`text-xs tabular-nums ${tone}`} aria-live="polite" data-remaining={left}>
-      {left}
+      {left} left
     </span>
   )
 }
@@ -99,7 +106,7 @@ export function CharRing({ text }: { text: string }) {
   const r = 9
   const c = 2 * Math.PI * r
   const ratio = Math.min(1, Math.max(0, used / ECHO_RULES.maxChars))
-  const tone = left < 0 ? "text-danger" : left <= ECHO_RULES.warnAtRemaining ? "text-warning" : "text-primary"
+  const tone = left < 0 ? "text-danger" : left <= ECHO_RULES.warnAtRemaining ? "text-warning" : "text-echo-accent"
   const big = left <= ECHO_RULES.warnAtRemaining
   if (used <= 0) return <span className="inline-block h-6 w-6" aria-hidden data-remaining={left} />
   return (
@@ -146,12 +153,12 @@ export function ReplyPolicyPicker({ value, onChange }: { value: ReplyPolicy; onC
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold text-primary-ink hover:bg-primary-tint"
+        className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-0.5 text-xs font-semibold text-echo-accent hover:bg-echo-accent-tint"
       >
         {POLICY_ICON[value]} {POLICY_PILL[value]}
       </button>
       {open && (
-        <div role="menu" aria-label="Who can reply?" className="absolute left-0 z-40 mt-1 w-72 rounded-xl border border-border bg-brand-card py-2 shadow-lg">
+        <div role="menu" aria-label="Who can reply?" className="absolute right-0 z-40 mt-1 w-72 max-w-[85vw] rounded-xl border border-border bg-brand-card py-2 shadow-lg">
           <p className="px-4 pb-1 text-base font-bold text-brand-text">Who can reply?</p>
           <p className="px-4 pb-2 text-sm text-muted-foreground">Pick who can reply to this post. Anyone mentioned can always reply.</p>
           {REPLY_POLICIES.map((p) => (
@@ -166,7 +173,7 @@ export function ReplyPolicyPicker({ value, onChange }: { value: ReplyPolicy; onC
               }}
               className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-semibold text-brand-text hover:bg-brand-secondary"
             >
-              <span className="rounded-full bg-primary p-2 text-primary-foreground">{POLICY_ICON[p.value]}</span>
+              <span className="rounded-full bg-echo-accent p-2 text-echo-on-accent">{POLICY_ICON[p.value]}</span>
               {p.value === "everyone" ? "Everyone" : p.value === "following" ? "Accounts you follow" : "Only accounts you mention"}
             </button>
           ))}
@@ -182,10 +189,10 @@ function range(n: number): number[] {
 
 /** The poll's choices (2 to 4, 25 characters each) and its length (5 minutes to 7 days). */
 export function PollEditor({ draft, onChange, onRemove }: { draft: PollDraft; onChange: (d: PollDraft) => void; onRemove: () => void }) {
-  const select = "rounded-lg border border-border bg-brand-bg px-2 py-1.5 text-sm text-brand-text"
+  const select = "rounded-echo-inner border border-border bg-brand-card px-2 py-1.5 text-sm text-brand-text"
   const setOption = (i: number, value: string) => onChange({ ...draft, options: draft.options.map((o, j) => (j === i ? value : o)) })
   return (
-    <div className="mt-3 rounded-2xl border border-border" data-poll-editor>
+    <div className="mt-3 rounded-echo-inner border border-border" data-poll-editor>
       <div className="space-y-2 p-3">
         {draft.options.map((o, i) => (
           <div key={i} className="flex items-center gap-2">
@@ -196,7 +203,7 @@ export function PollEditor({ draft, onChange, onRemove }: { draft: PollDraft; on
                 maxLength={POLL_RULES.maxLabel}
                 onChange={(e) => setOption(i, e.target.value)}
                 placeholder={i < POLL_RULES.minOptions ? `Choice ${i + 1}` : `Choice ${i + 1} (optional)`}
-                className="w-full rounded-lg border border-border bg-brand-bg px-3 py-2.5 text-base text-brand-text placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                className="w-full rounded-echo-inner border border-border bg-brand-card px-3 py-2.5 text-base text-brand-text placeholder:text-muted-foreground focus:border-echo-accent focus:outline-none"
               />
               <span className="absolute right-2 top-1 text-xs tabular-nums text-muted-foreground">
                 {Array.from(o).length} / {POLL_RULES.maxLabel}
@@ -247,7 +254,7 @@ export function PollEditor({ draft, onChange, onRemove }: { draft: PollDraft; on
           </label>
         </div>
       </div>
-      <button type="button" onClick={onRemove} className="w-full rounded-b-2xl border-t border-border py-3 text-sm font-semibold text-danger hover:bg-danger/10">
+      <button type="button" onClick={onRemove} className="w-full rounded-b-echo-inner border-t border-border py-3 text-sm font-semibold text-danger hover:bg-danger/10">
         Remove poll
       </button>
     </div>
@@ -271,7 +278,7 @@ export function ScheduleDialog({ open, value, onClose, onConfirm, onClear }: { o
             min={toLocalInputValue(scheduleEarliest())}
             max={toLocalInputValue(scheduleLatest())}
             onChange={(e) => setInput(e.target.value)}
-            className="rounded-lg border border-border bg-brand-bg px-3 py-2 text-base text-brand-text"
+            className="rounded-echo-inner border border-border bg-brand-card px-3 py-2 text-base text-brand-text"
           />
         </label>
         {problem && (
@@ -281,7 +288,7 @@ export function ScheduleDialog({ open, value, onClose, onConfirm, onClear }: { o
         )}
         <div className="flex items-center justify-between gap-2">
           {value ? (
-            <button type="button" onClick={onClear} className="rounded-full px-4 py-2 text-sm font-semibold text-primary-ink hover:bg-primary-tint">
+            <button type="button" onClick={onClear} className="rounded-full px-4 py-2 text-sm font-semibold text-echo-accent hover:bg-echo-accent-tint">
               Clear
             </button>
           ) : (
@@ -291,7 +298,7 @@ export function ScheduleDialog({ open, value, onClose, onConfirm, onClear }: { o
             type="button"
             disabled={!!problem || !picked}
             onClick={() => picked && onConfirm(picked)}
-            className="rounded-full bg-brand-text px-5 py-2 text-sm font-bold text-brand-bg hover:opacity-90 disabled:opacity-50"
+            className="rounded-full bg-echo-accent px-5 py-2 text-sm font-semibold text-echo-on-accent hover:bg-echo-accent-hover disabled:opacity-50"
           >
             Confirm
           </button>
@@ -317,7 +324,7 @@ function GifPickerDialog({ open, apiKey, onClose, onPick }: { open: boolean; api
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search for GIFs"
           aria-label="Search for GIFs"
-          className="w-full rounded-full border border-border bg-brand-bg px-4 py-2 text-base text-brand-text placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+          className="w-full rounded-full border border-border bg-brand-card px-4 py-2 text-base text-brand-text placeholder:text-muted-foreground focus:border-echo-accent focus:outline-none"
         />
         <div className="max-h-[55vh] overflow-y-auto">
           <Suspense fallback={<p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>}>
@@ -340,11 +347,11 @@ export async function gifFileFromPick(gif: Pick<GifSendPayload, "id" | "url">, f
 /** "Posting on Echo needs Premium" with Get Premium, shown instead of the composer to free members. */
 export function PremiumGateCard() {
   return (
-    <div className="border-b border-border px-4 py-4" data-echo-premium-gate>
-      <div className="rounded-2xl border border-border bg-brand-card p-4">
-        <p className="text-lg font-extrabold text-brand-text">Posting on Echo needs Premium</p>
-        <p className="mt-1 text-sm text-muted-foreground">You can still reply, like, bookmark and vote. Premium members can post, start threads and quote.</p>
-        <Link href="/premium" data-echo-get-premium className="mt-3 inline-flex rounded-full bg-brand-text px-5 py-2 text-sm font-bold text-brand-bg hover:opacity-90">
+    <div className="px-3 pt-3" data-echo-premium-gate>
+      <div className="rounded-echo-card border border-border bg-brand-card p-4">
+        <p className="font-echo-serif text-xl leading-echo text-brand-text">Posting on Echo needs Premium</p>
+        <p className="mt-1 text-sm text-muted-foreground">You can still reply, like, save and vote. Premium members can post, start threads and quote.</p>
+        <Link href="/premium" data-echo-get-premium className="mt-3 inline-flex rounded-full bg-echo-accent px-5 py-2 text-sm font-semibold text-echo-on-accent hover:bg-echo-accent-hover">
           Get Premium
         </Link>
       </div>
@@ -358,13 +365,13 @@ export function PremiumGateCard() {
  * Pure on its inputs so the gate is tested without a server.
  */
 export function ComposerGateView({ eligibility, loading, children }: { eligibility: Eligibility | undefined; loading: boolean; children: React.ReactNode }) {
-  if (loading) return <div className="h-24 border-b border-border" aria-busy="true" />
+  if (loading) return <div className="h-16" aria-busy="true" />
   if (!eligibility) return <>{children}</>
   if (eligibility.canPost) return <>{children}</>
   if (eligibility.reason === "premium_required" || eligibility.reason === "") return <PremiumGateCard />
   const words = eligibility.reason === "account_too_new" ? "Your account is too new to post on Echo." : "Your account can't post on Echo right now."
   return (
-    <p className="border-b border-border px-4 py-4 text-sm text-muted-foreground" data-echo-cannot-post>
+    <p className="px-4 py-4 text-center text-sm text-muted-foreground" data-echo-cannot-post>
       {words}
     </p>
   )
@@ -376,14 +383,23 @@ export function Composer({
   onPosted,
   onPremiumRequired,
   inline = false,
+  onCancel,
+  headerExtra,
+  placeholder: placeholderOverride,
 }: {
   purpose: ComposerPurpose
   autoFocus?: boolean
   onPosted?: (notes: Note[]) => void
   /** A 403 PREMIUM_REQUIRED at submit (Premium lapsed since the composer opened). */
   onPremiumRequired?: () => void
-  /** Home's composer: no "Replying to" line, a border below. */
+  /** The note page's reply box: no parent card above, one line until it is used. */
   inline?: boolean
+  /** The compose modal: a Cancel / Post note bar on top instead of the button below. */
+  onCancel?: () => void
+  /** Shown in that top bar beside Post note (the modal's Drafts & scheduled). */
+  headerExtra?: React.ReactNode
+  /** The note page's "Reply to <name>…". */
+  placeholder?: string
 }) {
   const qc = useQueryClient()
   const user = useAuthUser()
@@ -397,6 +413,7 @@ export function Composer({
   const [gifOpen, setGifOpen] = useState(false)
   const [emojiOpen, setEmojiOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [used, setUsed] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const keyHolder = useRef(createIdempotencyKeyHolder())
   const fileInput = useRef<HTMLInputElement | null>(null)
@@ -583,30 +600,73 @@ export function Composer({
     }
   }
 
-  const placeholder = purpose.kind === "reply" ? "Post your reply" : purpose.kind === "quote" ? "Add a comment" : poll ? "Ask a question" : "What's happening?"
-  const submitLabel = scheduledAt ? "Schedule" : purpose.kind === "reply" ? "Reply" : thread ? "Post all" : "Post"
+  const words = composerWords(purpose.kind, { poll: !!poll, thread, scheduled: !!scheduledAt })
+  const placeholder = placeholderOverride && !poll ? placeholderOverride : words.placeholder
+  const submitLabel = words.submit
   const anyText = entries.some((e) => e.text.length > 0)
+  // The reply box on the note page stays one line until it is used.
+  const compact = inline && !used && !anyText
+  const me = {
+    authorId: user?.id ?? "",
+    author: { id: user?.id ?? "", username: user?.username ?? "", displayName: selfDisplayName(user), avatarUrl: user?.avatar || null, mark: "none" as const },
+  }
+
+  const submitButton = (
+    <button type="button" onClick={submit} disabled={busy || !!problem} title={problem ?? undefined} className={submitPill} data-echo-submit>
+      {busy ? "Posting…" : submitLabel}
+    </button>
+  )
 
   return (
-    <div className={inline ? "border-b border-border px-4 pt-3" : ""} data-echo-composer={purpose.kind}>
+    <div className={inline ? "px-3 py-3" : ""} data-echo-composer={purpose.kind}>
+      {onCancel && (
+        <div className="mb-3 flex items-center gap-2" data-echo-composer-bar>
+          <button type="button" onClick={onCancel} className="rounded-full px-3 py-1.5 text-sm font-semibold text-brand-text hover:bg-brand-secondary">
+            Cancel
+          </button>
+          <div className="ml-auto flex items-center gap-2">
+            {headerExtra}
+            {submitButton}
+          </div>
+        </div>
+      )}
       {purpose.kind === "reply" && !inline && (
-        <p className="mb-2 pl-14 text-sm text-muted-foreground">
-          Replying to <span className="text-primary-ink">@{purpose.to.author?.username || "someone"}</span>
-        </p>
+        <div className="mb-2 rounded-echo-inner border border-border bg-brand-secondary/60 p-3" data-echo-reply-parent>
+          <p className="line-clamp-3 font-echo-serif text-base leading-echo text-brand-text">{purpose.to.text}</p>
+          <p className="mt-1 truncate text-xs text-muted-foreground">
+            Replying to {purpose.to.author?.displayName || purpose.to.author?.username || "someone"}
+            {purpose.to.author?.username && <span> · @{purpose.to.author.username}</span>}
+          </p>
+        </div>
       )}
       {scheduledAt && (
-        <p className="mb-2 flex items-center gap-2 pl-14 text-sm text-muted-foreground" data-echo-scheduled-for>
+        <p className="mb-2 flex items-center gap-2 text-xs font-semibold text-echo-accent" data-echo-scheduled-for>
           <CalendarClock className="h-4 w-4" aria-hidden /> {scheduleLabel(scheduledAt)}
         </p>
       )}
       {entries.map((entry, index) => (
-        <div key={entry.key} className="flex gap-3" data-entry={index}>
-          <div className="flex shrink-0 flex-col items-center">
-            <Avatar src={user?.avatar || null} name={name} className="h-10 w-10" />
-            {index < entries.length - 1 && <span className="mt-1 w-0.5 flex-1 bg-border" aria-hidden />}
-          </div>
-          <div className="min-w-0 flex-1 pb-2">
-            <div className="flex items-start gap-2">
+        <div key={entry.key} data-entry={index}>
+          <div className={`rounded-echo-card border bg-brand-card ${compact ? "px-3.5 py-1.5" : "p-3.5"} ${entry.key === active.key && thread ? "border-echo-accent/60" : "border-border"}`}>
+            {!compact && (
+              <div className="flex items-center gap-2">
+                <Signature note={me} className="min-w-0 flex-1" />
+                {index === 0 && showPolicy && (
+                  <ReplyPolicyPicker
+                    value={policy}
+                    onChange={(p) => {
+                      touch()
+                      setPolicy(p)
+                    }}
+                  />
+                )}
+                {thread && (
+                  <button type="button" aria-label={`Remove post ${index + 1}`} onClick={() => removeEntry(entry.key)} className="rounded-full p-1.5 text-muted-foreground hover:bg-brand-secondary hover:text-brand-text">
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            )}
+            <div className={compact ? "flex items-center gap-2" : ""}>
               <label className="sr-only" htmlFor={`echo-text-${entry.key}`}>
                 {thread ? `Post ${index + 1} of ${entries.length}` : placeholder}
               </label>
@@ -617,26 +677,25 @@ export function Composer({
                 }}
                 value={entry.text}
                 autoFocus={autoFocus && index === 0}
-                onFocus={() => setActiveKey(entry.key)}
+                onFocus={() => {
+                  setActiveKey(entry.key)
+                  setUsed(true)
+                }}
                 onChange={(e) => {
                   setText(entry.key, e.target.value)
                   e.target.style.height = "auto"
                   e.target.style.height = `${e.target.scrollHeight}px`
                 }}
-                placeholder={index === 0 ? placeholder : "Add another post"}
-                rows={index === 0 && !inline ? 3 : 2}
-                className="w-full resize-none bg-transparent py-2 text-xl text-brand-text placeholder:text-muted-foreground focus:outline-none"
+                placeholder={index === 0 ? placeholder : "Add to the thread…"}
+                rows={compact ? 1 : index === 0 && !inline ? 3 : 2}
+                className={`w-full min-w-0 resize-none bg-transparent font-echo-serif leading-echo text-brand-text placeholder:text-muted-foreground focus:outline-none ${compact ? "py-1.5 text-base" : "mt-2 py-1 text-xl"}`}
               />
-              {thread && (
-                <button type="button" aria-label={`Remove post ${index + 1}`} onClick={() => removeEntry(entry.key)} className="rounded-full p-1.5 text-muted-foreground hover:bg-brand-secondary hover:text-brand-text">
-                  <X className="h-4 w-4" />
-                </button>
-              )}
+              {compact && submitButton}
             </div>
             {entry.media.length > 0 && (
               <div className={`mt-2 grid gap-2 ${entry.media.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
                 {entry.media.map((m) => (
-                  <div key={m.key} className="relative overflow-hidden rounded-2xl border border-border">
+                  <div key={m.key} className="relative overflow-hidden rounded-echo-inner border border-border">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={m.previewUrl} alt="" className={`w-full object-cover ${entry.media.length === 1 ? "max-h-80" : "aspect-square"}`} />
                     {m.isGif && <span className="absolute bottom-2 left-2 rounded bg-brand-text/70 px-1.5 text-xs font-bold text-brand-bg">GIF</span>}
@@ -661,29 +720,14 @@ export function Composer({
                 }}
               />
             )}
+            {index === 0 && purpose.kind === "quote" && <QuotedNote note={purpose.of} quoteOfId={purpose.of.id} />}
           </div>
+          {index < entries.length - 1 && <span className="mx-auto block h-3 w-0.5 bg-echo-accent" aria-hidden />}
         </div>
       ))}
 
-      {purpose.kind === "quote" && (
-        <div className="pl-14">
-          <QuotedNote note={purpose.of} quoteOfId={purpose.of.id} />
-        </div>
-      )}
-
-      <div className="pl-14">
-        {showPolicy && (anyText || !inline) && (
-          <div className="border-b border-border pb-2">
-            <ReplyPolicyPicker
-              value={policy}
-              onChange={(p) => {
-                touch()
-                setPolicy(p)
-              }}
-            />
-          </div>
-        )}
-        <div className="flex items-center gap-0.5 py-2" role="toolbar" aria-label="Post options">
+      {!compact && (
+        <div className="flex flex-wrap items-center gap-2 pt-3" role="toolbar" aria-label="Post options">
           <input
             ref={fileInput}
             type="file"
@@ -695,69 +739,59 @@ export function Composer({
               e.target.value = ""
             }}
           />
-          <button type="button" aria-label="Add photos" title="Media" onClick={() => fileInput.current?.click()} disabled={mediaBlocked} className={iconButton}>
-            <ImagePlus className="h-5 w-5" />
+          <button type="button" aria-label="Add photos" onClick={() => fileInput.current?.click()} disabled={mediaBlocked} className={toolPill}>
+            <ImagePlus className="h-4 w-4" aria-hidden /> Photo
           </button>
           {gifKey && (
-            <button type="button" aria-label="Add a GIF" title="GIF" onClick={() => setGifOpen(true)} disabled={!!poll || active.media.length > 0} className={iconButton} data-echo-gif-button>
-              <span className="inline-flex h-5 items-center justify-center rounded border-2 border-current px-0.5 text-xs font-black leading-none">GIF</span>
+            <button type="button" aria-label="Add a GIF" onClick={() => setGifOpen(true)} disabled={!!poll || active.media.length > 0} className={toolPill} data-echo-gif-button>
+              <Clapperboard className="h-4 w-4" aria-hidden /> GIF
             </button>
           )}
-          <button
-            type="button"
-            aria-label="Add a poll"
-            title="Poll"
-            onClick={() => {
-              touch()
-              setPoll(newPollDraft())
-            }}
-            disabled={!canPoll || !!poll}
-            className={iconButton}
-          >
-            <ListChecks className="h-5 w-5" />
-          </button>
-          <button ref={emojiAnchor} type="button" aria-label="Add an emoji" title="Emoji" onClick={() => setEmojiOpen((v) => !v)} className={iconButton}>
-            <Smile className="h-5 w-5" />
+          {purpose.kind !== "reply" && (
+            <button
+              type="button"
+              aria-label="Add a poll"
+              onClick={() => {
+                touch()
+                setPoll(newPollDraft())
+              }}
+              disabled={!canPoll || !!poll}
+              className={toolPill}
+            >
+              <ListChecks className="h-4 w-4" aria-hidden /> Poll
+            </button>
+          )}
+          <button ref={emojiAnchor} type="button" aria-label="Add an emoji" onClick={() => setEmojiOpen((v) => !v)} className={toolPill}>
+            <Smile className="h-4 w-4" aria-hidden /> Emoji
           </button>
           {purpose.kind !== "reply" && (
-            <button type="button" aria-label="Schedule post" title="Schedule" onClick={() => setScheduling(true)} disabled={!canSchedule} className={iconButton}>
-              <CalendarClock className="h-5 w-5" />
+            <button
+              type="button"
+              aria-label="Schedule for later"
+              aria-pressed={!!scheduledAt}
+              onClick={() => setScheduling(true)}
+              disabled={!canSchedule}
+              className={`${toolPill} ${scheduledAt ? "border-echo-accent text-echo-accent" : ""}`}
+            >
+              <CalendarClock className="h-4 w-4" aria-hidden /> Later
+            </button>
+          )}
+          {canThread && (
+            <button type="button" aria-label="Add to thread" onClick={addEntry} disabled={entries.length >= ECHO_RULES.threadMax || !active.text.trim()} className={toolPill}>
+              <Plus className="h-4 w-4" aria-hidden /> Add to thread
             </button>
           )}
           <div className="ml-auto flex items-center gap-3">
-            <CharRing text={active.text} />
-            {canThread && (
-              <>
-                <span className="h-6 w-px bg-border" aria-hidden />
-                <button
-                  type="button"
-                  aria-label="Add post"
-                  title="Add post"
-                  onClick={addEntry}
-                  disabled={entries.length >= ECHO_RULES.threadMax || !active.text.trim()}
-                  className="rounded-full border border-border p-1 text-primary hover:bg-primary-tint disabled:opacity-40"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </>
-            )}
-            <button
-              type="button"
-              onClick={submit}
-              disabled={busy || !!problem}
-              title={problem ?? undefined}
-              className="rounded-full bg-brand-text px-4 py-1.5 text-sm font-bold text-brand-bg hover:opacity-90 disabled:opacity-50"
-            >
-              {busy ? "Posting…" : submitLabel}
-            </button>
+            <Counter text={active.text} />
+            {!onCancel && submitButton}
           </div>
         </div>
-        {(error || (problem && entries.some((e) => remaining(e.text) < 0))) && (
-          <p role="alert" className="pb-3 text-sm text-danger">
-            {error ?? problem}
-          </p>
-        )}
-      </div>
+      )}
+      {(error || (problem && entries.some((e) => remaining(e.text) < 0))) && (
+        <p role="alert" className="pt-2 text-sm text-danger">
+          {error ?? problem}
+        </p>
+      )}
 
       {emojiOpen && <EmojiPickerPopover anchorRef={emojiAnchor} onSelect={insertEmoji} onClose={() => setEmojiOpen(false)} />}
       {gifKey && <GifPickerDialog open={gifOpen} apiKey={gifKey} onClose={() => setGifOpen(false)} onPick={(g) => void pickGif(g)} />}

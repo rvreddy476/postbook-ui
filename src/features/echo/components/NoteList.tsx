@@ -21,8 +21,8 @@ export interface PagedQuery {
 
 export function ListMessage({ title, detail }: { title: string; detail?: string }) {
   return (
-    <div className="mx-auto max-w-sm px-8 py-12" data-echo-empty>
-      <p className="text-3xl font-extrabold leading-tight text-brand-text">{title}</p>
+    <div className="mx-auto max-w-sm px-8 py-12 text-center" data-echo-empty>
+      <p className="font-echo-serif text-2xl leading-tight text-brand-text">{title}</p>
       {detail && <p className="mt-2 text-base text-muted-foreground">{detail}</p>}
     </div>
   )
@@ -31,7 +31,7 @@ export function ListMessage({ title, detail }: { title: string; detail?: string 
 export function Spinner() {
   return (
     <div role="status" aria-label="Loading" className="flex justify-center py-8">
-      <span className="h-7 w-7 animate-spin rounded-full border-[3px] border-primary/30 border-t-primary" />
+      <span className="h-7 w-7 animate-spin rounded-full border-[3px] border-echo-accent/30 border-t-echo-accent" />
     </div>
   )
 }
@@ -48,6 +48,7 @@ export function NoteList({
   filter,
   render,
   order,
+  arrange,
 }: {
   query: PagedQuery
   empty: string
@@ -57,6 +58,8 @@ export function NoteList({
   render?: (n: Note) => React.ReactNode
   /** Re-order the loaded posts (the post page's reply sort). */
   order?: (a: Note, b: Note) => number
+  /** Re-arrange after sorting (the note page puts a reply to a reply under its parent). */
+  arrange?: (notes: Note[]) => Note[]
 }) {
   const sentinel = useRef<HTMLDivElement>(null)
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = query
@@ -80,7 +83,7 @@ export function NoteList({
     return (
       <div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
         <p className="text-base text-muted-foreground">{echoErrorMessage(query.error)}</p>
-        <button type="button" onClick={() => query.refetch()} className="rounded-full bg-primary-ink px-4 py-1.5 text-sm font-bold text-primary-foreground hover:bg-primary-hover">
+        <button type="button" onClick={() => query.refetch()} className="rounded-full bg-echo-accent px-4 py-1.5 text-sm font-bold text-echo-on-accent hover:bg-echo-accent-hover">
           Retry
         </button>
       </div>
@@ -88,13 +91,14 @@ export function NoteList({
   }
   const all = flattenPages(query.data)
   const kept = filter ? all.filter(filter) : all
-  const notes = order ? [...kept].sort(order) : kept
+  const sorted = order ? [...kept].sort(order) : kept
+  const notes = arrange ? arrange(sorted) : sorted
   return (
     <div>
       {notes.length === 0 && !hasNextPage ? (
         <ListMessage title={empty} detail={emptyDetail} />
       ) : (
-        <ul className="divide-y divide-border border-b border-border">
+        <ul className="flex flex-col gap-2.5 px-3 py-3" data-echo-cards>
           {notes.map((n) => (
             <li key={n.id}>{render ? render(n) : <NoteCard note={n} />}</li>
           ))}

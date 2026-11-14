@@ -161,12 +161,13 @@ describe("the shell renders without the VChat chrome", () => {
   })
 
   test("the nav items and the More menu", () => {
-    expect(v2.echoNavItems(null).map((i) => i.label)).toEqual(["Home", "Explore", "Notifications", "Chat", "Bookmarks", "Premium"])
+    expect(v2.echoNavItems(null).map((i) => i.label)).toEqual(["Home", "Explore", "Notifications", "Saved", "Scheduled", "Chat", "Premium"])
     expect(v2.echoNavItems("bob").at(-1)).toEqual({ key: "profile", label: "Profile", href: "/echo/bob" })
-    expect(v2.ECHO_MORE_ITEMS.map((i) => i.label)).toEqual(["Settings", "Scheduled", "Back to VChat"])
+    expect(v2.ECHO_MORE_ITEMS.map((i) => i.label)).toEqual(["Settings", "Back to VChat"])
     expect(v2.activeNavKey("/echo/hashtag/x", "a")).toBe("explore")
     expect(v2.activeNavKey("/echo/a", "a")).toBe("profile")
     expect(v2.activeNavKey("/echo/a/status/1", "a")).toBeNull()
+    expect(v2.activeNavKey("/echo/scheduled", "a")).toBe("scheduled")
   })
 })
 
@@ -198,9 +199,9 @@ describe("the composer's Premium gate", () => {
     const { Composer } = require("../components/Composer") as typeof import("../components/Composer")
     const html = render(<Composer purpose={{ kind: "note" }} />)
     signedIn = null
-    for (const label of ["Add photos", "Add a poll", "Add an emoji", "Schedule post", "Add post"]) expect(html).toContain(`aria-label="${label}"`)
+    for (const label of ["Add photos", "Add a poll", "Add an emoji", "Schedule for later", "Add to thread"]) expect(html).toContain(`aria-label="${label}"`)
     expect(html).toContain("Everyone can reply")
-    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Post<\/button>/)
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Post note<\/button>/)
   })
 
   test("the character ring warns in the last 20 and goes red past 500", () => {
@@ -345,24 +346,30 @@ describe("the repost and share menus", () => {
   test("drawn open from the action bar", () => {
     signedIn = { id: BOB, name: "Bob", username: "bob", avatar: "" }
     const repost = render(<ActionBar note={pollNote} initialMenu="repost" />)
-    expect(repost).toMatch(/role="menu" aria-label="Repost or quote"/)
+    expect(repost).toMatch(/role="menu" aria-label="Echo it"/)
     expect(repost).toContain('data-menu-item="repost"')
     expect(repost).toContain('data-menu-item="quote"')
-    const share = render(<ActionBar note={pollNote} initialMenu="share" />)
-    expect(share).toMatch(/role="menu" aria-label="Share post"/)
-    expect(share).toContain(">Copy link<")
-    expect(share).toContain(">Send via Chat<")
+    expect(repost).toContain(">Re-echo<")
+    expect(repost).toContain(">Quote<")
+    // Share lives in More now, beside Save and the account items.
+    const more = render(<ActionBar note={pollNote} initialMenu="more" />)
+    expect(more).toMatch(/role="menu" aria-label="More"/)
+    expect(more).toContain(">Copy link<")
+    expect(more).toContain(">Send via Chat<")
+    expect(more).toContain('data-menu-item="bookmark"')
+    expect(more).toContain(">Report post<")
     signedIn = null
   })
 
-  test("the action bar: reply, repost, like, views, bookmark, share", () => {
+  test("the action bar: Reply, Echo it, heart, More, and the views", () => {
     const html = render(<ActionBar note={pollNote} />)
     expect(html).toContain('aria-label="0 Replies. Reply"')
-    expect(html).toContain('aria-label="Repost or quote"')
+    expect(html).toContain('aria-label="Echo it"')
     expect(html).toContain('aria-label="Unlike"') // the fixture viewer liked it
     expect(html).toContain('aria-label="7 views. View post analytics"')
-    expect(html).toContain('aria-label="Remove bookmark"')
-    expect(html).toContain('aria-label="Share post"')
+    expect(html).toContain('aria-label="More"')
+    // The saved state shows inside More.
+    expect(render(<ActionBar note={pollNote} initialMenu="more" />)).toContain(">Remove from Saved<")
   })
 
   test("Copy link and Send via Chat count a share on the existing route", () => {

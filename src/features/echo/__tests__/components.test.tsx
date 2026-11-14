@@ -49,10 +49,13 @@ describe("the note card", () => {
     expect(html).toContain("Monsoon is here.")
   })
 
-  test("heart only, shown liked, with the counts; reply, repost or quote, views, bookmark and share", () => {
+  test("heart only, shown liked, with the counts; the pills Reply, Echo it, heart and More", () => {
     expect(html).toContain('aria-label="Unlike"')
     expect(html).toContain('aria-pressed="true"')
-    for (const label of ["2 Replies. Reply", "Repost or quote", "Bookmark", "Share post"]) expect(html).toContain(`aria-label="${label}"`)
+    for (const label of ["2 Replies. Reply", "Echo it", "More"]) expect(html).toContain(`aria-label="${label}"`)
+    // Save and share moved into More: no bare icon row.
+    expect(html).not.toContain('aria-label="Bookmark"')
+    expect(html).not.toContain('aria-label="Share post"')
     expect(html).toContain('href="/echo/alice/status/f1111111-1111-4111-8111-111111111111"')
     expect(html).not.toMatch(/reaction|emoji/i)
   })
@@ -72,17 +75,18 @@ describe("the note card", () => {
 })
 
 describe("the composer", () => {
-  test("starts empty: 500 left, Post off, Everyone can reply, the thread +", () => {
+  test("starts empty: 500 left, Post note off, Everyone can reply, Add to thread", () => {
     const html = render(<Composer purpose={{ kind: "note" }} />)
     expect(html).toContain('data-remaining="500"')
-    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Post<\/button>/)
+    expect(html).toContain("500 left")
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Post note<\/button>/)
     expect(html).toContain("Everyone can reply")
-    expect(html).toContain('aria-label="Add post"')
+    expect(html).toContain('aria-label="Add to thread"')
   })
 
   test("a reply has no thread and no reply-policy picker", () => {
     const html = render(<Composer purpose={{ kind: "reply", to: note }} />)
-    expect(html).not.toContain('aria-label="Add post"')
+    expect(html).not.toContain('aria-label="Add to thread"')
     expect(html).not.toContain("can reply")
     expect(html).not.toContain('aria-label="Schedule post"')
     expect(html).toContain(">Reply<")
@@ -91,7 +95,7 @@ describe("the composer", () => {
   test("a quote shows the note it quotes and no thread", () => {
     const html = render(<Composer purpose={{ kind: "quote", of: note }} />)
     expect(html).toContain("Rain all week in")
-    expect(html).not.toContain('aria-label="Add post"')
+    expect(html).not.toContain('aria-label="Add to thread"')
   })
 
   test("the counter warns near the limit and goes red past it", () => {

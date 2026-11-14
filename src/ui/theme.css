@@ -135,6 +135,18 @@
   /* The Follow seal in the flag's colours (founder, 20 Oct): a deep saffron ring and a green plus badge. Over media, so the same in both themes. */
   --theme-follow-seal: 241 90 34;
   --theme-follow-seal-plus: 19 136 8;
+
+  /*
+    Echo (look v3, founder 14 Nov 2026): Momentum's ember accent, used ONLY
+    inside /echo, for the topic line, the note page's border, selected tabs
+    and the Write a note / Post note pills. #c2410c is 5.18:1 on white, so it
+    carries 12px text. The tint is the selected-tab fill; on-accent is the
+    label on a filled ember pill.
+  */
+  --theme-echo-accent: 194 65 12;
+  --theme-echo-accent-hover: 167 54 10;
+  --theme-echo-accent-tint: 255 237 224;
+  --theme-echo-on-accent: 255 255 255;
 }
 
 .dark {
@@ -217,6 +229,12 @@
   /* The Follow seal in the flag's colours (founder, 20 Oct): a deep saffron ring and a green plus badge. Over media, so the same in both themes. */
   --theme-follow-seal: 241 90 34;
   --theme-follow-seal-plus: 19 136 8;
+
+  /* Echo's ember, lifted for the dark ground: #fb923c is 8.9:1 on black, so a filled pill takes a near-black label. */
+  --theme-echo-accent: 251 146 60;
+  --theme-echo-accent-hover: 253 170 102;
+  --theme-echo-accent-tint: 52 24 8;
+  --theme-echo-on-accent: 15 20 25;
 }
 
 /*
@@ -270,6 +288,14 @@
   --type-3xl-lh: 36px;
   --type-4xl: 36px;
   --type-4xl-lh: 40px;
+
+  /*
+    Echo's serif note text (look v3): timeline 18 (text-lg) or 16 for a long
+    note (text-base), composer 20 (text-xl), and the note page's 22, which is
+    no step above, so it is named here. Line height ~1.4 for all of them.
+  */
+  --type-echo-lead: 22px;
+  --echo-note-leading: 1.4;
 }
 
 /*

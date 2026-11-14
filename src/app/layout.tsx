@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { DM_Sans, Outfit, Space_Mono } from 'next/font/google';
+import { Bodoni_Moda, DM_Sans, Outfit, Space_Mono } from 'next/font/google';
 import { Providers } from './providers';
 import { OpenInAppBanner } from '@/features/share/components/OpenInAppBanner';
 import './globals.css';
@@ -17,6 +17,15 @@ const doorstepSans = DM_Sans({
   display: 'swap',
   preload: false,
   variable: '--font-doorstep',
+});
+
+// Momentum's serif, for Echo's note text (font-echo-serif in globals.css). Not preloaded: only /echo uses it.
+const bodoni = Bodoni_Moda({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  preload: false,
+  variable: '--font-bodoni',
 });
 
 const spaceMono = Space_Mono({
@@ -69,7 +78,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="light" style={{ colorScheme: 'light' }} suppressHydrationWarning>
-      <body className={`${outfit.variable} ${spaceMono.variable} ${doorstepSans.variable} bg-canvas text-brand-text antialiased`}>
+      <body className={`${outfit.variable} ${spaceMono.variable} ${doorstepSans.variable} ${bodoni.variable} bg-canvas text-brand-text antialiased`}>
         <script
           dangerouslySetInnerHTML={{
             __html: `
