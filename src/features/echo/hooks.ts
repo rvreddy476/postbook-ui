@@ -9,6 +9,13 @@ import {
   fetchReplies,
   fetchTimeline,
   fetchUserNotes,
+  fetchBookmarks,
+  fetchScheduled,
+  fetchQuotes,
+  fetchHashtagNotes,
+  searchNotes,
+  fetchTrends,
+  type ResultsTab,
   type ProfileNotesTab,
   type Timeline,
 } from "./api"
@@ -104,6 +111,7 @@ export function updateNoteEverywhere(qc: QueryClient, fn: (n: Note) => Note | nu
   qc.setQueriesData<InfiniteData<NotePage>>({ queryKey: ["echo", "timeline"] }, (d) => mapPages(d, fn))
   qc.setQueriesData<InfiniteData<NotePage>>({ queryKey: ["echo", "replies"] }, (d) => mapPages(d, fn))
   qc.setQueriesData<InfiniteData<NotePage>>({ queryKey: ["echo", "user"] }, (d) => mapPages(d, fn))
+  qc.setQueriesData<InfiniteData<NotePage>>({ queryKey: ["echo", "list"] }, (d) => mapPages(d, fn))
   qc.setQueriesData<Note[]>({ queryKey: ["echo", "conversation"] }, (d) => (d ? d.map(fn).filter((n): n is Note => n !== null) : d))
   qc.setQueriesData<Note>({ queryKey: ["echo", "note"] }, (d) => (d ? fn(d) ?? d : d))
 }
@@ -111,16 +119,85 @@ export function updateNoteEverywhere(qc: QueryClient, fn: (n: Note) => Note | nu
 /** A new note goes at the top of the Following timeline; a reply at the top of its parent's replies. */
 export function showCreatedNotes(qc: QueryClient, notes: readonly Note[]) {
   for (const note of notes) {
-    const key = note.replyToId ? echoKeys.replies(note.replyToId) : echoKeys.timeline("following")
-    qc.setQueryData<InfiniteData<NotePage>>(key, (d) => {
-      if (!d || d.pages.length === 0) return d
-      const [first, ...rest] = d.pages
-      if (first.items.some((n) => n.id === note.id)) return d
-      return { ...d, pages: [{ ...first, items: [note, ...first.items] }, ...rest] }
-    })
+    // A scheduled note is visible only in the author's Scheduled list.
+    if (note.status === "scheduled") {
+      void qc.invalidateQueries({ queryKey: ["echo", "list", "scheduled"] })
+      continue
+    }
+    const keys = note.replyToId ? [echoKeys.replies(note.replyToId)] : [echoKeys.timeline("following"), echoKeys.timeline("for-you")]
+    for (const key of keys) {
+      qc.setQueryData<InfiniteData<NotePage>>(key, (d) => {
+        if (!d || d.pages.length === 0) return d
+        const [first, ...rest] = d.pages
+        if (first.items.some((n) => n.id === note.id)) return d
+        return { ...d, pages: [{ ...first, items: [note, ...first.items] }, ...rest] }
+      })
+    }
     if (note.replyToId) {
       const parent = note.replyToId
       updateNoteEverywhere(qc, (n) => (n.id === parent ? { ...n, replyCount: n.replyCount + 1 } : n))
     }
+    if (note.quoteOfId) {
+      const quoted = note.quoteOfId
+      updateNoteEverywhere(qc, (n) => (n.id === quoted ? { ...n, quoteCount: n.quoteCount + 1 } : n))
+    }
   }
+}
+
+// ── Echo v2 lists (each under ["echo","list",…] so updateNoteEverywhere reaches it) ──
+
+function useNotePages(key: readonly unknown[], fetchPage: (cursor: string | null) => Promise<NotePage>, enabled = true) {
+  return useInfiniteQuery({
+    queryKey: key,
+    queryFn: ({ pageParam }) => fetchPage(pageParam),
+    initialPageParam: null as string | null,
+    getNextPageParam: nextCursor,
+    enabled,
+    retry: false,
+  })
+}
+
+export const echoListKeys = {
+  bookmarks: ["echo", "list", "bookmarks"] as const,
+  scheduled: ["echo", "list", "scheduled"] as const,
+  quotes: (id: string) => ["echo", "list", "quotes", id] as const,
+  hashtag: (tag: string, tab: ResultsTab) => ["echo", "list", "hashtag", tag.toLowerCase(), tab] as const,
+  search: (q: string, tab: ResultsTab) => ["echo", "list", "search", q, tab] as const,
+  trends: ["echo", "trends"] as const,
+  peek: (t: Timeline) => ["echo", "peek", t] as const,
+}
+
+export const useBookmarks = (enabled = true) => useNotePages(echoListKeys.bookmarks, fetchBookmarks, enabled)
+export const useScheduled = (enabled = true) => useNotePages(echoListKeys.scheduled, fetchScheduled, enabled)
+export const useQuotes = (id: string) => useNotePages(echoListKeys.quotes(id), (c) => fetchQuotes(id, c), !!id)
+export const useHashtagNotes = (tag: string, tab: ResultsTab) => useNotePages(echoListKeys.hashtag(tag, tab), (c) => fetchHashtagNotes(tag, tab, c), !!tag)
+export const useSearchNotes = (q: string, tab: ResultsTab, enabled = true) => useNotePages(echoListKeys.search(q, tab), (c) => searchNotes(q, tab, c), enabled)
+
+export function useTrends(limit = 10, enabled = true) {
+  return useQuery({ queryKey: [...echoListKeys.trends, limit], queryFn: () => fetchTrends(limit), enabled, retry: false, staleTime: 5 * 60_000 })
+}
+
+/** Can this viewer post / reply? Shown up front (the composer or the Premium card); the server still decides at submit. */
+export function useEligibility(enabled = true) {
+  return useQuery({ queryKey: echoKeys.eligibility, queryFn: fetchEligibility, enabled, retry: false, staleTime: 60_000 })
+}
+
+/**
+ * The newest page of a timeline, read again every minute, for the
+ * "Show N posts" pill: how many notes at its top are not in the list yet.
+ */
+export function usePeek(t: Timeline, enabled = true) {
+  return useQuery({ queryKey: echoListKeys.peek(t), queryFn: () => fetchTimeline(t, null), enabled, refetchInterval: 60_000, refetchIntervalInBackground: false, retry: false })
+}
+
+/** Notes at the top of `fresh` that `shown` does not have yet, counted until the first one already shown. */
+export function newNotesCount(fresh: readonly Pick<Note, "id">[], shown: readonly Pick<Note, "id">[]): number {
+  if (shown.length === 0) return 0
+  const have = new Set(shown.map((n) => n.id))
+  let count = 0
+  for (const n of fresh) {
+    if (have.has(n.id)) break
+    count += 1
+  }
+  return count
 }

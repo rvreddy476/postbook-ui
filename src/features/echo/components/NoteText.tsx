@@ -1,6 +1,6 @@
 import Link from "next/link"
 
-import { textSegments } from "../model"
+import { echoProfilePath, hashtagPath, textSegments } from "../model"
 
 /** A note's words, with @mentions to the profile, #hashtags to the tag page, and links opened safely. */
 export function NoteText({ text, className = "" }: { text: string; className?: string }) {
@@ -11,13 +11,13 @@ export function NoteText({ text, className = "" }: { text: string; className?: s
         switch (seg.kind) {
           case "mention":
             return (
-              <Link key={i} href={`/u/${encodeURIComponent(seg.username)}`} className="font-medium text-primary-ink hover:underline" onClick={(e) => e.stopPropagation()}>
+              <Link key={i} href={echoProfilePath(seg.username)} className="text-primary-ink hover:underline" onClick={(e) => e.stopPropagation()}>
                 {seg.text}
               </Link>
             )
           case "hashtag":
             return (
-              <Link key={i} href={`/hashtag/${encodeURIComponent(seg.tag)}`} className="font-medium text-primary-ink hover:underline" onClick={(e) => e.stopPropagation()}>
+              <Link key={i} href={hashtagPath(seg.tag)} className="text-primary-ink hover:underline" onClick={(e) => e.stopPropagation()}>
                 {seg.text}
               </Link>
             )

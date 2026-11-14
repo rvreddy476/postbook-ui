@@ -9,8 +9,8 @@ import { backendContractsDir, fixtureNames, readFixture, readFixtureText } from 
 */
 
 describe("the fixtures are the backend's, byte for byte", () => {
-  test("the four contract files are here", () => {
-    expect(fixtureNames()).toEqual(["eligibility", "error_premium_required", "note", "note_list"])
+  test("the contract files (phase 1 and v2) are here", () => {
+    expect(fixtureNames()).toEqual(["eligibility", "error_poll_closed", "error_premium_required", "note", "note_list", "note_scheduled", "note_v2", "trends"])
   })
 
   test("each matches post-service testdata/contracts/notes when the checkout is on this machine", () => {

@@ -100,8 +100,25 @@ describe("middleware: a note opens signed out, the timelines do not", () => {
     expect(passes(visit("/echo/note/f1111111-1111-4111-8111-111111111111"))).toBe(true)
   })
 
+  test("/echo/<handle>/status/<id> (v2 permalink) passes with no session", () => {
+    expect(passes(visit("/echo/alice/status/f1111111-1111-4111-8111-111111111111"))).toBe(true)
+    expect(passes(visit("/echo/i/status/f1111111-1111-4111-8111-111111111111/"))).toBe(true)
+  })
+
   test("/echo and anything else under it sends a stranger to sign in", () => {
-    for (const path of ["/echo", "/echo/", "/echo/compose", "/echo/notes"]) {
+    for (const path of [
+      "/echo",
+      "/echo/",
+      "/echo/compose",
+      "/echo/notes",
+      "/echo/alice",
+      "/echo/explore",
+      "/echo/notifications",
+      "/echo/bookmarks",
+      "/echo/scheduled",
+      "/echo/alice/status/f1111111-1111-4111-8111-111111111111/quotes",
+      "/echo/a/b/status/x",
+    ]) {
       const res = visit(path)
       expect(passes(res), path).toBe(false)
       expect(res.headers.get("location") ?? "", path).toContain("/login")

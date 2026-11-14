@@ -26,18 +26,19 @@ import {
   type Note,
   type NotePage,
   type ReplyPolicy,
-} from "./model"
+} from "../model"
 
 export type Timeline = "following" | "for-you"
 export type ProfileNotesTab = "notes" | "replies" | "reposts"
 
+/** X's order: For you, then Following. */
 export const TIMELINES: readonly { value: Timeline; label: string }[] = [
+  { value: "for-you", label: "For you" },
   { value: "following", label: "Following" },
-  { value: "for-you", label: "For You" },
 ]
 
 export const PROFILE_NOTES_TABS: readonly { value: ProfileNotesTab; label: string }[] = [
-  { value: "notes", label: "Notes" },
+  { value: "notes", label: "Posts" },
   { value: "replies", label: "Replies" },
   { value: "reposts", label: "Reposts" },
 ]
@@ -103,6 +104,10 @@ export interface CreateNoteBody {
   reply_to_id?: string
   quote_of_id?: string
   reply_policy?: ReplyPolicy
+  /** v2: a poll note has no media (POLL_WITH_MEDIA). */
+  poll?: { options: string[]; duration_minutes: number }
+  /** v2: RFC3339; a reply may not be scheduled. */
+  scheduled_at?: string
 }
 
 /**
@@ -110,12 +115,24 @@ export interface CreateNoteBody {
  * mutually exclusive (400 INVALID_REQUEST); a reply wins, since a reply
  * composer never carries a quote.
  */
-export function createNoteBody(input: { text: string; mediaIds?: readonly string[]; replyToId?: string | null; quoteOfId?: string | null; replyPolicy?: ReplyPolicy }): CreateNoteBody {
+export function createNoteBody(input: {
+  text: string
+  mediaIds?: readonly string[]
+  replyToId?: string | null
+  quoteOfId?: string | null
+  replyPolicy?: ReplyPolicy
+  poll?: { options: string[]; duration_minutes: number } | null
+  scheduledAt?: Date | null
+}): CreateNoteBody {
   const body: CreateNoteBody = { text: input.text.trim() }
-  if (input.mediaIds && input.mediaIds.length) body.media_ids = [...new Set(input.mediaIds)]
+  // A poll note carries no media (contract §2).
+  if (input.poll) body.poll = input.poll
+  else if (input.mediaIds && input.mediaIds.length) body.media_ids = [...new Set(input.mediaIds)]
   if (input.replyToId) body.reply_to_id = input.replyToId
   else if (input.quoteOfId) body.quote_of_id = input.quoteOfId
   if (input.replyPolicy) body.reply_policy = input.replyPolicy
+  // A reply may not be scheduled.
+  if (input.scheduledAt && !input.replyToId) body.scheduled_at = input.scheduledAt.toISOString()
   return body
 }
 
@@ -151,3 +168,5 @@ export async function setRepost(noteId: string, reposted: boolean): Promise<void
   if (reposted) await api.post(echoPaths.repost(noteId), { type: "plain" })
   else await api.delete(echoPaths.repost(noteId))
 }
+
+export * from "./v2"

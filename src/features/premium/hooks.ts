@@ -247,7 +247,7 @@ export function saveBlob(blob: Blob, filename: string): void {
 
 /**
   Fetches the document with the user's token through the API client, then
-  saves it as "<number with / as ->.html". Throws the client's error, so a
+  saves it as "<number with / as ->.pdf". Throws the client's error, so a
   404 reads as "Invoice not found" (model.invoiceErrorMessage).
 */
 export async function downloadPremiumInvoice(target: InvoiceTarget, save: (blob: Blob, filename: string) => void = saveBlob): Promise<string> {

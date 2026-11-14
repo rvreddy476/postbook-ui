@@ -157,9 +157,18 @@ const normalise = (pathname: string) =>
  */
 const REEL_PERMALINK_RE = /^\/reels\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i
 
+/**
+ * One Echo post, /echo/<handle>/status/<id> (Echo v2, X's permalink), and
+ * nothing else under it: like /echo/note/ it opens signed out for a public
+ * note (founder default 11). Its /quotes page, profiles and the timelines
+ * stay gated.
+ */
+const ECHO_STATUS_RE = /^\/echo\/[A-Za-z0-9_.]{1,30}\/status\/[0-9A-Za-z-]{1,64}\/?$/
+
 const isPublicPath = (pathname: string) => {
     if (PUBLIC_EXACT.has(pathname)) return true
     if (REEL_PERMALINK_RE.test(pathname)) return true
+    if (ECHO_STATUS_RE.test(pathname)) return true
     // Prefixes are written with their trailing slash so "/u/" cannot also
     // match a future "/users". Test the un-normalised path too, so a bare
     // "/u" does not slip past on the normalised one.

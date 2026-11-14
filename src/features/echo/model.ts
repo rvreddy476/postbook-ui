@@ -74,6 +74,36 @@ export interface Note {
   viewerCanReply: boolean
   /** One level deep; null when there is none or the quoted note is gone (quoteOfId stays). */
   quoted: Note | null
+  // ── Echo v2 (echo-v2-contract.md §1) ──
+  viewCount: number
+  bookmarkCount: number
+  bookmarked: boolean
+  quoteCount: number
+  /** counts.shares on the post JSON (POST /v1/posts/:id/share). */
+  shareCount: number
+  status: NoteStatus
+  scheduledAt: string | null
+  /** Why a due scheduled note did not publish (contract §3); null when none. */
+  publishError: string | null
+  poll: Poll | null
+}
+
+/** "failed": a scheduled note that could not publish after its retries (server rule; publish_error says why). */
+export type NoteStatus = "published" | "scheduled" | "failed"
+
+export interface PollOption {
+  index: number
+  label: string
+  /** null while the counts are hidden from this viewer (contract §1). */
+  votes: number | null
+}
+
+export interface Poll {
+  options: PollOption[]
+  totalVotes: number
+  endsAt: string
+  closed: boolean
+  viewerVote: number | null
 }
 
 export interface NotePage {
@@ -125,6 +155,25 @@ function toMedia(v: unknown): NoteMedia[] {
     .map((m) => ({ mediaId: str(m.media_id), isGif: m.kind === "gif" || m.mime_type === "image/gif", altText: str(m.alt_text) }))
 }
 
+function toPoll(v: unknown): Poll | null {
+  if (!isObj(v) || !Array.isArray(v.options)) return null
+  const options = v.options
+    .filter(isObj)
+    .map((o, i) => ({
+      index: typeof o.index === "number" && Number.isInteger(o.index) ? o.index : i,
+      label: str(o.label),
+      votes: typeof o.votes === "number" && Number.isFinite(o.votes) ? Math.max(0, Math.floor(o.votes)) : null,
+    }))
+  if (options.length === 0) return null
+  return {
+    options,
+    totalVotes: num(v.total_votes),
+    endsAt: str(v.ends_at),
+    closed: bool(v.closed),
+    viewerVote: typeof v.viewer_vote === "number" && Number.isInteger(v.viewer_vote) ? v.viewer_vote : null,
+  }
+}
+
 /** One note from the wire; null when it is not one (no id). */
 export function parseNote(raw: unknown, depth = 0): Note | null {
   const v = unwrap(raw)
@@ -151,6 +200,16 @@ export function parseNote(raw: unknown, depth = 0): Note | null {
     viewerCanReply: bool(v.viewer_can_reply),
     // The contract keeps it one level deep; so does the reader.
     quoted: depth === 0 ? parseNote(v.quoted_note, 1) : null,
+    viewCount: num(v.view_count),
+    bookmarkCount: num(v.bookmark_count),
+    // The server lane adds viewer_has_bookmarked; the post JSON already has is_bookmarked.
+    bookmarked: typeof v.viewer_has_bookmarked === "boolean" ? v.viewer_has_bookmarked : bool(v.is_bookmarked),
+    quoteCount: num(v.quote_count),
+    shareCount: isObj(v.counts) ? num(v.counts.shares) : num(v.share_count),
+    status: v.status === "scheduled" || v.status === "failed" ? v.status : "published",
+    scheduledAt: optStr(v.scheduled_at),
+    publishError: optStr(v.publish_error),
+    poll: toPoll(v.poll),
   }
 }
 
@@ -347,8 +406,42 @@ export function textSegments(text: string): TextSegment[] {
 
 // ── Paths ───────────────────────────────────────────────────────────────
 
+/** The legacy permalink (/echo/note/<id>); it redirects to the status page. Notifications still link here. */
 export function notePath(id: string): string {
   return `/echo/note/${encodeURIComponent(id)}`
+}
+
+/** X-style permalink: /echo/<handle>/status/<id>. "i" stands in when the handle is unknown. */
+export function statusPath(note: Pick<Note, "id" | "author">): string {
+  const handle = note.author?.username || "i"
+  return `/echo/${encodeURIComponent(handle)}/status/${encodeURIComponent(note.id)}`
+}
+
+export function quotesPath(note: Pick<Note, "id" | "author">): string {
+  return `${statusPath(note)}/quotes`
+}
+
+export function hashtagPath(tag: string): string {
+  return `/echo/hashtag/${encodeURIComponent(tag.replace(/^#/, ""))}`
+}
+
+export function echoProfilePath(username: string): string {
+  return `/echo/${encodeURIComponent(username)}`
+}
+
+/** "1,234" for the big post's counts. */
+export function fullCount(count: number): string {
+  return Math.max(0, Math.floor(count)).toLocaleString("en-US")
+}
+
+/** "3:45 PM · Nov 14, 2026" for the big post. */
+export function fullDate(createdAt: string): string {
+  const t = parseTime(createdAt)
+  if (t === null) return ""
+  const d = new Date(t)
+  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+  const date = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+  return `${time} · ${date}`
 }
 
 /** A picture on a note, drawn from media-service by id. */
@@ -356,9 +449,10 @@ export function noteMediaPath(mediaId: string): string {
   return `/v1/media/${encodeURIComponent(mediaId)}/serve`
 }
 
+/** The author's Echo profile when the handle is known; the VChat profile by id otherwise. */
 export function profilePath(author: Pick<NoteAuthor, "username" | "id"> | null, authorId: string): string {
-  const ref = author?.username || author?.id || authorId
-  return `/u/${encodeURIComponent(ref)}`
+  if (author?.username) return echoProfilePath(author.username)
+  return `/u/${encodeURIComponent(author?.id || authorId)}`
 }
 
 // ── Errors ──────────────────────────────────────────────────────────────
@@ -383,6 +477,12 @@ export const ECHO_ERROR_CODES = [
   "MEDIA_NOT_OWNED",
   "MEDIA_NOT_FOUND",
   "MEDIA_NOT_READY",
+  "INVALID_POLL",
+  "POLL_WITH_MEDIA",
+  "INVALID_SCHEDULE",
+  "POLL_CLOSED",
+  "ALREADY_VOTED",
+  "OWN_POLL",
 ] as const
 
 export type EchoErrorCode = (typeof ECHO_ERROR_CODES)[number]
@@ -420,6 +520,12 @@ const MESSAGES: Record<EchoErrorCode, string> = {
   MEDIA_NOT_OWNED: "One of these photos isn't yours to post.",
   MEDIA_NOT_FOUND: "One of these photos is missing. Remove it and add it again.",
   MEDIA_NOT_READY: "Your photos are still processing. Try again in a moment.",
+  INVALID_POLL: "A poll needs 2 to 4 choices of up to 25 characters, open from 5 minutes to 7 days.",
+  POLL_WITH_MEDIA: "A post with a poll can't have photos or a GIF.",
+  INVALID_SCHEDULE: "Pick a time from 5 minutes to 18 months from now.",
+  POLL_CLOSED: "This poll has ended.",
+  ALREADY_VOTED: "You've already voted in this poll.",
+  OWN_POLL: "You can't vote in your own poll.",
 }
 
 /** What an axios-style failure says: the server's code, status and Retry-After. */

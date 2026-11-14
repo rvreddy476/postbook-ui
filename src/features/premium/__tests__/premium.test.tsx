@@ -446,17 +446,17 @@ describe("tax invoices and credit notes", () => {
     expect(urls).toEqual(["/v1/monetization/premium/invoices"])
   })
 
-  test("download fetches the document through the authenticated client as a blob, no token in the URL, saved as MP-26-27-000001.html", async () => {
+  test("download fetches the document through the authenticated client as a blob, no token in the URL, saved as MP-26-27-000001.pdf", async () => {
     const calls: Array<{ url: string; config: unknown }> = []
-    const blob = new Blob(["<html></html>"], { type: "text/html" })
+    const blob = new Blob(["%PDF-1.3"], { type: "application/pdf" })
     spies.push(spyOn(api, "get").mockImplementation((async (url: string, config?: unknown) => (calls.push({ url, config }), { data: blob })) as never))
     const saved: Array<[Blob, string]> = []
     const name = await downloadPremiumInvoice({ id: INVOICE_ID, number: "MP/26-27/000001" }, (b, f) => saved.push([b, f]))
-    expect(name).toBe("MP-26-27-000001.html")
-    expect(calls).toEqual([{ url: `/v1/monetization/premium/invoices/${INVOICE_ID}/document`, config: { responseType: "blob" } }])
+    expect(name).toBe("MP-26-27-000001.pdf")
+    expect(calls).toEqual([{ url: `/v1/monetization/premium/invoices/${INVOICE_ID}/document`, config: { responseType: "blob", headers: { Accept: "application/pdf" } } }])
     expect(calls[0].url).not.toMatch(/token|access|bearer|\?/i)
-    expect(saved).toEqual([[blob, "MP-26-27-000001.html"]])
-    expect(M.invoiceFileName("MPC/26-27/000001")).toBe("MPC-26-27-000001.html")
+    expect(saved).toEqual([[blob, "MP-26-27-000001.pdf"]])
+    expect(M.invoiceFileName("MPC/26-27/000001")).toBe("MPC-26-27-000001.pdf")
   })
 
   test("download without a known number reads it from the detail first", async () => {
@@ -466,7 +466,7 @@ describe("tax invoices and credit notes", () => {
     const saved: string[] = []
     await downloadPremiumInvoice({ id: INVOICE_ID }, (_b, f) => saved.push(f))
     expect(urls).toEqual([`/v1/monetization/premium/invoices/${INVOICE_ID}`, `/v1/monetization/premium/invoices/${INVOICE_ID}/document`])
-    expect(saved).toEqual(["MP-26-27-000001.html"])
+    expect(saved).toEqual(["MP-26-27-000001.pdf"])
     expect((await fetchPremiumInvoice(INVOICE_ID))?.number).toBe("MP/26-27/000001")
   })
 

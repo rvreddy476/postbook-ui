@@ -40,7 +40,7 @@ describe("the note card", () => {
   })
 
   test("hashtags link to the tag page; the picture comes from media-service by id", () => {
-    expect(html).toContain('href="/hashtag/Bengaluru"')
+    expect(html).toContain('href="/echo/hashtag/Bengaluru"')
     expect(html).toContain("/v1/media/e1111111-1111-4111-8111-111111111111/serve/medium_1080")
   })
 
@@ -49,10 +49,11 @@ describe("the note card", () => {
     expect(html).toContain("Monsoon is here.")
   })
 
-  test("heart only, shown liked, with the counts; reply, repost, quote and share", () => {
+  test("heart only, shown liked, with the counts; reply, repost or quote, views, bookmark and share", () => {
     expect(html).toContain('aria-label="Unlike"')
     expect(html).toContain('aria-pressed="true"')
-    for (const label of ["Reply", "Repost", "Quote", "Share"]) expect(html).toContain(`aria-label="${label}"`)
+    for (const label of ["2 Replies. Reply", "Repost or quote", "Bookmark", "Share post"]) expect(html).toContain(`aria-label="${label}"`)
+    expect(html).toContain('href="/echo/alice/status/f1111111-1111-4111-8111-111111111111"')
     expect(html).not.toMatch(/reaction|emoji/i)
   })
 
@@ -62,7 +63,7 @@ describe("the note card", () => {
   })
 
   test("a quote whose note is gone says so", () => {
-    expect(render(<NoteCard note={{ ...note, quoted: null }} />)).toContain("This note isn&#x27;t available.")
+    expect(render(<NoteCard note={{ ...note, quoted: null }} />)).toContain("This post is unavailable.")
   })
 
   test("signed out: no options menu", () => {
@@ -71,25 +72,26 @@ describe("the note card", () => {
 })
 
 describe("the composer", () => {
-  test("starts empty: 500 left, Post off, the reply-policy picker with the three choices", () => {
+  test("starts empty: 500 left, Post off, Everyone can reply, the thread +", () => {
     const html = render(<Composer purpose={{ kind: "note" }} />)
     expect(html).toContain('data-remaining="500"')
     expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Post<\/button>/)
-    for (const label of ["Everyone", "People you follow", "Only people you mention"]) expect(html).toContain(label)
-    expect(html).toContain("Make a thread")
+    expect(html).toContain("Everyone can reply")
+    expect(html).toContain('aria-label="Add post"')
   })
 
   test("a reply has no thread and no reply-policy picker", () => {
     const html = render(<Composer purpose={{ kind: "reply", to: note }} />)
-    expect(html).not.toContain("Make a thread")
-    expect(html).not.toContain("Who can reply")
+    expect(html).not.toContain('aria-label="Add post"')
+    expect(html).not.toContain("can reply")
+    expect(html).not.toContain('aria-label="Schedule post"')
     expect(html).toContain(">Reply<")
   })
 
   test("a quote shows the note it quotes and no thread", () => {
     const html = render(<Composer purpose={{ kind: "quote", of: note }} />)
     expect(html).toContain("Rain all week in")
-    expect(html).not.toContain("Make a thread")
+    expect(html).not.toContain('aria-label="Add post"')
   })
 
   test("the counter warns near the limit and goes red past it", () => {

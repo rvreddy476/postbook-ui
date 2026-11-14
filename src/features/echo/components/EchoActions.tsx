@@ -1,17 +1,22 @@
 "use client"
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react"
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { Dialog } from "@/components/ui/dialog"
+import { SendInMessagesPanel } from "@/components/messenger/SendInMessagesPanel"
 import { useGlobalToast } from "@/contexts/ToastContext"
 import { ReelReportDialog } from "@/features/reels/components/ReelReportDialog"
+import { useBlockUser } from "@/hooks/useBlocking"
+import { followUser, unfollowUser } from "@/hooks/useEditProfile"
+import { useMuteUser } from "@/hooks/useMuting"
+import api from "@/lib/api"
 import { useAuthUser } from "@/store/auth"
 
-import { deleteNote, editNote, setRepost, toggleLike } from "../api"
+import { deleteNote, editNote, recordNoteShare, setBookmark, setRepost, toggleLike, votePoll } from "../api"
 import { updateNoteEverywhere, useEligibilityReader } from "../hooks"
 import {
   ECHO_WORDS,
@@ -20,37 +25,49 @@ import {
   composerGate,
   echoErrorMessage,
   entryProblem,
-  notePath,
+  fullCount,
+  statusPath,
   withLike,
   withRepost,
   type Note,
   type ReplyPolicy,
 } from "../model"
+import { withBookmark, withVote } from "../v2"
 import { Composer, Counter, type ComposerPurpose } from "./Composer"
 
 /*
-  Every action a note card offers, in one place so the timeline, the note
-  page and the profile tab behave the same: reply, quote and post open the
-  composer after GET /v1/notes/me/eligibility says yes; like and repost are
-  optimistic; edit, delete and report open their dialogs. A signed-out
-  visitor is sent to sign in and back.
+  Every action a note offers, in one place, so the timeline, the post page,
+  the profile and every list behave the same. Reply and quote open the
+  composer after GET /v1/notes/me/eligibility says yes; like, repost,
+  bookmark and vote are optimistic; Copy link and Send via Chat count a
+  share (POST /v1/posts/:id/share). A signed-out visitor is sent to sign in
+  and back. Mounted once by the Echo shell.
 */
 
 export interface EchoActionsValue {
   viewerId: string | null
-  /** Check eligibility, then open the composer for a new note (or say why not). */
+  /** The compose modal (/echo/compose). */
   compose: () => void
   reply: (note: Note) => void
   quote: (note: Note) => void
   like: (note: Note) => void
   repost: (note: Note) => void
-  share: (note: Note) => void
+  bookmark: (note: Note) => void
+  copyLink: (note: Note) => void
+  sendViaChat: (note: Note) => void
+  vote: (note: Note, optionIndex: number) => void
   edit: (note: Note) => void
   remove: (note: Note) => void
   report: (note: Note) => void
-  /** Ask before an inline composer opens; resolves true when it may. */
+  notInterested: (note: Note) => void
+  activity: (note: Note) => void
+  follow: (note: Note, follow: boolean) => void
+  mute: (note: Note) => void
+  block: (note: Note) => void
+  /** Ask before a composer opens; resolves true when it may. */
   ensureCanCompose: (purpose: "note" | "reply") => Promise<boolean>
   showPremiumRequired: () => void
+  signIn: () => void
 }
 
 const EchoActionsContext = createContext<EchoActionsValue | null>(null)
@@ -71,24 +88,27 @@ interface Notice {
 /** Where "Get Premium" goes: the Momentum Premium purchase page. */
 export const PREMIUM_PAGE = "/premium"
 
+const primaryButton = "rounded-full bg-brand-text px-5 py-2 text-sm font-bold text-brand-bg hover:opacity-90"
+const plainButton = "rounded-full px-4 py-2 text-sm font-semibold text-brand-text hover:bg-brand-secondary"
+
 /** The eligibility refusal. A Premium refusal also offers "Get Premium" (/premium); OK still closes. */
 export function EligibilityDialog({ notice, onClose }: { notice: Notice | null; onClose: () => void }) {
   return (
     <Dialog open={!!notice} onClose={onClose} title={notice?.title}>
       <div className="space-y-5" data-echo-eligibility>
-        <p className="text-sm text-brand-text/80">{notice?.detail}</p>
+        <p className="text-sm text-muted-foreground">{notice?.detail}</p>
         <div className="flex justify-end gap-2">
           {notice?.premium ? (
             <>
-              <button type="button" onClick={onClose} className="rounded-full px-4 py-2 text-sm font-medium text-brand-text hover:bg-brand-secondary">
+              <button type="button" onClick={onClose} className={plainButton}>
                 OK
               </button>
-              <Link href={PREMIUM_PAGE} onClick={onClose} data-echo-get-premium className="rounded-full bg-primary-ink px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover">
+              <Link href={PREMIUM_PAGE} onClick={onClose} data-echo-get-premium className={primaryButton}>
                 Get Premium
               </Link>
             </>
           ) : (
-            <button type="button" onClick={onClose} className="rounded-full bg-primary-ink px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover">
+            <button type="button" onClick={onClose} className={primaryButton}>
               OK
             </button>
           )}
@@ -98,13 +118,12 @@ export function EligibilityDialog({ notice, onClose }: { notice: Notice | null; 
   )
 }
 
-function EditNoteDialog({ note, viewerId, onClose }: { note: Note | null; viewerId: string | null; onClose: () => void }) {
+function EditNoteDialog({ note, viewerId, onClose }: { note: Note; viewerId: string | null; onClose: () => void }) {
   const qc = useQueryClient()
-  const [text, setText] = useState(note?.text ?? "")
-  const [policy, setPolicy] = useState<ReplyPolicy>(note?.replyPolicy ?? "everyone")
+  const [text, setText] = useState(note.text)
+  const [policy, setPolicy] = useState<ReplyPolicy>(note.replyPolicy)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  if (!note) return null
   const textEditable = canEditText(note, viewerId)
   const textProblem = textEditable ? entryProblem(text, note.media.map((m) => ({ key: m.mediaId, isGif: m.isGif, mediaId: m.mediaId }))) : null
   const save = async () => {
@@ -125,24 +144,24 @@ function EditNoteDialog({ note, viewerId, onClose }: { note: Note | null; viewer
     }
   }
   return (
-    <Dialog open onClose={onClose} title={textEditable ? "Edit note" : "Who can reply"}>
+    <Dialog open onClose={onClose} title={textEditable ? "Edit post" : "Who can reply"}>
       <div className="space-y-4">
         {textEditable ? (
           <>
             <textarea
-              aria-label="Note text"
+              aria-label="Post text"
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={4}
               className="w-full rounded-xl border border-border bg-brand-bg px-3 py-2 text-base text-brand-text focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>You can edit a note for 30 minutes after posting.</span>
+              <span>You can edit a post for 30 minutes after posting.</span>
               <Counter text={text} />
             </div>
           </>
         ) : (
-          <p className="text-sm text-muted-foreground">Notes can only be edited for 30 minutes after posting. You can still change who can reply.</p>
+          <p className="text-sm text-muted-foreground">Posts can only be edited for 30 minutes after posting. You can still change who can reply.</p>
         )}
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>Who can reply</span>
@@ -160,10 +179,10 @@ function EditNoteDialog({ note, viewerId, onClose }: { note: Note | null; viewer
           </p>
         )}
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded-full px-4 py-2 text-sm font-medium text-brand-text hover:bg-brand-secondary">
+          <button type="button" onClick={onClose} className={plainButton}>
             Cancel
           </button>
-          <button type="button" onClick={save} disabled={busy || !!textProblem} className="rounded-full bg-primary-ink px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50">
+          <button type="button" onClick={save} disabled={busy || !!textProblem} className={`${primaryButton} disabled:opacity-50`}>
             {busy ? "Saving…" : "Save"}
           </button>
         </div>
@@ -172,7 +191,36 @@ function EditNoteDialog({ note, viewerId, onClose }: { note: Note | null; viewer
   )
 }
 
-export function EchoActionsProvider({ children, onDeleted }: { children: React.ReactNode; onDeleted?: (note: Note) => void }) {
+/** View post activity (the author's own numbers). */
+function ActivityDialog({ note, onClose }: { note: Note; onClose: () => void }) {
+  const rows: [string, number][] = [
+    ["Views", note.viewCount],
+    ["Likes", note.likeCount],
+    ["Replies", note.replyCount],
+    ["Reposts", note.repostCount],
+    ["Quotes", note.quoteCount],
+    ["Bookmarks", note.bookmarkCount],
+    ["Shares", note.shareCount],
+  ]
+  return (
+    <Dialog open onClose={onClose} title="Post activity">
+      <dl className="grid grid-cols-2 gap-3" data-echo-activity>
+        {rows.map(([label, value]) => (
+          <div key={label} className="rounded-xl border border-border px-4 py-3">
+            <dt className="text-sm text-muted-foreground">{label}</dt>
+            <dd className="text-xl font-bold tabular-nums text-brand-text">{fullCount(value)}</dd>
+          </div>
+        ))}
+      </dl>
+    </Dialog>
+  )
+}
+
+function handleOf(note: Note): string {
+  return note.author?.username ? `@${note.author.username}` : "this account"
+}
+
+export function EchoActionsProvider({ children }: { children: React.ReactNode }) {
   const qc = useQueryClient()
   const router = useRouter()
   const pathname = usePathname()
@@ -180,6 +228,8 @@ export function EchoActionsProvider({ children, onDeleted }: { children: React.R
   const user = useAuthUser()
   const viewerId = user?.id ?? null
   const readEligibility = useEligibilityReader()
+  const muteUser = useMuteUser()
+  const blockUser = useBlockUser()
 
   const [composer, setComposer] = useState<ComposerPurpose | null>(null)
   const [notice, setNotice] = useState<Notice | null>(null)
@@ -187,7 +237,10 @@ export function EchoActionsProvider({ children, onDeleted }: { children: React.R
   const [deleting, setDeleting] = useState<Note | null>(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
   const [reporting, setReporting] = useState<Note | null>(null)
-  const [pending, setPending] = useState(new Set<string>())
+  const [sending, setSending] = useState<Note | null>(null)
+  const [activity, setActivity] = useState<Note | null>(null)
+  const [blocking, setBlocking] = useState<Note | null>(null)
+  const pending = useRef(new Set<string>())
 
   const signIn = useCallback(() => {
     router.push(`/login?redirect=${encodeURIComponent(pathname || "/echo")}`)
@@ -214,31 +267,44 @@ export function EchoActionsProvider({ children, onDeleted }: { children: React.R
     [viewerId, signIn, readEligibility, toast],
   )
 
-  const once = useCallback(
-    async (id: string, fn: () => Promise<void>) => {
-      if (pending.has(id)) return
-      setPending((s) => new Set(s).add(id))
-      try {
-        await fn()
-      } finally {
-        setPending((s) => {
-          const next = new Set(s)
-          next.delete(id)
-          return next
-        })
-      }
+  /** One request at a time per key: a double click does not send twice. */
+  const once = useCallback(async (key: string, fn: () => Promise<void>) => {
+    if (pending.current.has(key)) return
+    pending.current.add(key)
+    try {
+      await fn()
+    } finally {
+      pending.current.delete(key)
+    }
+  }, [])
+
+  const countShare = useCallback(
+    (note: Note) => {
+      void recordNoteShare(note.id).then(
+        (count) => {
+          updateNoteEverywhere(qc, (n) => {
+            const apply = (x: Note): Note => (x.id === note.id ? { ...x, shareCount: count ?? x.shareCount + 1 } : x)
+            const next = apply(n)
+            return next.quoted ? { ...next, quoted: apply(next.quoted) } : next
+          })
+        },
+        () => {
+          // Counting a share is best-effort; the link was still copied or sent.
+        },
+      )
     },
-    [pending],
+    [qc],
   )
+
+  const muteMutate = muteUser.mutate
 
   const value = useMemo<EchoActionsValue>(
     () => ({
       viewerId,
       ensureCanCompose,
       showPremiumRequired,
-      compose: () => {
-        void ensureCanCompose("note").then((ok) => ok && setComposer({ kind: "note" }))
-      },
+      signIn,
+      compose: () => (viewerId ? router.push("/echo/compose") : signIn()),
       reply: (note) => {
         if (!viewerId) return signIn()
         if (!note.viewerCanReply) {
@@ -277,18 +343,87 @@ export function EchoActionsProvider({ children, onDeleted }: { children: React.R
           }
         })
       },
-      share: (note) => {
-        const url = `${window.location.origin}${notePath(note.id)}`
+      bookmark: (note) => {
+        if (!viewerId) return signIn()
+        void once(`bookmark:${note.id}`, async () => {
+          const next = !note.bookmarked
+          updateNoteEverywhere(qc, (n) => withBookmark(n, note.id, next))
+          try {
+            const res = await setBookmark(note.id, next)
+            updateNoteEverywhere(qc, (n) => withBookmark(n, note.id, res.bookmarked, res.count ?? undefined))
+            void qc.invalidateQueries({ queryKey: ["echo", "list", "bookmarks"] })
+            toast({ type: "success", title: res.bookmarked ? "Added to your Bookmarks" : "Removed from your Bookmarks" })
+          } catch (err) {
+            updateNoteEverywhere(qc, (n) => withBookmark(n, note.id, note.bookmarked, note.bookmarkCount))
+            toast({ type: "error", title: echoErrorMessage(err) })
+          }
+        })
+      },
+      copyLink: (note) => {
+        const url = `${window.location.origin}${statusPath(note)}`
         void navigator.clipboard?.writeText(url).then(
-          () => toast({ type: "success", title: "Link copied" }),
+          () => {
+            toast({ type: "success", title: "Copied to clipboard" })
+            if (viewerId) countShare(note)
+          },
           () => toast({ type: "error", title: "Couldn't copy the link" }),
         )
+      },
+      sendViaChat: (note) => (viewerId ? setSending(note) : signIn()),
+      vote: (note, optionIndex) => {
+        if (!viewerId) return signIn()
+        void once(`vote:${note.id}`, async () => {
+          updateNoteEverywhere(qc, (n) => withVote(n, note.id, optionIndex))
+          try {
+            const updated = await votePoll(note.id, optionIndex)
+            updateNoteEverywhere(qc, (n) => (n.id === updated.id ? { ...updated, quoted: updated.quoted ?? n.quoted } : n))
+          } catch (err) {
+            updateNoteEverywhere(qc, (n) => (n.id === note.id ? { ...n, poll: note.poll } : n))
+            toast({ type: "error", title: echoErrorMessage(err) })
+          }
+        })
       },
       edit: (note) => setEditing(note),
       remove: (note) => setDeleting(note),
       report: (note) => (viewerId ? setReporting(note) : signIn()),
+      activity: (note) => setActivity(note),
+      notInterested: (note) => {
+        if (!viewerId) return signIn()
+        updateNoteEverywhere(qc, (n) => (n.id === note.id ? null : n))
+        void api.post("/v1/feed/feedback", { post_id: note.id, signal: "not_interested" }).then(
+          () => toast({ type: "success", title: "You'll see fewer posts like this" }),
+          () => toast({ type: "error", title: ECHO_WORDS.generic }),
+        )
+      },
+      follow: (note, follow) => {
+        if (!viewerId) return signIn()
+        void once(`follow:${note.authorId}`, async () => {
+          try {
+            if (follow) await followUser(note.authorId)
+            else await unfollowUser(note.authorId)
+            void qc.invalidateQueries({ queryKey: ["echo", "relationship", note.authorId] })
+            void qc.invalidateQueries({ queryKey: ["aggregated-profile"] })
+            toast({ type: "success", title: follow ? `You followed ${handleOf(note)}` : `You unfollowed ${handleOf(note)}` })
+          } catch (err) {
+            toast({ type: "error", title: echoErrorMessage(err) })
+          }
+        })
+      },
+      mute: (note) => {
+        if (!viewerId) return signIn()
+        muteMutate(
+          { muted_id: note.authorId },
+          {
+            onSuccess: () => {
+              updateNoteEverywhere(qc, (n) => (n.authorId === note.authorId ? null : n))
+              toast({ type: "success", title: `You muted ${handleOf(note)}` })
+            },
+          },
+        )
+      },
+      block: (note) => (viewerId ? setBlocking(note) : signIn()),
     }),
-    [viewerId, ensureCanCompose, showPremiumRequired, signIn, toast, once, qc],
+    [viewerId, ensureCanCompose, showPremiumRequired, signIn, toast, once, qc, router, countShare, muteMutate],
   )
 
   const confirmDelete = async () => {
@@ -298,9 +433,10 @@ export function EchoActionsProvider({ children, onDeleted }: { children: React.R
     try {
       await deleteNote(note.id)
       updateNoteEverywhere(qc, (n) => (n.id === note.id ? null : n))
-      toast({ type: "success", title: "Note deleted" })
+      qc.removeQueries({ queryKey: ["echo", "note", note.id] })
+      toast({ type: "success", title: "Your post was deleted" })
       setDeleting(null)
-      onDeleted?.(note)
+      if (pathname?.includes(`/status/${note.id}`)) router.replace("/echo")
     } catch (err) {
       toast({ type: "error", title: echoErrorMessage(err) })
     } finally {
@@ -308,7 +444,19 @@ export function EchoActionsProvider({ children, onDeleted }: { children: React.R
     }
   }
 
-  const composerTitle = composer?.kind === "reply" ? "Reply" : composer?.kind === "quote" ? "Quote" : "New note"
+  const confirmBlock = () => {
+    const note = blocking
+    if (!note) return
+    blockUser.mutate(note.authorId, {
+      onSuccess: () => {
+        updateNoteEverywhere(qc, (n) => (n.authorId === note.authorId ? null : n))
+        toast({ type: "success", title: `You blocked ${handleOf(note)}` })
+      },
+      onSettled: () => setBlocking(null),
+    })
+  }
+
+  const composerTitle = composer?.kind === "reply" ? "Reply" : composer?.kind === "quote" ? "Quote" : "New post"
 
   return (
     <EchoActionsContext.Provider value={value}>
@@ -325,22 +473,46 @@ export function EchoActionsProvider({ children, onDeleted }: { children: React.R
             }}
             onPosted={() => {
               setComposer(null)
-              toast({ type: "success", title: "Posted" })
+              toast({ type: "success", title: composer.kind === "reply" ? "Your reply was sent" : "Your post was sent" })
             }}
           />
         )}
       </Dialog>
       <EligibilityDialog notice={notice} onClose={() => setNotice(null)} />
       {editing && <EditNoteDialog key={editing.id} note={editing} viewerId={viewerId} onClose={() => setEditing(null)} />}
+      {activity && <ActivityDialog note={activity} onClose={() => setActivity(null)} />}
+      <Dialog open={!!sending} onClose={() => setSending(null)} title="Send via Chat">
+        {sending && (
+          <SendInMessagesPanel
+            postId={sending.id}
+            onBack={() => setSending(null)}
+            onSent={(recipient) => {
+              countShare(sending)
+              setSending(null)
+              toast({ type: "success", title: `Sent to ${recipient.name}` })
+            }}
+          />
+        )}
+      </Dialog>
       <ConfirmDialog
         open={!!deleting}
         onClose={() => setDeleting(null)}
         onConfirm={confirmDelete}
-        title="Delete note?"
-        description="This note will be removed from Echo, your profile and any timelines."
+        title="Delete post?"
+        description="This can't be undone. It will be removed from your profile, the timeline of anyone who follows you, and search results."
         confirmLabel="Delete"
         destructive
         loading={deleteBusy}
+      />
+      <ConfirmDialog
+        open={!!blocking}
+        onClose={() => setBlocking(null)}
+        onConfirm={confirmBlock}
+        title={blocking ? `Block ${handleOf(blocking)}?` : "Block?"}
+        description="They won't be able to follow you or see your posts, and you won't see their posts or notifications."
+        confirmLabel="Block"
+        destructive
+        loading={blockUser.isPending}
       />
       <ReelReportDialog open={!!reporting} targetId={reporting?.id ?? ""} targetType="post" onClose={() => setReporting(null)} />
     </EchoActionsContext.Provider>

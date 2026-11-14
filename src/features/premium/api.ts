@@ -63,8 +63,8 @@ export async function fetchPremiumInvoice(id: string): Promise<PremiumInvoiceDet
   return toInvoiceDetail(res.data)
 }
 
-/** The printable HTML as a file. Not an envelope: the body IS the document. */
+/** The PDF as a file. Not an envelope: the body IS the document. */
 export async function fetchPremiumInvoiceDocument(id: string): Promise<Blob> {
-  const res = await api.get(invoiceDocumentUrl(id), { responseType: "blob" })
+  const res = await api.get(invoiceDocumentUrl(id), { responseType: "blob", headers: { Accept: "application/pdf" } })
   return res.data as Blob
 }

@@ -19,7 +19,7 @@
     GET  /premium/invoices         {invoices:[{id,number,kind:"invoice|credit_note",date,total_paise,
                                                currency,pass_id}]}  newest first; a credit note's total < 0
     GET  /premium/invoices/:id     one document (JSON), original_invoice {id,number,date}|null
-    GET  /premium/invoices/:id/document   printable HTML attachment (bearer token; Cache-Control no-store)
+    GET  /premium/invoices/:id/document   application/pdf attachment (bearer token; Cache-Control no-store)
                                    Another buyer's id is 404 NOT_FOUND, never 403.
 
   Prices EXCLUDE GST (founder, 13 Nov 2026). price_paise is the taxable
@@ -543,7 +543,7 @@ export function invoiceUrl(id: string): string {
   return `${INVOICES_URL}/${encodeURIComponent(id)}`
 }
 
-/** The printable HTML. Fetched with the bearer token by the API client; never a bare link. */
+/** The PDF document. Fetched with the bearer token by the API client; never a bare link. */
 export function invoiceDocumentUrl(id: string): string {
   return `${invoiceUrl(id)}/document`
 }
@@ -647,10 +647,10 @@ export function reversedInvoice(note: PremiumInvoice, all: PremiumInvoice[]): Pr
   return all.find((r) => r.kind === "invoice" && r.passId === note.passId) ?? null
 }
 
-/** "MP/26-27/000001" → "MP-26-27-000001.html". */
+/** "MP/26-27/000001" → "MP-26-27-000001.pdf". */
 export function invoiceFileName(number: string): string {
   const safe = number.trim().replace(/\//g, "-").replace(/[^A-Za-z0-9._-]/g, "_")
-  return `${safe || "invoice"}.html`
+  return `${safe || "invoice"}.pdf`
 }
 
 export const INVOICE_WORDS = {
