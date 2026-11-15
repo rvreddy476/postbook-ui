@@ -44,7 +44,7 @@ import { notificationsFilterFromParam, notificationsTabHref, scheduleLabel, with
 import { Composer, ComposerGateView, PremiumGateCard, ScheduleDialog } from "./components/Composer"
 import { EchoActionsProvider, useEchoActions } from "./components/EchoActions"
 import { PageHeader, SearchBox, Tabs, TrendRows, WriteNoteButton, useEchoShell } from "./components/EchoShell"
-import { BigNote, NoteCard, ReplyBubble, VerifiedMark } from "./components/NoteCard"
+import { BigNote, NoteCard, ReplyThread, VerifiedMark } from "./components/NoteCard"
 import { NoteText } from "./components/NoteText"
 import { ListMessage, NoteList, Spinner } from "./components/NoteList"
 
@@ -337,7 +337,7 @@ export function StatusScreen({ handle, id }: { handle: string; id: string }) {
             order={REPLY_ORDER[sort]}
             filter={(r) => !isPart(r)}
             arrange={arrange}
-            render={(r) => <ReplyBubble note={r} depth={rows.get(r.id)?.depth ?? 0} replyingTo={rows.get(r.id)?.replyingTo ?? null} />}
+            render={(r) => <ReplyThread note={r} depth={rows.get(r.id)?.depth ?? 0} replyingTo={rows.get(r.id)?.replyingTo ?? null} />}
           />
         </div>
         <div className="-mx-3">

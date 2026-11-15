@@ -31,7 +31,7 @@ import api from "@/lib/api"
 import { relationshipFromGraph } from "@/lib/graphApi"
 import { onImageError, resolveImageUrl } from "@/lib/imageUrl"
 
-import { useNote, useTopReplies } from "../hooks"
+import { flattenPages, useNote, useReplies, useTopReplies } from "../hooks"
 import {
   MARK_LABEL,
   canEditText,
@@ -48,7 +48,7 @@ import {
   type Note,
   type VerificationMark,
 } from "../model"
-import { bubbleText, echoesLabel, heartsLabel, isLongNote, metaLine, replyCountLabel, timelineBubbles, topicLine, type TopicLine } from "../look"
+import { bubbleText, childReplyPlacement, echoesLabel, heartsLabel, isLongNote, metaLine, replyCountLabel, timelineBubbles, topicLine, viewRepliesLabel, type TopicLine } from "../look"
 import { canVote, pollCountsVisible, pollPercent, pollTimeLeft, repostMenu, shareMenu } from "../v2"
 import { useEchoActions } from "./EchoActions"
 import { MenuButton, type MenuItem } from "./Menu"
@@ -547,8 +547,9 @@ export function NoteCard({
   // A reply's topic line names who it answers: the parent note, read once it is on screen (the existing note call, cached).
   const parent = useNote(note.replyToId ?? "", seen && !!note.replyToId && !threadPart && replyToHandle === undefined)
   const replies = top.data?.items ?? []
-  const { thread } = timelineBubbles(note, replies)
-  const topic = topicLine(note, { thread, threadPart, replyToHandle: replyToHandle ?? parent.data?.author?.username ?? null })
+  // The server counts a thread's parts on its first note; the replies only hint at one.
+  const thread = timelineBubbles(note, replies).thread || note.threadParts > 1
+  const topic = topicLine(note, { thread, threadParts: note.threadParts, threadPart, replyToHandle: replyToHandle ?? parent.data?.author?.username ?? null })
   return (
     <>
       <article
@@ -707,6 +708,55 @@ export function ReplyBubble({ note, depth = 0, replyingTo = null }: { note: Note
           </span>
         </div>
       </div>
+    </div>
+  )
+}
+
+/**
+ * A reply on the note page with its own replies one tap away: "View N
+ * replies" loads them under it (the same cached replies list the reply's
+ * own page uses, so likes, edits and new replies show here too), one step
+ * further in, flat with "Replying to @x" past the second step.
+ */
+export function ReplyThread({ note, depth = 0, replyingTo = null }: { note: Note; depth?: number; replyingTo?: string | null }) {
+  const [open, setOpen] = useState(false)
+  const children = useReplies(note.id, open)
+  const kids = flattenPages(children.data)
+  const place = childReplyPlacement(depth, note.author?.username)
+  const indent = place.depth >= 2 ? "ml-16" : place.depth === 1 ? "ml-8" : ""
+  const link = "text-xs font-semibold text-echo-accent hover:underline disabled:opacity-60"
+  return (
+    <div data-echo-reply-thread={note.id}>
+      <ReplyBubble note={note} depth={depth} replyingTo={replyingTo} />
+      {!open && note.replyCount > 0 && (
+        <div className={`mt-1.5 pl-9 ${depth >= 2 ? "ml-16" : depth === 1 ? "ml-8" : ""}`}>
+          <button type="button" onClick={() => setOpen(true)} className={link} data-echo-view-replies={note.id}>
+            {viewRepliesLabel(note.replyCount)}
+          </button>
+        </div>
+      )}
+      {open && (
+        <div className="mt-3 space-y-3" data-echo-child-replies={note.id}>
+          {kids.map((k) => (
+            <ReplyThread key={k.id} note={k} depth={place.depth} replyingTo={place.replyingTo} />
+          ))}
+          {children.isLoading && <p className={`pl-9 text-xs text-muted-foreground ${indent}`}>Loading replies…</p>}
+          {children.isError && (
+            <p className={`pl-9 ${indent}`}>
+              <button type="button" onClick={() => void children.refetch()} className={link}>
+                Couldn&apos;t load replies. Try again
+              </button>
+            </p>
+          )}
+          {children.hasNextPage && (
+            <p className={`pl-9 ${indent}`}>
+              <button type="button" disabled={children.isFetchingNextPage} onClick={() => void children.fetchNextPage()} className={link} data-echo-more-replies={note.id}>
+                Show more replies
+              </button>
+            </p>
+          )}
+        </div>
+      )}
     </div>
   )
 }

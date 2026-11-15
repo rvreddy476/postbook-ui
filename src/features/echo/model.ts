@@ -86,6 +86,8 @@ export interface Note {
   /** Why a due scheduled note did not publish (contract §3); null when none. */
   publishError: string | null
   poll: Poll | null
+  /** On the first note of a thread, its live part count (the first included); 0 otherwise. */
+  threadParts: number
 }
 
 /** "failed": a scheduled note that could not publish after its retries (server rule; publish_error says why). */
@@ -210,6 +212,7 @@ export function parseNote(raw: unknown, depth = 0): Note | null {
     scheduledAt: optStr(v.scheduled_at),
     publishError: optStr(v.publish_error),
     poll: toPoll(v.poll),
+    threadParts: num(v.thread_parts),
   }
 }
 

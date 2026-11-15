@@ -35,7 +35,8 @@ describe("the note card", () => {
   test("author name, how long ago, and the Verified mark on top; the name links to the profile", () => {
     expect(html).toContain("Alice Rao")
     expect(html).toContain('href="/echo/alice"')
-    expect(html.indexOf("Alice Rao")).toBeLessThan(html.indexOf(">2d<"))
+    expect(html.indexOf("Alice Rao")).toBeLessThan(html.indexOf("data-echo-age"))
+    expect(html.indexOf("data-echo-age")).toBeLessThan(html.indexOf("data-echo-text"))
     expect(html).toContain('data-mark="person"')
     expect(html).toContain('aria-label="Verified"')
   })

@@ -192,3 +192,19 @@ export function selfDisplayName(user: { name?: string | null; username?: string 
   if (name && !name.includes("@")) return name
   return (user?.username ?? "").trim()
 }
+
+/**
+ * Where a reply loaded under another reply on the note page sits: one step
+ * further in, up to MAX_REPLY_DEPTH; past that it stays at the deepest step
+ * and says whose reply it answers ("Replying to @x").
+ */
+export function childReplyPlacement(parentDepth: number, parentHandle: string | null | undefined): { depth: number; replyingTo: string | null } {
+  const level = parentDepth + 1
+  if (level <= MAX_REPLY_DEPTH) return { depth: level, replyingTo: null }
+  return { depth: MAX_REPLY_DEPTH, replyingTo: parentHandle || null }
+}
+
+/** "View 1 reply", "View 12 replies": the button that opens a reply's own replies. */
+export function viewRepliesLabel(count: number): string {
+  return `View ${fullCount(count)} ${count === 1 ? "reply" : "replies"}`
+}

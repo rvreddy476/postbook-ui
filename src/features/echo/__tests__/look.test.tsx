@@ -26,7 +26,7 @@ mock.module("@/store/auth", () => ({
 
 const { ToastProvider } = await import("@/contexts/ToastContext")
 const { EchoActionsProvider } = await import("../components/EchoActions")
-const { ActionBar, BigNote, NoteCard, ReplyBubble, ReplyBubbles, TopicLineView } = await import("../components/NoteCard")
+const { ActionBar, BigNote, NoteCard, ReplyBubble, ReplyBubbles, ReplyThread, TopicLineView } = await import("../components/NoteCard")
 const { Composer } = await import("../components/Composer")
 const { WriteNoteButton, Tabs } = await import("../components/EchoShell")
 const { parseNote } = await import("../model")
@@ -353,5 +353,55 @@ describe("selfDisplayName", () => {
     expect(selfDisplayName({ name: "echoa@example.com", username: "" })).toBe("")
     expect(selfDisplayName({ name: "Asha Rao", username: "asha" })).toBe("Asha Rao")
     expect(selfDisplayName(null)).toBe("")
+  })
+})
+
+describe("thread part count on the timeline", () => {
+  test("thread_parts is read off the note JSON, 0 when absent", () => {
+    const raw = (readFixture("note") as { data: Record<string, unknown> }).data
+    expect(parseNote({ ...raw, thread_parts: 4 })!.threadParts).toBe(4)
+    expect(parseNote({ ...raw, thread_parts: undefined })!.threadParts).toBe(0)
+  })
+
+  test("a thread's first note says Thread · N parts and offers Read the thread", () => {
+    const html = render(<NoteCard note={note({ threadParts: 3, text: "Start #rain" })} />)
+    expect(html).toContain('data-echo-topic="thread"')
+    expect(html).toContain("Thread · 3 parts")
+    expect(html).toContain("data-echo-read-thread")
+  })
+
+  test("a lone note (0 or 1 part) is no thread", () => {
+    const html = render(<NoteCard note={note({ threadParts: 0 })} />)
+    expect(html).not.toContain("Thread")
+    expect(render(<NoteCard note={note({ threadParts: 1 })} />)).not.toContain("data-echo-read-thread")
+  })
+})
+
+describe("replies to replies on the note page", () => {
+  test("placement: one step in up to two, then flat with Replying to @x", () => {
+    expect(look.childReplyPlacement(0, "bob")).toEqual({ depth: 1, replyingTo: null })
+    expect(look.childReplyPlacement(1, "bob")).toEqual({ depth: 2, replyingTo: null })
+    expect(look.childReplyPlacement(2, "bob")).toEqual({ depth: 2, replyingTo: "bob" })
+    expect(look.childReplyPlacement(2, "")).toEqual({ depth: 2, replyingTo: null })
+  })
+
+  test("the button's words", () => {
+    expect(look.viewRepliesLabel(1)).toBe("View 1 reply")
+    expect(look.viewRepliesLabel(12)).toBe("View 12 replies")
+  })
+
+  test("a reply with replies offers View N replies; one without does not", () => {
+    const withKids = render(<ReplyThread note={{ ...reply("r1", "u1", "Bob", "Hi"), replyCount: 3 }} />)
+    expect(withKids).toContain('data-echo-view-replies="r1"')
+    expect(withKids).toContain("View 3 replies")
+    expect(withKids).not.toContain("data-echo-child-replies")
+    const none = render(<ReplyThread note={{ ...reply("r2", "u2", "Cara", "Yo"), replyCount: 0 }} />)
+    expect(none).not.toContain("data-echo-view-replies")
+  })
+
+  test("the button sits at the reply's own indent", () => {
+    const html = render(<ReplyThread note={{ ...reply("r3", "u3", "Dev", "Deep"), replyCount: 2 }} depth={1} />)
+    expect(html).toContain('data-echo-reply-depth="1"')
+    expect(html).toMatch(/ml-8[^"]*"><button[^>]*data-echo-view-replies="r3"/)
   })
 })
