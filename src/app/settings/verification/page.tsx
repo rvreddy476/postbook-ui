@@ -10,9 +10,11 @@ import {
     CheckCircle2,
     ChevronRight,
     Clock,
+    Fingerprint,
     XCircle,
 } from "lucide-react"
 import { useOfficialStatus } from "@/hooks/useOfficialMark"
+import { usePersonStatus } from "@/hooks/usePersonVerification"
 import {
     useSubmitVerification,
     useVerificationRequest,
@@ -279,8 +281,30 @@ export default function VerificationPage() {
                 )}
             </motion.div>
 
+            <PersonVerificationEntry />
             <OfficialMarkEntry />
         </div>
+    )
+}
+
+/** Verify you're a real person (15 Nov 2026): drawn only while the server's switch is on. */
+function PersonVerificationEntry() {
+    const { data } = usePersonStatus()
+    if (!data || data.off) return null
+    const done = data.status?.next === ""
+    return (
+        <Link
+            href="/settings/verification/person"
+            data-person-entry
+            className="flex items-center gap-3 rounded-2xl border border-brand-text/10 bg-brand-card p-5 shadow-xs transition-colors hover:border-brand-text/30"
+        >
+            <Fingerprint className="h-6 w-6 shrink-0 text-brand-text" aria-hidden />
+            <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-brand-text">Verify you&apos;re a real person</p>
+                <p className="text-xs text-brand-highlight">{done ? "Verified" : "Uses DigiLocker and a quick selfie."}</p>
+            </div>
+            <ChevronRight className="h-4 w-4 shrink-0 text-brand-highlight" aria-hidden />
+        </Link>
     )
 }
 

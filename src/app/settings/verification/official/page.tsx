@@ -55,10 +55,19 @@ function Field({
 
 function ErrorLine({ error }: { error: unknown }) {
     if (!error) return null
+    const e = asServerError(error)
     return (
-        <p className="text-xs font-medium text-danger" role="alert" data-official-error>
-            {asServerError(error).message}
-        </p>
+        <div className="space-y-2">
+            <p className="text-xs font-medium text-danger" role="alert" data-official-error>
+                {e.message}
+            </p>
+            {/* The Official mark needs the person mark first (15 Nov 2026). */}
+            {e.code === "PERSON_VERIFICATION_REQUIRED" && (
+                <Link href="/settings/verification/person" className={LINK} data-official-person-link>
+                    Verify you&apos;re a real person
+                </Link>
+            )}
+        </div>
     )
 }
 
