@@ -253,6 +253,16 @@ describe("the note page", () => {
       ["d", 2, "dev"],
     ])
   })
+
+  test("the thread page lists every part after the open note, part 3 and on included", () => {
+    const p1 = reply("p1", "u1", "Bob", "1")
+    const p2 = reply("p2", "u1", "Bob", "2", "p1")
+    const p3 = reply("p3", "u1", "Bob", "3", "p2")
+    expect(look.threadPartsAfter("p1", [p1, p2, p3]).map((p) => p.id)).toEqual(["p2", "p3"])
+    expect(look.threadPartsAfter("p2", [p1, p2, p3]).map((p) => p.id)).toEqual(["p3"])
+    expect(look.threadPartsAfter("p3", [p1, p2, p3])).toEqual([])
+    expect(look.threadPartsAfter("x", [p1, p2, p3])).toEqual([])
+  })
 })
 
 describe("the composer's words", () => {

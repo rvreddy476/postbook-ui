@@ -4,7 +4,7 @@
   same as every other call.
 
     GET    /v1/feed/notes/following | for-you   ?cursor=&limit=
-    GET    /v1/notes/:id   /:id/conversation   /:id/replies?cursor=&limit=
+    GET    /v1/notes/:id   /:id/conversation   /:id/thread   /:id/replies?cursor=&limit=
     GET    /v1/notes/users/:userId?tab=notes|replies|reposts&cursor=&limit=
     GET    /v1/notes/me/eligibility
     POST   /v1/notes            (Idempotency-Key)
@@ -59,6 +59,7 @@ export const echoPaths = {
   timeline: (t: Timeline, cursor?: string | null) => `/v1/feed/notes/${t}?${pageQuery(cursor)}`,
   note: (noteId: string) => `/v1/notes/${id(noteId)}`,
   conversation: (noteId: string) => `/v1/notes/${id(noteId)}/conversation`,
+  threadOf: (noteId: string) => `/v1/notes/${id(noteId)}/thread`,
   replies: (noteId: string, cursor?: string | null, limit = PAGE_SIZE) => `/v1/notes/${id(noteId)}/replies?${pageQuery(cursor, limit)}`,
   userNotes: (userId: string, tab: ProfileNotesTab, cursor?: string | null) => `/v1/notes/users/${id(userId)}?${pageQuery(cursor, PAGE_SIZE, { tab })}`,
   eligibility: "/v1/notes/me/eligibility",
@@ -84,6 +85,11 @@ export async function fetchNote(noteId: string): Promise<Note> {
 
 export async function fetchConversation(noteId: string): Promise<Note[]> {
   return parseNotePage((await api.get(echoPaths.conversation(noteId))).data).items
+}
+
+/** Every part of the thread the note is in, first part first; [] when it is in none. */
+export async function fetchThread(noteId: string): Promise<Note[]> {
+  return parseNotePage((await api.get(echoPaths.threadOf(noteId))).data).items
 }
 
 export async function fetchReplies(noteId: string, cursor?: string | null, limit = PAGE_SIZE): Promise<NotePage> {

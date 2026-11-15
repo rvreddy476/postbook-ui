@@ -26,6 +26,7 @@ import {
   updateNoteEverywhere,
   useBookmarks,
   useConversation,
+  useThread,
   useEligibility,
   useHashtagNotes,
   useNote,
@@ -39,7 +40,7 @@ import {
   useUserNotes,
 } from "./hooks"
 import { ECHO_WORDS, echoErrorMessage, fullCount, hashtagPath, readFailure, replyPolicyLabel, statusPath, type Note } from "./model"
-import { conversationRows, isLongNote, replyBoxPlaceholder } from "./look"
+import { conversationRows, isLongNote, replyBoxPlaceholder, threadPartsAfter } from "./look"
 import { notificationsFilterFromParam, notificationsTabHref, scheduleLabel, withMentionsFilter } from "./v2"
 import { Composer, ComposerGateView, PremiumGateCard, ScheduleDialog } from "./components/Composer"
 import { EchoActionsProvider, useEchoActions } from "./components/EchoActions"
@@ -250,6 +251,7 @@ export function StatusScreen({ handle, id }: { handle: string; id: string }) {
   const user = useAuthUser()
   const note = useNote(id)
   const conversation = useConversation(id, note.isSuccess && !!note.data?.replyToId)
+  const thread = useThread(id, note.isSuccess)
   const replies = useReplies(id, note.isSuccess)
   const [sort, setSort] = useState<ReplySort>("relevant")
 
@@ -281,10 +283,15 @@ export function StatusScreen({ handle, id }: { handle: string; id: string }) {
     const n = note.data
     const above = (conversation.data ?? []).filter((c) => c.id !== n.id)
     // The author's own thread carrying on under the note: serif cards joined by an ember line, above the conversation.
-    const isPart = (r: Note) => r.authorId === n.authorId && r.replyToId === n.id
-    const parts = flattenPages(replies.data)
-      .filter(isPart)
-      .sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt))
+    // Every later part comes from the thread call; until it answers, the parts that reply to this note directly.
+    const directPart = (r: Note) => r.authorId === n.authorId && r.replyToId === n.id
+    const parts = thread.data
+      ? threadPartsAfter(n.id, thread.data)
+      : flattenPages(replies.data)
+          .filter(directPart)
+          .sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt))
+    const partIds = new Set(parts.map((p) => p.id))
+    const isPart = (r: Note) => (thread.data ? partIds.has(r.id) : directPart(r))
     const rows = new Map<string, { depth: number; replyingTo: string | null }>()
     const arrange = (ns: Note[]) => {
       const out = conversationRows(n.id, ns)

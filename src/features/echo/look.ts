@@ -137,6 +137,12 @@ export interface ConversationRow {
   replyingTo: string | null
 }
 
+/** The thread parts after the open note, in order; [] when the note is not in the thread. */
+export function threadPartsAfter(noteId: string, thread: readonly Note[]): Note[] {
+  const i = thread.findIndex((p) => p.id === noteId)
+  return i < 0 ? [] : thread.slice(i + 1)
+}
+
 /**
  * The note page's replies in reading order. A reply to a reply in the
  * loaded set sits under its parent, one step in (two steps at most); past

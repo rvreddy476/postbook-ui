@@ -4,6 +4,7 @@ import { useInfiniteQuery, useQuery, useQueryClient, type InfiniteData, type Que
 
 import {
   fetchConversation,
+  fetchThread,
   fetchEligibility,
   fetchNote,
   fetchReplies,
@@ -33,6 +34,7 @@ export const echoKeys = {
   timeline: (t: Timeline) => ["echo", "timeline", t] as const,
   note: (id: string) => ["echo", "note", id] as const,
   conversation: (id: string) => ["echo", "conversation", id] as const,
+  thread: (id: string) => ["echo", "thread", id] as const,
   replies: (id: string) => ["echo", "replies", id] as const,
   /** A timeline card's first replies (a plain NotePage, not an infinite list). */
   topReplies: (id: string) => ["echo", "top-replies", id] as const,
@@ -58,6 +60,11 @@ export function useNote(id: string, enabled = true) {
 
 export function useConversation(id: string, enabled = true) {
   return useQuery({ queryKey: echoKeys.conversation(id), queryFn: () => fetchConversation(id), enabled: enabled && !!id, retry: false })
+}
+
+/** Every part of the thread the note is in, first part first. */
+export function useThread(id: string, enabled = true) {
+  return useQuery({ queryKey: echoKeys.thread(id), queryFn: () => fetchThread(id), enabled: enabled && !!id, retry: false })
 }
 
 export function useReplies(id: string, enabled = true) {
@@ -132,6 +139,7 @@ export function updateNoteEverywhere(qc: QueryClient, fn: (n: Note) => Note | nu
   qc.setQueriesData<InfiniteData<NotePage>>({ queryKey: ["echo", "list"] }, (d) => mapPages(d, fn))
   qc.setQueriesData<NotePage>({ queryKey: ["echo", "top-replies"] }, (d) => (d ? { ...d, items: d.items.map(fn).filter((n): n is Note => n !== null) } : d))
   qc.setQueriesData<Note[]>({ queryKey: ["echo", "conversation"] }, (d) => (d ? d.map(fn).filter((n): n is Note => n !== null) : d))
+  qc.setQueriesData<Note[]>({ queryKey: ["echo", "thread"] }, (d) => (d ? d.map(fn).filter((n): n is Note => n !== null) : d))
   qc.setQueriesData<Note>({ queryKey: ["echo", "note"] }, (d) => (d ? fn(d) ?? d : d))
 }
 
