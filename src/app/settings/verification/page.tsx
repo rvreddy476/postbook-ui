@@ -6,10 +6,13 @@ import { motion } from "framer-motion"
 import {
     ArrowLeft,
     BadgeCheck,
+    Building2,
     CheckCircle2,
+    ChevronRight,
     Clock,
     XCircle,
 } from "lucide-react"
+import { useOfficialStatus } from "@/hooks/useOfficialMark"
 import {
     useSubmitVerification,
     useVerificationRequest,
@@ -275,6 +278,33 @@ export default function VerificationPage() {
                     </div>
                 )}
             </motion.div>
+
+            <OfficialMarkEntry />
         </div>
+    )
+}
+
+/** Official mark (15 Nov 2026): drawn only while the server's switch is on. */
+function OfficialMarkEntry() {
+    const { data } = useOfficialStatus()
+    if (!data || data.off) return null
+    const done = data.status?.next === ""
+    return (
+        <Link
+            href="/settings/verification/official"
+            data-official-entry
+            className="flex items-center gap-3 rounded-2xl border border-brand-text/10 bg-brand-card p-5 shadow-xs transition-colors hover:border-brand-text/30"
+        >
+            <Building2 className="h-6 w-6 shrink-0 text-brand-text" aria-hidden />
+            <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-brand-text">Official mark</p>
+                <p className="text-xs text-brand-highlight">
+                    {done
+                        ? "Your organisation holds its mark."
+                        : "For organisations, brands, media outlets and public bodies."}
+                </p>
+            </div>
+            <ChevronRight className="h-4 w-4 shrink-0 text-brand-highlight" aria-hidden />
+        </Link>
     )
 }
