@@ -3,7 +3,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useQueryClient } from "@tanstack/react-query"
-import { AtSign, CalendarClock, Clapperboard, Globe, ImagePlus, ListChecks, Plus, Smile, UserCheck, X } from "lucide-react"
+import { AtSign, CalendarClock, Clapperboard, Film, Globe, ImagePlus, ListChecks, Plus, Smile, UserCheck, X } from "lucide-react"
 
 import EmojiPickerPopover from "@/components/comments/EmojiPickerPopover"
 import Avatar from "@/components/ui/Avatar"
@@ -14,7 +14,7 @@ import { uploadMedia } from "@/lib/mediaUpload"
 import { useAuthUser } from "@/store/auth"
 
 import { createNote, createNoteBody, createThread } from "../api"
-import { showCreatedNotes } from "../hooks"
+import { showCreatedNotes, useEligibility } from "../hooks"
 import {
   ECHO_RULES,
   REPLY_POLICIES,
@@ -22,7 +22,9 @@ import {
   echoErrorMessage,
   entryProblem,
   isAcceptedFile,
+  isVideoFile,
   readFailure,
+  videoProblem,
   remaining,
   threadProblem,
   MEDIA_LIMIT_MESSAGE,
@@ -417,6 +419,7 @@ export function Composer({
   const [error, setError] = useState<string | null>(null)
   const keyHolder = useRef(createIdempotencyKeyHolder())
   const fileInput = useRef<HTMLInputElement | null>(null)
+  const videoInput = useRef<HTMLInputElement | null>(null)
   const emojiAnchor = useRef<HTMLButtonElement | null>(null)
   const textareas = useRef(new Map<string, HTMLTextAreaElement | null>())
   const blobs = useRef(new Set<string>())
@@ -433,7 +436,10 @@ export function Composer({
   const canPoll = purpose.kind !== "reply" && !thread && entries[0].media.length === 0
   const canSchedule = purpose.kind !== "reply" && !thread
   const showPolicy = purpose.kind !== "reply"
-  const mediaBlocked = !!poll || active.media.some((m) => m.isGif) || active.media.length >= ECHO_RULES.maxImages
+  const mediaBlocked = !!poll || active.media.some((m) => m.isGif || m.isVideo) || active.media.length >= ECHO_RULES.maxImages
+  // A reply by someone without Premium gets the shorter video limit; notes, quotes and threads need Premium.
+  const eligibility = useEligibility(purpose.kind === "reply")
+  const premium = purpose.kind !== "reply" || !!eligibility.data?.canPost
 
   const problem = useMemo(() => {
     if (thread) return threadProblem(entries)
@@ -481,6 +487,20 @@ export function Composer({
     else if (take < images.length) setError(MEDIA_LIMIT_MESSAGE)
   }
 
+  const addVideo = async (list: FileList | null) => {
+    const file = list?.[0]
+    if (!file) return
+    if (!isVideoFile(file)) return setError("Pick a video file.")
+    if (poll || active.media.length > 0) return setError(MEDIA_LIMIT_MESSAGE)
+    const problem = videoProblem(await readVideoDurationMs(file), file.size, premium)
+    if (problem) return setError(problem)
+    const previewUrl = URL.createObjectURL(file)
+    blobs.current.add(previewUrl)
+    const staged: StagedFile = { key: nextKey("m"), file, previewUrl, isGif: false, isVideo: true }
+    const key = active.key
+    change((cur) => cur.map((e) => (e.key === key ? { ...e, media: [staged] } : e)))
+  }
+
   const pickGif = async (gif: GifSendPayload) => {
     setGifOpen(false)
     try {
@@ -525,7 +545,7 @@ export function Composer({
           e.media.map(async (m) => {
             if (m.mediaId) return m
             try {
-              return { ...m, mediaId: await uploadMedia(m.file, "image", "general"), failed: false }
+              return { ...m, mediaId: await uploadMedia(m.file, m.isVideo ? "video" : "image", "general"), failed: false }
             } catch {
               return { ...m, failed: true }
             }
@@ -696,11 +716,15 @@ export function Composer({
               <div className={`mt-2 grid gap-2 ${entry.media.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
                 {entry.media.map((m) => (
                   <div key={m.key} className="relative overflow-hidden rounded-echo-inner border border-border">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={m.previewUrl} alt="" className={`w-full object-cover ${entry.media.length === 1 ? "max-h-80" : "aspect-square"}`} />
+                    {m.isVideo ? (
+                      <video src={m.previewUrl} muted playsInline controls className="max-h-80 w-full bg-black object-contain" data-echo-staged-video />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={m.previewUrl} alt="" className={`w-full object-cover ${entry.media.length === 1 ? "max-h-80" : "aspect-square"}`} />
+                    )}
                     {m.isGif && <span className="absolute bottom-2 left-2 rounded bg-brand-text/70 px-1.5 text-xs font-bold text-brand-bg">GIF</span>}
                     {m.failed && <span className="absolute inset-x-0 bottom-0 bg-danger px-1 text-center text-xs text-primary-foreground">Failed</span>}
-                    <button type="button" aria-label={m.isGif ? "Remove GIF" : "Remove photo"} onClick={() => removeMedia(entry.key, m.key)} className="absolute right-2 top-2 rounded-full bg-brand-text/70 p-1 text-brand-bg">
+                    <button type="button" aria-label={m.isVideo ? "Remove video" : m.isGif ? "Remove GIF" : "Remove photo"} onClick={() => removeMedia(entry.key, m.key)} className="absolute right-2 top-2 rounded-full bg-brand-text/70 p-1 text-brand-bg">
                       <X className="h-4 w-4" />
                     </button>
                   </div>
@@ -741,6 +765,19 @@ export function Composer({
           />
           <button type="button" aria-label="Add photos" onClick={() => fileInput.current?.click()} disabled={mediaBlocked} className={toolPill}>
             <ImagePlus className="h-4 w-4" aria-hidden /> Photo
+          </button>
+          <input
+            ref={videoInput}
+            type="file"
+            accept="video/*"
+            hidden
+            onChange={(e) => {
+              void addVideo(e.target.files)
+              e.target.value = ""
+            }}
+          />
+          <button type="button" aria-label="Add a video" onClick={() => videoInput.current?.click()} disabled={!!poll || active.media.length > 0} className={toolPill} data-echo-video-button>
+            <Film className="h-4 w-4" aria-hidden /> Video
           </button>
           {gifKey && (
             <button type="button" aria-label="Add a GIF" onClick={() => setGifOpen(true)} disabled={!!poll || active.media.length > 0} className={toolPill} data-echo-gif-button>
@@ -814,4 +851,20 @@ export function Composer({
       )}
     </div>
   )
+}
+
+/** A picked video's length from its own metadata; 0 when the browser cannot tell. */
+function readVideoDurationMs(file: File): Promise<number> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file)
+    const v = document.createElement("video")
+    v.preload = "metadata"
+    const done = (ms: number) => {
+      URL.revokeObjectURL(url)
+      resolve(ms)
+    }
+    v.onloadedmetadata = () => done(Number.isFinite(v.duration) ? Math.round(v.duration * 1000) : 0)
+    v.onerror = () => done(0)
+    v.src = url
+  })
 }

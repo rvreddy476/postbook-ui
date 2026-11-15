@@ -11,6 +11,7 @@ import {
   Bookmark,
   Check,
   Ellipsis,
+  Eye,
   Flag,
   Frown,
   Heart,
@@ -42,13 +43,15 @@ import {
   isAuthor,
   noteMediaPath,
   profilePath,
+  videoTooLongNotice,
   quotesPath,
   shortAge,
   statusPath,
   type Note,
   type VerificationMark,
 } from "../model"
-import { bubbleText, childReplyPlacement, echoesLabel, heartsLabel, isLongNote, metaLine, replyCountLabel, timelineBubbles, topicLine, viewRepliesLabel, type TopicLine } from "../look"
+import { bubbleText, childReplyPlacement, echoesLabel, heartsLabel, isLongNote, metaLine, replyCountLabel, timelineBubbles, topicLine, viewRepliesLabel, viewsLabel, type TopicLine } from "../look"
+import { EchoVideo } from "./EchoVideo"
 import { canVote, pollCountsVisible, pollPercent, pollTimeLeft, repostMenu, shareMenu } from "../v2"
 import { useEchoActions } from "./EchoActions"
 import { MenuButton, type MenuItem } from "./Menu"
@@ -184,9 +187,28 @@ export function Signature({ note, right, className = "mt-3" }: { note: Pick<Note
   )
 }
 
-/** Up to 4 images in a grid, or one GIF, inside the card at radius 12. */
-export function NoteMediaGrid({ note }: { note: Pick<Note, "media"> }) {
+/** Up to 4 images in a grid, one GIF, or the one video, inside the card at radius 12. */
+export function NoteMediaGrid({ note, controls = false }: { note: Pick<Note, "media"> & Partial<Pick<Note, "isProcessing" | "videoTooLong">>; controls?: boolean }) {
   if (note.media.length === 0) return null
+  const video = note.media.find((m) => m.isVideo)
+  if (video) {
+    return (
+      <div data-echo-video-block>
+        {note.isProcessing ? (
+          <div className="mt-3 flex aspect-video items-center justify-center rounded-echo-inner border border-border bg-brand-secondary text-sm font-semibold text-muted-foreground" data-echo-video-processing>
+            Processing video…
+          </div>
+        ) : (
+          <EchoVideo media={video} controls={controls} />
+        )}
+        {note.videoTooLong && (
+          <p className="mt-2 rounded-echo-inner bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive" data-echo-video-too-long>
+            {videoTooLongNotice(video.durationMs)}
+          </p>
+        )}
+      </div>
+    )
+  }
   const cols = note.media.length === 1 ? "grid-cols-1" : "grid-cols-2"
   return (
     <div className={`mt-3 grid gap-0.5 overflow-hidden rounded-echo-inner border border-border ${cols}`}>
@@ -324,6 +346,9 @@ function useRelationship(userId: string, enabled: boolean) {
 
 const PILL = "inline-flex min-h-8 items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-semibold transition-colors hover:bg-brand-secondary"
 
+// The note page's pills fill their grid cells, so every gap is the same.
+const STRETCH = "[&>*]:w-full [&>*]:justify-center [&_[data-echo-pill]]:w-full [&_[data-echo-pill]]:justify-center"
+
 function Pill({
   label,
   active = false,
@@ -442,13 +467,16 @@ export function ActionBar({ note, big = false, initialMenu }: { note: Note; big?
   const heart = <Heart className={`h-4 w-4 ${note.liked ? "fill-current" : ""}`} aria-hidden />
   if (big) {
     return (
-      <div className="mt-4 flex flex-wrap items-center gap-2" data-echo-action-bar="big">
+      <div className={`mt-4 grid grid-cols-3 gap-2 sm:grid-cols-6 ${STRETCH}`} data-echo-action-bar="big">
         <Pill label={note.liked ? "Unlike" : "Like"} active={note.liked} tone="danger" onClick={() => actions.like(note)} testId="heart">
           {heart} {heartsLabel(note.likeCount)}
         </Pill>
         <EchoItPill note={note} initialOpen={initialMenu === "repost"}>
           {echoesLabel(note)}
         </EchoItPill>
+        <Pill label={`${note.viewCount} views`} testId="views">
+          <Eye className="h-4 w-4" aria-hidden /> {viewsLabel(note.viewCount)}
+        </Pill>
         <Pill label={note.bookmarked ? "Remove from Saved" : "Save"} active={note.bookmarked} tone="accent" onClick={() => actions.bookmark(note)} testId="save">
           <Bookmark className={`h-4 w-4 ${note.bookmarked ? "fill-current" : ""}`} aria-hidden />
           {note.bookmarked ? "Saved" : "Save"}
@@ -463,7 +491,7 @@ export function ActionBar({ note, big = false, initialMenu }: { note: Note; big?
   }
   const echoes = note.repostCount + note.quoteCount
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-2" data-echo-action-bar>
+    <div className="mt-3 flex items-center justify-between gap-1" data-echo-action-bar>
       <Pill label={`${note.replyCount} Replies. Reply`} onClick={() => actions.reply(note)} testId="reply">
         <MessageCircle className="h-4 w-4" aria-hidden /> Reply
       </Pill>
@@ -474,20 +502,11 @@ export function ActionBar({ note, big = false, initialMenu }: { note: Note; big?
         {heart}
         {note.likeCount > 0 && <span className="tabular-nums">{compactCount(note.likeCount)}</span>}
       </Pill>
+      <Pill label={`${note.viewCount} views`} onClick={() => router.push(statusPath(note))} testId="views">
+        <Eye className="h-4 w-4" aria-hidden />
+        {note.viewCount > 0 && <span className="tabular-nums">{compactCount(note.viewCount)}</span>}
+      </Pill>
       <MoreMenu note={note} initialOpen={initialMenu === "more"} />
-      {note.viewCount > 0 && (
-        <button
-          type="button"
-          aria-label={`${note.viewCount} views. View post analytics`}
-          onClick={(e) => {
-            e.stopPropagation()
-            router.push(statusPath(note))
-          }}
-          className="ml-auto inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-brand-text"
-        >
-          <BarChart2 className="h-3.5 w-3.5" aria-hidden /> {compactCount(note.viewCount)}
-        </button>
-      )}
     </div>
   )
 }
@@ -602,7 +621,7 @@ function FollowPill({ note }: { note: Note }) {
   )
 }
 
-/** The note page's note: a larger card with an ember border, `#tag · 2:14 pm · 1.2k views`, the 22px serif, signature + Follow, count pills. */
+/** The note page's note: a larger card with an ember border, `#tag · 2:14 pm`, the 22px serif, signature + Follow, count pills. */
 export function BigNote({ note }: { note: Note }) {
   const ref = useRef<HTMLElement>(null)
   useTrackView(ref, note.id)
@@ -623,11 +642,9 @@ export function BigNote({ note }: { note: Note }) {
           {meta.time}
         </time>
         {note.editedAt && <span>· Edited</span>}
-        <span aria-hidden>·</span>
-        <span>{meta.views}</span>
       </p>
       <NoteText text={note.text} size="lead" className="mt-2" />
-      <NoteMediaGrid note={note} />
+      <NoteMediaGrid note={note} controls />
       <PollView note={note} />
       <QuotedNote note={note.quoted} quoteOfId={note.quoteOfId} />
       {note.quoteCount > 0 && (

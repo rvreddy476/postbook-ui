@@ -49,7 +49,9 @@ describe("note.json", () => {
   })
 
   test("one image, by media id", () => {
-    expect(note.media).toEqual([{ mediaId: "e1111111-1111-4111-8111-111111111111", isGif: false, altText: "" }])
+    expect(note.media).toEqual([
+      { mediaId: "e1111111-1111-4111-8111-111111111111", isGif: false, altText: "", isVideo: false, durationMs: 0, hlsUrl: null },
+    ])
   })
 
   test("the quoted note is read one level deep", () => {

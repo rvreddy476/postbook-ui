@@ -52,6 +52,12 @@ export interface NoteMedia {
   mediaId: string
   isGif: boolean
   altText: string
+  /** A note's one video (kind "video"); everything else is a picture. */
+  isVideo: boolean
+  /** Measured length; 0 until media-service has measured it. */
+  durationMs: number
+  /** The authorised HLS master playlist once transcoded, else null. */
+  hlsUrl: string | null
 }
 
 export interface Note {
@@ -88,6 +94,10 @@ export interface Note {
   poll: Poll | null
   /** On the first note of a thread, its live part count (the first included); 0 otherwise. */
   threadParts: number
+  /** A video still transcoding or awaiting its check: only its author is shown the note. */
+  isProcessing: boolean
+  /** The author's own note whose video is longer than the note allows; nobody else sees it. */
+  videoTooLong: boolean
 }
 
 /** "failed": a scheduled note that could not publish after its retries (server rule; publish_error says why). */
@@ -154,7 +164,14 @@ function toMedia(v: unknown): NoteMedia[] {
     .filter(isObj)
     .filter((m) => str(m.media_id))
     .sort((a, b) => num(a.position) - num(b.position))
-    .map((m) => ({ mediaId: str(m.media_id), isGif: m.kind === "gif" || m.mime_type === "image/gif", altText: str(m.alt_text) }))
+    .map((m) => ({
+      mediaId: str(m.media_id),
+      isGif: m.kind === "gif" || m.mime_type === "image/gif",
+      altText: str(m.alt_text),
+      isVideo: m.kind === "video",
+      durationMs: num(m.duration_ms),
+      hlsUrl: optStr(m.hls_url),
+    }))
 }
 
 function toPoll(v: unknown): Poll | null {
@@ -213,6 +230,8 @@ export function parseNote(raw: unknown, depth = 0): Note | null {
     publishError: optStr(v.publish_error),
     poll: toPoll(v.poll),
     threadParts: num(v.thread_parts),
+    isProcessing: bool(v.is_processing),
+    videoTooLong: bool(v.video_too_long),
   }
 }
 
@@ -259,18 +278,20 @@ export function remaining(text: string): number {
   return ECHO_RULES.maxChars - noteLength(text)
 }
 
-export const MEDIA_LIMIT_MESSAGE = "Add up to 4 photos or 1 GIF."
+export const MEDIA_LIMIT_MESSAGE = "Add up to 4 photos, 1 GIF or 1 video."
 
-/** A picture staged on a composer entry. */
+/** A picture or the one video staged on a composer entry. */
 export interface StagedMedia {
   key: string
   isGif: boolean
+  isVideo?: boolean
   mediaId?: string
   failed?: boolean
 }
 
-/** The media rule: up to 4 images, or exactly 1 GIF on its own. */
-export function mediaProblem(media: readonly Pick<StagedMedia, "isGif">[]): string | null {
+/** The media rule: up to 4 images, or exactly 1 GIF on its own, or exactly 1 video on its own. */
+export function mediaProblem(media: readonly Pick<StagedMedia, "isGif" | "isVideo">[]): string | null {
+  if (media.some((m) => m.isVideo) && media.length > 1) return MEDIA_LIMIT_MESSAGE
   const gifs = media.filter((m) => m.isGif).length
   if (gifs > 0 && media.length > 1) return MEDIA_LIMIT_MESSAGE
   if (media.length > ECHO_RULES.maxImages) return MEDIA_LIMIT_MESSAGE
@@ -291,9 +312,50 @@ export function acceptedPicks(current: readonly Pick<StagedMedia, "isGif">[], in
   return accepted
 }
 
-/** Echo takes photos and GIFs only. */
+/** Echo takes photos and GIFs; a video goes through the Video pill. */
 export function isAcceptedFile(file: { type: string }): boolean {
   return file.type.startsWith("image/")
+}
+
+export function isVideoFile(file: { type: string }): boolean {
+  return file.type.startsWith("video/")
+}
+
+/**
+ * Video limits, after X (founder, 15 Nov 2026): 140 s and 512 MB without
+ * Premium (replies), 10 minutes with Premium. The server keeps the same
+ * numbers (docs/designs/echo-v2-contract.md, "Video in notes").
+ */
+export const VIDEO_LIMITS = {
+  standard: { maxMs: 140_000, maxBytes: 512 * 1024 * 1024, words: "2 min 20 s" },
+  premium: { maxMs: 600_000, maxBytes: 0, words: "10 minutes" },
+} as const
+
+export function videoLimit(premium: boolean) {
+  return premium ? VIDEO_LIMITS.premium : VIDEO_LIMITS.standard
+}
+
+/** Why a picked video cannot go on a note, or null. durationMs 0 means unknown. */
+export function videoProblem(durationMs: number, sizeBytes: number, premium: boolean): string | null {
+  const lim = videoLimit(premium)
+  if (durationMs > lim.maxMs) return `Videos can be up to ${lim.words}.`
+  if (lim.maxBytes > 0 && sizeBytes > lim.maxBytes) return "Videos can be up to 512 MB."
+  return null
+}
+
+/** What the author is told about a note whose video is over its limit. */
+export function videoTooLongNotice(durationMs: number): string {
+  const words = durationMs > VIDEO_LIMITS.premium.maxMs ? VIDEO_LIMITS.premium.words : VIDEO_LIMITS.standard.words
+  return `This video is longer than ${words} and is only visible to you.`
+}
+
+/** "1:05", "12:03", "1:02:03". */
+export function videoClock(ms: number): string {
+  const total = Math.max(0, Math.round(ms / 1000))
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = String(total % 60).padStart(2, "0")
+  return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`
 }
 
 /** Why one entry cannot be posted yet, or null when it can. */
@@ -301,7 +363,7 @@ export function entryProblem(text: string, media: readonly StagedMedia[] = []): 
   const length = noteLength(text)
   if (length > ECHO_RULES.maxChars) return `Notes can be up to ${ECHO_RULES.maxChars} characters.`
   if (length === 0 && media.length === 0) return "Write something or add a photo."
-  if (media.some((m) => m.failed)) return "A photo didn't upload. Remove it and try again."
+  if (media.some((m) => m.failed)) return media.some((m) => m.isVideo) ? "The video didn't upload. Remove it and try again." : "A photo didn't upload. Remove it and try again."
   return mediaProblem(media)
 }
 
@@ -470,6 +532,8 @@ export const ECHO_ERROR_CODES = [
   "EMPTY_NOTE",
   "TOO_MANY_MEDIA",
   "MEDIA_NOT_ALLOWED",
+  "VIDEO_TOO_LONG",
+  "VIDEO_TOO_LARGE",
   "NOTE_NOT_FOUND",
   "INVALID_THREAD",
   "INVALID_REQUEST",
@@ -512,7 +576,9 @@ const MESSAGES: Record<EchoErrorCode, string> = {
   NOTE_TOO_LONG: `Notes can be up to ${ECHO_RULES.maxChars} characters.`,
   EMPTY_NOTE: "Write something or add a photo.",
   TOO_MANY_MEDIA: MEDIA_LIMIT_MESSAGE,
-  MEDIA_NOT_ALLOWED: "Echo takes photos and GIFs only.",
+  MEDIA_NOT_ALLOWED: "Echo takes photos, GIFs and videos only.",
+  VIDEO_TOO_LONG: "This video is too long for a note.",
+  VIDEO_TOO_LARGE: "Videos can be up to 512 MB.",
   NOTE_NOT_FOUND: ECHO_WORDS.noteNotFound,
   INVALID_THREAD: "A thread needs 2 to 25 notes, each within the limits.",
   INVALID_REQUEST: "Something in this note isn't right. Check it and try again.",

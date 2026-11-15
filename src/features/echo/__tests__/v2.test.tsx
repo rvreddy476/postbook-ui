@@ -27,7 +27,8 @@ mock.module("@/store/auth", () => ({
 const { ToastProvider } = await import("@/contexts/ToastContext")
 const { EchoActionsProvider } = await import("../components/EchoActions")
 const { EchoShell, LeftNav } = await import("../components/EchoShell")
-const { ActionBar, PollView } = await import("../components/NoteCard")
+const { ActionBar, NoteMediaGrid, PollView } = await import("../components/NoteCard")
+const model = await import("../model")
 const { ComposerGateView, CharRing, gifFileFromPick } = await import("../components/Composer")
 const { parseNote, parseNotePage, readFailure, echoErrorMessage } = await import("../model")
 const { createNoteBody, echoPaths, echoV2Paths } = await import("../api")
@@ -361,13 +362,17 @@ describe("the repost and share menus", () => {
     signedIn = null
   })
 
-  test("the action bar: Reply, Echo it, heart, More, and the views", () => {
+  test("the action bar: Reply, Echo it, heart, the eye with views, More, evenly spaced", () => {
     const html = render(<ActionBar note={pollNote} />)
     expect(html).toContain('aria-label="0 Replies. Reply"')
     expect(html).toContain('aria-label="Echo it"')
     expect(html).toContain('aria-label="Unlike"') // the fixture viewer liked it
-    expect(html).toContain('aria-label="7 views. View post analytics"')
+    expect(html).toContain('aria-label="7 views"')
+    expect(html).toContain("lucide-eye")
     expect(html).toContain('aria-label="More"')
+    expect(html).toMatch(/data-echo-pill="reply".*data-echo-pill="echo".*data-echo-pill="heart".*data-echo-pill="views".*data-echo-pill="more"/s)
+    expect(html).toContain("justify-between")
+    expect(html).not.toContain("flex-wrap")
     // The saved state shows inside More.
     expect(render(<ActionBar note={pollNote} initialMenu="more" />)).toContain(">Remove from Saved<")
   })
@@ -452,3 +457,54 @@ describe("routes and paths", () => {
   })
 })
 
+
+describe("video in notes", () => {
+  const { videoProblem, videoClock, videoTooLongNotice, mediaProblem, isVideoFile } = model
+  test("limits follow X: 140 s and 512 MB without Premium, 10 minutes with", () => {
+    expect(videoProblem(140_000, 512 * 1024 * 1024, false)).toBeNull()
+    expect(videoProblem(140_001, 1, false)).toBe("Videos can be up to 2 min 20 s.")
+    expect(videoProblem(1, 512 * 1024 * 1024 + 1, false)).toBe("Videos can be up to 512 MB.")
+    expect(videoProblem(600_000, 4 * 1024 ** 3, true)).toBeNull()
+    expect(videoProblem(600_001, 1, true)).toBe("Videos can be up to 10 minutes.")
+    expect(videoProblem(0, 1, false)).toBeNull() // length unknown: the server decides later
+  })
+
+  test("one video goes on its own; the clock and the author's notice", () => {
+    expect(mediaProblem([{ isGif: false, isVideo: true }])).toBeNull()
+    expect(mediaProblem([{ isGif: false, isVideo: true }, { isGif: false }])).toBe(model.MEDIA_LIMIT_MESSAGE)
+    expect(isVideoFile({ type: "video/mp4" })).toBe(true)
+    expect(videoClock(65_000)).toBe("1:05")
+    expect(videoClock(3_723_000)).toBe("1:02:03")
+    expect(videoTooLongNotice(200_000)).toBe("This video is longer than 2 min 20 s and is only visible to you.")
+    expect(videoTooLongNotice(700_000)).toBe("This video is longer than 10 minutes and is only visible to you.")
+  })
+
+  test("a video note parses its video, processing state and the too-long flag", () => {
+    const n = parseNote({
+      id: "v1", author_id: "a", text: "", created_at: "2026-11-15T10:00:00Z", post_type: "video",
+      is_processing: false, video_too_long: true,
+      media: [{ media_id: "m1", kind: "video", duration_ms: 65000, hls_url: "/v1/media/m1/hls/master.m3u8", position: 0 }],
+    })!
+    expect(n.media).toEqual([{ mediaId: "m1", isGif: false, altText: "", isVideo: true, durationMs: 65000, hlsUrl: "/v1/media/m1/hls/master.m3u8" }])
+    expect(n.videoTooLong).toBe(true)
+    expect(n.isProcessing).toBe(false)
+  })
+
+  test("a card shows the player, its length and the author's notice; processing shows a placeholder", () => {
+    const base = parseNote({ id: "v2", author_id: "a", text: "", created_at: "2026-11-15T10:00:00Z", media: [{ media_id: "m2", kind: "video", duration_ms: 65000 }] })!
+    const html = render(<NoteMediaGrid note={{ ...base, videoTooLong: true }} />)
+    expect(html).toContain('data-echo-video="m2"')
+    expect(html).toContain(">1:05<")
+    expect(html).toContain("only visible to you")
+    const busy = render(<NoteMediaGrid note={{ ...base, isProcessing: true }} />)
+    expect(busy).toContain("Processing video…")
+    expect(busy).not.toContain("<video")
+  })
+
+  test("the note page's pills: an even 3-column grid with the eye, no views in the date line", () => {
+    const html = render(<ActionBar note={pollNote} big />)
+    expect(html).toContain("grid-cols-3")
+    expect(html).toMatch(/data-echo-pill="heart".*data-echo-pill="echo".*data-echo-pill="views".*data-echo-pill="save".*data-echo-pill="reply".*data-echo-pill="more"/s)
+    expect(html).toContain("lucide-eye")
+  })
+})
