@@ -1,12 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Building2, Clock, Landmark, ShieldCheck } from "lucide-react"
+import { ArrowLeft, Building2, Clock, FileText, Landmark, ShieldCheck } from "lucide-react"
 import {
+    CERTIFICATE_ACCEPT,
+    CERTIFICATE_WORDS,
+    NO_CERTIFICATE,
     REGISTRATION_MAX,
-    applicationComplete,
+    canSubmitApplication,
     lastRefused,
+    uploadCertificate,
+    withCertificate,
+    type Certificate,
     markWords,
     officialStep,
     useAcceptGovernmentInvitation,
@@ -22,7 +28,9 @@ import { asServerError } from "../../_lib/saveFeedback"
 /*
  * Settings › Get Verified › Official mark (15 Nov 2026). The server's `next`
  * decides the step: apply → email_code → review → done. Words match the
- * Android screen (:feature:profile OfficialMarkScreen).
+ * Android screen (:feature:profile OfficialMarkScreen). The optional
+ * registration certificate (16 Nov 2026) follows the console contract
+ * section 6; with one, the e-mail code leads to "review".
  */
 
 const INPUT =
@@ -71,8 +79,65 @@ function ErrorLine({ error }: { error: unknown }) {
     )
 }
 
+/** Registration certificate field (contract section 6). The words come from the hook, verbatim. */
+function CertificateField({ cert, onChange }: { cert: Certificate; onChange: (c: Certificate) => void }) {
+    const input = useRef<HTMLInputElement>(null)
+    const uploading = cert.state === "uploading"
+    return (
+        <div className="space-y-1.5" data-official-certificate={cert.state}>
+            <label htmlFor="official-certificate" className="block text-xs font-semibold tracking-wide text-brand-highlight">
+                {CERTIFICATE_WORDS.label}
+            </label>
+            <p className="text-xs text-brand-highlight">{CERTIFICATE_WORDS.help}</p>
+            <input
+                ref={input}
+                id="official-certificate"
+                type="file"
+                accept={CERTIFICATE_ACCEPT}
+                className="sr-only"
+                tabIndex={-1}
+                disabled={uploading}
+                onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    // Clear the picker so choosing the same file again still fires.
+                    e.target.value = ""
+                    if (file) void uploadCertificate(file, onChange)
+                }}
+            />
+            {cert.state === "ready" ? (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-brand-divider px-3 py-2.5">
+                    <span className="flex min-w-0 items-center gap-2 text-sm text-brand-text">
+                        <FileText className="h-4 w-4 shrink-0" aria-hidden />
+                        <span className="truncate" data-official-certificate-name>
+                            {cert.name}
+                        </span>
+                    </span>
+                    <button type="button" className={LINK} onClick={() => onChange(NO_CERTIFICATE)}>
+                        {CERTIFICATE_WORDS.remove}
+                    </button>
+                </div>
+            ) : (
+                <button
+                    type="button"
+                    className="inline-flex items-center justify-center rounded-xl border border-brand-divider px-4 py-2 text-sm font-semibold text-brand-text disabled:opacity-40"
+                    disabled={uploading}
+                    onClick={() => input.current?.click()}
+                >
+                    {uploading ? CERTIFICATE_WORDS.uploading : CERTIFICATE_WORDS.upload}
+                </button>
+            )}
+            {cert.state === "error" && (
+                <p className="text-xs font-medium text-danger" role="alert" data-official-certificate-error>
+                    {cert.message}
+                </p>
+            )}
+        </div>
+    )
+}
+
 function ApplyForm({ refused, onSubmitted }: { refused: boolean; onSubmitted: () => void }) {
     const [a, setA] = useState<OfficialApplication>({ legalName: "", kind: "gstin", number: "", domain: "", email: "" })
+    const [cert, setCert] = useState<Certificate>(NO_CERTIFICATE)
     const submit = useSubmitOfficial()
     const set = (patch: Partial<OfficialApplication>) => setA((prev) => ({ ...prev, ...patch }))
 
@@ -82,7 +147,7 @@ function ApplyForm({ refused, onSubmitted }: { refused: boolean; onSubmitted: ()
             data-official-step="apply"
             onSubmit={(e) => {
                 e.preventDefault()
-                if (applicationComplete(a)) submit.mutate(a, { onSuccess: onSubmitted })
+                if (canSubmitApplication(a, cert)) submit.mutate(withCertificate(a, cert), { onSuccess: onSubmitted })
             }}
         >
             {refused && (
@@ -127,6 +192,7 @@ function ApplyForm({ refused, onSubmitted }: { refused: boolean; onSubmitted: ()
                     />
                 </Field>
             </div>
+            <CertificateField cert={cert} onChange={setCert} />
             <Field
                 id="official-domain"
                 label="Official domain"
@@ -157,7 +223,7 @@ function ApplyForm({ refused, onSubmitted }: { refused: boolean; onSubmitted: ()
                     onChange={(e) => set({ email: e.target.value })}
                 />
             </Field>
-            <button type="submit" className={PRIMARY} disabled={!applicationComplete(a) || submit.isPending}>
+            <button type="submit" className={PRIMARY} disabled={!canSubmitApplication(a, cert) || submit.isPending}>
                 {submit.isPending ? "Sending…" : "Send code"}
             </button>
             <ErrorLine error={submit.error} />

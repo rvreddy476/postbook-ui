@@ -29,8 +29,11 @@ interface ConfirmUploadResponse {
  */
 /**
  * `fileType` is exactly what media-service accepts on /v1/media/init
- * (`oneof=image video audio`). There is no document type: a PDF or a zip has
- * nowhere to go, so callers must not offer one.
+ * (`oneof=image video audio document`). `document` is the private kind
+ * (media-service service/document.go): PDF, JPEG or PNG, at most 10 MB, only
+ * the `general` subtype, never served back to any viewer (the uploader
+ * included). Use it only for evidence a reviewer reads, such as the Official
+ * mark registration certificate.
  *
  * `chat` is the subtype for a message attachment. It matters: a chat asset is
  * served from the protected prefix and message-service reserves it against the
@@ -39,7 +42,7 @@ interface ConfirmUploadResponse {
  */
 export async function uploadMedia(
     file: File,
-    fileType: "image" | "video" | "audio",
+    fileType: "image" | "video" | "audio" | "document",
     mediaSubtype: "general" | "avatar" | "cover" | "gif" | "chat" = "general"
 ): Promise<string> {
     // Step 1: Init upload
