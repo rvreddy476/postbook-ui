@@ -7,6 +7,10 @@ import { creditsApply, creditsCreateFields, creditsDraftFields, creditsErrorProb
 import { actionCreateFields, actionProblemFromError, type ActionWrite } from "@/features/action-button/model";
 import { gateCreateField, gatePatchField, tierGateMessage } from "@/features/memberships/model";
 
+import { createSubtitleTrack } from "@/features/posttube/data/posttubeApi";
+import { captionUploadMessage } from "@/features/posttube/data/captionUpload";
+import type { MediaSubtitleTrack } from "@/features/posttube/types";
+
 import { studioSoundFields } from "./studioSound";
 import { isShortStudio } from "./tokens";
 import type { StudioFormState } from "./types";
@@ -64,7 +68,16 @@ export function studioCreateFields(form: StudioFormState, opts: { longVideo?: bo
   Object.assign(out, actionCreateFields(form.action));
   // Members only from birth (every content type, long_video and flick too): only when a level is chosen.
   Object.assign(out, gateCreateField(form.tierRequiredId));
+  // 18+ from birth (lv-9): always sent, so the post is never created open
+  // and gated a moment later. A server that ignores it is caught by
+  // secureAgeRestriction, which falls back to the PATCH and fails closed.
+  out.age_restricted = studioAgeRestricted(form);
   return out;
+}
+
+/** Whether this upload is to be 18+: the long-video studio's switch (shorts never ask). */
+export function studioAgeRestricted(form: Pick<StudioFormState, "contentType" | "ageRestricted">): boolean {
+  return !isShortStudio(form.contentType) && form.ageRestricted === true;
 }
 
 /**
@@ -156,15 +169,116 @@ export function studioDraftCreditFields(form: StudioFormState, longVideo: boolea
 }
 
 /**
- * Settings the create route does not take, sent as one owner PATCH
- * (/v1/posts/:id) once the post exists — scheduled posts too, since the row
- * is written at create. Today that is only age_restricted, and only from
- * the long-video studio (shorts never ask). null = nothing to send.
+ * The compatibility PATCH for 18+ (/v1/posts/:id), for a server whose create
+ * route ignored age_restricted. Only from the long-video studio (shorts
+ * never ask). null = nothing to send.
  */
 export function postPublishPatch(form: Pick<StudioFormState, "contentType" | "ageRestricted">): HubPostPatch | null {
-  if (isShortStudio(form.contentType)) return null;
-  if (!form.ageRestricted) return null;
-  return { age_restricted: true };
+  return studioAgeRestricted(form) ? { age_restricted: true } : null;
+}
+
+/* ── 18+ after publish: confirm it, or fail closed (lv-9) ── */
+
+export type AgeGateOutcome =
+  /** 18+ was not asked for. */
+  | { state: "not_requested" }
+  /** The gate is on: the create stored it, or the fallback PATCH did. */
+  | { state: "confirmed"; via: "create" | "patch" }
+  /** Not confirmed; the video was already private or was made private. */
+  | { state: "private"; message: string }
+  /** Not confirmed and it could not be made private: the creator must act now. */
+  | { state: "exposed"; message: string };
+
+type PatchPost = (postId: string, patch: HubPostPatch) => Promise<HubPostDetail | null>;
+
+/**
+ * After a publish where the creator chose 18+. `echoed` is the create (or
+ * draft publish) response's age_restricted: true means the server stored it
+ * at create and nothing else is sent. Otherwise the server ignored the field,
+ * so the PATCH is tried (twice); if it still cannot be confirmed, the video
+ * is made private rather than left open without the gate, and the creator
+ * is told plainly. Never throws.
+ */
+export async function secureAgeRestriction(opts: {
+  postId: string;
+  wanted: boolean;
+  echoed: boolean | undefined;
+  visibility: string;
+  patchPost: PatchPost;
+}): Promise<AgeGateOutcome> {
+  if (!opts.wanted) return { state: "not_requested" };
+  if (opts.echoed === true) return { state: "confirmed", via: "create" };
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const detail = await opts.patchPost(opts.postId, { age_restricted: true });
+      // A detail that says false is a server that did not apply it.
+      if (!detail || detail.age_restricted !== false) return { state: "confirmed", via: "patch" };
+      break;
+    } catch {
+      /* try again, then fail closed */
+    }
+  }
+
+  if (opts.visibility === "private") {
+    return {
+      state: "private",
+      message: "The 18+ age restriction could not be saved. Your video is private, so no one else can watch it. Turn on 18+ in Creator Hub before you make it public.",
+    };
+  }
+  try {
+    await opts.patchPost(opts.postId, { visibility: "private" });
+    return {
+      state: "private",
+      message: "The 18+ age restriction could not be saved, so we made your video private to keep it from under-18 viewers. Turn on 18+ in Creator Hub, then make it public again.",
+    };
+  } catch {
+    return {
+      state: "exposed",
+      message: "The 18+ age restriction could not be saved and the video could not be made private. It may be visible without the age gate. Open Creator Hub now and turn on 18+, or make the video private.",
+    };
+  }
+}
+
+/* ── Captions at publish (lv-8) ─────────────────────────── */
+
+export type CaptionUploadOutcome =
+  | { ok: true; track: MediaSubtitleTrack }
+  | { ok: false; message: string };
+
+/** Uploads the studio's caption file; a failure comes back in words, never thrown, and never stops the publish. */
+export async function uploadStudioCaptions(
+  mediaId: string,
+  file: File,
+  language: string,
+  upload: (mediaId: string, params: { language: string; file: File }) => Promise<MediaSubtitleTrack> = createSubtitleTrack,
+): Promise<CaptionUploadOutcome> {
+  try {
+    return { ok: true, track: await upload(mediaId, { language, file }) };
+  } catch (err) {
+    return { ok: false, message: captionUploadMessage(err) };
+  }
+}
+
+/** The form fields a caption outcome sets: the track listed, or the error shown with a retry. */
+export function captionOutcomePatch(
+  outcome: CaptionUploadOutcome,
+  tracks: readonly MediaSubtitleTrack[],
+): Pick<StudioFormState, "subtitleTracks" | "subtitleUploadState" | "subtitleUploadError" | "publishCaptionError"> {
+  if (outcome.ok) {
+    return {
+      subtitleTracks: [...tracks.filter((t) => t.id !== outcome.track.id), outcome.track],
+      subtitleUploadState: "done",
+      subtitleUploadError: null,
+      publishCaptionError: null,
+    };
+  }
+  return {
+    subtitleTracks: [...tracks],
+    subtitleUploadState: "error",
+    subtitleUploadError: outcome.message,
+    publishCaptionError: outcome.message,
+  };
 }
 
 /**

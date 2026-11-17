@@ -15,6 +15,8 @@ export interface Reel {
   viewer_has_saved: boolean;
   duration_seconds?: number;
   audio_track?: AudioTrack;
+  /** The create / draft-publish response's age_restricted, when it carried one (the studio's 18+ check, lv-9). */
+  age_restricted?: boolean;
 }
 
 export interface ReelComment {

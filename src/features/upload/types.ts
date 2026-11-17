@@ -124,6 +124,10 @@ export interface StudioFormState {
   publishedPostId: string | null;
   publishSuccess: boolean;
   publishWarning: string | null;
+  /** The caption track failed at publish (the video still published); the success screen offers a retry. */
+  publishCaptionError: string | null;
+  /** 18+ was chosen but could not be confirmed after publish; what the studio did about it, in words. */
+  ageGateError: string | null;
   followUpFailures: FollowUpFailure[];
   /** The episode the post became, when a series was chosen and the add worked. */
   publishedEpisodeNum: number | null;
@@ -196,6 +200,8 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   publishedPostId: null,
   publishSuccess: false,
   publishWarning: null,
+  publishCaptionError: null,
+  ageGateError: null,
   followUpFailures: [],
   publishedEpisodeNum: null,
   publishedCopyrightReview: null,

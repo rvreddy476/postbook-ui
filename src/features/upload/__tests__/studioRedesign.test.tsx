@@ -112,13 +112,14 @@ describe("the follow-up PATCH after publish", () => {
     expect(postPublishPatch(form("reel", { ageRestricted: true }))).toBeNull();
     expect(postPublishPatch(form("short", { ageRestricted: true }))).toBeNull();
   });
-  test("the studio runs it for scheduled posts too, and a failure is a warning, not a failed publish", () => {
+  // lv-9: the PATCH is now only the fallback for a create that ignored
+  // age_restricted, and a failure fails closed (private + error) instead of
+  // a warning; launchSafety.test.tsx covers that behaviour.
+  test("the studio runs the 18+ check for scheduled posts too, through the fail-closed fallback", () => {
     const hook = src("../useUploadStudio.ts");
     expect(hook).not.toContain("!form.scheduleAt");
     expect(hook).toContain("if (isLongStudio && postId) {");
-    const followUp = hook.slice(hook.indexOf("const followUpPatch = postId ? postPublishPatch(form) : null;"), hook.indexOf("const followUpFailures: FollowUpFailure[] = [];"));
-    expect(followUp).toContain("await updatePost(postId, followUpPatch);");
-    expect(followUp).toContain("warnings.push(");
+    expect(hook).toContain("secureAgeRestriction(");
   });
 });
 

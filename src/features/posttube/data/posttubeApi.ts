@@ -1,6 +1,7 @@
 import api from "@/lib/api";
 import type { PostDetail } from "@/types/profile";
 import type { MediaSubtitleTrack, PostTubeVideo, VideoMetadataDTO, FeedPage } from "../types";
+import { prepareCaptionUpload } from "./captionUpload";
 import {
   buildVideoFeedQuery,
   embeddedAuthor,
@@ -580,13 +581,6 @@ export async function getRenditions(mediaId: string): Promise<MediaRendition[]> 
 
 /* ── Creator tools (used by features/upload) ────────────── */
 
-function convertSrtToVtt(content: string): string {
-  const normalized = content.replace(/\r\n/g, "\n").trim();
-  if (!normalized) return "WEBVTT\n\n";
-  if (normalized.startsWith("WEBVTT")) return `${normalized}\n`;
-  const body = normalized.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, "$1.$2");
-  return `WEBVTT\n\n${body}\n`;
-}
 
 export async function updateVideoTrim(videoId: string, trimStartMs: number, trimEndMs?: number): Promise<void> {
   await api.patch(`/v1/videos/${videoId}/trim`, { trim_start_ms: trimStartMs, trim_end_ms: trimEndMs ?? null });
@@ -612,20 +606,18 @@ export async function getVideoDetail(videoId: string): Promise<VideoMetadataDTO>
   return res.data.data;
 }
 
+/**
+ * `POST /v1/subtitles/:mediaId {language, source, format:"vtt", content}`.
+ * The file is checked first (captionUpload.ts: .srt/.vtt, size, language);
+ * a refusal throws CaptionUploadError and sends nothing. SRT becomes VTT.
+ * Never sends content_url: media-service refuses it (lv-8).
+ */
 export async function createSubtitleTrack(
   mediaId: string,
   params: { language: string; file: File; source?: string },
 ): Promise<MediaSubtitleTrack> {
-  const fileName = params.file.name.toLowerCase();
-  const rawContent = await params.file.text();
-  const vttContent = fileName.endsWith(".srt") ? convertSrtToVtt(rawContent) : rawContent;
-  const contentUrl = `data:text/vtt;charset=utf-8,${encodeURIComponent(vttContent)}`;
-  const res = await api.post<ApiResponse<MediaSubtitleTrack>>(`/v1/subtitles/${mediaId}`, {
-    language: params.language,
-    source: params.source ?? "manual_upload",
-    format: "vtt",
-    content_url: contentUrl,
-  });
+  const body = await prepareCaptionUpload(params.file, params.language, params.source ?? "manual");
+  const res = await api.post<ApiResponse<MediaSubtitleTrack>>(`/v1/subtitles/${mediaId}`, body);
   return res.data.data;
 }
 

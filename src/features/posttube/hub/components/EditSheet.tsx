@@ -10,6 +10,7 @@ import { useAuthUser } from "@/store/auth";
 import { MembersOnlyChoices } from "@/features/memberships/components/MembersOnlyChoices";
 import { invalidateGate, useGateLevels } from "@/features/memberships/hooks";
 import { gateEditField } from "@/features/memberships/model";
+import { captionUploadMessage } from "@/features/posttube/data/captionUpload";
 import {
   HUB_COMMENT_ACCESSES,
   HUB_COMMENT_MODERATIONS,
@@ -858,8 +859,8 @@ function CaptionsTab({ post }: { post: HubPostDetail }) {
     try {
       await upload.mutateAsync({ mediaId, language: language || "en", file });
       toast({ type: "success", title: "Captions uploaded" });
-    } catch {
-      toast({ type: "error", title: "Could not upload that file", description: "Use .srt or .vtt." });
+    } catch (err) {
+      toast({ type: "error", title: "Could not upload that file", description: captionUploadMessage(err) });
     }
   };
 

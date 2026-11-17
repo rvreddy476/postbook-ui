@@ -1175,9 +1175,9 @@ export async function setCaptionPublished(mediaId: string, language: string, pub
   await api.patch(`/v1/subtitles/${mediaId}/${encodeURIComponent(language)}`, { published });
 }
 
-/** `POST /v1/subtitles/:mediaId` through posttubeApi (SRT → VTT, data URL body). */
+/** `POST /v1/subtitles/:mediaId` through posttubeApi (checked, SRT → VTT, sent as `content`). */
 export async function uploadCaption(mediaId: string, language: string, file: File): Promise<MediaSubtitleTrack> {
-  return createSubtitleTrack(mediaId, { language, file, source: "manual_upload" });
+  return createSubtitleTrack(mediaId, { language, file, source: "manual" });
 }
 
 /** `POST /v1/subtitles/:mediaId/auto {language}` — "" lets the backend detect. */

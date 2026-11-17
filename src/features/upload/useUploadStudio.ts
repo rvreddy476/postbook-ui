@@ -30,7 +30,8 @@ import { chapterRowsToWire } from "@/features/posttube/hub/chaptersModel";
 import { type FollowUpFailure, type StudioFormState, INITIAL_FORM_STATE } from "./types";
 import { validateSelectedFile, validateMediaDuration } from "./fileRules";
 import { freshStudioForm, mergePublishDefaults, takesPublishDefaults } from "./studioDefaults";
-import { applySeriesChoice, isFinalPublishRefusal, postPublishPatch, readPublishedCopyrightReview, saveUploadChapters, scheduleIso, studioCreateFields, studioDraftActionField, studioDraftCreditFields, studioDraftGateField, studioTakesCredits } from "./studioApi";
+import { applySeriesChoice, captionOutcomePatch, isFinalPublishRefusal, readPublishedCopyrightReview, saveUploadChapters, scheduleIso, secureAgeRestriction, studioAgeRestricted, studioCreateFields, studioDraftActionField, studioDraftCreditFields, studioDraftGateField, studioTakesCredits, uploadStudioCaptions, type CaptionUploadOutcome } from "./studioApi";
+import { captionUploadMessage } from "@/features/posttube/data/captionUpload";
 import { cachedCover, keepPublishAttempt, newPublishAttempt, type PublishAttempt } from "./publishAttempt";
 import { chosenSoundPatch, soundToAudioTrack, studioDraftSoundFields, studioSoundNotice, studioSoundStatus } from "./studioSound";
 import { useSoundInfo } from "@/features/reels/hooks/useSounds";
@@ -430,7 +431,7 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         subtitleUploadKeyRef.current = null;
         patch({
           subtitleUploadState: "error",
-          subtitleUploadError: error instanceof Error ? error.message : "Subtitle upload failed.",
+          subtitleUploadError: captionUploadMessage(error),
         });
       });
 
@@ -438,6 +439,18 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
       cancelled = true;
     };
   }, [form.language, form.mediaId, form.subtitleUploadState, form.subtitlesFile, patch]);
+
+  /* Retry from the success screen when the caption track failed at publish. */
+  const [retryingCaptions, setRetryingCaptions] = useState(false);
+  const retryCaptions = useCallback(async () => {
+    const mediaId = form.mediaId;
+    const file = form.subtitlesFile;
+    if (!mediaId || !file || retryingCaptions) return;
+    setRetryingCaptions(true);
+    const outcome = await uploadStudioCaptions(mediaId, file, form.language);
+    setForm((prev) => ({ ...prev, ...captionOutcomePatch(outcome, prev.subtitleTracks) }));
+    setRetryingCaptions(false);
+  }, [form.mediaId, form.subtitlesFile, form.language, retryingCaptions]);
 
   const extractCoverPreview = useMutation({
     mutationFn: async (timestampMs: number) => {
@@ -519,6 +532,8 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         ...studioDraftActionField(form),
         // Members only: the level the draft publishes gated on; null keeps it open.
         ...studioDraftGateField(form),
+        // 18+ with the draft, so the publish can gate from birth (lv-9).
+        age_restricted: studioAgeRestricted(form),
       });
   }, [form, patch]);
 
@@ -581,15 +596,14 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         }
       }
 
-      // 3. Upload subtitles, if provided and not already uploaded.
+      // 3. Upload subtitles, if provided and not already uploaded. A failure
+      //    never stops the publish; it is shown on the success screen with a
+      //    retry (lv-8: it used to be swallowed).
+      let captions: CaptionUploadOutcome | null = null;
       if (form.subtitlesFile && form.subtitleTracks.length === 0) {
         const uploadKey = `${mediaId}:${form.subtitlesFile.name}:${form.subtitlesFile.size}:${form.language}`;
         subtitleUploadKeyRef.current = uploadKey; // stop the auto-effect re-uploading
-        try {
-          await createSubtitleTrack(mediaId, { language: form.language, file: form.subtitlesFile });
-        } catch {
-          /* non-fatal — caption track can be added later */
-        }
+        captions = await uploadStudioCaptions(mediaId, form.subtitlesFile, form.language);
       }
 
       // 4. Save to the database. Server-side transcoding runs asynchronously;
@@ -599,7 +613,7 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
           await saveDraftWithCover(coverMediaId);
           const scheduleAt = scheduleIso(form.scheduleAt);
           const reel = await publishDraft(form.draftId, scheduleAt ? { schedule_at: scheduleAt } : undefined);
-          return { reel, coverMediaId };
+          return { reel, coverMediaId, captions };
         } catch (err) {
           // A members-only or copyright refusal (uploads paused) would refuse the direct create too: say it, and post nothing.
           if (isFinalPublishRefusal(err)) throw err;
@@ -620,9 +634,9 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         idempotencyKey: attempt.key,
         fields: studioCreateFields(form, { longVideo: classified === "long_video" }),
       });
-      return { reel, coverMediaId };
+      return { reel, coverMediaId, captions };
     },
-    onSuccess: async ({ reel, coverMediaId }) => {
+    onSuccess: async ({ reel, coverMediaId, captions }) => {
       publishAttemptRef.current = null;
       const postId = reel.reel_id;
       const warnings: string[] = [];
@@ -630,6 +644,24 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
       // Members only rode in with the create (or the draft): nothing to set
       // after it, and no window where the post was open. Its lists refresh.
       if (postId && form.tierRequiredId) invalidateGate(queryClient, postId);
+
+      // 18+ rode in with the create (or the draft). A server that ignored it
+      // gets the PATCH; if that fails too the video is made private rather
+      // than left open without the gate, and the creator is told (lv-9).
+      // First of the follow-ups, so an ungated window is as short as it can be.
+      let ageGateError: string | null = null;
+      if (postId) {
+        const gate = await secureAgeRestriction({
+          postId,
+          wanted: studioAgeRestricted(form),
+          echoed: reel.age_restricted,
+          visibility: form.visibility,
+          patchPost: updatePost,
+        });
+        if (gate.state === "private" || gate.state === "exposed") ageGateError = gate.message;
+      } else if (studioAgeRestricted(form) && reel.age_restricted !== true) {
+        ageGateError = "The 18+ age restriction could not be confirmed. Open the video in Creator Hub now and check that 18+ is on, or make it private.";
+      }
 
       // The post row exists at create, scheduled or not, so the follow-ups
       // run for scheduled videos too (they were skipped before).
@@ -662,17 +694,6 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
         }
       }
 
-      // Settings the create route does not take (age restriction): one owner
-      // PATCH. A failure never fails the publish; it is said on the success screen.
-      const followUpPatch = postId ? postPublishPatch(form) : null;
-      if (postId && followUpPatch) {
-        try {
-          await updatePost(postId, followUpPatch);
-        } catch {
-          warnings.push("The 18+ age restriction could not be saved. Turn it on in Creator Hub.");
-        }
-      }
-
       // Series and chapters: each in its own try/catch, scheduled or not
       // (the post row exists either way). A failure leaves the post
       // published; the studio points at the Creator Hub to finish it.
@@ -701,14 +722,17 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
       const publishedLong = isLongVideo || classifyVideo(form.videoDurationSec, form.videoWidth, form.videoHeight) === "long_video";
       const publishedCopyrightReview = publishedLong && postId && !scheduleIso(form.scheduleAt) ? await readPublishedCopyrightReview(postId) : null;
 
-      patch({
+      setForm((prev) => ({
+        ...prev,
+        ...(captions ? captionOutcomePatch(captions, prev.subtitleTracks) : {}),
         publishedPostId: postId,
         publishedCopyrightReview,
         publishSuccess: true,
         publishWarning: warnings.length > 0 ? warnings.join(" ") : null,
+        ageGateError,
         followUpFailures,
         publishedEpisodeNum,
-      });
+      }));
 
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["feed"] }),
@@ -784,6 +808,8 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
     saveDraftMutation,
     publishMutation,
     retryProcessingCheck,
+    retryCaptions,
+    retryingCaptions,
     goToStep,
     nextStep,
     prevStep,

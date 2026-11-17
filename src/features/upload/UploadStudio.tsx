@@ -22,6 +22,7 @@ import { EnrichStep } from "./steps/EnrichStep";
 import { CreditsStep } from "./steps/CreditsStep";
 import { creditsErrorProblem } from "@/features/posttube/credits/creditsModel";
 import { PublishStep } from "./steps/PublishStep";
+import { PublishProblems } from "./components/PublishProblems";
 import { getStepErrors, canPublish, getAllErrors } from "./validation";
 
 import "./upload.css";
@@ -231,6 +232,13 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
                 {form.publishWarning}
               </p>
             )}
+            <PublishProblems
+              postId={form.publishedPostId}
+              ageGateError={form.ageGateError}
+              captionError={form.publishCaptionError}
+              onRetryCaptions={form.mediaId && form.subtitlesFile ? () => void studio.retryCaptions() : undefined}
+              retryingCaptions={studio.retryingCaptions}
+            />
 
             {/* A held video opens for its author only: no link to share yet. */}
             {postUrl && !outcome.held && (

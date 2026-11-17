@@ -48,6 +48,7 @@ export function postDetailToReel(post: PostDetail): Reel {
     view_count: post.view_count ?? 0,
     viewer_has_boosted: !!post.viewer_reaction,
     viewer_has_saved: !!post.is_bookmarked,
+    ...(typeof post.age_restricted === "boolean" ? { age_restricted: post.age_restricted } : {}),
   };
 }
 
@@ -289,6 +290,8 @@ export async function updateDraft(
     action: { label: string; url: string } | null;
     /* Members only (post-service service/drafts.go:79, migration 071): a level id sets, null clears; the publish gates the post from birth. */
     tier_required_id: string | null;
+    /* 18+ (lv-9): carried so the publish can gate from birth; a server that ignores it is caught after publish. */
+    age_restricted: boolean;
   }>
 ): Promise<ReelDraft> {
   const res = await api.patch<ApiResponse<ReelDraft>>(`/v1/reels/drafts/${draftId}`, params);
