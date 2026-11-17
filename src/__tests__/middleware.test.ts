@@ -90,3 +90,16 @@ describe("middleware: the Action button's redirect page", () => {
     expect(new URL(res.headers.get("location") as string).pathname).toBe("/login");
   });
 });
+
+describe("middleware: a shared collection (lv-31)", () => {
+  test("/posttube/playlists/<uuid> passes signed out; the API decides what a stranger sees", () => {
+    expect(passes(visit("/posttube/playlists/6b1f1a0e-6c4a-4f1e-9f5d-3a2f9c8e7d61"))).toBe(true);
+    expect(passes(visit("/posttube/playlists/6b1f1a0e-6c4a-4f1e-9f5d-3a2f9c8e7d61/"))).toBe(true);
+  });
+
+  test("the collections index and anything deeper stay gated", () => {
+    expect(passes(visit("/posttube/playlists"))).toBe(false);
+    expect(passes(visit("/posttube/playlists/new"))).toBe(false);
+    expect(passes(visit("/posttube/playlists/6b1f1a0e-6c4a-4f1e-9f5d-3a2f9c8e7d61/edit"))).toBe(false);
+  });
+});

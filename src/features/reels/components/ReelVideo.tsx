@@ -13,7 +13,10 @@ import { Heart, Loader2, Play } from "lucide-react";
 import type Hls from "hls.js";
 
 import type { ReelItem } from "@/features/reels/model";
-import { pickHlsLevel, type PlayerPrefs } from "@/features/reels/playback/playerPrefs";
+import { type PlayerPrefs } from "@/features/reels/playback/playerPrefs";
+import { setElementSource } from "@/features/reels/playback/hlsAuth";
+import { absoluteUrl, hlsPreloadCache, levelPlanFor } from "@/features/reels/playback/hlsPreload";
+import { fatalHlsAction, signedHlsConfig, SignedPlaylistRefresher } from "@/features/reels/playback/hlsRefresh";
 import { onSoundError, onSoundPlayRefused, planSoundSync, SOUND_LOAD_TIMEOUT_MS, soundDurationS, type SoundLoad, type SyncReason } from "@/features/reels/playback/soundSync";
 import { soundServeHref } from "@/features/reels/sounds";
 import { useSubtitleTrack } from "@/features/reels/playback/useSubtitleTrack";
@@ -87,12 +90,14 @@ interface ReelVideoProps {
    * through again (false). The screen shows the top speaker as muted meanwhile.
    */
   onForcedMutedChange?: (forcedMuted: boolean) => void;
+  /** Data saver is on: the rung is capped at DATA_SAVER_MAX_HEIGHT, Auto included. */
+  dataSaver?: boolean;
 }
 
 const DOUBLE_TAP_MS = 260;
 
 export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function ReelVideo(
-  { reel, active, position, prefs, onPrefsChange, onEnded, onDoubleTap, onQualityLevels, onProgress, onCaptionsAvailable, onTime, onPlayState, onDimensions, chromeless = false, sourceOverride = null, onForcedMutedChange },
+  { reel, active, position, prefs, onPrefsChange, onEnded, onDoubleTap, onQualityLevels, onProgress, onCaptionsAvailable, onTime, onPlayState, onDimensions, chromeless = false, sourceOverride = null, onForcedMutedChange, dataSaver = false },
   ref,
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -290,6 +295,8 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
   const resumeRef = useRef<{ at: number; paused: boolean } | null>(null);
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
+  const dataSaverRef = useRef(dataSaver);
+  dataSaverRef.current = dataSaver;
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -310,12 +317,33 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
       video.addEventListener("loadedmetadata", onLoaded);
     }
 
-    const useFile = (url = reel.media.fileUrl) => {
+    const useFile = (url = reel.media.fileUrl, keepPlace = false) => {
+      if (cancelled) return;
+      // A fallback mid-reel continues where the viewer was, never at 0:00 (lv-27).
+      const at = keepPlace ? video.currentTime : 0;
+      const wasPaused = video.paused;
+      hlsRef.current?.destroy();
+      hlsRef.current = null;
+      if (at > 0) {
+        const onLoaded = () => {
+          video.removeEventListener("loadedmetadata", onLoaded);
+          if (cancelled) return;
+          video.currentTime = at;
+          if (!wasPaused) void video.play().catch(() => undefined);
+        };
+        video.addEventListener("loadedmetadata", onLoaded);
+      }
+      setElementSource(video, url);
+    };
+    // The viewer lost access (a refreshed playlist said 401/403/404): the
+    // "can't be played" state. No progressive fallback on an auth failure.
+    const unavailable = () => {
       if (cancelled) return;
       hlsRef.current?.destroy();
       hlsRef.current = null;
-      video.src = url;
-      video.load();
+      video.pause();
+      setFailed(true);
+      setBuffering(false);
     };
 
     const attach = async () => {
@@ -337,37 +365,49 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
       if (cancelled) return;
       if (!HlsCtor.isSupported()) {
         if (video.canPlayType("application/vnd.apple.mpegurl")) {
-          video.src = hlsUrl;
-          video.load();
+          setElementSource(video, hlsUrl);
           onQualityLevels?.([]);
           return;
         }
         useFile();
         return;
       }
-      const hls = new HlsCtor({
-        maxBufferLength: active ? 20 : 6,
-        capLevelToPlayerSize: false,
-        xhrSetup: (xhr) => {
-          xhr.withCredentials = true;
-        },
-      });
+      // Signed segment URLs expire within minutes: the loaders refresh the
+      // child playlist before they do, or on a 403 (hlsRefresh.ts), and answer
+      // a preloaded start from the cache (hlsPreload.ts).
+      const refresher = new SignedPlaylistRefresher({ onRevoked: unavailable });
+      const preloadedRung = hlsPreloadCache.rungFor(hlsUrl);
+      const hls = new HlsCtor(signedHlsConfig(HlsCtor, refresher, { maxBufferLength: active ? 20 : 6, capLevelToPlayerSize: false }));
+      video.crossOrigin = "anonymous";
       hlsRef.current = hls;
       hls.on(HlsCtor.Events.MANIFEST_PARSED, () => {
         const heights = hls.levels.map((l) => l.height);
         levelHeightsRef.current = heights;
         onQualityLevels?.(heights);
-        hls.nextLevel = pickHlsLevel(prefs.quality, heights);
+        const plan = levelPlanFor(prefsRef.current.quality, heights, dataSaverRef.current);
+        hls.autoLevelCapping = plan.autoCap;
+        if (plan.level >= 0) {
+          hls.nextLevel = plan.level;
+          return;
+        }
+        // Auto: start on the rung the stage preloaded, when there is one under the cap.
+        const start = preloadedRung ? hls.levels.findIndex((l) => absoluteUrl(l.url?.[0] ?? "") === preloadedRung) : -1;
+        if (start >= 0 && (plan.autoCap < 0 || heights[start] <= heights[plan.autoCap])) hls.startLevel = start;
       });
       hls.on(HlsCtor.Events.ERROR, (_e, data) => {
         if (!data.fatal) return;
-        if (data.type === HlsCtor.ErrorTypes.MEDIA_ERROR) {
+        const action = fatalHlsAction({ type: data.type, details: data.details, response: data.response }, refresher.revoked);
+        if (action === "recover-media") {
           hls.recoverMediaError();
           return;
         }
+        if (action === "unavailable") {
+          unavailable();
+          return;
+        }
         // Manifest missing (still transcoding) or a network failure:
-        // fall back to the progressive file rather than showing an error.
-        useFile();
+        // the progressive file, from where the viewer was.
+        useFile(reel.media.fileUrl, true);
       });
       hls.loadSource(hlsUrl);
       hls.attachMedia(video);
@@ -406,8 +446,10 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
   useEffect(() => {
     const hls = hlsRef.current;
     if (!hls || levelHeightsRef.current.length === 0) return;
-    hls.nextLevel = pickHlsLevel(prefs.quality, levelHeightsRef.current);
-  }, [prefs.quality]);
+    const plan = levelPlanFor(prefs.quality, levelHeightsRef.current, dataSaver);
+    hls.autoLevelCapping = plan.autoCap;
+    hls.nextLevel = plan.level;
+  }, [prefs.quality, dataSaver]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -643,7 +685,7 @@ export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function Re
         ref={videoRef}
         playsInline
         preload={active ? "auto" : "metadata"}
-        crossOrigin="use-credentials"
+        crossOrigin="anonymous"
         controlsList="nodownload"
         onContextMenu={(e) => e.preventDefault()}
         poster={undefined}

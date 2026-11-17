@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, Globe, Heart, Link2, ListVideo, Lock, LogIn, Pencil, Play, RefreshCw, Trash2 } from "lucide-react";
+import { Check, Clock, Globe, Heart, Link2, ListVideo, Lock, LogIn, Pencil, Play, RefreshCw, Share2, Trash2 } from "lucide-react";
 import { useState, type DragEvent, type FormEvent } from "react";
 
 import { ReelConfirmDialog } from "@/features/reels/components/ReelConfirmDialog";
 
-import { playAllHref, type Collection, type CollectionItem, type CollectionPatch, type CollectionVisibility, type SystemCollectionKind } from "../libraryApi";
+import { canShareCollection, collectionShareUrl, playAllHref, shareCollectionLink, type Collection, type CollectionItem, type CollectionPatch, type CollectionVisibility, type SystemCollectionKind } from "../libraryApi";
 import type { CollectionStatus } from "../hooks/useCollection";
 import { CollectionRow } from "./CollectionRow";
 
@@ -82,6 +82,18 @@ export function CollectionView(props: CollectionViewProps) {
 
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropAt, setDropAt] = useState<{ index: number; after: boolean } | null>(null);
+
+  // Share (lv-31): the system sheet, or the link on the clipboard with a short "Link copied".
+  const [shareNote, setShareNote] = useState<string | null>(null);
+  const shareable = canShareCollection(collection);
+  const share = async () => {
+    if (!collection) return;
+    const outcome = await shareCollectionLink(collectionShareUrl(window.location.origin, collection), collection.title);
+    if (outcome === "copied") setShareNote("Link copied");
+    else if (outcome === "failed") setShareNote("Could not copy the link");
+    else return;
+    window.setTimeout(() => setShareNote(null), 2000);
+  };
 
   const startEdit = () => {
     if (!collection) return;
@@ -279,6 +291,16 @@ export function CollectionView(props: CollectionViewProps) {
                 <Link href={play} className="tube-library__play">
                   <Play className="fill-current" /> Play all
                 </Link>
+              ) : null}
+              {shareable ? (
+                <button type="button" className="tube-library__icon-button" aria-label="Share collection" title={shareNote ?? "Share collection"} onClick={() => void share()}>
+                  {shareNote === "Link copied" ? <Check /> : <Share2 />}
+                </button>
+              ) : null}
+              {shareNote ? (
+                <span role="status" className="tube-library__meta">
+                  {shareNote}
+                </span>
               ) : null}
               {canEdit && !isSystem ? (
                 <>

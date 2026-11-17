@@ -408,15 +408,26 @@ export async function getWatchProgress(videoId: string): Promise<WatchProgress |
   }
 }
 
-export async function saveVideoWatchProgress(
-  videoId: string,
-  params: { positionMs: number; durationMs: number; completed?: boolean },
-): Promise<void> {
-  await api.post(`/v1/videos/${videoId}/progress`, {
+/**
+  The POST /v1/videos/:id/progress body. `sent_at_ms` is when the player
+  took the reading (Unix ms; now unless the caller says otherwise): the
+  server drops a report older than the one it holds, so a late heartbeat or
+  a slow retry cannot move the resume point back (lv-53, was LV-C-3).
+*/
+export function watchProgressBody(params: { positionMs: number; durationMs: number; completed?: boolean; sentAtMs?: number }, now = Date.now()) {
+  return {
     position_ms: Math.max(0, Math.round(params.positionMs)),
     duration_ms: Math.max(0, Math.round(params.durationMs)),
     ...(typeof params.completed === "boolean" ? { completed: params.completed } : {}),
-  });
+    sent_at_ms: Math.round(params.sentAtMs ?? now),
+  };
+}
+
+export async function saveVideoWatchProgress(
+  videoId: string,
+  params: { positionMs: number; durationMs: number; completed?: boolean; sentAtMs?: number },
+): Promise<void> {
+  await api.post(`/v1/videos/${videoId}/progress`, watchProgressBody(params));
 }
 
 export async function deleteVideoWatchProgress(videoId: string): Promise<void> {

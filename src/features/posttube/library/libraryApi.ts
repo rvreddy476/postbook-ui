@@ -218,3 +218,44 @@ export function playAllHref(collection: Pick<Collection, "id">, items: Collectio
   if (!first) return null;
   return `/posttube/watch/${encodeURIComponent(first.postId)}?list=${encodeURIComponent(collection.id)}`;
 }
+
+/**
+  Whether a collection can be shared (lv-31): a user collection that is
+  public or unlisted. Private lists and the system lists (Watch later,
+  Liked) answer only their owner, so a link would open on nothing.
+*/
+export function canShareCollection(collection: Pick<Collection, "kind" | "visibility"> | null | undefined): boolean {
+  return !!collection && collection.kind === "user" && (collection.visibility === "public" || collection.visibility === "unlisted");
+}
+
+/** The link a shared collection opens: its own page, which opens signed out (middleware PLAYLIST_PAGE_RE). */
+export function collectionShareUrl(origin: string, collection: Pick<Collection, "id">): string {
+  return `${origin.replace(/\/$/, "")}/posttube/playlists/${encodeURIComponent(collection.id)}`;
+}
+
+export type ShareOutcome = "shared" | "copied" | "failed" | "cancelled";
+
+interface ShareNavigator {
+  share?: (data: { title?: string; url?: string }) => Promise<void>;
+  clipboard?: { writeText: (text: string) => Promise<void> };
+}
+
+/** The system share sheet where there is one, else the clipboard. */
+export async function shareCollectionLink(url: string, title: string, nav: ShareNavigator | undefined = typeof navigator !== "undefined" ? (navigator as ShareNavigator) : undefined): Promise<ShareOutcome> {
+  if (nav?.share) {
+    try {
+      await nav.share({ title, url });
+      return "shared";
+    } catch (err) {
+      if ((err as { name?: string })?.name === "AbortError") return "cancelled";
+      /* fall through to the clipboard */
+    }
+  }
+  if (!nav?.clipboard) return "failed";
+  try {
+    await nav.clipboard.writeText(url);
+    return "copied";
+  } catch {
+    return "failed";
+  }
+}

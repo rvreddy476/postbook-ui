@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, ChevronDown, EyeOff, Globe, Link2 } from "lucide-react";
+import { CalendarClock, ChevronDown, EyeOff, Globe, Link2, Users } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 import { HUB_FLAGS, HUB_VISIBILITIES, type HubFlag, type HubVisibility } from "../hubApi";
@@ -27,6 +27,7 @@ export function VisibilityIcon({ visibility }: { visibility: HubVisibility }) {
   if (visibility === "public") return <Globe aria-hidden="true" />;
   if (visibility === "unlisted") return <Link2 aria-hidden="true" />;
   if (visibility === "scheduled") return <CalendarClock aria-hidden="true" />;
+  if (visibility === "followers" || visibility === "friends") return <Users aria-hidden="true" />;
   return <EyeOff aria-hidden="true" />;
 }
 

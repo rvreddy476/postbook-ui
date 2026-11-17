@@ -74,7 +74,9 @@ describe("library rows", () => {
   test("a scheduled_at with no visibility reads as scheduled and carries the flag", () => {
     expect(normalizeVisibility("", "2026-10-01T00:00:00Z")).toBe("scheduled");
     expect(normalizeVisibility("PUBLIC")).toBe("public");
-    expect(normalizeVisibility("weird")).toBe("public");
+    // An audience the hub does not know is never shown as Public (lv extra scope: followers shown as public).
+    expect(normalizeVisibility("weird")).toBe("private");
+    expect(normalizeVisibility(undefined)).toBe("public");
     expect(normalizeFlags(null, { scheduledAt: "2026-10-01T00:00:00Z", madeForKids: true, processingStatus: "failed" })).toEqual(["processing_failed", "made_for_kids", "scheduled"]);
   });
 

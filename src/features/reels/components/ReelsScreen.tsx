@@ -50,6 +50,8 @@ import {
 import { DESKTOP_QUERY, useMediaQuery } from "@/features/reels/hooks/useMediaQuery";
 import { useReelSubscription } from "@/features/reels/hooks/useReelSubscription";
 import { usePlayerPrefs } from "@/features/reels/hooks/usePlayerPrefs";
+import { useNextReelPreload } from "@/features/reels/playback/useReelPreload";
+import { useDataSaver } from "@/hooks/useDataSaver";
 import { CLEAR_SCREEN_HINT_MS, CLEAR_SCREEN_INITIAL, clearScreenReducer } from "@/features/reels/clearScreen";
 import { reelPermalink, type ReelItem } from "@/features/reels/model";
 import { withShareRef } from "@/features/share/shareRef";
@@ -174,6 +176,9 @@ export function ReelsScreen() {
   }, [feed.data, pinned.data]);
 
   const active = reels[index];
+  // Data saver caps the reel's rung and turns off preloading the next one.
+  const { effective: dataSaver } = useDataSaver();
+  useNextReelPreload(reels[index + 1], prefs.quality, dataSaver);
   const showComments = theater || (commentsOpen && Boolean(active) && !active.commentsDisabled);
   useReelLive(active?.id, showComments);
   const isOwn = Boolean(active && viewerId && active.authorId === viewerId);
@@ -823,6 +828,7 @@ export function ReelsScreen() {
                           prefs={prefs}
                           onPrefsChange={updatePrefs}
                           onForcedMutedChange={setForcedMuted}
+                          dataSaver={dataSaver}
                           onEnded={onEnded}
                           onDoubleTap={onDoubleTapLike}
                           onQualityLevels={setQualityHeights}

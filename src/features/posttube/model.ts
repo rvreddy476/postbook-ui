@@ -35,10 +35,14 @@ export interface WatchProgress {
   post: HydratedPostRow | null;
 }
 
-/** A row counts as finished at 90% — the same bar the server applies. */
+/**
+  A row counts as finished at 90%: the bar post-service applies
+  (watchProgressState: percent >= 90, video_series_handler.go). One number
+  on the web: a finished row leaves Continue watching and plays from the top.
+*/
 export const COMPLETED_PERCENT = 90;
-/** Resume is skipped from 95% on: the viewer effectively finished it. */
-export const RESUME_CUTOFF_PERCENT = 95;
+/** Resume is skipped once the row is finished; the same 90%, never a second bar (lv-46). */
+export const RESUME_CUTOFF_PERCENT = COMPLETED_PERCENT;
 export const PROGRESS_SAVE_INTERVAL_MS = 10_000;
 
 export function progressPercent(positionMs: number, durationMs: number): number {

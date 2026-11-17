@@ -158,6 +158,16 @@ const normalise = (pathname: string) =>
 const REEL_PERMALINK_RE = /^\/reels\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i
 
 /**
+ * One collection, /posttube/playlists/<uuid>, and nothing else under it
+ * (lv-31): a shared playlist link must open signed out. post-service answers
+ * GET /v1/playlists/:id and /items to anyone for a public or unlisted
+ * playlist and only to its creator for a private one (playlistReadableBy),
+ * so a stranger sees exactly what the API gives them. The index
+ * (/posttube/playlists, the viewer's own) stays gated.
+ */
+const PLAYLIST_PAGE_RE = /^\/posttube\/playlists\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i
+
+/**
  * One Echo post, /echo/<handle>/status/<id> (Echo v2, X's permalink), and
  * nothing else under it: like /echo/note/ it opens signed out for a public
  * note (founder default 11). Its /quotes page, profiles and the timelines
@@ -168,6 +178,7 @@ const ECHO_STATUS_RE = /^\/echo\/[A-Za-z0-9_.]{1,30}\/status\/[0-9A-Za-z-]{1,64}
 const isPublicPath = (pathname: string) => {
     if (PUBLIC_EXACT.has(pathname)) return true
     if (REEL_PERMALINK_RE.test(pathname)) return true
+    if (PLAYLIST_PAGE_RE.test(pathname)) return true
     if (ECHO_STATUS_RE.test(pathname)) return true
     // Prefixes are written with their trailing slash so "/u/" cannot also
     // match a future "/users". Test the un-normalised path too, so a bare

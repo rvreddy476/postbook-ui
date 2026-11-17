@@ -110,7 +110,13 @@ export const HUB_COMMENT_SORTS: readonly HubCommentSort[] = ["top", "newest"];
 
 /* ── Library rows ───────────────────────────────────────── */
 
-export type HubVisibility = "public" | "unlisted" | "private" | "scheduled";
+/**
+  A row's audience as the server holds it. "followers" and "friends" are set
+  at upload (StudioSettings) and shown as they are; the hub's own pickers
+  still offer HUB_VISIBILITIES only.
+*/
+export type HubVisibility = "public" | "unlisted" | "private" | "scheduled" | "followers" | "friends";
+/** What the hub's visibility pickers offer. */
 export const HUB_VISIBILITIES: readonly HubVisibility[] = ["public", "unlisted", "private", "scheduled"];
 
 export type HubFlag = "processing_failed" | "review_hold" | "made_for_kids" | "scheduled";
@@ -156,9 +162,13 @@ export interface HubLibraryRow {
 
 export function normalizeVisibility(raw: unknown, scheduledAt?: string | null): HubVisibility {
   const v = str(raw).toLowerCase();
-  if (v === "public" || v === "unlisted" || v === "private" || v === "scheduled") return v;
+  if (v === "public" || v === "unlisted" || v === "private" || v === "scheduled" || v === "followers" || v === "friends") return v;
+  // Narrower circles the server also knows: never shown as "Public".
+  if (v === "close_friends" || v === "trusted") return "friends";
   if (scheduledAt) return "scheduled";
-  return "public";
+  // Missing on an old row: public. Any other value is an audience we do not
+  // know, and the safe label for it is the narrow one.
+  return v ? "private" : "public";
 }
 
 const LEGACY_NOTICES: Record<string, HubFlag> = {

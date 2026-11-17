@@ -39,6 +39,8 @@ import {
 } from "@/features/reels/components/ChoiceMenu";
 import { Popover } from "@/features/reels/components/Popover";
 import { pickHlsLevel, SPEEDS } from "@/features/reels/playback/playerPrefs";
+import { setElementSource } from "@/features/reels/playback/hlsAuth";
+import { fatalHlsAction, signedHlsConfig, SignedPlaylistRefresher } from "@/features/reels/playback/hlsRefresh";
 import { fitFrame, type FrameBox } from "../endScreenGeometry";
 import { formatClockMs, type TubePlayerPrefs } from "../model";
 import { playerKeyAction, playerKeyPreventsDefault, SEEK_LARGE_S } from "../playerKeys";
@@ -316,8 +318,10 @@ export function TubePlayer({
     setFailed(false);
     setBuffering(true);
 
-    const useFile = (url = fileUrl) => {
+    const useFile = (url = fileUrl, keepPlace = false) => {
       if (cancelled) return;
+      // A fallback mid-video continues where the viewer was, never at 0:00 (lv-27).
+      if (keepPlace && seekAppliedRef.current && video.currentTime > 0) carryRef.current = { at: video.currentTime, paused: video.paused };
       hlsRef.current?.destroy();
       hlsRef.current = null;
       levelHeightsRef.current = [];
@@ -327,8 +331,17 @@ export function TubePlayer({
         setBuffering(false);
         return;
       }
-      video.src = url;
-      video.load();
+      setElementSource(video, url);
+    };
+    // The viewer lost access (a refreshed playlist said 401/403/404): stop on the
+    // "can't be played" state. No progressive fallback on an auth failure.
+    const unavailable = () => {
+      if (cancelled) return;
+      hlsRef.current?.destroy();
+      hlsRef.current = null;
+      video.pause();
+      setFailed(true);
+      setBuffering(false);
     };
 
     const attach = async () => {
@@ -348,20 +361,17 @@ export function TubePlayer({
       if (cancelled) return;
       if (!HlsCtor.isSupported()) {
         if (video.canPlayType("application/vnd.apple.mpegurl")) {
-          video.src = hlsUrl;
-          video.load();
+          setElementSource(video, hlsUrl);
           return;
         }
         useFile();
         return;
       }
-      const hls = new HlsCtor({
-        maxBufferLength: 30,
-        capLevelToPlayerSize: false,
-        xhrSetup: (xhr) => {
-          xhr.withCredentials = true;
-        },
-      });
+      // Segment URLs expire within minutes: the loaders refresh the child
+      // playlist before they do, or on a 403, and keep the position (hlsRefresh.ts).
+      const refresher = new SignedPlaylistRefresher({ onRevoked: unavailable });
+      const hls = new HlsCtor(signedHlsConfig(HlsCtor, refresher, { maxBufferLength: 30, capLevelToPlayerSize: false }));
+      video.crossOrigin = "anonymous";
       hlsRef.current = hls;
       hls.on(HlsCtor.Events.MANIFEST_PARSED, () => {
         const heights = hls.levels.map((l) => l.height);
@@ -371,13 +381,18 @@ export function TubePlayer({
       });
       hls.on(HlsCtor.Events.ERROR, (_e, data) => {
         if (!data.fatal) return;
-        if (data.type === HlsCtor.ErrorTypes.MEDIA_ERROR) {
+        const action = fatalHlsAction({ type: data.type, details: data.details, response: data.response }, refresher.revoked);
+        if (action === "recover-media") {
           hls.recoverMediaError();
           return;
         }
-        // Manifest missing (still transcoding) or a network failure:
-        // fall back to the progressive file rather than showing an error.
-        useFile();
+        if (action === "unavailable") {
+          unavailable();
+          return;
+        }
+        // Manifest missing (still transcoding) or a network failure: the
+        // progressive file, from where the viewer was.
+        useFile(fileUrl, true);
       });
       hls.loadSource(hlsUrl);
       hls.attachMedia(video);
@@ -796,7 +811,7 @@ export function TubePlayer({
           playsInline
           autoPlay={autoPlay && tapped}
           preload={tapped ? "auto" : "none"}
-          crossOrigin="use-credentials"
+          crossOrigin="anonymous"
           controlsList="nodownload"
           onContextMenu={(e) => e.preventDefault()}
           onClick={togglePlay}

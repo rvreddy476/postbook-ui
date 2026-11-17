@@ -524,7 +524,7 @@ export interface VisibilityPanelProps {
   onSave: () => void;
 }
 
-const VIS_HINT: Record<Exclude<HubVisibility, "scheduled">, string> = {
+const VIS_HINT: Record<"private" | "unlisted" | "public", string> = {
   private: "Only you, and people you share it with.",
   unlisted: "Anyone with the link can watch.",
   public: "Everyone can watch and find it.",

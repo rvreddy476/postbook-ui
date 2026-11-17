@@ -9,7 +9,8 @@
   side effect and is best-effort.
 */
 
-import api from "@/lib/api";
+import api, { getCurrentUserId } from "@/lib/api";
+import { peekAccessToken } from "@/lib/accessToken";
 
 export const SURFACE = "reels";
 export const HEARTBEAT_MS = 5000;
@@ -115,8 +116,40 @@ export async function sendEvents(events: AnalyticsEvent[]): Promise<void> {
   }
 }
 
-/** On unload the request must outlive the page; sendBeacon does, axios does not. */
-export function sendEventsOnUnload(events: AnalyticsEvent[]): void {
+export interface KeepaliveDeps {
+  fetch?: typeof fetch;
+  token?: () => string | null;
+  userId?: () => string | null;
+  apiBase?: string;
+}
+
+/**
+  play_end must outlive the page (tab closed, navigation, tab hidden and
+  then discarded). sendBeacon cannot carry the Authorization header the
+  ingest route needs, so this is `fetch(..., { keepalive: true })` with the
+  same headers the API client would add (as webPush/signOut.ts does). With
+  no token in memory it falls back to the API client, which refreshes one.
+*/
+export function sendEventsOnUnload(events: AnalyticsEvent[], deps: KeepaliveDeps = {}): void {
   if (events.length === 0) return;
-  void sendEvents(events);
+  const doFetch = deps.fetch ?? (typeof fetch !== "undefined" ? fetch : undefined);
+  const token = (deps.token ?? peekAccessToken)();
+  if (!doFetch || !token) {
+    void sendEvents(events);
+    return;
+  }
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+    "Idempotency-Key": eventId(),
+  };
+  const userId = (deps.userId ?? getCurrentUserId)();
+  if (userId) headers["X-User-Id"] = userId;
+  const base = deps.apiBase ?? (process.env.NEXT_PUBLIC_API_BASE_URL || "");
+  try {
+    void doFetch(`${base}/v1/analytics/events`, { method: "POST", keepalive: true, headers, body: JSON.stringify({ events }) }).catch(() => undefined);
+  } catch {
+    /* best-effort */
+  }
 }

@@ -1,4 +1,5 @@
 import { mediaHref } from "@/features/reels/model";
+import { hlsXhrSetup } from "@/features/reels/playback/hlsAuth";
 
 /*
   A frame of the video as its cover (Creator Hub, 2026-09-29).
@@ -156,9 +157,8 @@ export function captureFrame(source: FrameSource, seconds: number, timeoutMs = C
           maxBufferLength: 4,
           maxMaxBufferLength: 8,
           capLevelToPlayerSize: false,
-          xhrSetup: (xhr) => {
-            xhr.withCredentials = true;
-          },
+          // The cookie to the API's playlist routes only; signed CDN segments go without (reels-2).
+          xhrSetup: hlsXhrSetup,
         });
         release = () => hls.destroy();
         hls.on(HlsCtor.Events.MANIFEST_PARSED, () => {

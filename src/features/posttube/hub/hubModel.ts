@@ -300,6 +300,8 @@ export const VISIBILITY_LABEL: Record<HubVisibility, string> = {
   unlisted: "Unlisted",
   private: "Private",
   scheduled: "Scheduled",
+  followers: "Followers",
+  friends: "Friends",
 };
 
 export const FLAG_LABEL: Record<HubFlag, string> = {
