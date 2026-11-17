@@ -1,4 +1,4 @@
-import { SHORTS_MAX_DURATION_LABEL, SHORTS_MAX_DURATION_SECONDS } from "@/lib/videoLimits";
+import { LONG_VIDEO_MAX_DURATION_LABEL, SHORTS_MAX_DURATION_LABEL, SHORTS_MAX_DURATION_SECONDS } from "@/lib/videoLimits";
 import { isShortStudio, type ContentType } from "./tokens";
 
 /** datetime-local is a local wall clock, not an ISO UTC string with its zone cut off. */
@@ -9,19 +9,30 @@ export function tomorrowLocalInput(now = new Date()): string {
 }
 
 /*
-  No size limit and no length limit, in any studio (founder, 2026-10-21).
-  The old 500 MB clamp is gone: files of 20 MB and more go up through the
-  resumable multipart path (reelsApi.uploadMediaResumable), which takes any
-  size the server accepts. In the Shorts studio, a file over the boundary is
-  not refused — it is classified long_video and posted as a long video.
+  No size limit in any studio (founder, 2026-10-21): files of 20 MB and more
+  go up through the resumable multipart path (reelsApi.uploadMediaResumable),
+  which takes any size the server accepts. In the Shorts studio, a file over
+  the boundary is not refused — it is classified long_video and posted as a
+  long video.
+
+  Length: media-service refuses a video over MEDIA_MAX_VIDEO_DURATION_SEC
+  (default 4 hours) with 413 VIDEO_TOO_LONG, at init from the duration_ms the
+  studio sends, so the label no longer says "Any length" (lv-30). The
+  server's message, with its own number, is what a refused creator sees.
 */
 
 /** The two lines under the drop zone: how big, how long. Honest, so no number that is not enforced. */
 export function uploadLimitLabels(type: ContentType): { size: string; duration: string } {
   return {
     size: "Any file size",
-    duration: isShortStudio(type) ? `Up to ${SHORTS_MAX_DURATION_LABEL} as a Short` : "Any length",
+    duration: isShortStudio(type) ? `Up to ${SHORTS_MAX_DURATION_LABEL} as a Short` : `Up to ${LONG_VIDEO_MAX_DURATION_LABEL}`,
   };
+}
+
+/** 734.2 MB, 2.4 GB — a multi-GB long video reads in GB. */
+export function fileSizeLabel(bytes: number): string {
+  const mb = bytes / (1024 * 1024);
+  return mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb.toFixed(1)} MB`;
 }
 
 export function validateSelectedFile(file: Pick<File, "type" | "size">, type: ContentType): string | null {
@@ -31,7 +42,7 @@ export function validateSelectedFile(file: Pick<File, "type" | "size">, type: Co
   return null;
 }
 
-/** Only a duration that cannot be read is refused; there is no upper limit. */
+/** Only a duration that cannot be read is refused here; the upper limit is the server's (VIDEO_TOO_LONG at init). */
 export function validateMediaDuration(seconds: number): string | null {
   if (!Number.isFinite(seconds) || seconds <= 0) return "We couldn't read this file's duration. Try another file or export it again.";
   return null;

@@ -34,13 +34,31 @@ export class CaptionUploadError extends Error {
 }
 
 const LANGUAGE_TAG = /^[A-Za-z-]{1,10}$/;
-const SRT_TIMING = /\d{1,2}:\d{2}:\d{2},\d{3}\s*-->/;
+/** An SRT cue timing as files really carry it: hours optional and 1-2 digits, "," or "." before 1-3 ms digits. */
+const SRT_TIMESTAMP = /(?:(\d{1,2}):)?(\d{1,2}):(\d{2})[,.](\d{1,3})/;
+const SRT_TIMING = new RegExp(`${SRT_TIMESTAMP.source}\\s*-->`);
+
+const pad = (value: string, width: number) => value.padStart(width, "0");
+
+/** One SRT timestamp as WebVTT's hh:mm:ss.mmm (REG-8: the server refuses "0:00:01,000"). */
+export function normalizeCaptionTimestamp(stamp: string): string {
+  const m = new RegExp(`^${SRT_TIMESTAMP.source}$`).exec(stamp.trim());
+  if (!m) return stamp;
+  const [, hours = "0", minutes, seconds, fraction] = m;
+  // The digits after the separator are a fraction of a second: ",5" is 500 ms.
+  return `${pad(hours, 2)}:${pad(minutes, 2)}:${seconds}.${fraction.padEnd(3, "0")}`;
+}
 
 export function convertSrtToVtt(content: string): string {
   const normalized = content.replace(/\r\n/g, "\n").trim();
   if (!normalized) return "WEBVTT\n\n";
   if (normalized.startsWith("WEBVTT")) return `${normalized}\n`;
-  const body = normalized.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, "$1.$2");
+  // Only timing lines change: a cue's text may itself hold something that looks like a time.
+  const stamp = new RegExp(SRT_TIMESTAMP.source, "g");
+  const body = normalized
+    .split("\n")
+    .map((line) => (line.includes("-->") ? line.replace(stamp, (match) => normalizeCaptionTimestamp(match)) : line))
+    .join("\n");
   return `WEBVTT\n\n${body}\n`;
 }
 

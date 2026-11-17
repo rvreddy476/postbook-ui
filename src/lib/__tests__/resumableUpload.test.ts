@@ -43,6 +43,7 @@ function transport(plan: ResumablePlan, failures: Record<number, unknown[]> = {}
             sent.push({ part, size: chunk.size })
         },
         async complete() { calls.complete++ },
+        async status() { throw new Error("status is not expected on a fresh upload") },
     }
     return { t, sent, calls }
 }

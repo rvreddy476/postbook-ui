@@ -28,6 +28,8 @@ export interface StudioFormState {
   videoFile: File | null;
   videoPreviewUrl: string | null;
   videoDurationSec: number | null;
+  /** The exact length the browser read (ms, rounded up), sent at upload init as duration_ms; null when unknown. */
+  videoDurationMs: number | null;
   videoWidth: number | null;
   videoHeight: number | null;
 
@@ -145,6 +147,7 @@ export const INITIAL_FORM_STATE: StudioFormState = {
   videoFile: null,
   videoPreviewUrl: null,
   videoDurationSec: null,
+  videoDurationMs: null,
   videoWidth: null,
   videoHeight: null,
   mediaId: null,

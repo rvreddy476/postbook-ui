@@ -6,6 +6,7 @@ import { createAuthStrategy } from '@/services/auth/strategyFactory';
 import { noteOfflineSignOut } from '@/features/offline/signOut';
 import { noteWebPushSignOut } from '@/features/webPush/signOut';
 import { forgetHiddenChats } from '@/lib/chat/hiddenChats/tokenStore';
+import { forgetUploadResume } from '@/lib/resumableUpload';
 import { HttpClientError } from '@/services/core/httpClient';
 import { TERMS_VERSION } from '@/lib/legal';
 
@@ -288,6 +289,8 @@ export const logoutUser = () => {
   noteWebPushSignOut(authRepository.getSessionUser()?.id);
   // Hidden chats lock: reveal/open tokens and the hidden ids leave memory.
   forgetHiddenChats();
+  // A kept upload names a file on this device: it does not outlive the session (reels-39).
+  forgetUploadResume();
   authRepository.logout();
 };
 
@@ -296,6 +299,8 @@ export const prepareLogoutNavigation = () => {
   noteOfflineSignOut(authRepository.getSessionUser()?.id);
   noteWebPushSignOut(authRepository.getSessionUser()?.id);
   forgetHiddenChats();
+  // A kept upload names a file on this device: it does not outlive the session (reels-39).
+  forgetUploadResume();
   authRepository.prepareLogoutNavigation();
 };
 

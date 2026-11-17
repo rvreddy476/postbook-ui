@@ -1,4 +1,5 @@
 import api from "@/lib/api";
+import { uploadRefusal } from "@/lib/uploadRefusal";
 
 import { getPost, saveChapters, type HubPostDetail, type HubPostPatch } from "@/features/posttube/hub/hubApi";
 import { copyrightRefusalMessage, copyrightReviewCopy, isCopyrightHeld, isCopyrightRefusal, type CopyrightReview } from "@/features/copyright/model";
@@ -177,6 +178,43 @@ export function postPublishPatch(form: Pick<StudioFormState, "contentType" | "ag
   return studioAgeRestricted(form) ? { age_restricted: true } : null;
 }
 
+/* ── 18+ in a draft save against an older post-service (REG-7) ── */
+
+/**
+ * A post-service from before a8a90d515 decodes the draft strictly and
+ * answers 400 to the unknown key `age_restricted` (even `false`). That one
+ * refusal names the field; nothing else is taken for it.
+ */
+export function isAgeRestrictedFieldRefusal(err: unknown): boolean {
+  const res = (err as { response?: { status?: unknown; data?: { error?: { message?: unknown } } } } | null)?.response;
+  const message = res?.data?.error?.message;
+  return res?.status === 400 && typeof message === "string" && /age_restricted/.test(message);
+}
+
+/**
+ * Saves a draft so deploy order does not matter: when the server refuses
+ * only `age_restricted`, the save is sent again without it. The flag stays in
+ * the studio's form and still goes with the create, and the post-publish
+ * check (secureAgeRestriction) confirms it either way. `dropped` says the
+ * draft itself does not hold the flag.
+ */
+export async function saveDraftTolerant<B extends { age_restricted?: boolean }>(
+  send: (draftId: string, body: B) => Promise<unknown>,
+  draftId: string,
+  body: B,
+): Promise<{ ageRestrictedDropped: boolean }> {
+  try {
+    await send(draftId, body);
+    return { ageRestrictedDropped: false };
+  } catch (err) {
+    if (!("age_restricted" in body) || !isAgeRestrictedFieldRefusal(err)) throw err;
+    const rest = { ...body };
+    delete rest.age_restricted;
+    await send(draftId, rest);
+    return { ageRestrictedDropped: true };
+  }
+}
+
 /* ── 18+ after publish: confirm it, or fail closed (lv-9) ── */
 
 export type AgeGateOutcome =
@@ -293,6 +331,9 @@ export function publishFailure(err: unknown): { code: string | null; message: st
   if (!err) return null;
   const body = (err as { response?: { data?: { error?: { code?: unknown; message?: unknown } } } }).response?.data?.error;
   const code = typeof body?.code === "string" && body.code ? body.code : null;
+  // Upload limits (length, daily quota, long videos in flight, expired session...): a specific sentence with the wait.
+  const upload = uploadRefusal(err);
+  if (upload) return { code, message: upload.message };
   // Copyright: long-video uploads paused (with the day it ends), or members-only on a video the review would hold.
   const copyright = copyrightRefusalMessage(err, "create");
   if (copyright) return { code, message: copyright };

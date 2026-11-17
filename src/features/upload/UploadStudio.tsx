@@ -92,7 +92,8 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
     headingRef.current?.scrollIntoView({ block: "start" });
   }, [form.currentStep]);
   const focusErrors = () => requestAnimationFrame(() => validationRef.current?.focus());
-  const saveError = studio.saveDraftMutation.error instanceof Error ? studio.saveDraftMutation.error.message : null;
+  // The same words as a publish failure: an upload refusal (quota, length, expired...) is named, not "status code 429".
+  const saveError = studio.saveDraftMutation.error ? publishFailure(studio.saveDraftMutation.error)?.message ?? null : null;
   const currentStepErrors = getStepErrors(form.currentStep, form);
   const allErrors = getAllErrors(form, steps);
 
@@ -148,6 +149,8 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
             onFileSelected={studio.selectFile}
             clearFile={studio.clearFile}
             contentType={contentType}
+            resumeOffer={studio.resume.offer}
+            onDiscardResume={studio.resume.discard}
           />
         );
       case "details":
@@ -342,6 +345,7 @@ export function UploadStudio({ contentType, soundId = null }: UploadStudioProps)
             {form.uploadPhase === "uploading" ? <progress max={100} value={form.uploadProgress} aria-label="Video upload progress" /> : null}
             </div>{form.uploadPhase === "uploading" ? <b>{form.uploadProgress}%</b> : null}
           </div> : null}
+          {studio.resume.notice ? <p className="upload-banner" data-variant="warning" role="status" data-upload-notice>{studio.resume.notice}</p> : null}
           {saveError ? <p className="upload-field-error" role="alert"><AlertTriangle aria-hidden="true" />Your draft couldn&apos;t be saved. {saveError} Your form is still here; try saving again.</p> : null}
           {studio.saveDraftMutation.isSuccess && !busy ? <p className="upload-save-note" role="status"><Check aria-hidden="true" />Draft saved. Save again after making changes.</p> : null}
           <footer className="upload-form-footer">

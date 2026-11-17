@@ -30,7 +30,9 @@ import { chapterRowsToWire } from "@/features/posttube/hub/chaptersModel";
 import { type FollowUpFailure, type StudioFormState, INITIAL_FORM_STATE } from "./types";
 import { validateSelectedFile, validateMediaDuration } from "./fileRules";
 import { freshStudioForm, mergePublishDefaults, takesPublishDefaults } from "./studioDefaults";
-import { applySeriesChoice, captionOutcomePatch, isFinalPublishRefusal, readPublishedCopyrightReview, saveUploadChapters, scheduleIso, secureAgeRestriction, studioAgeRestricted, studioCreateFields, studioDraftActionField, studioDraftCreditFields, studioDraftGateField, studioTakesCredits, uploadStudioCaptions, type CaptionUploadOutcome } from "./studioApi";
+import { localResumeStore } from "@/lib/resumableUpload";
+import { RESUME_EXPIRED_NOTICE, readResumeOffer, resumeFileProblem, type ResumeOffer } from "./uploadResume";
+import { applySeriesChoice, captionOutcomePatch, isFinalPublishRefusal, readPublishedCopyrightReview, saveDraftTolerant, saveUploadChapters, scheduleIso, secureAgeRestriction, studioAgeRestricted, studioCreateFields, studioDraftActionField, studioDraftCreditFields, studioDraftGateField, studioTakesCredits, uploadStudioCaptions, type CaptionUploadOutcome } from "./studioApi";
 import { captionUploadMessage } from "@/features/posttube/data/captionUpload";
 import { cachedCover, keepPublishAttempt, newPublishAttempt, type PublishAttempt } from "./publishAttempt";
 import { chosenSoundPatch, soundToAudioTrack, studioDraftSoundFields, studioSoundNotice, studioSoundStatus } from "./studioSound";
@@ -191,6 +193,30 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
     patch(chosenSoundPatch(sound));
   }, [patch, soundId]);
 
+  /* ── An unfinished upload from an earlier visit (reels-39) ──
+   * The resumable session is kept per studio in localStorage. On opening
+   * the studio with one, the creator is asked to choose the same file again;
+   * the publish (or draft save) then sends only the missing parts. Read after
+   * mount: storage is client-only.
+   */
+  const resumeStore = useMemo(() => localResumeStore(contentType), [contentType]);
+  const [resumeOffer, setResumeOffer] = useState<ResumeOffer | null>(null);
+  const [uploadNotice, setUploadNotice] = useState<string | null>(null);
+  useEffect(() => {
+    const { offer, notice } = readResumeOffer(resumeStore);
+    setResumeOffer(offer);
+    if (notice) setUploadNotice(notice);
+  }, [resumeStore]);
+  const resumeOfferRef = useRef<ResumeOffer | null>(null);
+  resumeOfferRef.current = resumeOffer;
+
+  /** Start over: forget the kept upload so any file can be chosen. */
+  const discardResume = useCallback(() => {
+    resumeStore.clear();
+    setResumeOffer(null);
+    patch({ uploadError: null });
+  }, [resumeStore, patch]);
+
   /* ── File selection ──────────────────────────────── */
 
   const [checkingFile, setCheckingFile] = useState(false);
@@ -203,6 +229,9 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
     setCheckingFile(false);
     const fileError = validateSelectedFile(file, contentType);
     if (fileError) { patch({ uploadError: fileError }); return; }
+    // An unfinished upload is waiting for its own file: another one is refused until Start over.
+    const resumeProblem = resumeFileProblem(resumeOfferRef.current, file);
+    if (resumeProblem) { patch({ uploadError: resumeProblem }); return; }
     setCheckingFile(true);
     patch({ uploadError: null });
 
@@ -239,12 +268,15 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
       cleanup(false);
       subtitleUploadKeyRef.current = null;
       publishAttemptRef.current = null;
+      // The kept upload's own file is back: the offer has done its job (the record stays for the upload).
+      setResumeOffer(null);
       setForm((previous) => {
         if (previous.videoPreviewUrl) URL.revokeObjectURL(previous.videoPreviewUrl);
         if (previous.customCoverPreviewUrl) URL.revokeObjectURL(previous.customCoverPreviewUrl);
         return {
           ...freshStudioForm(contentType, previous.currentStep, getPublishDefaults(), previous),
           videoFile: file, videoPreviewUrl: previewUrl, videoDurationSec: Math.round(duration),
+          videoDurationMs: Math.ceil(duration * 1000),
           videoWidth: width || null, videoHeight: height || null,
           coverTimestampMs: Math.round(duration * 500),
           computedVideoCategory: computedCategory, finalVideoCategory: computedCategory,
@@ -261,12 +293,37 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
     setCheckingFile(false);
     subtitleUploadKeyRef.current = null;
     publishAttemptRef.current = null;
+    // Removing the file cancels its upload: nothing is left to resume.
+    resumeStore.clear();
+    setResumeOffer(null);
+    setUploadNotice(null);
     setForm((prev) => {
       if (prev.videoPreviewUrl) URL.revokeObjectURL(prev.videoPreviewUrl);
       if (prev.customCoverPreviewUrl) URL.revokeObjectURL(prev.customCoverPreviewUrl);
       return freshStudioForm(contentType, "video", getPublishDefaults(), prev);
     });
-  }, [contentType]);
+  }, [contentType, resumeStore]);
+
+  /**
+   * The video upload for Publish and Save draft: the simple path under 20 MB,
+   * the resumable one above. Both send the length at init (duration_ms), so
+   * an over-long file is refused before any bytes move (N-3 / lv-30). The
+   * resumable path keeps its session for a reload and, when a kept one has
+   * expired, starts again and says so.
+   */
+  const uploadVideo = useCallback(async (file: File, durationMs: number | null, draftId: string | null) => {
+    setUploadNotice(null);
+    const options = {
+      durationMs,
+      resume: resumeStore,
+      draftId,
+      onRestart: () => setUploadNotice(RESUME_EXPIRED_NOTICE),
+    };
+    const onProgress = (pct: number) => patch({ uploadProgress: pct });
+    return file.size >= RESUMABLE_UPLOAD_THRESHOLD
+      ? uploadMediaResumable(file, onProgress, options)
+      : uploadMedia(file, onProgress, options);
+  }, [patch, resumeStore]);
 
   /* ── Deferred upload ─────────────────────────────────
    * The file is NOT uploaded on selection — we keep only a local reference and
@@ -498,7 +555,9 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
     const hashtags = mergeHashtags(form.hashtags, form.caption);
     patch({ hashtags });
     const classified = classifyVideo(form.videoDurationSec, form.videoWidth, form.videoHeight);
-    await updateDraft(draftId, {
+    // REG-7: an older post-service refuses age_restricted in the draft; the save then goes
+    // without it, the flag stays in the form, and the create / post-publish check carry it.
+    await saveDraftTolerant(updateDraft, draftId, {
         title: form.title || undefined,
         caption: form.caption,
         hashtags,
@@ -545,9 +604,7 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
       let mediaId = form.mediaId;
       if (!mediaId) {
         patch({ uploadPhase: "uploading", uploadProgress: 0, uploadError: null });
-        const upload =
-          form.videoFile.size >= RESUMABLE_UPLOAD_THRESHOLD ? uploadMediaResumable : uploadMedia;
-        mediaId = await upload(form.videoFile, (pct) => patch({ uploadProgress: pct }));
+        mediaId = await uploadVideo(form.videoFile, form.videoDurationMs, form.draftId);
         patch({ uploadPhase: "done", mediaId, processingStatus: "processing" });
       }
       let draftId = form.draftId;
@@ -575,9 +632,7 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
       if (!mediaId) {
         if (!form.videoFile) throw new Error("No video selected");
         patch({ uploadPhase: "uploading", uploadProgress: 0, uploadError: null });
-        const upload =
-          form.videoFile.size >= RESUMABLE_UPLOAD_THRESHOLD ? uploadMediaResumable : uploadMedia;
-        mediaId = await upload(form.videoFile, (pct) => patch({ uploadProgress: pct }));
+        mediaId = await uploadVideo(form.videoFile, form.videoDurationMs, form.draftId);
         patch({ uploadPhase: "done", mediaId, processingStatus: "processing" });
       }
 
@@ -800,6 +855,8 @@ export function useUploadStudio(contentType: ContentType, options: { soundId?: s
     selectFile,
     checkingFile,
     clearFile,
+    /** An unfinished upload from an earlier visit, Start over, and what happened to a kept upload. */
+    resume: { offer: resumeOffer, discard: discardResume, notice: uploadNotice },
     sound: { status: soundStatus, notice: studioSoundNotice(soundStatus) },
     removeSound,
     chooseSound,

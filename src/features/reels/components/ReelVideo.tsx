@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { Heart, Loader2, Play } from "lucide-react";
 import type Hls from "hls.js";
 
@@ -97,9 +97,14 @@ interface ReelVideoProps {
 const DOUBLE_TAP_MS = 260;
 
 export const ReelVideo = forwardRef<ReelVideoHandle, ReelVideoProps>(function ReelVideo(
-  { reel, active, position, prefs, onPrefsChange, onEnded, onDoubleTap, onQualityLevels, onProgress, onCaptionsAvailable, onTime, onPlayState, onDimensions, chromeless = false, sourceOverride = null, onForcedMutedChange, dataSaver = false },
+  { reel, active: activeProp, position, prefs, onPrefsChange, onEnded, onDoubleTap, onQualityLevels, onProgress, onCaptionsAvailable, onTime, onPlayState, onDimensions, chromeless = false, sourceOverride = null, onForcedMutedChange, dataSaver = false },
   ref,
 ) {
+  // A reel leaving the stage stays mounted for its exit animation (the screen's
+  // AnimatePresence, mode popLayout). It is not the active player any more: it
+  // pauses at once, so two reels never play sound together (reels-14, reels-82).
+  const present = useIsPresent();
+  const active = activeProp && present;
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

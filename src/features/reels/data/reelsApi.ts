@@ -1,5 +1,12 @@
 import api from "@/lib/api";
-import { RESUMABLE_UPLOAD_THRESHOLD, isUseResumableUpload, uploadResumable } from "@/lib/resumableUpload";
+import {
+  RESUMABLE_UPLOAD_THRESHOLD,
+  durationMsField,
+  isUseResumableUpload,
+  uploadResumable,
+  type RestartReason,
+  type ResumeStore,
+} from "@/lib/resumableUpload";
 
 import type { PostDetail } from "@/types/profile";
 import type {
@@ -112,14 +119,32 @@ export interface InitUploadResult {
   object_key: string;
 }
 
-export async function initMediaUpload(file: File): Promise<InitUploadResult> {
+/**
+ * What the studio passes with a video upload.
+ * - durationMs: the length the browser read; sent at init as duration_ms so
+ *   an over-long file is refused (413 VIDEO_TOO_LONG) before any bytes move.
+ *   Unknown (null) is left out.
+ * - resume / draftId / onRestart: the resumable path's kept session
+ *   (lib/resumableUpload.ts), so a reload does not start from 0 %.
+ */
+export interface StudioUploadOptions {
+  durationMs?: number | null;
+  resume?: ResumeStore | null;
+  draftId?: string | null;
+  onRestart?: (reason: RestartReason) => void;
+}
+
+export async function initMediaUpload(file: File, durationMs?: number | null): Promise<InitUploadResult> {
   const fileType = file.type.startsWith("video/") ? "video" : "image";
-  const res = await api.post<ApiResponse<InitUploadResult>>("/v1/media/init", {
+  const body: Record<string, unknown> = {
     file_type: fileType,
     media_subtype: "reel",
     mime_type: file.type,
     file_size_bytes: file.size,
-  });
+  };
+  const duration = fileType === "video" ? durationMsField(durationMs) : undefined;
+  if (duration !== undefined) body.duration_ms = duration;
+  const res = await api.post<ApiResponse<InitUploadResult>>("/v1/media/init", body);
   return res.data.data;
 }
 
@@ -165,13 +190,14 @@ export async function confirmUpload(mediaId: string): Promise<void> {
  */
 export async function uploadMedia(
   file: File,
-  onProgress?: (pct: number) => void
+  onProgress?: (pct: number) => void,
+  options: StudioUploadOptions = {},
 ): Promise<string> {
   let init: InitUploadResult;
   try {
-    init = await initMediaUpload(file);
+    init = await initMediaUpload(file, options.durationMs);
   } catch (err) {
-    if (file.type.startsWith("video/") && isUseResumableUpload(err)) return uploadMediaResumable(file, onProgress);
+    if (file.type.startsWith("video/") && isUseResumableUpload(err)) return uploadMediaResumable(file, onProgress, options);
     throw err;
   }
   await uploadToPresignedUrl(init.upload_url, file, onProgress);
@@ -194,9 +220,16 @@ export { RESUMABLE_UPLOAD_THRESHOLD };
  */
 export function uploadMediaResumable(
   file: File,
-  onProgress?: (pct: number) => void
+  onProgress?: (pct: number) => void,
+  options: StudioUploadOptions = {},
 ): Promise<string> {
-  return uploadResumable(file, { onProgress });
+  return uploadResumable(file, {
+    onProgress,
+    durationMs: options.durationMs,
+    store: options.resume,
+    draftId: options.draftId,
+    onRestart: options.onRestart,
+  });
 }
 
 /** Upload a data URL (e.g. canvas-extracted cover frame) as an image and return the media ID. */

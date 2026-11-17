@@ -47,6 +47,7 @@
     "face-api.js"
   ],
   "devDependencies": {
+    "@happy-dom/global-registrator": "^21.0.4",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "26.6.2",
     "@types/react": "^19.3.0",

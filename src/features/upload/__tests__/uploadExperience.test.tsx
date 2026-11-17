@@ -25,9 +25,9 @@ describe("upload file requirements", () => {
     expect(validateSelectedFile({ type: "video/mp4", size: 600 * 1024 * 1024 }, "reel")).toBeNull();
     expect(validateSelectedFile({ type: "video/mp4", size: 600 * 1024 * 1024 }, "short")).toBeNull();
   });
-  test("the labels advertise no number that is not enforced", () => {
-    expect(uploadLimitLabels("long")).toEqual({ size: "Any file size", duration: "Any length" });
-    expect(uploadLimitLabels("podcast")).toEqual({ size: "Any file size", duration: "Any length" });
+  test("the labels advertise no number that is not enforced, and no length the server refuses (lv-30)", () => {
+    expect(uploadLimitLabels("long")).toEqual({ size: "Any file size", duration: "Up to 4 hours" });
+    expect(uploadLimitLabels("podcast")).toEqual({ size: "Any file size", duration: "Up to 4 hours" });
     expect(uploadLimitLabels("reel")).toEqual({ size: "Any file size", duration: "Up to 10 minutes as a Short" });
   });
   test("empty and unsupported files receive actionable errors", () => {
@@ -78,7 +78,8 @@ describe("accessible upload surfaces", () => {
     expect(html).toContain('aria-describedby="upload-file-error upload-file-limits"');
     expect(html).toContain('role="alert"');
     expect(html).toContain("Any file size");
-    expect(html).toContain("Any length");
+    expect(html).toContain("Up to 4 hours");
+    expect(html).not.toContain("Any length");
     expect(html).not.toContain("500 MB");
     expect(html).not.toContain("12 hours");
     expect(html).not.toContain("overflow-y-auto");
