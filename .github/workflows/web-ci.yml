@@ -1,0 +1,72 @@
+# postbook-ui CI (reels-9, web part): typecheck, the Bun tests and a
+# production build on every push and pull request. Bun only.
+#
+# Bun is pinned to 1.3.14, the version bun.lock was last written with
+# (lockfile configVersion 1); package.json and the Dockerfile (oven/bun:1)
+# pin nothing tighter. Change it here and in the Dockerfile together.
+# TypeScript stays on 5.9.x (package.json): TS 7 removed the compiler API
+# `next build` loads its config through.
+#
+# Lint: not run. `bun run lint` is `next lint`, which Next 16 removed, and the
+# repository has no ESLint install or config; a lint step needs that added
+# first (a lockfile change).
+#
+# The build takes no secrets. NEXT_PUBLIC_* values are inlined at build time;
+# they are set to the Dockerfile's own defaults (empty = the feature is off or
+# the URL is derived from window.location). Never put a real key here.
+
+name: web-ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bunx tsc --noEmit
+
+      - name: Tests
+        run: bun test
+
+      - name: Build
+        # The same command and placeholders as the Dockerfile's builder stage
+        # (webpack: Turbopack's Google-font resolver rejects the Outfit query).
+        run: bun run build --webpack
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ""
+          NEXT_PUBLIC_WS_BASE_URL: ""
+          NEXT_PUBLIC_SITE_URL: "https://cleestudio.com"
+          NEXT_PUBLIC_ENABLE_STUB_PAYMENTS: "true"
+          NEXT_PUBLIC_RAZORPAY_KEY_ID: ""
+          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ""
+          NEXT_PUBLIC_FIREBASE_API_KEY: ""
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ""
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ""
+          NEXT_PUBLIC_FIREBASE_APP_ID: ""
+          NEXT_PUBLIC_FIREBASE_VAPID_KEY: ""
+          NEXT_PUBLIC_GIPHY_SDK_KEY: ""
+          NEXT_PUBLIC_PLAY_STORE_URL: ""
+          NEXT_PUBLIC_APP_STORE_URL: ""
+          NEXT_PUBLIC_ANDROID_PACKAGE: ""
