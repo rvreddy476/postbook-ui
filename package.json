@@ -36,7 +36,7 @@
     "hls.js": "^1.7.3",
     "livekit-client": "^2.22.3",
     "lucide-react": "1.47.0",
-    "next": "16.3.5",
+    "next": "16.4.5",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "styled-components": "6.6.0",
@@ -55,5 +55,10 @@
     "postcss": "^8.5.28",
     "tailwindcss": "^4.3.3",
     "typescript": "5.9.3"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "1.13.6",
+    "js-cookie": "3.0.7",
+    "node-fetch": "2.6.7"
   }
 }
