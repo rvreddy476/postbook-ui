@@ -70,3 +70,98 @@ jobs:
           NEXT_PUBLIC_PLAY_STORE_URL: ""
           NEXT_PUBLIC_APP_STORE_URL: ""
           NEXT_PUBLIC_ANDROID_PACKAGE: ""
+
+  # Gate line 5 (web): dependency vulnerabilities in bun.lock, by `bun audit`
+  # (the pinned Bun; it reads the lockfile, no install needed). Every
+  # advisory is printed with its fixed version, read from GitHub's advisory
+  # API because bun audit gives only the vulnerable range. The job FAILS on
+  # a high or critical advisory with a patched release (or one whose
+  # advisory cannot be read); moderate, low and unpatched ones only print.
+  # To accept one, pass its id to `bun audit --ignore=<CVE/GHSA>` below with
+  # a comment saying why and until when.
+  dependency-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: bun audit (fail on high/critical with a fix)
+        env:
+          # Read-only use: GitHub's public advisory API, for the rate limit.
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gate="$RUNNER_TEMP/audit-gate.mjs"
+          cat > "$gate" <<'JS'
+          // Reads `bun audit --json` on stdin. Prints every advisory with its fixed
+          // version; exits 1 when a high or critical advisory has a patched release.
+          // bun audit gives only the vulnerable range, and GitHub writes `<= X` both
+          // when there is no patch and when the patch is X+1, so the fixed version is
+          // read from the advisory itself (GitHub's public advisory API; GITHUB_TOKEN
+          // raises the rate limit). A lookup that fails counts as "fix available" for
+          // high and critical, so an API outage fails the job instead of passing it.
+          const input = await Bun.stdin.text();
+          if (!input.trim()) {
+            console.log("::error title=bun audit printed nothing::no JSON report (registry unreachable?)");
+            process.exit(2);
+          }
+          const report = JSON.parse(input);
+          if (!report || typeof report !== "object" || Array.isArray(report)) {
+            console.log("::error title=bun audit::unexpected report shape");
+            process.exit(2);
+          }
+          const rank = { critical: 4, high: 3, moderate: 2, low: 1, info: 0 };
+          const headers = { Accept: "application/vnd.github+json", "User-Agent": "web-ci-dependency-audit" };
+          if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+
+          async function patched(pkg, url) {
+            const id = String(url).match(/GHSA-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}/i)?.[0];
+            if (!id) return { fix: null, known: false };
+            try {
+              const res = await fetch(`https://api.github.com/advisories/${id}`, { headers });
+              if (!res.ok) return { fix: null, known: false };
+              const body = await res.json();
+              const fixes = (body.vulnerabilities || [])
+                .filter((v) => v.package?.name === pkg && v.first_patched_version)
+                .map((v) => v.first_patched_version);
+              return { fix: fixes.length ? [...new Set(fixes)].join(" | ") : null, known: true };
+            } catch {
+              return { fix: null, known: false };
+            }
+          }
+
+          const rows = [];
+          for (const [pkg, advisories] of Object.entries(report)) {
+            for (const a of advisories) {
+              const p = await patched(pkg, a.url);
+              rows.push({ pkg, sev: a.severity, range: a.vulnerable_versions, ...p, url: a.url });
+            }
+          }
+          rows.sort((x, y) => (rank[y.sev] ?? 0) - (rank[x.sev] ?? 0) || x.pkg.localeCompare(y.pkg));
+          const serious = (r) => (rank[r.sev] ?? 0) >= rank.high;
+          const blocking = rows.filter((r) => serious(r) && (r.fix || !r.known));
+          for (const r of rows) {
+            const tag = blocking.includes(r) ? "BLOCK" : "warn ";
+            const fix = r.fix || (r.known ? "none" : "unknown");
+            console.log(`${tag} ${r.sev.padEnd(8)} ${r.pkg.padEnd(20)} vulnerable ${String(r.range).padEnd(20)} fixed ${fix.padEnd(14)} ${r.url}`);
+          }
+          const count = (s) => rows.filter((r) => r.sev === s).length;
+          console.log(
+            `${rows.length} advisories: ${count("critical")} critical, ${count("high")} high, ` +
+              `${count("moderate")} moderate, ${count("low")} low; ${blocking.length} high/critical with a fix (or an unreadable advisory)`,
+          );
+          if (blocking.length) {
+            for (const r of blocking) {
+              const why = r.fix ? `fixed in ${r.fix}` : "advisory unreadable, treated as fixable";
+              console.log(`::error title=Vulnerable dependency::${r.pkg} ${r.sev} (${r.range}), ${why}: ${r.url}`);
+            }
+            process.exit(1);
+          }
+          JS
+          # bun audit exits 1 whenever it finds anything; the gate decides.
+          bun audit --json > "$RUNNER_TEMP/audit.json" || true
+          bun "$gate" < "$RUNNER_TEMP/audit.json"

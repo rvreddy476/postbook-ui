@@ -1,0 +1,18 @@
+# gitleaks allow-list, by finding fingerprint (commit:file:rule:line).
+#
+# Only test fixtures, examples and placeholders belong here, each under a
+# comment giving the reason. A value that could be a real credential is never
+# listed: it is rotated first, and the scan stays red until it is.
+# Reviewed 2026-11-18 against a full-history scan of every branch with
+# gitleaks 8.24.3, default rules (.github/workflows/secrets-scan.yml).
+# Fingerprints carry the commit SHA: a history rewrite invalidates them.
+
+# fake: Doorstep share-link token in a golden contract fixture, copied byte for
+# byte from modernsmapp doorstep-service internal/http/testdata/contracts. The
+# backend test mints it as base64url(sha256("fixture-token-3")); no server holds it.
+015fe11ee79cf5a8ddc2c7df95c4b3977b614996:src/features/doorstep/__tests__/contracts/share_post_201.json:generic-api-key:1
+
+# fake: Razorpay test-mode key id (rzp_test_ prefix; a key id is public and
+# goes to the browser anyway) used as the contract-test constant in
+# modernsmapp food-service and commerce-service fixtures.
+bc7bdde5740fa7e58158921a5701ea00db8243f9:src/features/feast/customer/__tests__/rules.test.ts:generic-api-key:305
